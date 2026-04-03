@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.7</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.puchain</groupId>
+    <artifactId>fep-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>FEP Parent</name>
+    <description>FEP 综合前置平台 - 父工程</description>
+
+    <modules>
+        <module>fep-common</module>
+        <module>fep-security-api</module>
+        <module>fep-security-mock</module>
+        <module>fep-transport</module>
+        <module>fep-converter</module>
+        <module>fep-processor</module>
+        <module>fep-collector</module>
+        <module>fep-web</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- FEP 模块版本 (统一管理) -->
+        <fep.version>1.0.0-SNAPSHOT</fep.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- FEP 内部模块 -->
+            <dependency>
+                <groupId>com.puchain</groupId>
+                <artifactId>fep-common</artifactId>
+                <version>${fep.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.puchain</groupId>
+                <artifactId>fep-security-api</artifactId>
+                <version>${fep.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.puchain</groupId>
+                <artifactId>fep-security-mock</artifactId>
+                <version>${fep.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.puchain</groupId>
+                <artifactId>fep-transport</artifactId>
+                <version>${fep.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.puchain</groupId>
+                <artifactId>fep-converter</artifactId>
+                <version>${fep.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.puchain</groupId>
+                <artifactId>fep-processor</artifactId>
+                <version>${fep.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.puchain</groupId>
+                <artifactId>fep-collector</artifactId>
+                <version>${fep.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
