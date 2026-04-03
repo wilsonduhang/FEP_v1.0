@@ -1,0 +1,7 @@
+# 开发环境配置
+# - 安全模块使用 Mock 实现 (明文透传)
+# - 日志级别 DEBUG
+
+logging:
+  level:
+    com.puchain.fep: DEBUG
