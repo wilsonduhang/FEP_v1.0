@@ -1,0 +1,12 @@
+{
+  "name": "fep-admin-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FEP 综合前置平台管理 Web 前端 (Vue3 + TypeScript + Element Plus)",
+  "scripts": {
+    "placeholder": "echo 'Vue3 project will be initialized in P1'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
