@@ -37,7 +37,9 @@ public class MockSignService implements SignService {
         if (data == null || signature == null || publicKey == null) {
             throw new IllegalArgumentException("data, signature and publicKey must not be null");
         }
-        log.debug("[MOCK] SM2 verify called, data length={}, signature={}", data.length, signature);
+        // 清理日志输入中的 CR/LF 防止日志注入 (CWE-117)
+        final String safeSignature = signature.replaceAll("[\r\n]", "_");
+        log.debug("[MOCK] SM2 verify called, data length={}, signature={}", data.length, safeSignature);
         return true;
     }
 }

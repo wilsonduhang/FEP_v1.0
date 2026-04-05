@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- 排除 Spring 配置类（很多是骨架） -->
+    <Match>
+        <Class name="~.*AutoConfiguration"/>
+        <Bug pattern="UUF_UNUSED_FIELD"/>
+    </Match>
+
+    <!-- 排除测试类的某些检查 -->
+    <Match>
+        <Class name="~.*Test"/>
+        <Bug pattern="DM_DEFAULT_ENCODING"/>
+    </Match>
+
+    <!-- MockSignService 固定签名是 mock，非硬编码密钥 -->
+    <Match>
+        <Class name="com.puchain.fep.security.mock.MockSignService"/>
+        <Or>
+            <Bug pattern="DMI_CONSTANT_DB_PASSWORD"/>
+            <Bug pattern="HARD_CODE_PASSWORD"/>
+        </Or>
+    </Match>
+</FindBugsFilter>
