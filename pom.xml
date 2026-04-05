@@ -39,6 +39,10 @@
 
         <!-- FEP 模块版本 (统一管理) -->
         <fep.version>1.0.0-SNAPSHOT</fep.version>
+
+        <!-- JaCoCo 覆盖率门禁阈值 -->
+        <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
+        <jacoco.branch.coverage.minimum>0.70</jacoco.branch.coverage.minimum>
     </properties>
 
     <dependencyManagement>
@@ -153,6 +157,71 @@
                         <goals>
                             <goal>check</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!--
+              JaCoCo 覆盖率门禁 (BUNDLE 粒度):
+              - 80% 行覆盖 / 70% 分支覆盖 (未达标则 BUILD FAILURE)
+              - 已知限制: BUNDLE 为 0 指令时自动通过 — P0 骨架模块均如此
+              - P1+ 需监控: 新增模块若只有被排除的 Configuration 类，会悄悄通过门禁
+                (可通过 CI 增加 "每个模块至少 N 个测试" 的保护性检查)
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.12</version>
+                <configuration>
+                    <excludes>
+                        <!-- 排除 Spring 启动类 (无业务逻辑) -->
+                        <exclude>**/FepApplication.class</exclude>
+                        <!-- 排除 Spring Boot auto-configuration 类 (Spring 约定) -->
+                        <exclude>**/*AutoConfiguration.class</exclude>
+                        <!-- 排除 P0 骨架空 @Configuration 类 (P1+ 有逻辑后移出排除) -->
+                        <exclude>**/SecurityApiConfiguration.class</exclude>
+                        <exclude>**/SecurityMockConfiguration.class</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${jacoco.line.coverage.minimum}</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${jacoco.branch.coverage.minimum}</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                            <haltOnFailure>true</haltOnFailure>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
