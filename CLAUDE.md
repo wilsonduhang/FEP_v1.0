@@ -149,7 +149,7 @@ FEP/
 **Nightly 深扫**（每日 02:00 北京时间）：
 - **OWASP Dependency-Check**：CVSS ≥ 7 阻断
 - **Pitest**：fep-common mutation score ≥ 80%
-- **SonarCloud**：Sonar Way 质量门
+- ~~**SonarCloud**~~：⏸ 暂缓 — 免费版仅支持 Public 仓库，本项目为 Private。配置保留（`sonar-project.properties` + `nightly.yml` 有守护跳过），未来可接自建 SonarQube 或改 Public 后激活
 
 **本地一键验证**：
 ```bash
