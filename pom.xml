@@ -186,6 +186,7 @@
                         <!-- 排除 P0 骨架空 @Configuration 类 (P1+ 有逻辑后移出排除) -->
                         <exclude>**/SecurityApiConfiguration.class</exclude>
                         <exclude>**/SecurityMockConfiguration.class</exclude>
+                        <exclude>**/OpenApiConfiguration.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
