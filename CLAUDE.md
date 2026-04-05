@@ -84,6 +84,20 @@ com.puchain.fep/
 - **Commit 标注**: `AI-Generated: claude-code` + `Reviewed-By: <姓名>`
 - **安全代码 Commit**: `Security-Reviewed-By: ③<姓名>` (不含 AI-Generated)
 
+### AI Agent 工作流（每个编码 Task 必读）
+
+生成代码时必须遵循以下顺序（TDD + 质量自检）：
+
+1. **写失败测试** — 先写测试，明确期望行为
+2. **运行测试确认失败** — 验证测试能抓到缺陷
+3. **写最小实现** — 让测试变绿的最少代码
+4. **本地门禁验证** — `cd /Users/muzhou/FEP_v1.0 && ./mvnw verify`
+5. **对照 9 项清单自检**（见下文"质量门禁合规"）
+6. **违规一律修复到 0** — 不通过门禁不 commit
+7. **Commit** — 含 `AI-Generated: claude-code` + `Reviewed-By: pending`
+
+**禁止跳过步骤 4-6**。CI 会拦截但反馈慢，本地自检省时间。
+
 ## 文档体系
 
 ```
@@ -107,7 +121,48 @@ FEP/
 - **敏感数据**: 日志禁止明文银行卡号/身份证/手机号，必须调用脱敏工具
 - **Javadoc**: Claude Code 生成的公共类/方法必须包含完整 Javadoc
 - **OpenAPI**: Controller 必须包含 @Tag/@Operation/@Parameter/@ApiResponse 注解
-- **格式化**: Checkstyle (阿里巴巴 Java 规范) + .editorconfig
+- **格式化**: Checkstyle + .editorconfig（规则见 `FEP_v1.0/checkstyle.xml`）
+
+## 质量门禁合规（P0.5 硬性要求）
+
+**AI 生成代码提交前必须通过 9 项自检**（详细示例见 [`docs/guides/ai-code-review-checklist.md`](docs/guides/ai-code-review-checklist.md)）：
+
+| # | 检查项 | 拦截机制 |
+|:-:|--------|---------|
+| 1 | 无吞异常 / 无空 catch | SpotBugs + 人工评审 |
+| 2 | 测试断言验证业务含义（禁止 `assertNotNull` 式假断言） | 人工评审 + Pitest（nightly） |
+| 3 | 边界覆盖：null / 空集合 / 极限值 | 人工评审 |
+| 4 | 日志无敏感数据（身份证/卡号/手机号/密钥） | Find Security Bugs + 人工 |
+| 5 | 无未使用的抽象 / 泛型 / 参数 | 人工评审 |
+| 6 | 无硬编码（URL / 密码 / 密钥 / 路径 / 超时） | 人工评审 |
+| 7 | 公共类/方法有 Javadoc | Checkstyle |
+| 8 | 禁用 `System.out.println` / `printStackTrace()` | Checkstyle |
+| 9 | 与本模块已有代码风格一致 | 人工评审 |
+
+**CI 自动门禁**（PR 触发 ≤ 5min）：
+- **Checkstyle**：风格违规零容忍
+- **SpotBugs + Find Security Bugs**：Bug + 安全漏洞零容忍
+- **JaCoCo**：行覆盖 ≥ 80% / 分支 ≥ 70%
+- **ArchUnit**：8 层依赖方向 + security.impl 隔离 + 命名规范
+- **PR 大小**：新增代码 ≤ 400 行（不含 docs/xml/pom.xml）
+
+**Nightly 深扫**（每日 02:00 北京时间）：
+- **OWASP Dependency-Check**：CVSS ≥ 7 阻断
+- **Pitest**：fep-common mutation score ≥ 80%
+- **SonarCloud**：Sonar Way 质量门
+
+**本地一键验证**：
+```bash
+cd /Users/muzhou/FEP_v1.0 && ./mvnw verify --batch-mode --no-transfer-progress
+```
+
+**修复 vs 排除的判断**：
+- 真实 Bug/安全漏洞 → **修复代码**（如 Task 2 中发现的 CRLF 日志注入）
+- 工具误报 / 规则对本项目过严 → 更新 `checkstyle.xml` / `spotbugs-exclude.xml` / JaCoCo excludes，**附注释说明理由**
+
+**二次 AI 评审**（核心模块强制）：
+- `security/` `converter/` `processor/`（对账）模块提交前必须通过 santa-method 或 code-reviewer agent 独立评审
+- 流程见 [`docs/guides/secondary-ai-review.md`](docs/guides/secondary-ai-review.md)
 
 ## 已知约束
 
