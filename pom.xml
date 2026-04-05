@@ -43,6 +43,9 @@
         <!-- JaCoCo 覆盖率门禁阈值 -->
         <jacoco.line.coverage.minimum>0.80</jacoco.line.coverage.minimum>
         <jacoco.branch.coverage.minimum>0.70</jacoco.branch.coverage.minimum>
+
+        <!-- OWASP Dependency-Check 默认跳过（仅 nightly CI 运行） -->
+        <owasp.skip>true</owasp.skip>
     </properties>
 
     <dependencyManagement>
@@ -222,6 +225,33 @@
                             </rules>
                             <haltOnFailure>true</haltOnFailure>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>10.0.4</version>
+                <configuration>
+                    <!-- CVSS >= 7.0 (High) 阻断构建 -->
+                    <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <!-- 不扫描测试依赖（加速） -->
+                    <skipTestScope>true</skipTestScope>
+                    <!-- 生成 HTML + XML 报告 -->
+                    <formats>
+                        <format>HTML</format>
+                        <format>XML</format>
+                    </formats>
+                    <!-- 仅在手动触发或 nightly CI 运行，避免慢 PR -->
+                    <skip>${owasp.skip}</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>owasp-dependency-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
