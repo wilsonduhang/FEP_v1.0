@@ -1,0 +1,81 @@
+name: Nightly Deep Scan
+
+on:
+  schedule:
+    # 每天 UTC 18:00 (北京时间 02:00) 运行
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  deep-scan:
+    name: OWASP + Pitest + SonarCloud
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compute NVD cache key (weekly rotation)
+        id: nvd-key
+        run: echo "week=$(date -u +%Y-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache OWASP NVD data
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: owasp-nvd-${{ runner.os }}-${{ steps.nvd-key.outputs.week }}
+          restore-keys: |
+            owasp-nvd-${{ runner.os }}-
+
+      - name: Run mvn verify + OWASP + Pitest
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          ./mvnw verify -Ppitest
+          -Dowasp.skip=false
+          --batch-mode --no-transfer-progress
+
+      - name: Run SonarCloud analysis
+        if: env.SONAR_TOKEN != ''
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >
+          ./mvnw sonar:sonar
+          -Dsonar.token=$SONAR_TOKEN
+          --batch-mode --no-transfer-progress
+
+      - name: Upload OWASP reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check-reports
+          path: '**/target/dependency-check-report.html'
+          retention-days: 30
+
+      - name: Upload Pitest reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pitest-reports
+          path: '**/target/pit-reports/'
+          retention-days: 30
