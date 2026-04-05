@@ -16,5 +16,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @Configuration
 @EnableJpaRepositories(basePackages = "com.puchain.fep.web")
 @EnableJpaAuditing
-public class JpaConfig {
+public class JpaConfiguration {
 }
