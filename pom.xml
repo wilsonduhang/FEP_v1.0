@@ -46,6 +46,9 @@
 
         <!-- OWASP Dependency-Check 默认跳过（仅 nightly CI 运行） -->
         <owasp.skip>true</owasp.skip>
+
+        <!-- Pitest 默认在每个模块跳过，需要的模块显式开启 -->
+        <pitest.skip>true</pitest.skip>
     </properties>
 
     <dependencyManagement>
@@ -257,4 +260,66 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Pitest 变异测试 profile: mvn verify -Ppitest -->
+        <profile>
+            <id>pitest</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>1.17.0</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.pitest</groupId>
+                                <artifactId>pitest-junit5-plugin</artifactId>
+                                <version>1.2.1</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <skip>${pitest.skip}</skip>
+                            <targetClasses>
+                                <param>com.puchain.fep.*</param>
+                            </targetClasses>
+                            <targetTests>
+                                <param>com.puchain.fep.*</param>
+                            </targetTests>
+                            <excludedClasses>
+                                <param>*AutoConfiguration</param>
+                                <param>*Configuration</param>
+                                <param>*Application</param>
+                            </excludedClasses>
+                            <!-- mutation 阈值 -->
+                            <mutationThreshold>80</mutationThreshold>
+                            <coverageThreshold>80</coverageThreshold>
+                            <!-- 输出 -->
+                            <outputFormats>
+                                <outputFormat>HTML</outputFormat>
+                                <outputFormat>XML</outputFormat>
+                            </outputFormats>
+                            <!-- 超时（单个 mutation 最大运行时间） -->
+                            <timeoutConstant>10000</timeoutConstant>
+                            <!-- 并行度 -->
+                            <threads>4</threads>
+                            <!-- 仅运行变动相关的 mutation（增量模式） -->
+                            <withHistory>true</withHistory>
+                            <!-- P0 骨架阶段允许空 mutation（Configuration 被排除后可能为 0） -->
+                            <failWhenNoMutations>false</failWhenNoMutations>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>pitest-mutation-coverage</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>mutationCoverage</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

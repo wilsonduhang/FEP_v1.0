@@ -14,6 +14,11 @@
     <name>FEP Common</name>
     <description>FEP 公共工具/常量/异常/DTO</description>
 
+    <properties>
+        <!-- fep-common 启用 Pitest（P0.5 的 proof of concept） -->
+        <pitest.skip>false</pitest.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
