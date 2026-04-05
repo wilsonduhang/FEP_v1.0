@@ -129,23 +129,26 @@ FEP/
 
 ## 当前项目状态
 
-- **阶段**: P0 完成（项目骨架已搭建，进入功能开发阶段）
+- **阶段**: P0.5 完成（质量门禁已就位，进入 P1 业务开发）
 - **已完成**:
-  - PRD v1.3 (3轮审计) / 架构 v4.0 / 团队 v4.0 / 开发规范 v3.0 / 文档整理
-  - P0 项目骨架: Maven 多模块 (parent + 8 子模块) + GitHub Actions CI
+  - PRD v1.3 (3轮审计) / 架构 v4.0 / 团队 v4.0 / 开发规范 v3.0
+  - P0: Maven 多模块骨架（parent + 8 子模块）+ GitHub Actions CI
+  - P0.5: 5 层质量门禁
 - **代码仓库**: `github.com/wilsonduhang/FEP_v1.0`
-- **模块状态**:
-  | 模块 | 状态 | 说明 |
-  |------|------|------|
-  | fep-parent | P0 完成 | Spring Boot 3.3.7 parent + dependencyManagement |
-  | fep-common | P0 骨架 | 空 Configuration，待填充工具类/异常/DTO |
-  | fep-security-api | P0 骨架 | CryptoService + SignService 接口已定义 |
-  | fep-security-mock | P0 骨架 | Mock 实现 (明文透传 + 固定签名) |
-  | fep-transport | P0 骨架 | 空 Configuration，待集成 TLQ |
-  | fep-converter | P0 骨架 | 空 Configuration，待实现报文转换 |
-  | fep-processor | P0 骨架 | 空 Configuration，待实现校验/状态机 |
-  | fep-collector | P0 骨架 | 空 Configuration，待实现适配器 |
-  | fep-web | P0 骨架 | Spring Boot 主应用，冒烟测试通过 |
-  | fep-admin-ui | P0 占位 | 仅 package.json，P1 初始化 Vue3 |
-- **CI**: GitHub Actions (`mvn verify` on push/PR to main/develop)
-- **下一步**: P1 — fep-common 核心工具类 + fep-security-api 完善 + fep-web 基础 REST 端点
+- **质量门禁（P0.5 交付）**:
+  | 层级 | 工具 | 阈值/规则 |
+  |------|------|-----------|
+  | 风格 | Checkstyle | 零违规，140 行宽，禁用 System.out/printStackTrace |
+  | Bug | SpotBugs + Find Security Bugs | effort=Max, threshold=Low, 零违规 |
+  | 覆盖率 | JaCoCo | 行 ≥80% / 分支 ≥70% |
+  | 架构 | ArchUnit | 8 层依赖方向 + security.impl 隔离 + 命名规范 |
+  | 依赖 | OWASP Dependency-Check | CVSS ≥7 阻断构建（nightly） |
+  | 变异 | Pitest | fep-common 启用，mutation ≥80%（nightly） |
+  | 综合 | SonarCloud 免费版 | Sonar Way 质量门（nightly） |
+- **CI 双轨制**:
+  - PR 快检（≤5min）: ci.yml — 编译/测试/静态分析/400 行 PR 上限
+  - nightly 深检（≤40min）: nightly.yml — OWASP + Pitest + SonarCloud
+- **评审流程**:
+  - 所有 PR 使用 `.github/pull_request_template.md` 强制填写 AI 占比 + 9 项评审清单
+  - 核心模块（security/converter/processor）强制二次 AI 评审（santa-method / code-reviewer agent）
+- **下一步**: P1 — TLQ 通信层 (Producer/Consumer/去重/重试/死信队列)
