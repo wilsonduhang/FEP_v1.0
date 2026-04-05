@@ -109,9 +109,37 @@ FEP/
     ├── architecture/                 ← 架构设计方案 v4.0
     ├── team/                         ← 团队组建方案 v4.0
     ├── guides/                       ← 规范·约束·指引 (统一存放)
+    │   ├── ai-code-review-checklist.md     ← AI 代码 9 项评审清单
+    │   ├── secondary-ai-review.md          ← 二次 AI 评审流程
+    │   └── plan-review-checklist.md        ← Plan 评审 7 项清单
+    ├── plans/                        ← 实施计划
+    │   ├── prd-traceability-matrix.md      ← PRD ↔ Plan 追溯矩阵
+    │   ├── YYYY-MM-DD-*.md                 ← 各阶段 Plan
+    │   └── ...
     ├── business/                     ← 业务理解
     └── references/                   ← 行业研究资料
 ```
+
+## Plan 治理（2026-04-05 建立）
+
+**责任矩阵**:
+
+| 角色 | 谁 | 职责 |
+|---|---|---|
+| Plan 作者 | Claude Code（mode A） | 按 PRD 起草 + 自检 + 引用 FR-ID |
+| Plan 独立评审 | Claude Code（santa-method） | PRD 对齐 / 完整性 / 一致性 |
+| **Plan 批准者** | **muzhou** | **一票否决**，签字后方可执行 |
+| **Plan 质量负责人** | **muzhou** | 项目成败最终负责人 |
+
+**强制流程**（P1 及以后所有 Plan）:
+1. 起草 → 2. AI 独立评审（santa-method）→ 3. 人工批准签字 → 4. Task 执行
+
+**核心产物**:
+- [PRD 追溯矩阵](docs/plans/prd-traceability-matrix.md) — 双向追溯 FR-ID ↔ Plan/Task
+- [Plan 评审清单](docs/guides/plan-review-checklist.md) — 7 项核心检查
+- 每个 Task 必须引用 PRD 章节 + FR-ID（基础设施/元流程 Plan 除外）
+
+**原则**: AI 是起草人和评审工具，**人是批准人和责任人**。无签字的 Plan 禁止进入实施。
 
 ## 编码规范摘要
 
