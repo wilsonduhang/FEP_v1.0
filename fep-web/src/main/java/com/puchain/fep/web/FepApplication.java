@@ -16,6 +16,11 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = "com.puchain.fep")
 public class FepApplication {
 
+    /**
+     * 应用程序入口。
+     *
+     * @param args 命令行参数
+     */
     public static void main(String[] args) {
         SpringApplication.run(FepApplication.class, args);
     }
