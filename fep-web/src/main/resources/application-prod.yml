@@ -20,6 +20,25 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
     show-sql: false
 
+# Redis (生产环境)
+fep:
+  redis:
+    enabled: true
+spring:
+  data:
+    redis:
+      host: ${FEP_REDIS_HOST:localhost}
+      port: ${FEP_REDIS_PORT:6379}
+      password: ${FEP_REDIS_PASSWORD:}
+      database: ${FEP_REDIS_DATABASE:0}
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+          max-wait: 3000ms
+
 logging:
   level:
     com.puchain.fep: INFO

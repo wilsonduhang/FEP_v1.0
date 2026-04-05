@@ -187,6 +187,7 @@
                         <exclude>**/SecurityApiConfiguration.class</exclude>
                         <exclude>**/SecurityMockConfiguration.class</exclude>
                         <exclude>**/OpenApiConfiguration.class</exclude>
+                        <exclude>**/RedisConfiguration.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

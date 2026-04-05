@@ -3,6 +3,10 @@ spring:
     name: fep
   profiles:
     active: dev
+  data:
+    redis:
+      repositories:
+        enabled: false
   jpa:
     open-in-view: false
     properties:
