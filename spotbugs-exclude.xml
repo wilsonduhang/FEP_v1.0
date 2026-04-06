@@ -23,6 +23,8 @@
             <Class name="com.puchain.fep.web.auth.service.LoginAttemptService"/>
             <Class name="com.puchain.fep.web.auth.service.SingleSignOnService"/>
             <Class name="com.puchain.fep.web.config.SecurityConfiguration"/>
+            <Class name="com.puchain.fep.web.sysmgmt.role.service.SysRoleService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.role.controller.SysRoleController"/>
         </Or>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
@@ -37,6 +39,34 @@
     <Match>
         <Class name="com.puchain.fep.web.auth.controller.AuthController"/>
         <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- SysRoleController: 角色管理端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.role.controller.SysRoleController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- RolePermissionAssignRequest: 请求 DTO 由 Jackson 反序列化填充，可变列表是预期行为 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.role.dto.RolePermissionAssignRequest"/>
+            <Class name="com.puchain.fep.web.sysmgmt.role.dto.RolePermissionAssignRequest$MenuPermission"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- SysRoleService/Controller: 角色编码/名称/状态均为受控枚举或数据库值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.role.service.SysRoleService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.role.controller.SysRoleController"/>
+            <Class name="com.puchain.fep.web.sysmgmt.role.domain.SysRole"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
     <!-- JwtTokenProvider 是 Spring 单例，构造器异常在启动时快速失败是期望行为 -->

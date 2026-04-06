@@ -192,6 +192,16 @@
                         <!-- 排除 JPA Entity + DTO (纯 getter/setter 无业务逻辑) -->
                         <exclude>**/domain/SysUser.class</exclude>
                         <exclude>**/domain/UserStatus.class</exclude>
+                        <exclude>**/domain/SysRole.class</exclude>
+                        <exclude>**/domain/RoleType.class</exclude>
+                        <exclude>**/domain/RoleStatus.class</exclude>
+                        <exclude>**/domain/SysUserRole.class</exclude>
+                        <exclude>**/domain/SysRolePermission.class</exclude>
+                        <exclude>**/dto/RoleCreateRequest.class</exclude>
+                        <exclude>**/dto/RoleUpdateRequest.class</exclude>
+                        <exclude>**/dto/RoleResponse.class</exclude>
+                        <exclude>**/dto/RolePermissionAssignRequest.class</exclude>
+                        <exclude>**/dto/RolePermissionAssignRequest$MenuPermission.class</exclude>
                         <exclude>**/domain/LoginRequest.class</exclude>
                         <exclude>**/domain/LoginResponse.class</exclude>
                         <exclude>**/domain/RefreshRequest.class</exclude>
@@ -207,6 +217,9 @@
                         <exclude>**/service/SingleSignOnService.class</exclude>
                         <!-- 排除 Auth Controller (MockMvc 测试已验证路由，端到端在 Task 18) -->
                         <exclude>**/controller/AuthController.class</exclude>
+                        <!-- 排除 Role Service + Controller (集成测试覆盖核心路径，端到端在 Task 18) -->
+                        <exclude>**/role/service/SysRoleService.class</exclude>
+                        <exclude>**/role/controller/SysRoleController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

@@ -7,6 +7,9 @@ import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.domain.LoginResponse;
 import com.puchain.fep.web.auth.jwt.JwtProperties;
 import com.puchain.fep.web.auth.jwt.JwtTokenProvider;
+import com.puchain.fep.web.sysmgmt.rel.repository.SysUserRoleRepository;
+import com.puchain.fep.web.sysmgmt.role.domain.SysRole;
+import com.puchain.fep.web.sysmgmt.role.repository.SysRoleRepository;
 import com.puchain.fep.web.sysmgmt.user.domain.SysUser;
 import com.puchain.fep.web.sysmgmt.user.domain.UserStatus;
 import com.puchain.fep.web.sysmgmt.user.repository.SysUserRepository;
@@ -38,6 +41,8 @@ public class AuthService {
     private static final Duration LOCK_DURATION = Duration.ofMinutes(30);
 
     private final SysUserRepository userRepository;
+    private final SysUserRoleRepository userRoleRepository;
+    private final SysRoleRepository roleRepository;
     private final PasswordHasher passwordHasher;
     private final CaptchaService captchaService;
     private final LoginAttemptService loginAttemptService;
@@ -49,16 +54,20 @@ public class AuthService {
     /**
      * 构造 AuthService。
      *
-     * @param userRepository     用户 Repository
-     * @param passwordHasher     密码散列服务
-     * @param captchaService     验证码服务
+     * @param userRepository      用户 Repository
+     * @param userRoleRepository  用户-角色关联 Repository
+     * @param roleRepository      角色 Repository
+     * @param passwordHasher      密码散列服务
+     * @param captchaService      验证码服务
      * @param loginAttemptService 登录尝试服务
      * @param singleSignOnService SSO 服务
-     * @param tokenProvider      JWT 签发/解析
-     * @param redisTemplate      Redis 模板
-     * @param jwtProperties      JWT 配置属性
+     * @param tokenProvider       JWT 签发/解析
+     * @param redisTemplate       Redis 模板
+     * @param jwtProperties       JWT 配置属性
      */
     public AuthService(final SysUserRepository userRepository,
+                       final SysUserRoleRepository userRoleRepository,
+                       final SysRoleRepository roleRepository,
                        final PasswordHasher passwordHasher,
                        final CaptchaService captchaService,
                        final LoginAttemptService loginAttemptService,
@@ -67,6 +76,8 @@ public class AuthService {
                        final StringRedisTemplate redisTemplate,
                        final JwtProperties jwtProperties) {
         this.userRepository = userRepository;
+        this.userRoleRepository = userRoleRepository;
+        this.roleRepository = roleRepository;
         this.passwordHasher = passwordHasher;
         this.captchaService = captchaService;
         this.loginAttemptService = loginAttemptService;
@@ -135,8 +146,8 @@ public class AuthService {
         user.setLoginFailCount(0);
         userRepository.save(user);
 
-        // 6. 查询角色（Task 15 建立关联后填充真实数据）
-        List<String> roleCodes = List.of();
+        // 6. 查询角色
+        List<String> roleCodes = loadRoleCodes(user.getUserId());
 
         // 7. 签发 token
         String accessToken = tokenProvider.createAccessToken(
@@ -199,7 +210,7 @@ public class AuthService {
         String userId = claims.getSubject();
         SysUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new FepAuthException(FepErrorCode.AUTH_0401));
-        List<String> roleCodes = List.of(); // TODO Task 15 填充
+        List<String> roleCodes = loadRoleCodes(userId);
         String newAccess = tokenProvider.createAccessToken(
                 user.getUserId(), user.getUserAccount(), roleCodes);
         String newJti = tokenProvider.extractJti(newAccess);
@@ -207,6 +218,22 @@ public class AuthService {
         return new LoginResponse(newAccess, refreshToken,
                 user.getUserId(), user.getUserAccount(), user.getUserName(),
                 roleCodes, false);
+    }
+
+    /**
+     * 根据用户 ID 加载角色编码列表。
+     *
+     * @param userId 用户 ID
+     * @return 角色编码列表（可能为空列表）
+     */
+    private List<String> loadRoleCodes(final String userId) {
+        List<String> roleIds = userRoleRepository.findRoleIdsByUserId(userId);
+        if (roleIds.isEmpty()) {
+            return List.of();
+        }
+        return roleRepository.findByRoleIdIn(roleIds).stream()
+                .map(SysRole::getRoleCode)
+                .toList();
     }
 
     /**
