@@ -8,6 +8,8 @@ import com.puchain.fep.web.sysmgmt.role.dto.RolePermissionAssignRequest;
 import com.puchain.fep.web.sysmgmt.role.dto.RoleResponse;
 import com.puchain.fep.web.sysmgmt.role.dto.RoleUpdateRequest;
 import com.puchain.fep.web.sysmgmt.role.service.SysRoleService;
+import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
+import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -57,6 +59,7 @@ public class SysRoleController {
      * @return 新建角色信息
      */
     @PostMapping
+    @OperationLog(module = "角色管理", type = OperationType.CREATE, description = "创建角色")
     @Operation(summary = "创建角色", description = "新增角色，角色编码不可重复")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @ApiResponse(responseCode = "400", description = "参数校验失败")
@@ -73,6 +76,7 @@ public class SysRoleController {
      * @return 更新后的角色信息
      */
     @PutMapping("/{roleId}")
+    @OperationLog(module = "角色管理", type = OperationType.UPDATE, description = "更新角色")
     @Operation(summary = "更新角色", description = "修改角色名称、数据权限范围、备注")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @ApiResponse(responseCode = "404", description = "角色不存在")
@@ -89,6 +93,7 @@ public class SysRoleController {
      * @return 空响应
      */
     @DeleteMapping("/{roleId}")
+    @OperationLog(module = "角色管理", type = OperationType.DELETE, description = "删除角色")
     @Operation(summary = "删除角色", description = "删除角色及关联权限/用户绑定，系统内置角色不可删除")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @ApiResponse(responseCode = "400", description = "系统角色不允许删除")
@@ -106,6 +111,7 @@ public class SysRoleController {
      * @return 切换后的角色信息
      */
     @PutMapping("/{roleId}/toggle-status")
+    @OperationLog(module = "角色管理", type = OperationType.UPDATE, description = "切换角色状态")
     @Operation(summary = "切换角色状态", description = "ACTIVE 与 DISABLED 互切")
     @ApiResponse(responseCode = "200", description = "切换成功")
     @ApiResponse(responseCode = "404", description = "角色不存在")
@@ -123,6 +129,7 @@ public class SysRoleController {
      * @return 分页角色列表
      */
     @GetMapping
+    @OperationLog(module = "角色管理", type = OperationType.QUERY, description = "搜索角色")
     @Operation(summary = "搜索角色", description = "按角色名称关键字分页搜索")
     @ApiResponse(responseCode = "200", description = "查询成功")
     public ApiResult<PageResult<RoleResponse>> search(
@@ -140,6 +147,7 @@ public class SysRoleController {
      * @return 空响应
      */
     @PutMapping("/{roleId}/permissions")
+    @OperationLog(module = "角色管理", type = OperationType.UPDATE, description = "分配菜单权限")
     @Operation(summary = "分配角色权限", description = "全量替换角色的菜单权限")
     @ApiResponse(responseCode = "200", description = "分配成功")
     @ApiResponse(responseCode = "404", description = "角色不存在")
