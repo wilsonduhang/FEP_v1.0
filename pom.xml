@@ -188,6 +188,10 @@
                         <exclude>**/SecurityMockConfiguration.class</exclude>
                         <exclude>**/OpenApiConfiguration.class</exclude>
                         <exclude>**/RedisConfiguration.class</exclude>
+                        <exclude>**/JpaConfiguration.class</exclude>
+                        <!-- 排除 JPA Entity (纯 getter/setter 无业务逻辑) -->
+                        <exclude>**/domain/SysUser.class</exclude>
+                        <exclude>**/domain/UserStatus.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
