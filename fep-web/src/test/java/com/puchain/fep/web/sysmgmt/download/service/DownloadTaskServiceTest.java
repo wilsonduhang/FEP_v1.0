@@ -1,9 +1,11 @@
 package com.puchain.fep.web.sysmgmt.download.service;
 
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.sysmgmt.download.domain.TaskStatus;
 import com.puchain.fep.web.sysmgmt.download.domain.TaskType;
 import com.puchain.fep.web.sysmgmt.download.dto.DownloadTaskResponse;
+import com.puchain.fep.web.sysmgmt.download.repository.SysDownloadTaskRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -33,6 +36,9 @@ class DownloadTaskServiceTest {
 
     @Autowired
     private DownloadTaskService downloadTaskService;
+
+    @Autowired
+    private SysDownloadTaskRepository downloadTaskRepository;
 
     /**
      * 测试1: createTask 应持久化任务，初始状态为 WAITING，进度为 0。
@@ -120,5 +126,42 @@ class DownloadTaskServiceTest {
         assertEquals(TaskStatus.FAILED, resp.getTaskStatus(), "失败后状态应为 FAILED");
         assertEquals(reason, resp.getFailureReason(), "失败原因应与传入一致");
         assertNull(resp.getFileName(), "失败任务文件名应仍为 null");
+    }
+
+    /**
+     * 测试5: getFilePath 对非 COMPLETED 状态的任务应抛出业务异常（BIZ_5003）。
+     */
+    @Test
+    void getFilePath_whenNotCompleted_shouldThrowException() {
+        DownloadTaskResponse created = downloadTaskService.createTask(
+                "未完成任务", TaskType.DATA_EXPORT, USER_A);
+
+        assertThrows(FepBusinessException.class,
+                () -> downloadTaskService.getFilePath(created.getTaskId()),
+                "WAITING 状态的任务不允许获取文件路径");
+    }
+
+    /**
+     * 测试6: cleanExpiredTasks 应将超期 COMPLETED 任务标记为 EXPIRED。
+     */
+    @Test
+    void cleanExpiredTasks_shouldMarkExpiredTasksAsExpired() {
+        // 创建并完成一个任务
+        DownloadTaskResponse created = downloadTaskService.createTask(
+                "即将过期任务", TaskType.DATA_EXPORT, USER_A);
+        String taskId = created.getTaskId();
+        downloadTaskService.completeTask(taskId, "test.xlsx", "/data/test.xlsx", 1024L);
+
+        // 手动将过期时间设置为过去，触发清理逻辑
+        com.puchain.fep.web.sysmgmt.download.domain.SysDownloadTask task =
+                downloadTaskRepository.findById(taskId).orElseThrow();
+        task.setExpireTime(java.time.LocalDateTime.now().minusDays(1));
+        downloadTaskRepository.save(task);
+
+        int cleaned = downloadTaskService.cleanExpiredTasks();
+
+        assertTrue(cleaned >= 1, "应至少清理 1 条过期任务");
+        DownloadTaskResponse resp = downloadTaskService.findById(taskId);
+        assertEquals(TaskStatus.EXPIRED, resp.getTaskStatus(), "过期任务状态应更新为 EXPIRED");
     }
 }
