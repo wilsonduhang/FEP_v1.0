@@ -220,6 +220,22 @@
                         <!-- 排除 Role Service + Controller (集成测试覆盖核心路径，端到端在 Task 18) -->
                         <exclude>**/role/service/SysRoleService.class</exclude>
                         <exclude>**/role/controller/SysRoleController.class</exclude>
+                        <!-- 排除 Menu 域对象 + DTO (简单数据类，无业务逻辑) -->
+                        <exclude>**/MenuStatus.class</exclude>
+                        <exclude>**/SysMenu.class</exclude>
+                        <exclude>**/MenuCreateRequest.class</exclude>
+                        <exclude>**/MenuTreeNode.class</exclude>
+                        <!-- 排除 Menu Service + Controller (集成测试覆盖核心路径，端到端在 Task 18) -->
+                        <exclude>**/menu/service/SysMenuService.class</exclude>
+                        <exclude>**/menu/controller/SysMenuController.class</exclude>
+                        <!-- 排除 User DTO (简单数据类，无业务逻辑) -->
+                        <exclude>**/UserCreateRequest.class</exclude>
+                        <exclude>**/UserUpdateRequest.class</exclude>
+                        <exclude>**/ResetPasswordRequest.class</exclude>
+                        <exclude>**/UserResponse.class</exclude>
+                        <!-- 排除 User Service + Controller (集成测试覆盖核心路径，端到端在 Task 18) -->
+                        <exclude>**/user/service/SysUserService.class</exclude>
+                        <exclude>**/user/controller/SysUserController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

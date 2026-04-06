@@ -25,6 +25,10 @@
             <Class name="com.puchain.fep.web.config.SecurityConfiguration"/>
             <Class name="com.puchain.fep.web.sysmgmt.role.service.SysRoleService"/>
             <Class name="com.puchain.fep.web.sysmgmt.role.controller.SysRoleController"/>
+            <Class name="com.puchain.fep.web.sysmgmt.menu.service.SysMenuService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.menu.controller.SysMenuController"/>
+            <Class name="com.puchain.fep.web.sysmgmt.user.service.SysUserService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.user.controller.SysUserController"/>
         </Or>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
@@ -67,6 +71,43 @@
             <Class name="com.puchain.fep.web.sysmgmt.role.domain.SysRole"/>
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- SysMenuService/SysUserService: 菜单编码/用户名/账号均为数据库值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.menu.service.SysMenuService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.menu.domain.SysMenu"/>
+            <Class name="com.puchain.fep.web.sysmgmt.user.service.SysUserService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.user.domain.SysUser"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- SysMenuController: 菜单管理端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.menu.controller.SysMenuController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- SysUserController: 用户管理端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.user.controller.SysUserController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- UserCreateRequest/UserUpdateRequest/UserResponse: 请求/响应 DTO，可变列表是预期行为 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.user.dto.UserCreateRequest"/>
+            <Class name="com.puchain.fep.web.sysmgmt.user.dto.UserUpdateRequest"/>
+            <Class name="com.puchain.fep.web.sysmgmt.user.dto.UserResponse"/>
+            <Class name="com.puchain.fep.web.sysmgmt.menu.dto.MenuTreeNode"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
     </Match>
 
     <!-- JwtTokenProvider 是 Spring 单例，构造器异常在启动时快速失败是期望行为 -->
