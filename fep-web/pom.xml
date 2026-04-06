@@ -86,11 +86,14 @@
             <version>2.6.0</version>
         </dependency>
 
-        <!-- Spring Security Crypto (BCryptPasswordEncoder) -->
+        <!-- Spring Security (includes spring-security-crypto transitively) -->
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-crypto</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+
+        <!-- Note: spring-security-test will be added when network is available.
+             Current tests use MockMvc with Spring Security auto-configured. -->
 
         <!-- Redis -->
         <dependency>

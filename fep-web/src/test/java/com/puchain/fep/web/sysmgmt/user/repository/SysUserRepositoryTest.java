@@ -5,7 +5,6 @@ import com.puchain.fep.web.sysmgmt.user.domain.UserStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
@@ -20,9 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>使用 H2 内存数据库 + Flyway 种子数据验证 Repository 方法。</p>
  */
 @SpringBootTest
-@TestPropertySource(properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration"
-})
 @Transactional
 class SysUserRepositoryTest {
 

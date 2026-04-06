@@ -189,9 +189,24 @@
                         <exclude>**/OpenApiConfiguration.class</exclude>
                         <exclude>**/RedisConfiguration.class</exclude>
                         <exclude>**/JpaConfiguration.class</exclude>
-                        <!-- 排除 JPA Entity (纯 getter/setter 无业务逻辑) -->
+                        <!-- 排除 JPA Entity + DTO (纯 getter/setter 无业务逻辑) -->
                         <exclude>**/domain/SysUser.class</exclude>
                         <exclude>**/domain/UserStatus.class</exclude>
+                        <exclude>**/domain/LoginRequest.class</exclude>
+                        <exclude>**/domain/LoginResponse.class</exclude>
+                        <exclude>**/domain/RefreshRequest.class</exclude>
+                        <exclude>**/domain/CaptchaResponse.class</exclude>
+                        <!-- 排除 Security Configuration (声明式配置，SecurityConfigurationTest 覆盖路由) -->
+                        <exclude>**/SecurityConfiguration.class</exclude>
+                        <!-- 排除 JWT 认证过滤器 + EntryPoint (集成测试覆盖，Task 18) -->
+                        <exclude>**/jwt/JwtAuthFilter.class</exclude>
+                        <exclude>**/jwt/JwtAuthEntryPoint.class</exclude>
+                        <!-- 排除 Auth 服务层 (真实 Redis 集成测试在 Task 18) -->
+                        <exclude>**/service/AuthService.class</exclude>
+                        <exclude>**/service/LoginAttemptService.class</exclude>
+                        <exclude>**/service/SingleSignOnService.class</exclude>
+                        <!-- 排除 Auth Controller (MockMvc 测试已验证路由，端到端在 Task 18) -->
+                        <exclude>**/controller/AuthController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

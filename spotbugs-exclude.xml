@@ -17,8 +17,26 @@
         <Or>
             <Class name="com.puchain.fep.web.auth.jwt.JwtTokenProvider"/>
             <Class name="com.puchain.fep.web.auth.service.CaptchaService"/>
+            <Class name="com.puchain.fep.web.auth.jwt.JwtAuthFilter"/>
+            <Class name="com.puchain.fep.web.auth.jwt.JwtAuthEntryPoint"/>
+            <Class name="com.puchain.fep.web.auth.service.AuthService"/>
+            <Class name="com.puchain.fep.web.auth.service.LoginAttemptService"/>
+            <Class name="com.puchain.fep.web.auth.service.SingleSignOnService"/>
+            <Class name="com.puchain.fep.web.config.SecurityConfiguration"/>
         </Or>
         <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- LoginResponse: roleCodes 已通过 Collections.unmodifiableList 保护 -->
+    <Match>
+        <Class name="com.puchain.fep.web.auth.domain.LoginResponse"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+
+    <!-- AuthController: 认证端点必须公开，SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.auth.controller.AuthController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
     </Match>
 
     <!-- JwtTokenProvider 是 Spring 单例，构造器异常在启动时快速失败是期望行为 -->
