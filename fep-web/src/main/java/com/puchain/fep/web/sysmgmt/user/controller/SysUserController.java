@@ -8,6 +8,8 @@ import com.puchain.fep.web.sysmgmt.user.dto.UserCreateRequest;
 import com.puchain.fep.web.sysmgmt.user.dto.UserResponse;
 import com.puchain.fep.web.sysmgmt.user.dto.UserUpdateRequest;
 import com.puchain.fep.web.sysmgmt.user.service.SysUserService;
+import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
+import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -57,6 +59,7 @@ public class SysUserController {
      * @return 分页用户列表
      */
     @GetMapping
+    @OperationLog(module = "用户管理", type = OperationType.QUERY, description = "搜索用户")
     @Operation(summary = "搜索用户", description = "按用户名或账号关键字分页搜索")
     @ApiResponse(responseCode = "200", description = "查询成功")
     public ApiResult<PageResult<UserResponse>> search(
@@ -88,6 +91,7 @@ public class SysUserController {
      * @return 新建用户信息
      */
     @PostMapping
+    @OperationLog(module = "用户管理", type = OperationType.CREATE, description = "创建用户")
     @Operation(summary = "创建用户", description = "新增用户，登录账号不可重复")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @ApiResponse(responseCode = "400", description = "参数校验失败")
@@ -104,6 +108,7 @@ public class SysUserController {
      * @return 更新后的用户信息
      */
     @PutMapping("/{userId}")
+    @OperationLog(module = "用户管理", type = OperationType.UPDATE, description = "更新用户")
     @Operation(summary = "更新用户", description = "修改用户姓名、手机号、邮箱、部门、角色")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @ApiResponse(responseCode = "404", description = "用户不存在")
@@ -120,6 +125,7 @@ public class SysUserController {
      * @return 空响应
      */
     @DeleteMapping("/{userId}")
+    @OperationLog(module = "用户管理", type = OperationType.DELETE, description = "删除用户")
     @Operation(summary = "删除用户", description = "删除用户及关联角色绑定")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @ApiResponse(responseCode = "404", description = "用户不存在")
@@ -136,6 +142,7 @@ public class SysUserController {
      * @return 更新后的用户信息
      */
     @PostMapping("/{userId}/enable")
+    @OperationLog(module = "用户管理", type = OperationType.UPDATE, description = "启用用户")
     @Operation(summary = "启用用户", description = "将用户状态设为 ACTIVE，清除锁定")
     @ApiResponse(responseCode = "200", description = "启用成功")
     @ApiResponse(responseCode = "404", description = "用户不存在")
@@ -151,6 +158,7 @@ public class SysUserController {
      * @return 更新后的用户信息
      */
     @PostMapping("/{userId}/disable")
+    @OperationLog(module = "用户管理", type = OperationType.UPDATE, description = "禁用用户")
     @Operation(summary = "禁用用户", description = "将用户状态设为 DISABLED")
     @ApiResponse(responseCode = "200", description = "禁用成功")
     @ApiResponse(responseCode = "404", description = "用户不存在")
@@ -167,6 +175,7 @@ public class SysUserController {
      * @return 空响应
      */
     @PostMapping("/{userId}/reset-password")
+    @OperationLog(module = "用户管理", type = OperationType.UPDATE, description = "重置密码")
     @Operation(summary = "重置密码", description = "重置用户密码，下次登录须修改")
     @ApiResponse(responseCode = "200", description = "重置成功")
     @ApiResponse(responseCode = "400", description = "密码复杂度不满足")

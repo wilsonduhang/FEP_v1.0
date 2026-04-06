@@ -7,6 +7,8 @@ import com.puchain.fep.web.auth.domain.LoginResponse;
 import com.puchain.fep.web.auth.domain.RefreshRequest;
 import com.puchain.fep.web.auth.service.AuthService;
 import com.puchain.fep.web.auth.service.CaptchaService;
+import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
+import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
@@ -68,6 +70,7 @@ public class AuthController {
      * @return access/refresh token + 用户信息
      */
     @PostMapping("/login")
+    @OperationLog(module = "认证", type = OperationType.LOGIN, description = "用户登录")
     @Operation(summary = "用户登录", description = "账号+密码+图形验证码，返回 accessToken + refreshToken")
     @ApiResponse(responseCode = "200", description = "登录成功")
     @ApiResponse(responseCode = "401", description = "认证失败")
@@ -82,6 +85,7 @@ public class AuthController {
      * @return 空响应
      */
     @PostMapping("/logout")
+    @OperationLog(module = "认证", type = OperationType.LOGOUT, description = "用户登出")
     @Operation(summary = "用户登出", description = "将当前 accessToken 加入黑名单")
     @ApiResponse(responseCode = "200", description = "登出成功")
     public ApiResult<Void> logout(final HttpServletRequest request) {
