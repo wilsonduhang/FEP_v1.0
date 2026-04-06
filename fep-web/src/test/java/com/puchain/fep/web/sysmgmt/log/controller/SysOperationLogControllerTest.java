@@ -258,4 +258,74 @@ class SysOperationLogControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BIZ_5001"));
     }
+
+    /**
+     * 传入空字符串 module 参数应按"无过滤"处理（覆盖 isBlank() 为 true 的分支）。
+     *
+     * <p>覆盖 SysOperationLogService.search 中
+     * {@code (module == null || module.isBlank())} 的 isBlank()=true 分支。</p>
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void search_withBlankModuleParam_shouldReturnAllLogs() throws Exception {
+        mockMvc.perform(get("/api/v1/sys/logs")
+                        .param("module", "   ")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"));
+    }
+
+    /**
+     * 带 X-Forwarded-For 头（含多 IP）的请求应触发 AOP 切面并记录操作日志。
+     *
+     * <p>通过传入 X-Forwarded-For 头覆盖 OperationLogAspect.resolveClientIp 中
+     * 多 IP 分割逻辑（commaIndex > 0 分支）。</p>
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void search_withXForwardedForMultiIp_shouldTriggerAspect() throws Exception {
+        // X-Forwarded-For 多 IP: 覆盖 commaIndex > 0 分支
+        mockMvc.perform(get("/api/v1/sys/logs")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("X-Forwarded-For", "192.168.1.100, 10.0.0.1, 172.16.0.1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"));
+    }
+
+    /**
+     * 带 X-Forwarded-For=unknown 头的请求应跳过该头并尝试 X-Real-IP。
+     *
+     * <p>覆盖 OperationLogAspect.resolveClientIp 中 X-Forwarded-For=unknown 分支
+     * 以及 X-Real-IP 单 IP 分支。</p>
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void search_withXForwardedForUnknownAndXRealIp_shouldTriggerAspect() throws Exception {
+        // X-Forwarded-For=unknown → 跳过; X-Real-IP 有效 → 使用 X-Real-IP
+        mockMvc.perform(get("/api/v1/sys/logs")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("X-Forwarded-For", "unknown")
+                        .header("X-Real-IP", "10.0.0.50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"));
+    }
+
+    /**
+     * 不带代理头的请求应使用 remoteAddr 作为 IP。
+     *
+     * <p>覆盖 OperationLogAspect.resolveClientIp 的 fallthrough 到 remoteAddr 分支。</p>
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void search_withoutProxyHeaders_shouldUseRemoteAddr() throws Exception {
+        // 不带任何代理头: 覆盖 X-Forwarded-For null 分支和 X-Real-IP null 分支
+        mockMvc.perform(get("/api/v1/sys/logs")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"));
+    }
 }
