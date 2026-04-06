@@ -12,6 +12,27 @@
         <Bug pattern="DM_DEFAULT_ENCODING"/>
     </Match>
 
+    <!-- Spring DI: 注入的可变对象引用是框架管理的单例，非安全风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.auth.jwt.JwtTokenProvider"/>
+            <Class name="com.puchain.fep.web.auth.service.CaptchaService"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- JwtTokenProvider 是 Spring 单例，构造器异常在启动时快速失败是期望行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.auth.jwt.JwtTokenProvider"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- CaptchaService: 验证码仅使用 ASCII 字母数字，equalsIgnoreCase 无 Unicode 风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.auth.service.CaptchaService"/>
+        <Bug pattern="IMPROPER_UNICODE"/>
+    </Match>
+
     <!-- MockSignService 固定签名是 mock，非硬编码密钥 -->
     <Match>
         <Class name="com.puchain.fep.security.mock.MockSignService"/>
