@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 > FEP 综合前置平台 · Claude Code 项目知识库
-> 最后更新: 2026-04-03
+> 最后更新: 2026-04-06
 
 ## 项目概述
 
@@ -212,26 +212,18 @@ cd /Users/muzhou/FEP_v1.0 && ./mvnw verify --batch-mode --no-transfer-progress
 
 ## 当前项目状态
 
-- **阶段**: P0.5 完成（质量门禁已就位，进入 P1 业务开发）
+- **阶段**: P6a.1 完成（Web 基础设施 + 核心 RBAC 就绪）
 - **已完成**:
-  - PRD v1.3 (3轮审计) / 架构 v4.0 / 团队 v4.0 / 开发规范 v3.0
-  - P0: Maven 多模块骨架（parent + 8 子模块）+ GitHub Actions CI
-  - P0.5: 5 层质量门禁
+  - PRD v1.3 / 架构 v4.0 / 团队 v4.0 / 开发规范 v3.0
+  - P0 项目骨架 + P0.5 质量门禁 + Plan 治理框架
+  - P6a.1 Web 基础设施 + 核心 RBAC（19 Tasks, ~24 REST 端点）
 - **代码仓库**: `github.com/wilsonduhang/FEP_v1.0`
-- **质量门禁（P0.5 交付）**:
-  | 层级 | 工具 | 阈值/规则 |
-  |------|------|-----------|
-  | 风格 | Checkstyle | 零违规，140 行宽，禁用 System.out/printStackTrace |
-  | Bug | SpotBugs + Find Security Bugs | effort=Max, threshold=Low, 零违规 |
-  | 覆盖率 | JaCoCo | 行 ≥80% / 分支 ≥70% |
-  | 架构 | ArchUnit | 8 层依赖方向 + security.impl 隔离 + 命名规范 |
-  | 依赖 | OWASP Dependency-Check | CVSS ≥7 阻断构建（nightly） |
-  | 变异 | Pitest | fep-common 启用，mutation ≥80%（nightly） |
-  | 综合 | SonarCloud 免费版 | Sonar Way 质量门（nightly） |
-- **CI 双轨制**:
-  - PR 快检（≤5min）: ci.yml — 编译/测试/静态分析/400 行 PR 上限
-  - nightly 深检（≤40min）: nightly.yml — OWASP + Pitest + SonarCloud
-- **评审流程**:
-  - 所有 PR 使用 `.github/pull_request_template.md` 强制填写 AI 占比 + 9 项评审清单
-  - 核心模块（security/converter/processor）强制二次 AI 评审（santa-method / code-reviewer agent）
-- **下一步**: P1 — TLQ 通信层 (Producer/Consumer/去重/重试/死信队列)
+- **P6a.1 交付**:
+  - 数据库: JPA + Flyway + H2(dev)/MySQL(prod) + 5 张核心表 + 种子数据
+  - Web 框架: ApiResult / FepErrorCode / 全局异常 / TraceIdFilter / 分页
+  - API 文档: SpringDoc OpenAPI 3.0 (/swagger-ui.html)
+  - 认证授权: Spring Security 6 + JWT + Redis Session + SSO 单点踢出
+  - 验证码: EasyCaptcha + Redis TTL 5min
+  - 密码: BCrypt(12) + @PasswordComplexity(两类字符) + 锁定策略
+  - RBAC: 用户/角色/菜单 CRUD + 菜单权限分配 + 用户菜单树
+- **下一步**: P6a.2 其他系统管理（消息/下载/日志/系统配置）
