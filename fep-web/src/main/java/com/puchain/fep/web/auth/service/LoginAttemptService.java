@@ -1,5 +1,7 @@
 package com.puchain.fep.web.auth.service;
 
+import com.puchain.fep.common.util.LogSanitizer;
+import com.puchain.fep.web.auth.RedisKeyConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -22,7 +24,6 @@ import java.time.Duration;
 public class LoginAttemptService {
 
     private static final Logger log = LoggerFactory.getLogger(LoginAttemptService.class);
-    private static final String KEY_PREFIX = "fep:login:fail:";
     private static final Duration COUNT_TTL = Duration.ofMinutes(30);
     private static final int MAX_ATTEMPTS = 5;
 
@@ -44,12 +45,12 @@ public class LoginAttemptService {
      * @return 累计失败次数
      */
     public int recordFailure(final String account) {
-        String key = KEY_PREFIX + account;
+        String key = RedisKeyConstants.LOGIN_FAIL_PREFIX + account;
         Long count = redisTemplate.opsForValue().increment(key);
         redisTemplate.expire(key, COUNT_TTL);
         int result = count != null ? count.intValue() : 0;
         log.info("Login failure recorded for account={}, attempts={}",
-                account.replace("\r", "\\r").replace("\n", "\\n"), result);
+                LogSanitizer.sanitize(account), result);
         return result;
     }
 
@@ -59,7 +60,7 @@ public class LoginAttemptService {
      * @param account 登录账号
      */
     public void clearFailures(final String account) {
-        redisTemplate.delete(KEY_PREFIX + account);
+        redisTemplate.delete(RedisKeyConstants.LOGIN_FAIL_PREFIX + account);
     }
 
     /**
@@ -69,7 +70,7 @@ public class LoginAttemptService {
      * @return true 已锁定
      */
     public boolean isLocked(final String account) {
-        String value = redisTemplate.opsForValue().get(KEY_PREFIX + account);
+        String value = redisTemplate.opsForValue().get(RedisKeyConstants.LOGIN_FAIL_PREFIX + account);
         return value != null && Integer.parseInt(value) >= MAX_ATTEMPTS;
     }
 

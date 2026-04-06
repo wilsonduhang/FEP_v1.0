@@ -55,4 +55,12 @@ public interface SysUserRoleRepository extends JpaRepository<SysUserRole, Long> 
      */
     @Query("SELECT ur.roleId FROM SysUserRole ur WHERE ur.userId = :userId")
     List<String> findRoleIdsByUserId(@Param("userId") String userId);
+
+    /**
+     * 根据用户 ID 集合批量查找关联。
+     *
+     * @param userIds 用户 ID 集合
+     * @return 关联列表
+     */
+    List<SysUserRole> findByUserIdIn(List<String> userIds);
 }

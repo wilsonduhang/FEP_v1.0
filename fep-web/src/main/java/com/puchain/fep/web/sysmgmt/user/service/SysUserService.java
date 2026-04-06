@@ -4,10 +4,10 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.security.PasswordHasher;
+import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.web.sysmgmt.rel.domain.SysUserRole;
 import com.puchain.fep.web.sysmgmt.rel.repository.SysUserRoleRepository;
-import com.puchain.fep.web.sysmgmt.role.domain.SysRole;
-import com.puchain.fep.web.sysmgmt.role.repository.SysRoleRepository;
+import com.puchain.fep.web.sysmgmt.role.service.RoleQueryHelper;
 import com.puchain.fep.web.sysmgmt.user.domain.SysUser;
 import com.puchain.fep.web.sysmgmt.user.domain.UserStatus;
 import com.puchain.fep.web.sysmgmt.user.dto.ResetPasswordRequest;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 /**
  * 用户管理服务。
@@ -43,7 +43,7 @@ public class SysUserService {
 
     private final SysUserRepository userRepository;
     private final SysUserRoleRepository userRoleRepository;
-    private final SysRoleRepository roleRepository;
+    private final RoleQueryHelper roleQueryHelper;
     private final PasswordHasher passwordHasher;
 
     /**
@@ -51,16 +51,16 @@ public class SysUserService {
      *
      * @param userRepository     用户 Repository
      * @param userRoleRepository 用户-角色关联 Repository
-     * @param roleRepository     角色 Repository
+     * @param roleQueryHelper    角色查询辅助
      * @param passwordHasher     密码散列器
      */
     public SysUserService(final SysUserRepository userRepository,
                           final SysUserRoleRepository userRoleRepository,
-                          final SysRoleRepository roleRepository,
+                          final RoleQueryHelper roleQueryHelper,
                           final PasswordHasher passwordHasher) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
-        this.roleRepository = roleRepository;
+        this.roleQueryHelper = roleQueryHelper;
         this.passwordHasher = passwordHasher;
     }
 
@@ -79,7 +79,7 @@ public class SysUserService {
         }
 
         SysUser user = new SysUser();
-        user.setUserId(UUID.randomUUID().toString().replace("-", ""));
+        user.setUserId(IdGenerator.uuid32());
         user.setUserAccount(request.getAccount());
         user.setUserName(request.getUserName());
         user.setPasswordHash(passwordHasher.hash(request.getInitialPassword()));
@@ -132,7 +132,7 @@ public class SysUserService {
         if (request.getRoleIds() != null) {
             roleCodes = assignRoles(userId, request.getRoleIds());
         } else {
-            roleCodes = getRoleCodes(userId);
+            roleCodes = roleQueryHelper.getRoleCodes(userId);
         }
 
         log.info("User updated: account={}", saved.getUserAccount());
@@ -179,7 +179,7 @@ public class SysUserService {
         }
 
         SysUser saved = userRepository.save(user);
-        List<String> roleCodes = getRoleCodes(userId);
+        List<String> roleCodes = roleQueryHelper.getRoleCodes(userId);
 
         log.info("User status changed: account={}, status={}", saved.getUserAccount(), status);
         return UserResponse.from(saved, roleCodes);
@@ -228,8 +228,14 @@ public class SysUserService {
                     keyword, keyword, pageable);
         }
 
+        // Batch load roles for all users on this page (instead of N+1)
+        List<String> userIds = page.getContent().stream()
+                .map(SysUser::getUserId).toList();
+        Map<String, List<String>> roleCodesByUserId = roleQueryHelper.batchGetRoleCodes(userIds);
+
         List<UserResponse> records = page.getContent().stream()
-                .map(u -> UserResponse.from(u, getRoleCodes(u.getUserId())))
+                .map(u -> UserResponse.from(u,
+                        roleCodesByUserId.getOrDefault(u.getUserId(), List.of())))
                 .toList();
 
         return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
@@ -246,7 +252,7 @@ public class SysUserService {
         SysUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "用户不存在: " + userId));
-        List<String> roleCodes = getRoleCodes(userId);
+        List<String> roleCodes = roleQueryHelper.getRoleCodes(userId);
         return UserResponse.from(user, roleCodes);
     }
 
@@ -268,24 +274,6 @@ public class SysUserService {
             userRoleRepository.save(new SysUserRole(userId, roleId));
         }
 
-        return roleRepository.findByRoleIdIn(roleIds).stream()
-                .map(SysRole::getRoleCode)
-                .toList();
-    }
-
-    /**
-     * 获取用户角色编码列表。
-     *
-     * @param userId 用户 ID
-     * @return 角色编码列表
-     */
-    private List<String> getRoleCodes(final String userId) {
-        List<String> roleIds = userRoleRepository.findRoleIdsByUserId(userId);
-        if (roleIds.isEmpty()) {
-            return List.of();
-        }
-        return roleRepository.findByRoleIdIn(roleIds).stream()
-                .map(SysRole::getRoleCode)
-                .toList();
+        return roleQueryHelper.getRoleCodes(userId);
     }
 }

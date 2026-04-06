@@ -1,6 +1,7 @@
 package com.puchain.fep.web.sysmgmt.menu.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.sysmgmt.menu.domain.MenuStatus;
 import com.puchain.fep.web.sysmgmt.menu.domain.SysMenu;
@@ -19,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -113,7 +113,7 @@ public class SysMenuService {
         }
 
         SysMenu menu = new SysMenu();
-        menu.setMenuId(UUID.randomUUID().toString().replace("-", ""));
+        menu.setMenuId(IdGenerator.uuid32());
         menu.setMenuCode(request.getMenuCode());
         menu.setMenuName(request.getMenuName());
         menu.setParentId(request.getParentId());

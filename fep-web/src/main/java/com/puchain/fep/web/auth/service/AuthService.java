@@ -3,13 +3,13 @@ package com.puchain.fep.web.auth.service;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepAuthException;
 import com.puchain.fep.common.security.PasswordHasher;
+import com.puchain.fep.common.util.LogSanitizer;
+import com.puchain.fep.web.auth.RedisKeyConstants;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.domain.LoginResponse;
 import com.puchain.fep.web.auth.jwt.JwtProperties;
 import com.puchain.fep.web.auth.jwt.JwtTokenProvider;
-import com.puchain.fep.web.sysmgmt.rel.repository.SysUserRoleRepository;
-import com.puchain.fep.web.sysmgmt.role.domain.SysRole;
-import com.puchain.fep.web.sysmgmt.role.repository.SysRoleRepository;
+import com.puchain.fep.web.sysmgmt.role.service.RoleQueryHelper;
 import com.puchain.fep.web.sysmgmt.user.domain.SysUser;
 import com.puchain.fep.web.sysmgmt.user.domain.UserStatus;
 import com.puchain.fep.web.sysmgmt.user.repository.SysUserRepository;
@@ -37,12 +37,10 @@ import java.util.List;
 public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
-    private static final String BLACKLIST_PREFIX = "fep:jwt:blacklist:";
     private static final Duration LOCK_DURATION = Duration.ofMinutes(30);
 
     private final SysUserRepository userRepository;
-    private final SysUserRoleRepository userRoleRepository;
-    private final SysRoleRepository roleRepository;
+    private final RoleQueryHelper roleQueryHelper;
     private final PasswordHasher passwordHasher;
     private final CaptchaService captchaService;
     private final LoginAttemptService loginAttemptService;
@@ -55,8 +53,7 @@ public class AuthService {
      * 构造 AuthService。
      *
      * @param userRepository      用户 Repository
-     * @param userRoleRepository  用户-角色关联 Repository
-     * @param roleRepository      角色 Repository
+     * @param roleQueryHelper     角色查询辅助
      * @param passwordHasher      密码散列服务
      * @param captchaService      验证码服务
      * @param loginAttemptService 登录尝试服务
@@ -66,8 +63,7 @@ public class AuthService {
      * @param jwtProperties       JWT 配置属性
      */
     public AuthService(final SysUserRepository userRepository,
-                       final SysUserRoleRepository userRoleRepository,
-                       final SysRoleRepository roleRepository,
+                       final RoleQueryHelper roleQueryHelper,
                        final PasswordHasher passwordHasher,
                        final CaptchaService captchaService,
                        final LoginAttemptService loginAttemptService,
@@ -76,8 +72,7 @@ public class AuthService {
                        final StringRedisTemplate redisTemplate,
                        final JwtProperties jwtProperties) {
         this.userRepository = userRepository;
-        this.userRoleRepository = userRoleRepository;
-        this.roleRepository = roleRepository;
+        this.roleQueryHelper = roleQueryHelper;
         this.passwordHasher = passwordHasher;
         this.captchaService = captchaService;
         this.loginAttemptService = loginAttemptService;
@@ -147,7 +142,7 @@ public class AuthService {
         userRepository.save(user);
 
         // 6. 查询角色
-        List<String> roleCodes = loadRoleCodes(user.getUserId());
+        List<String> roleCodes = roleQueryHelper.getRoleCodes(user.getUserId());
 
         // 7. 签发 token
         String accessToken = tokenProvider.createAccessToken(
@@ -161,7 +156,7 @@ public class AuthService {
 
         boolean mustChangePassword = user.getLastPasswordChangeTime() == null;
 
-        log.info("User login success: account={}", sanitize(request.getAccount()));
+        log.info("User login success: account={}", LogSanitizer.sanitize(request.getAccount()));
 
         return new LoginResponse(accessToken, refreshToken,
                 user.getUserId(), user.getUserAccount(), user.getUserName(),
@@ -180,13 +175,13 @@ public class AuthService {
             String userId = claims.getSubject();
             long ttlMs = claims.getExpiration().getTime() - System.currentTimeMillis();
             if (ttlMs > 0) {
-                redisTemplate.opsForValue().set(BLACKLIST_PREFIX + jti, "1",
+                redisTemplate.opsForValue().set(RedisKeyConstants.JWT_BLACKLIST_PREFIX + jti, "1",
                         Duration.ofMillis(ttlMs));
             }
             singleSignOnService.clearSession(userId);
-            log.info("User logout: userId={}", sanitize(userId));
+            log.info("User logout: userId={}", LogSanitizer.sanitize(userId));
         } catch (JwtException ex) {
-            log.debug("Logout with invalid token: {}", sanitize(ex.getMessage()));
+            log.debug("Logout with invalid token: {}", LogSanitizer.sanitize(ex.getMessage()));
         }
     }
 
@@ -210,7 +205,7 @@ public class AuthService {
         String userId = claims.getSubject();
         SysUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new FepAuthException(FepErrorCode.AUTH_0401));
-        List<String> roleCodes = loadRoleCodes(userId);
+        List<String> roleCodes = roleQueryHelper.getRoleCodes(userId);
         String newAccess = tokenProvider.createAccessToken(
                 user.getUserId(), user.getUserAccount(), roleCodes);
         String newJti = tokenProvider.extractJti(newAccess);
@@ -220,29 +215,4 @@ public class AuthService {
                 roleCodes, false);
     }
 
-    /**
-     * 根据用户 ID 加载角色编码列表。
-     *
-     * @param userId 用户 ID
-     * @return 角色编码列表（可能为空列表）
-     */
-    private List<String> loadRoleCodes(final String userId) {
-        List<String> roleIds = userRoleRepository.findRoleIdsByUserId(userId);
-        if (roleIds.isEmpty()) {
-            return List.of();
-        }
-        return roleRepository.findByRoleIdIn(roleIds).stream()
-                .map(SysRole::getRoleCode)
-                .toList();
-    }
-
-    /**
-     * 清除 CRLF 字符，防止日志注入。
-     */
-    private static String sanitize(final String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replace("\r", "\\r").replace("\n", "\\n");
-    }
 }

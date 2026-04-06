@@ -1,5 +1,7 @@
 package com.puchain.fep.web.auth.jwt;
 
+import com.puchain.fep.common.util.LogSanitizer;
+import com.puchain.fep.web.auth.RedisKeyConstants;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -38,9 +40,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
     private static final String HEADER = "Authorization";
     private static final String PREFIX = "Bearer ";
-    private static final String BLACKLIST_KEY = "fep:jwt:blacklist:";
-    private static final String SESSION_KEY = "fep:session:";
-
     private final JwtTokenProvider tokenProvider;
     private final StringRedisTemplate redisTemplate;
 
@@ -71,18 +70,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     // Redis 不可用 — 仅验证签名，跳过黑名单/SSO
                     log.debug("Redis unavailable, skipping blacklist/SSO checks");
                     authenticate(claims, request);
-                } else if (Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_KEY + jti))) {
+                } else if (Boolean.TRUE.equals(redisTemplate.hasKey(RedisKeyConstants.JWT_BLACKLIST_PREFIX + jti))) {
                     // 1. 黑名单校验（登出后 token 失效）
-                    log.debug("JWT {} is blacklisted", sanitize(jti));
+                    log.debug("JWT {} is blacklisted", LogSanitizer.sanitize(jti));
                 } else if (!isCurrentSession(userId, jti)) {
                     // 2. 单点踢出校验 (PRD §5.1.5)
                     log.debug("JWT {} is not current session for user {} (kicked out)",
-                            sanitize(jti), sanitize(userId));
+                            LogSanitizer.sanitize(jti), LogSanitizer.sanitize(userId));
                 } else {
                     authenticate(claims, request);
                 }
             } catch (JwtException ex) {
-                log.debug("JWT validation failed: {}", sanitize(ex.getMessage()));
+                log.debug("JWT validation failed: {}", LogSanitizer.sanitize(ex.getMessage()));
                 // 不抛，由 EntryPoint 处理未认证请求
             }
         }
@@ -102,7 +101,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      * @return true 为当前会话
      */
     private boolean isCurrentSession(final String userId, final String jti) {
-        String currentJti = redisTemplate.opsForValue().get(SESSION_KEY + userId);
+        String currentJti = redisTemplate.opsForValue().get(RedisKeyConstants.SSO_SESSION_PREFIX + userId);
         return currentJti == null || currentJti.equals(jti);
     }
 
@@ -139,16 +138,4 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
-    /**
-     * 清除 CRLF 字符，防止日志注入。
-     *
-     * @param input 原始字符串
-     * @return 安全字符串
-     */
-    private static String sanitize(final String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replace("\r", "\\r").replace("\n", "\\n");
-    }
 }

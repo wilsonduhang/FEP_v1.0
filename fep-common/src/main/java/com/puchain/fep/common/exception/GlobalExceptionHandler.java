@@ -2,6 +2,7 @@ package com.puchain.fep.common.exception;
 
 import com.puchain.fep.common.domain.ApiResult;
 import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.util.LogSanitizer;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FepBusinessException.class)
     public ResponseEntity<ApiResult<Void>> handleBusiness(FepBusinessException ex) {
         LOG.warn("Business exception: code={}, message={}",
-                sanitize(ex.getErrorCode().getCode()), sanitize(ex.getMessage()));
+                LogSanitizer.sanitize(ex.getErrorCode().getCode()), LogSanitizer.sanitize(ex.getMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.failure(ex.getErrorCode(), ex.getMessage()));
     }
@@ -51,7 +52,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FepAuthException.class)
     public ResponseEntity<ApiResult<Void>> handleAuth(FepAuthException ex) {
         LOG.warn("Auth exception: code={}, message={}",
-                sanitize(ex.getErrorCode().getCode()), sanitize(ex.getMessage()));
+                LogSanitizer.sanitize(ex.getErrorCode().getCode()), LogSanitizer.sanitize(ex.getMessage()));
         HttpStatus status = ex.getErrorCode() == FepErrorCode.AUTH_0403
                 ? HttpStatus.FORBIDDEN
                 : HttpStatus.UNAUTHORIZED;
@@ -70,7 +71,7 @@ public class GlobalExceptionHandler {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        LOG.warn("Validation failed: {}", sanitize(message));
+        LOG.warn("Validation failed: {}", LogSanitizer.sanitize(message));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.failure(FepErrorCode.PARAM_4002, message));
     }
@@ -86,7 +87,7 @@ public class GlobalExceptionHandler {
         String message = ex.getConstraintViolations().stream()
                 .map(v -> v.getPropertyPath() + ": " + v.getMessage())
                 .collect(Collectors.joining("; "));
-        LOG.warn("Constraint violation: {}", sanitize(message));
+        LOG.warn("Constraint violation: {}", LogSanitizer.sanitize(message));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.failure(FepErrorCode.PARAM_4002, message));
     }
@@ -99,7 +100,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResult<Void>> handleIllegalArgument(IllegalArgumentException ex) {
-        LOG.warn("Illegal argument: {}", sanitize(ex.getMessage()));
+        LOG.warn("Illegal argument: {}", LogSanitizer.sanitize(ex.getMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.failure(FepErrorCode.PARAM_4002, ex.getMessage()));
     }
@@ -117,16 +118,4 @@ public class GlobalExceptionHandler {
                 .body(ApiResult.failure(FepErrorCode.SYS_0500, "系统繁忙，请稍后再试"));
     }
 
-    /**
-     * 清除字符串中的 CR/LF 字符，防止 CRLF 日志注入。
-     *
-     * @param input 原始字符串
-     * @return 清理后的字符串
-     */
-    private static String sanitize(String input) {
-        if (input == null) {
-            return "";
-        }
-        return input.replace("\r", "\\r").replace("\n", "\\n");
-    }
 }

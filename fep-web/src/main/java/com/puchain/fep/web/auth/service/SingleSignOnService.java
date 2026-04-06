@@ -1,5 +1,6 @@
 package com.puchain.fep.web.auth.service;
 
+import com.puchain.fep.web.auth.RedisKeyConstants;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +20,6 @@ import java.time.Duration;
  */
 @Service
 public class SingleSignOnService {
-
-    private static final String SESSION_KEY = "fep:session:";
 
     private final StringRedisTemplate redisTemplate;
 
@@ -42,7 +41,7 @@ public class SingleSignOnService {
      */
     public void registerSession(final String userId, final String jti, final long ttlSeconds) {
         redisTemplate.opsForValue().set(
-                SESSION_KEY + userId,
+                RedisKeyConstants.SSO_SESSION_PREFIX + userId,
                 jti,
                 Duration.ofSeconds(ttlSeconds));
     }
@@ -53,6 +52,6 @@ public class SingleSignOnService {
      * @param userId 用户 ID
      */
     public void clearSession(final String userId) {
-        redisTemplate.delete(SESSION_KEY + userId);
+        redisTemplate.delete(RedisKeyConstants.SSO_SESSION_PREFIX + userId);
     }
 }

@@ -1,6 +1,7 @@
 package com.puchain.fep.web.sysmgmt.role.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.sysmgmt.rel.domain.SysRolePermission;
@@ -25,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 角色管理服务。
@@ -75,7 +75,7 @@ public class SysRoleService {
         }
 
         SysRole role = new SysRole();
-        role.setRoleId(UUID.randomUUID().toString().replace("-", ""));
+        role.setRoleId(IdGenerator.uuid32());
         role.setRoleCode(request.getRoleCode());
         role.setRoleName(request.getRoleName());
         role.setRoleType(request.getRoleType());

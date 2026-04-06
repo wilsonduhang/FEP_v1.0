@@ -29,6 +29,7 @@
             <Class name="com.puchain.fep.web.sysmgmt.menu.controller.SysMenuController"/>
             <Class name="com.puchain.fep.web.sysmgmt.user.service.SysUserService"/>
             <Class name="com.puchain.fep.web.sysmgmt.user.controller.SysUserController"/>
+            <Class name="com.puchain.fep.web.sysmgmt.role.service.RoleQueryHelper"/>
         </Or>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
@@ -69,6 +70,16 @@
             <Class name="com.puchain.fep.web.sysmgmt.role.service.SysRoleService"/>
             <Class name="com.puchain.fep.web.sysmgmt.role.controller.SysRoleController"/>
             <Class name="com.puchain.fep.web.sysmgmt.role.domain.SysRole"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- AuthService/JwtAuthFilter/LoginAttemptService: 已通过 LogSanitizer.sanitize() 清理，SpotBugs 无法跨方法跟踪 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.auth.service.AuthService"/>
+            <Class name="com.puchain.fep.web.auth.jwt.JwtAuthFilter"/>
+            <Class name="com.puchain.fep.web.auth.service.LoginAttemptService"/>
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>

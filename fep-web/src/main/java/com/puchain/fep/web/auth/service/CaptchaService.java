@@ -1,5 +1,7 @@
 package com.puchain.fep.web.auth.service;
 
+import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.web.auth.RedisKeyConstants;
 import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.wf.captcha.SpecCaptcha;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +10,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.UUID;
 
 /**
  * 图形验证码服务。
@@ -22,7 +23,6 @@ import java.util.UUID;
 @ConditionalOnBean(StringRedisTemplate.class)
 public class CaptchaService {
 
-    private static final String KEY_PREFIX = "fep:captcha:";
     private static final Duration TTL = Duration.ofMinutes(5);
     private static final int CAPTCHA_WIDTH = 130;
     private static final int CAPTCHA_HEIGHT = 48;
@@ -49,8 +49,8 @@ public class CaptchaService {
         SpecCaptcha captcha = new SpecCaptcha(CAPTCHA_WIDTH, CAPTCHA_HEIGHT, CAPTCHA_LENGTH);
         captcha.setCharType(SpecCaptcha.TYPE_DEFAULT); // 字母数字混合
         String code = captcha.text().toLowerCase(java.util.Locale.ROOT);
-        String captchaId = UUID.randomUUID().toString().replace("-", "");
-        redisTemplate.opsForValue().set(KEY_PREFIX + captchaId, code, TTL);
+        String captchaId = IdGenerator.uuid32();
+        redisTemplate.opsForValue().set(RedisKeyConstants.CAPTCHA_PREFIX + captchaId, code, TTL);
         return new CaptchaResponse(
                 captchaId, "data:image/png;base64," + captcha.toBase64(), TTL.getSeconds());
     }
@@ -66,7 +66,7 @@ public class CaptchaService {
         if (captchaId == null || userInput == null) {
             return false;
         }
-        String key = KEY_PREFIX + captchaId;
+        String key = RedisKeyConstants.CAPTCHA_PREFIX + captchaId;
         String stored = redisTemplate.opsForValue().get(key);
         if (stored == null) {
             return false;
