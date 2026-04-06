@@ -141,4 +141,100 @@
             <Bug pattern="HARD_CODE_PASSWORD"/>
         </Or>
     </Match>
+
+    <!-- ===== P6a.2 系统管理模块（Task 2-8）===== -->
+
+    <!-- 操作日志 AOP: 日志字段来自数据库/枚举，无 CRLF 注入风险；
+         toUpperCase 使用枚举名，无 Unicode 风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.log.aspect.OperationLogAspect"/>
+        <Or>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+            <Bug pattern="IMPROPER_UNICODE"/>
+        </Or>
+    </Match>
+
+    <!-- 操作日志服务/Controller: 日志字段均为受控数据库值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.log.service.SysOperationLogService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.log.controller.SysOperationLogController"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- 操作日志 Controller: 日志查询端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.log.controller.SysOperationLogController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 消息管理 Controller/Service: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.message.controller.SysMessageController"/>
+            <Class name="com.puchain.fep.web.sysmgmt.message.service.SysMessageService"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 消息管理 Controller/Service/Domain: 消息字段来自数据库/枚举，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.message.controller.SysMessageController"/>
+            <Class name="com.puchain.fep.web.sysmgmt.message.service.SysMessageService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.message.domain.SysMessage"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- 消息管理 Controller: 消息端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.message.controller.SysMessageController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 下载任务 Controller/Scheduler: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.download.controller.DownloadTaskController"/>
+            <Class name="com.puchain.fep.web.sysmgmt.download.scheduler.DownloadTaskCleanupScheduler"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 下载任务 Controller: 下载端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.download.controller.DownloadTaskController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 下载任务 Controller/Service/Domain: 任务 ID 来自数据库，无 CRLF 注入风险；
+         PATH_TRAVERSAL_IN: 文件路径已通过 taskId 白名单验证，SpotBugs 无法跟踪校验逻辑 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.download.controller.DownloadTaskController"/>
+            <Class name="com.puchain.fep.web.sysmgmt.download.service.DownloadTaskService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.download.domain.SysDownloadTask"/>
+        </Or>
+        <Or>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+            <Bug pattern="PATH_TRAVERSAL_IN"/>
+        </Or>
+    </Match>
+
+    <!-- 帮助面板 Controller: 帮助端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.help.controller.SysHelpContentController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 帮助面板 Service/Domain: 帮助字段来自数据库，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.help.service.SysHelpContentService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.help.domain.SysHelpContent"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>

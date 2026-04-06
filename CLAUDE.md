@@ -77,6 +77,13 @@ com.puchain.fep/
 | 链路追踪 | SkyWalking |
 | 监控 | Prometheus + Grafana |
 
+## AI Agent 启动自检（每次新会话必做）
+
+1. 读取 MEMORY.md 中标记"**待执行**"的记忆文件
+2. 如有待执行任务，**立即向用户汇报清单**并请求确认执行
+3. 用户确认后执行，完成后将记忆标记从"待执行"改为"已完成"
+4. **在待执行任务完成之前，不得启动新 Plan 编写或 Task 执行**
+
 ## AI Agent 规范
 
 - **唯一 AI Agent: Claude Code** — 不使用 Codex、DeepSeek 或任何其他 AI

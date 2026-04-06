@@ -5,6 +5,8 @@ import com.puchain.fep.web.sysmgmt.menu.domain.SysMenu;
 import com.puchain.fep.web.sysmgmt.menu.dto.MenuCreateRequest;
 import com.puchain.fep.web.sysmgmt.menu.dto.MenuTreeNode;
 import com.puchain.fep.web.sysmgmt.menu.service.SysMenuService;
+import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
+import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -54,6 +56,7 @@ public class SysMenuController {
      * @return 菜单树节点列表
      */
     @GetMapping("/tree")
+    @OperationLog(module = "菜单管理", type = OperationType.QUERY, description = "查询完整菜单树")
     @Operation(summary = "获取完整菜单树", description = "管理用，返回所有状态的菜单树")
     @ApiResponse(responseCode = "200", description = "查询成功")
     public ApiResult<List<MenuTreeNode>> getFullTree() {
@@ -81,6 +84,7 @@ public class SysMenuController {
      * @return 新建菜单树节点
      */
     @PostMapping
+    @OperationLog(module = "菜单管理", type = OperationType.CREATE, description = "创建菜单")
     @Operation(summary = "创建菜单", description = "新增菜单节点，编码不可重复")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @ApiResponse(responseCode = "400", description = "参数校验失败")
@@ -97,6 +101,7 @@ public class SysMenuController {
      * @return 空响应
      */
     @DeleteMapping("/{menuId}")
+    @OperationLog(module = "菜单管理", type = OperationType.DELETE, description = "删除菜单")
     @Operation(summary = "删除菜单", description = "仅允许删除叶子节点")
     @ApiResponse(responseCode = "200", description = "删除成功")
     @ApiResponse(responseCode = "400", description = "存在子菜单不允许删除")
@@ -114,6 +119,7 @@ public class SysMenuController {
      * @return 更新后的菜单树节点
      */
     @PostMapping("/{menuId}/toggle-status")
+    @OperationLog(module = "菜单管理", type = OperationType.UPDATE, description = "切换菜单状态")
     @Operation(summary = "切换菜单状态", description = "ACTIVE 与 DISABLED 互切")
     @ApiResponse(responseCode = "200", description = "切换成功")
     @ApiResponse(responseCode = "404", description = "菜单不存在")
@@ -131,6 +137,7 @@ public class SysMenuController {
      * @return 更新后的菜单树节点
      */
     @PatchMapping("/{menuId}/sort-order")
+    @OperationLog(module = "菜单管理", type = OperationType.UPDATE, description = "更新菜单排序")
     @Operation(summary = "更新菜单排序", description = "修改菜单的排序序号")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @ApiResponse(responseCode = "404", description = "菜单不存在")

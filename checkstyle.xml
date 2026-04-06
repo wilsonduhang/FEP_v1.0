@@ -10,6 +10,9 @@
     <property name="fileExtensions" value="java, properties, xml"/>
 
     <!-- 文件级检查 -->
+    <module name="FileLength">
+        <property name="max" value="400"/>
+    </module>
     <module name="FileTabCharacter">
         <property name="eachLine" value="true"/>
     </module>

@@ -36,3 +36,8 @@ management:
 logging:
   level:
     com.puchain.fep: INFO
+
+# P6a.2 下载任务配置
+fep:
+  download:
+    storage-path: ./fep-downloads
