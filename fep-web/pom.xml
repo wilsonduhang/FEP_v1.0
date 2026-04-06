@@ -86,6 +86,12 @@
             <version>2.6.0</version>
         </dependency>
 
+        <!-- Spring Security Crypto (BCryptPasswordEncoder) -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
         <!-- Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
