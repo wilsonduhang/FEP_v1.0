@@ -1,7 +1,9 @@
 package com.puchain.fep.web;
 
+import com.puchain.fep.web.auth.jwt.JwtProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
@@ -14,6 +16,7 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication
 @ComponentScan(basePackages = "com.puchain.fep")
+@EnableConfigurationProperties({JwtProperties.class})
 public class FepApplication {
 
     /**

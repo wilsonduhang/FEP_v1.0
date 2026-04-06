@@ -32,6 +32,13 @@ spring:
 #       port: 6379
 #       database: 0
 
+fep:
+  jwt:
+    secret: ZGV2LWRldi1kZXYtZGV2LWRldi1kZXYtZGV2LWRldi1kZXYtZGV2LWRldi0xMg==
+    access-token-ttl-seconds: 7200
+    refresh-token-ttl-seconds: 604800
+    issuer: fep-dev
+
 logging:
   level:
     com.puchain.fep: DEBUG

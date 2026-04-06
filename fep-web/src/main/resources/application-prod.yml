@@ -24,6 +24,11 @@ spring:
 fep:
   redis:
     enabled: true
+  jwt:
+    secret: ${FEP_JWT_SECRET}
+    access-token-ttl-seconds: 7200
+    refresh-token-ttl-seconds: 604800
+    issuer: fep
 spring:
   data:
     redis:
