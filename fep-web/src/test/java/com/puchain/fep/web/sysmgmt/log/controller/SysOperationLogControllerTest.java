@@ -161,13 +161,24 @@ class SysOperationLogControllerTest {
     }
 
     /**
-     * 无过滤条件查询应返回分页日志，total >= 1，首条模块为"用户管理"。
+     * 无过滤条件查询应返回分页日志，total >= 1。
+     * 按模块"用户管理"过滤时应至少命中测试插入的那条日志。
      *
      * @throws Exception MockMvc 请求异常
      */
     @Test
     void search_shouldReturnPagedLogs() throws Exception {
+        // 无过滤：total >= 1（含测试日志及 setUp 登录产生的审计日志）
         mockMvc.perform(get("/api/v1/sys/logs")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.data.total").value(
+                        org.hamcrest.Matchers.greaterThanOrEqualTo(1)));
+
+        // 按模块过滤，确认测试日志（模块="用户管理"）可被检索到
+        mockMvc.perform(get("/api/v1/sys/logs")
+                        .param("module", "用户管理")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
