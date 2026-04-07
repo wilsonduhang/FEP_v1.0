@@ -390,4 +390,27 @@
         <Class name="com.puchain.fep.web.sysmgmt.config.alert.service.SysAlertRuleService"/>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6a.3 系统配置管理（Task 8）企业主体管理 ===== -->
+
+    <!-- 企业主体 Controller: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.enterprise.controller.SysEnterpriseController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 企业主体 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.enterprise.controller.SysEnterpriseController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 企业主体 Service/Domain: enterpriseName/usci 来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.config.enterprise.service.SysEnterpriseService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.enterprise.domain.SysEnterprise"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
