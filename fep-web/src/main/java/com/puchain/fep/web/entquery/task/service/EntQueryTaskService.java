@@ -4,6 +4,8 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.web.entquery.result.dto.QueryResultResponse;
+import com.puchain.fep.web.entquery.result.repository.EntQueryResultRepository;
 import com.puchain.fep.web.entquery.task.domain.EntQueryTask;
 import com.puchain.fep.web.entquery.task.domain.QueryTaskStatus;
 import com.puchain.fep.web.entquery.task.domain.QueryType;
@@ -38,17 +40,21 @@ public class EntQueryTaskService {
     private static final Logger log = LoggerFactory.getLogger(EntQueryTaskService.class);
 
     private final EntQueryTaskRepository taskRepository;
+    private final EntQueryResultRepository resultRepository;
     private final SysEnterpriseRepository enterpriseRepository;
 
     /**
      * 构造 EntQueryTaskService。
      *
      * @param taskRepository       查询任务 Repository
+     * @param resultRepository     查询结果 Repository
      * @param enterpriseRepository 企业主体 Repository
      */
     public EntQueryTaskService(final EntQueryTaskRepository taskRepository,
+                               final EntQueryResultRepository resultRepository,
                                final SysEnterpriseRepository enterpriseRepository) {
         this.taskRepository = taskRepository;
+        this.resultRepository = resultRepository;
         this.enterpriseRepository = enterpriseRepository;
     }
 
@@ -176,5 +182,40 @@ public class EntQueryTaskService {
                 .toList();
 
         return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+    }
+
+    /**
+     * 查询指定任务的所有结果列表。
+     *
+     * @param taskId 查询任务 ID
+     * @return 查询结果列表（可能为空）
+     * @throws FepBusinessException 任务不存在（BIZ_5001）
+     */
+    public List<QueryResultResponse> listResults(final String taskId) {
+        if (!taskRepository.existsById(taskId)) {
+            throw new FepBusinessException(FepErrorCode.BIZ_5001,
+                    "查询任务不存在: " + taskId);
+        }
+        return resultRepository.findByTaskId(taskId).stream()
+                .map(QueryResultResponse::from).toList();
+    }
+
+    /**
+     * 查询指定任务下某条结果的详情。
+     *
+     * @param taskId   查询任务 ID
+     * @param resultId 查询结果 ID
+     * @return 查询结果详情
+     * @throws FepBusinessException 任务不存在（BIZ_5001）或结果不存在（BIZ_5001）
+     */
+    public QueryResultResponse getResult(final String taskId, final String resultId) {
+        if (!taskRepository.existsById(taskId)) {
+            throw new FepBusinessException(FepErrorCode.BIZ_5001,
+                    "查询任务不存在: " + taskId);
+        }
+        return resultRepository.findById(resultId)
+                .map(QueryResultResponse::from)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
+                        "查询结果不存在: " + resultId));
     }
 }
