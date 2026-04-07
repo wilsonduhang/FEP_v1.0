@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -102,6 +103,20 @@ public class GlobalExceptionHandler {
         LOG.warn("Constraint violation: {}", LogSanitizer.sanitize(message));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.failure(FepErrorCode.PARAM_4002, message));
+    }
+
+    /**
+     * 处理 HTTP 消息不可读异常（如枚举值非法、JSON 格式错误）。
+     *
+     * @param ex HTTP 消息不可读异常
+     * @return HTTP 400 响应
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResult<Void>> handleMessageNotReadable(
+            HttpMessageNotReadableException ex) {
+        LOG.warn("HTTP message not readable: {}", LogSanitizer.sanitize(ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResult.failure(FepErrorCode.PARAM_4002, "请求体格式错误或包含非法参数值"));
     }
 
     /**
