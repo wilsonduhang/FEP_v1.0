@@ -4,10 +4,8 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepAuthException;
 import com.puchain.fep.common.security.PasswordHasher;
 import com.puchain.fep.common.util.LogSanitizer;
-import com.puchain.fep.web.auth.RedisKeyConstants;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.domain.LoginResponse;
-import com.puchain.fep.web.auth.jwt.JwtProperties;
 import com.puchain.fep.web.auth.jwt.JwtTokenProvider;
 import com.puchain.fep.web.sysmgmt.role.service.RoleQueryHelper;
 import com.puchain.fep.web.sysmgmt.user.domain.SysUser;
@@ -17,7 +15,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,8 +43,6 @@ public class AuthService {
     private final LoginAttemptService loginAttemptService;
     private final SingleSignOnService singleSignOnService;
     private final JwtTokenProvider tokenProvider;
-    private final StringRedisTemplate redisTemplate;
-    private final long accessTokenTtlSeconds;
 
     /**
      * 构造 AuthService。
@@ -59,8 +54,6 @@ public class AuthService {
      * @param loginAttemptService 登录尝试服务
      * @param singleSignOnService SSO 服务
      * @param tokenProvider       JWT 签发/解析
-     * @param redisTemplate       Redis 模板
-     * @param jwtProperties       JWT 配置属性
      */
     public AuthService(final SysUserRepository userRepository,
                        final RoleQueryHelper roleQueryHelper,
@@ -68,9 +61,7 @@ public class AuthService {
                        final CaptchaService captchaService,
                        final LoginAttemptService loginAttemptService,
                        final SingleSignOnService singleSignOnService,
-                       final JwtTokenProvider tokenProvider,
-                       final StringRedisTemplate redisTemplate,
-                       final JwtProperties jwtProperties) {
+                       final JwtTokenProvider tokenProvider) {
         this.userRepository = userRepository;
         this.roleQueryHelper = roleQueryHelper;
         this.passwordHasher = passwordHasher;
@@ -78,8 +69,6 @@ public class AuthService {
         this.loginAttemptService = loginAttemptService;
         this.singleSignOnService = singleSignOnService;
         this.tokenProvider = tokenProvider;
-        this.redisTemplate = redisTemplate;
-        this.accessTokenTtlSeconds = jwtProperties.getAccessTokenTtlSeconds();
     }
 
     /**
@@ -152,7 +141,7 @@ public class AuthService {
 
         // 8. 记录当前会话 jti（覆盖旧 jti，实现单点踢出 PRD §5.1.5）
         String jti = tokenProvider.extractJti(accessToken);
-        singleSignOnService.registerSession(user.getUserId(), jti, accessTokenTtlSeconds);
+        singleSignOnService.registerSession(user.getUserId(), jti, tokenProvider.getAccessTokenTtlSeconds());
 
         boolean mustChangePassword = user.getLastPasswordChangeTime() == null;
 
@@ -174,10 +163,7 @@ public class AuthService {
             String jti = claims.getId();
             String userId = claims.getSubject();
             long ttlMs = claims.getExpiration().getTime() - System.currentTimeMillis();
-            if (ttlMs > 0) {
-                redisTemplate.opsForValue().set(RedisKeyConstants.JWT_BLACKLIST_PREFIX + jti, "1",
-                        Duration.ofMillis(ttlMs));
-            }
+            singleSignOnService.blacklistToken(jti, ttlMs);
             singleSignOnService.clearSession(userId);
             log.info("User logout: userId={}", LogSanitizer.sanitize(userId));
         } catch (JwtException ex) {
@@ -209,7 +195,7 @@ public class AuthService {
         String newAccess = tokenProvider.createAccessToken(
                 user.getUserId(), user.getUserAccount(), roleCodes);
         String newJti = tokenProvider.extractJti(newAccess);
-        singleSignOnService.registerSession(userId, newJti, accessTokenTtlSeconds);
+        singleSignOnService.registerSession(userId, newJti, tokenProvider.getAccessTokenTtlSeconds());
         return new LoginResponse(newAccess, refreshToken,
                 user.getUserId(), user.getUserAccount(), user.getUserName(),
                 roleCodes, false);
