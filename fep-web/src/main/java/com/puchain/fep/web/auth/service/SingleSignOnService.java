@@ -54,4 +54,18 @@ public class SingleSignOnService {
     public void clearSession(final String userId) {
         redisTemplate.delete(RedisKeyConstants.SSO_SESSION_PREFIX + userId);
     }
+
+    /**
+     * 将 JWT 加入黑名单（登出时调用，使 token 立即失效）。
+     *
+     * @param jti   JWT ID
+     * @param ttlMs 剩余有效期（毫秒），黑名单条目与 token 同步过期
+     */
+    public void blacklistToken(final String jti, final long ttlMs) {
+        if (ttlMs > 0) {
+            redisTemplate.opsForValue().set(
+                    RedisKeyConstants.JWT_BLACKLIST_PREFIX + jti, "1",
+                    Duration.ofMillis(ttlMs));
+        }
+    }
 }
