@@ -239,6 +239,12 @@
                         <!-- 排除下载 Controller 的文件流端点：字节流响应无法在 MockMvc 中可靠断言，
                              downloadFile 分支依赖真实文件系统，集成测试在 Task 18 覆盖 -->
                         <exclude>**/download/controller/DownloadTaskController.class</exclude>
+                        <!-- P6c 查询任务: Entity/DTO getter/setter 纯 POJO，无业务逻辑 -->
+                        <exclude>**/entquery/task/domain/EntQueryTask.class</exclude>
+                        <exclude>**/entquery/task/domain/QueryType.class</exclude>
+                        <exclude>**/entquery/task/domain/QueryTaskStatus.class</exclude>
+                        <exclude>**/entquery/task/dto/QueryTaskCreateRequest.class</exclude>
+                        <exclude>**/entquery/task/dto/QueryTaskResponse.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

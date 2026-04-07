@@ -413,4 +413,28 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6c 企业信息查询管理（Task 2）查询任务 ===== -->
+
+    <!-- 查询任务 Controller: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.entquery.task.controller.EntQueryTaskController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 查询任务 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.entquery.task.controller.EntQueryTaskController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 查询任务 Service/Domain/Controller: taskId/usci/queryType 来自数据库受控值或枚举，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.entquery.task.service.EntQueryTaskService"/>
+            <Class name="com.puchain.fep.web.entquery.task.domain.EntQueryTask"/>
+            <Class name="com.puchain.fep.web.entquery.task.controller.EntQueryTaskController"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
