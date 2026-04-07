@@ -286,4 +286,71 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6a.3 系统配置管理（Task 4）输出类型 + 数据类型 ===== -->
+
+    <!-- 输出类型 Controller: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.outputtype.controller.SysOutputTypeController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 输出类型 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.outputtype.controller.SysOutputTypeController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 输出类型 Service/Domain: 名称/编码来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.config.outputtype.service.SysOutputTypeService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.outputtype.domain.SysOutputType"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- 数据类型配置 Controller: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.datatypeconfig.controller.SysDataTypeConfigController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 数据类型配置 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.datatypeconfig.controller.SysDataTypeConfigController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 数据类型配置 Service/Domain: 名称/编码来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.config.datatypeconfig.service.SysDataTypeConfigService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.datatypeconfig.domain.SysDataTypeConfig"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- ===== P6a.3 系统配置管理（Task 5）数据接收方管理 ===== -->
+
+    <!-- 数据接收方 Controller: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.receiver.controller.SysDataReceiverController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 数据接收方 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.receiver.controller.SysDataReceiverController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 数据接收方 Service/Domain: 接收方名称/地址来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.config.receiver.service.SysDataReceiverService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.receiver.domain.SysDataReceiver"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
