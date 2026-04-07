@@ -4,10 +4,19 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.web.sysmgmt.config.businesstype.repository.SysBusinessTypeRepository;
 import com.puchain.fep.web.sysmgmt.config.enterprise.domain.AuditStatus;
 import com.puchain.fep.web.sysmgmt.config.enterprise.domain.SysEnterprise;
+import com.puchain.fep.web.sysmgmt.config.enterprise.domain.SysEnterpriseBiz;
+import com.puchain.fep.web.sysmgmt.config.enterprise.domain.SysEnterpriseQueryConfig;
+import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseBizInfoRequest;
+import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseBizInfoResponse;
 import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseCreateRequest;
+import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseQueryConfigRequest;
+import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseQueryConfigResponse;
 import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseResponse;
+import com.puchain.fep.web.sysmgmt.config.enterprise.repository.SysEnterpriseBizRepository;
+import com.puchain.fep.web.sysmgmt.config.enterprise.repository.SysEnterpriseQueryConfigRepository;
 import com.puchain.fep.web.sysmgmt.config.enterprise.repository.SysEnterpriseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +27,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -35,14 +45,26 @@ public class SysEnterpriseService {
     private static final Logger log = LoggerFactory.getLogger(SysEnterpriseService.class);
 
     private final SysEnterpriseRepository enterpriseRepository;
+    private final SysEnterpriseBizRepository bizRepository;
+    private final SysEnterpriseQueryConfigRepository queryConfigRepository;
+    private final SysBusinessTypeRepository businessTypeRepository;
 
     /**
      * 构造 SysEnterpriseService。
      *
-     * @param enterpriseRepository 企业主体 Repository
+     * @param enterpriseRepository  企业主体 Repository
+     * @param bizRepository         企业业务信息关联 Repository
+     * @param queryConfigRepository 企业精准查询配置 Repository
+     * @param businessTypeRepository 业务类型 Repository
      */
-    public SysEnterpriseService(final SysEnterpriseRepository enterpriseRepository) {
+    public SysEnterpriseService(final SysEnterpriseRepository enterpriseRepository,
+                                final SysEnterpriseBizRepository bizRepository,
+                                final SysEnterpriseQueryConfigRepository queryConfigRepository,
+                                final SysBusinessTypeRepository businessTypeRepository) {
         this.enterpriseRepository = enterpriseRepository;
+        this.bizRepository = bizRepository;
+        this.queryConfigRepository = queryConfigRepository;
+        this.businessTypeRepository = businessTypeRepository;
     }
 
     /**
@@ -157,5 +179,125 @@ public class SysEnterpriseService {
 
         enterpriseRepository.delete(entity);
         log.info("Enterprise deleted: id={}, name={}", entity.getEnterpriseId(), entity.getEnterpriseName());
+    }
+
+    /**
+     * 查询企业关联的业务信息列表。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @return 业务信息关联列表
+     * @throws FepBusinessException 企业主体不存在（BIZ_5001）
+     */
+    public List<EnterpriseBizInfoResponse> listBizInfo(final String enterpriseId) {
+        enterpriseRepository.findById(enterpriseId)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
+                        "企业主体不存在: " + enterpriseId));
+        return bizRepository.findByEnterpriseId(enterpriseId).stream()
+                .map(EnterpriseBizInfoResponse::from)
+                .toList();
+    }
+
+    /**
+     * 添加企业业务信息关联。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @param request      关联创建请求
+     * @return 创建后的业务信息关联响应
+     * @throws FepBusinessException 企业主体不存在（BIZ_5001）或业务类型不存在（BIZ_5004）
+     */
+    @Transactional
+    public EnterpriseBizInfoResponse addBizInfo(final String enterpriseId,
+                                                final EnterpriseBizInfoRequest request) {
+        enterpriseRepository.findById(enterpriseId)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
+                        "企业主体不存在: " + enterpriseId));
+
+        if (!businessTypeRepository.existsById(request.getBusinessTypeId())) {
+            throw new FepBusinessException(FepErrorCode.BIZ_5004,
+                    "业务类型不存在: " + request.getBusinessTypeId());
+        }
+
+        SysEnterpriseBiz entity = new SysEnterpriseBiz();
+        entity.setId(IdGenerator.uuid32());
+        entity.setEnterpriseId(enterpriseId);
+        entity.setBusinessTypeId(request.getBusinessTypeId());
+        entity.setConfigJson(request.getConfigJson());
+        entity.setStatus("ACTIVE");
+        entity.setCreateTime(LocalDateTime.now());
+
+        SysEnterpriseBiz saved = bizRepository.save(entity);
+        log.info("EnterpriseBiz added: enterpriseId={}, businessTypeId={}", enterpriseId,
+                request.getBusinessTypeId());
+        return EnterpriseBizInfoResponse.from(saved);
+    }
+
+    /**
+     * 删除企业业务信息关联。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @param bizInfoId    业务信息关联 ID
+     * @throws FepBusinessException 记录不存在或不属于该企业（BIZ_5001）
+     */
+    @Transactional
+    public void removeBizInfo(final String enterpriseId, final String bizInfoId) {
+        SysEnterpriseBiz entity = bizRepository.findById(bizInfoId)
+                .filter(e -> enterpriseId.equals(e.getEnterpriseId()))
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
+                        "业务信息关联不存在: " + bizInfoId));
+
+        bizRepository.delete(entity);
+        log.info("EnterpriseBiz removed: id={}, enterpriseId={}", bizInfoId, enterpriseId);
+    }
+
+    /**
+     * 获取企业精准查询配置（未配置时返回 null）。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @return 查询配置响应（可为 null）
+     * @throws FepBusinessException 企业主体不存在（BIZ_5001）
+     */
+    public EnterpriseQueryConfigResponse getQueryConfig(final String enterpriseId) {
+        enterpriseRepository.findById(enterpriseId)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
+                        "企业主体不存在: " + enterpriseId));
+        return queryConfigRepository.findByEnterpriseId(enterpriseId)
+                .map(EnterpriseQueryConfigResponse::from)
+                .orElse(null);
+    }
+
+    /**
+     * 更新（upsert）企业精准查询配置。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @param request      查询配置更新请求
+     * @return 更新后的查询配置响应
+     * @throws FepBusinessException 企业主体不存在（BIZ_5001）
+     */
+    @Transactional
+    public EnterpriseQueryConfigResponse updateQueryConfig(final String enterpriseId,
+                                                          final EnterpriseQueryConfigRequest request) {
+        enterpriseRepository.findById(enterpriseId)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
+                        "企业主体不存在: " + enterpriseId));
+
+        LocalDateTime now = LocalDateTime.now();
+        SysEnterpriseQueryConfig entity = queryConfigRepository.findByEnterpriseId(enterpriseId)
+                .orElseGet(() -> {
+                    SysEnterpriseQueryConfig newCfg = new SysEnterpriseQueryConfig();
+                    newCfg.setId(IdGenerator.uuid32());
+                    newCfg.setEnterpriseId(enterpriseId);
+                    newCfg.setStatus("ACTIVE");
+                    newCfg.setCreateTime(now);
+                    return newCfg;
+                });
+
+        entity.setQueryType(request.getQueryType());
+        entity.setQueryParams(request.getQueryParams());
+        entity.setUpdateTime(now);
+
+        SysEnterpriseQueryConfig saved = queryConfigRepository.save(entity);
+        log.info("EnterpriseQueryConfig upserted: enterpriseId={}, queryType={}", enterpriseId,
+                request.getQueryType());
+        return EnterpriseQueryConfigResponse.from(saved);
     }
 }

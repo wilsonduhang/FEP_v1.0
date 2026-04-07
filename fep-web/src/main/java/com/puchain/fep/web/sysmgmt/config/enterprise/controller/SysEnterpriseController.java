@@ -2,7 +2,11 @@ package com.puchain.fep.web.sysmgmt.config.enterprise.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseBizInfoRequest;
+import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseBizInfoResponse;
 import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseCreateRequest;
+import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseQueryConfigRequest;
+import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseQueryConfigResponse;
 import com.puchain.fep.web.sysmgmt.config.enterprise.dto.EnterpriseResponse;
 import com.puchain.fep.web.sysmgmt.config.enterprise.service.SysEnterpriseService;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
@@ -12,6 +16,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -134,5 +139,92 @@ public class SysEnterpriseController {
             @Parameter(description = "企业主体 ID") @PathVariable final String enterpriseId) {
         enterpriseService.delete(enterpriseId);
         return ApiResult.success();
+    }
+
+    /**
+     * 查询企业业务信息关联列表。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @return 业务信息关联列表
+     */
+    @GetMapping("/{enterpriseId}/business-info")
+    @OperationLog(module = "企业主体", type = OperationType.QUERY, description = "查询业务信息列表")
+    @Operation(summary = "查询企业业务信息列表", description = "获取指定企业的所有业务信息关联")
+    @ApiResponse(responseCode = "200", description = "查询成功")
+    @ApiResponse(responseCode = "404", description = "企业主体不存在")
+    public ApiResult<List<EnterpriseBizInfoResponse>> listBizInfo(
+            @Parameter(description = "企业主体 ID") @PathVariable final String enterpriseId) {
+        return ApiResult.success(enterpriseService.listBizInfo(enterpriseId));
+    }
+
+    /**
+     * 添加企业业务信息关联。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @param request      关联创建请求
+     * @return 新建的业务信息关联
+     */
+    @PostMapping("/{enterpriseId}/business-info")
+    @OperationLog(module = "企业主体", type = OperationType.CREATE, description = "关联业务信息")
+    @Operation(summary = "添加企业业务信息关联", description = "为企业关联一个业务类型")
+    @ApiResponse(responseCode = "200", description = "关联成功")
+    @ApiResponse(responseCode = "404", description = "企业主体不存在")
+    public ApiResult<EnterpriseBizInfoResponse> addBizInfo(
+            @Parameter(description = "企业主体 ID") @PathVariable final String enterpriseId,
+            @Valid @RequestBody final EnterpriseBizInfoRequest request) {
+        return ApiResult.success(enterpriseService.addBizInfo(enterpriseId, request));
+    }
+
+    /**
+     * 删除企业业务信息关联。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @param bizInfoId    业务信息关联 ID
+     * @return 空响应
+     */
+    @DeleteMapping("/{enterpriseId}/business-info/{bizInfoId}")
+    @OperationLog(module = "企业主体", type = OperationType.DELETE, description = "删除业务关联")
+    @Operation(summary = "删除企业业务信息关联", description = "删除指定业务信息关联记录")
+    @ApiResponse(responseCode = "200", description = "删除成功")
+    @ApiResponse(responseCode = "404", description = "关联记录不存在")
+    public ApiResult<Void> removeBizInfo(
+            @Parameter(description = "企业主体 ID") @PathVariable final String enterpriseId,
+            @Parameter(description = "业务信息关联 ID") @PathVariable final String bizInfoId) {
+        enterpriseService.removeBizInfo(enterpriseId, bizInfoId);
+        return ApiResult.success();
+    }
+
+    /**
+     * 获取企业精准查询配置。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @return 查询配置（未配置时 data 为 null）
+     */
+    @GetMapping("/{enterpriseId}/query-config")
+    @OperationLog(module = "企业主体", type = OperationType.QUERY, description = "查询精准查询配置")
+    @Operation(summary = "获取企业精准查询配置", description = "未配置时 data 字段为 null")
+    @ApiResponse(responseCode = "200", description = "查询成功")
+    @ApiResponse(responseCode = "404", description = "企业主体不存在")
+    public ApiResult<EnterpriseQueryConfigResponse> getQueryConfig(
+            @Parameter(description = "企业主体 ID") @PathVariable final String enterpriseId) {
+        return ApiResult.success(enterpriseService.getQueryConfig(enterpriseId));
+    }
+
+    /**
+     * 更新（upsert）企业精准查询配置。
+     *
+     * @param enterpriseId 企业主体 ID
+     * @param request      查询配置更新请求
+     * @return 更新后的查询配置
+     */
+    @PutMapping("/{enterpriseId}/query-config")
+    @OperationLog(module = "企业主体", type = OperationType.UPDATE, description = "更新精准查询配置")
+    @Operation(summary = "更新企业精准查询配置", description = "不存在则创建，存在则覆盖")
+    @ApiResponse(responseCode = "200", description = "更新成功")
+    @ApiResponse(responseCode = "404", description = "企业主体不存在")
+    public ApiResult<EnterpriseQueryConfigResponse> updateQueryConfig(
+            @Parameter(description = "企业主体 ID") @PathVariable final String enterpriseId,
+            @Valid @RequestBody final EnterpriseQueryConfigRequest request) {
+        return ApiResult.success(enterpriseService.updateQueryConfig(enterpriseId, request));
     }
 }
