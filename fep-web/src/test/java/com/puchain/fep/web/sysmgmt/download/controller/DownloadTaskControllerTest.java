@@ -218,10 +218,10 @@ class DownloadTaskControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"));
 
-        // 再次查询应返回任务不存在错误（HTTP 400 + BIZ_5001）
+        // 再次查询应返回任务不存在错误（HTTP 404 + BIZ_5001）
         mockMvc.perform(get("/api/v1/sys/downloads/" + taskId)
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BIZ_5001"));
     }
 }

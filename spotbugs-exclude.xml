@@ -237,4 +237,53 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6a.3 系统配置管理（Task 2-3）===== -->
+
+    <!-- 平台设置 Controller: 配置端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.platform.controller.SysConfigController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- ConfigBatchUpdateRequest/ConfigGroupResponse: 请求/响应 DTO 由 Jackson 反序列化填充，
+         可变 Map/List 是预期行为，Spring 框架管理生命周期 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.config.platform.dto.ConfigBatchUpdateRequest"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.platform.dto.ConfigGroupResponse"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- 平台设置 Service: 配置 key/value 来自数据库，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.platform.service.SysConfigService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- 业务类型 Controller: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.businesstype.controller.SysBusinessTypeController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 业务类型 Controller: 业务类型端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.businesstype.controller.SysBusinessTypeController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 业务类型 Service/Domain: 类型名称/编码来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.config.businesstype.service.SysBusinessTypeService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessType"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.businesstype.domain.BusinessTypeStatus"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>

@@ -255,9 +255,9 @@ class SysOperationLogControllerTest {
     }
 
     /**
-     * 查询不存在的 logId 应返回 HTTP 400 且响应体 code = BIZ_5001。
+     * 查询不存在的 logId 应返回 HTTP 404 且响应体 code = BIZ_5001。
      *
-     * <p>GlobalExceptionHandler 将 FepBusinessException 映射到 400 Bad Request，
+     * <p>GlobalExceptionHandler 将 BIZ_5001 FepBusinessException 映射到 404 Not Found，
      * 响应体中的 code 字段携带业务错误码 BIZ_5001。</p>
      *
      * @throws Exception MockMvc 请求异常
@@ -266,7 +266,7 @@ class SysOperationLogControllerTest {
     void findById_notFound_shouldReturn404() throws Exception {
         mockMvc.perform(get("/api/v1/sys/logs/nonexistentlogid00000000000000001")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BIZ_5001"));
     }
 
