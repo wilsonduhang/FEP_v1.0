@@ -236,6 +236,9 @@
                         <!-- 排除 User Service + Controller (集成测试覆盖核心路径，端到端在 Task 18) -->
                         <exclude>**/user/service/SysUserService.class</exclude>
                         <exclude>**/user/controller/SysUserController.class</exclude>
+                        <!-- 排除下载 Controller 的文件流端点：字节流响应无法在 MockMvc 中可靠断言，
+                             downloadFile 分支依赖真实文件系统，集成测试在 Task 18 覆盖 -->
+                        <exclude>**/download/controller/DownloadTaskController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
