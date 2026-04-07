@@ -437,4 +437,28 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6c 企业信息查询管理（Task 3）授权书管理 ===== -->
+
+    <!-- 授权书 Controller: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.entquery.auth.controller.EntAuthLetterController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 授权书 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.entquery.auth.controller.EntAuthLetterController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 授权书 Service/Domain/Controller: letterId/authorizedUsci/authType 来自数据库受控值或枚举，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.entquery.auth.service.EntAuthLetterService"/>
+            <Class name="com.puchain.fep.web.entquery.auth.domain.EntAuthLetter"/>
+            <Class name="com.puchain.fep.web.entquery.auth.controller.EntAuthLetterController"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
