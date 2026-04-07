@@ -116,4 +116,13 @@ public class JwtTokenProvider {
     public String extractJti(final String token) {
         return parse(token).getId();
     }
+
+    /**
+     * 获取 Access Token TTL 秒数。
+     *
+     * @return TTL 秒数
+     */
+    public long getAccessTokenTtlSeconds() {
+        return properties.getAccessTokenTtlSeconds();
+    }
 }
