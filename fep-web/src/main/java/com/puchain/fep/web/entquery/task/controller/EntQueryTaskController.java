@@ -2,6 +2,7 @@ package com.puchain.fep.web.entquery.task.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.web.entquery.result.dto.QueryResultResponse;
 import com.puchain.fep.web.entquery.task.dto.QueryTaskCreateRequest;
 import com.puchain.fep.web.entquery.task.dto.QueryTaskResponse;
 import com.puchain.fep.web.entquery.task.service.EntQueryTaskService;
@@ -12,6 +13,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -135,5 +138,39 @@ public class EntQueryTaskController {
             @Parameter(description = "任务 ID") @PathVariable final String taskId) {
         taskService.delete(taskId);
         return ApiResult.success();
+    }
+
+    /**
+     * 查询指定任务的结果列表。
+     *
+     * @param taskId 查询任务 ID
+     * @return 结果列表
+     */
+    @GetMapping("/{taskId}/results")
+    @OperationLog(module = "查询结果管理", type = OperationType.QUERY, description = "查询结果列表")
+    @Operation(summary = "查询结果列表", description = "查询指定任务的所有查询结果")
+    @ApiResponse(responseCode = "200", description = "查询成功")
+    @ApiResponse(responseCode = "404", description = "任务不存在")
+    public ApiResult<List<QueryResultResponse>> listResults(
+            @Parameter(description = "任务 ID") @PathVariable final String taskId) {
+        return ApiResult.success(taskService.listResults(taskId));
+    }
+
+    /**
+     * 查询指定任务下某条结果的详情。
+     *
+     * @param taskId   查询任务 ID
+     * @param resultId 查询结果 ID
+     * @return 结果详情
+     */
+    @GetMapping("/{taskId}/results/{resultId}")
+    @OperationLog(module = "查询结果管理", type = OperationType.QUERY, description = "查询结果详情")
+    @Operation(summary = "查询结果详情", description = "查询指定结果的详细信息")
+    @ApiResponse(responseCode = "200", description = "查询成功")
+    @ApiResponse(responseCode = "404", description = "任务或结果不存在")
+    public ApiResult<QueryResultResponse> getResult(
+            @Parameter(description = "任务 ID") @PathVariable final String taskId,
+            @Parameter(description = "结果 ID") @PathVariable final String resultId) {
+        return ApiResult.success(taskService.getResult(taskId, resultId));
     }
 }
