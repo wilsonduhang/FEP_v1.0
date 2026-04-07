@@ -17,13 +17,31 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
-    void businessExceptionShouldReturn400WithErrorCode() {
+    void businessExceptionBiz5002ShouldReturn409() {
         FepBusinessException ex = new FepBusinessException(FepErrorCode.BIZ_5002, "用户已存在");
         ResponseEntity<ApiResult<Void>> response = handler.handleBusiness(ex);
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("BIZ_5002", response.getBody().getCode());
         assertEquals("用户已存在", response.getBody().getMessage());
+    }
+
+    @Test
+    void businessExceptionBiz5001ShouldReturn404() {
+        FepBusinessException ex = new FepBusinessException(FepErrorCode.BIZ_5001, "资源不存在");
+        ResponseEntity<ApiResult<Void>> response = handler.handleBusiness(ex);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("BIZ_5001", response.getBody().getCode());
+    }
+
+    @Test
+    void businessExceptionOtherShouldReturn400() {
+        FepBusinessException ex = new FepBusinessException(FepErrorCode.BIZ_5003, "业务状态不允许");
+        ResponseEntity<ApiResult<Void>> response = handler.handleBusiness(ex);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("BIZ_5003", response.getBody().getCode());
     }
 
     @Test

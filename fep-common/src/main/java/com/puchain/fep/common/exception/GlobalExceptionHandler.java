@@ -32,14 +32,26 @@ public class GlobalExceptionHandler {
     /**
      * 处理业务异常。
      *
+     * <p>BIZ_5002（资源已存在）映射为 HTTP 409 Conflict；
+     * BIZ_5001（资源不存在）映射为 HTTP 404 Not Found；
+     * 其余业务异常映射为 HTTP 400 Bad Request。</p>
+     *
      * @param ex 业务异常
-     * @return HTTP 400 响应
+     * @return HTTP 响应
      */
     @ExceptionHandler(FepBusinessException.class)
     public ResponseEntity<ApiResult<Void>> handleBusiness(FepBusinessException ex) {
         LOG.warn("Business exception: code={}, message={}",
                 LogSanitizer.sanitize(ex.getErrorCode().getCode()), LogSanitizer.sanitize(ex.getMessage()));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        HttpStatus status;
+        if (ex.getErrorCode() == FepErrorCode.BIZ_5002) {
+            status = HttpStatus.CONFLICT;
+        } else if (ex.getErrorCode() == FepErrorCode.BIZ_5001) {
+            status = HttpStatus.NOT_FOUND;
+        } else {
+            status = HttpStatus.BAD_REQUEST;
+        }
+        return ResponseEntity.status(status)
                 .body(ApiResult.failure(ex.getErrorCode(), ex.getMessage()));
     }
 
