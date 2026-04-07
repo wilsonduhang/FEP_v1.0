@@ -353,4 +353,41 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6a.3 系统配置管理（Task 6）推送接口管理 ===== -->
+
+    <!-- 推送接口 Controller: Spring DI 注入的单例引用，非安全风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.pushinterface.controller.SysPushInterfaceController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 推送接口 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.pushinterface.controller.SysPushInterfaceController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 推送接口 Service/Domain: 接口名称/URL 来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.config.pushinterface.service.SysPushInterfaceService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.pushinterface.domain.SysPushInterface"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- ===== P6a.3 系统配置管理（Task 7）接口预警管理 ===== -->
+
+    <!-- 接口预警 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.alert.controller.SysAlertRuleController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 接口预警 Service: ruleId 来自数据库 PK，threshold 为 Integer 受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.alert.service.SysAlertRuleService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
