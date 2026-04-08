@@ -245,6 +245,12 @@
                         <exclude>**/entquery/task/domain/QueryTaskStatus.class</exclude>
                         <exclude>**/entquery/task/dto/QueryTaskCreateRequest.class</exclude>
                         <exclude>**/entquery/task/dto/QueryTaskResponse.class</exclude>
+                        <!-- P6e 首页待办: Entity/DTO/enum getter/setter 纯 POJO，无业务逻辑 -->
+                        <exclude>**/dashboard/todo/domain/DashboardTodo.class</exclude>
+                        <exclude>**/dashboard/todo/domain/TodoPriority.class</exclude>
+                        <exclude>**/dashboard/todo/domain/TodoStatus.class</exclude>
+                        <exclude>**/dashboard/todo/dto/TodoCreateRequest.class</exclude>
+                        <exclude>**/dashboard/todo/dto/TodoResponse.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
