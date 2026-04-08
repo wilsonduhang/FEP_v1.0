@@ -325,8 +325,8 @@ class SysDataReceiverControllerTest {
                 .at("/data/receiverId").asText();
 
         // 更新并携带 DISABLED 状态
-        com.puchain.fep.web.sysmgmt.config.receiver.domain.ReceiverStatus disabled =
-                com.puchain.fep.web.sysmgmt.config.receiver.domain.ReceiverStatus.DISABLED;
+        com.puchain.fep.common.domain.EnableDisableStatus disabled =
+                com.puchain.fep.common.domain.EnableDisableStatus.DISABLED;
         DataReceiverCreateRequest updateReq = new DataReceiverCreateRequest();
         updateReq.setReceiverName("带状态更新接收方");
         updateReq.setReceiverMethod(ReceiverMethod.INTERFACE);

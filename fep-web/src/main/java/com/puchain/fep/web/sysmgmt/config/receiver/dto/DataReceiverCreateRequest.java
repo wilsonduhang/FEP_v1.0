@@ -1,7 +1,7 @@
 package com.puchain.fep.web.sysmgmt.config.receiver.dto;
 
 import com.puchain.fep.web.sysmgmt.config.receiver.domain.ReceiverMethod;
-import com.puchain.fep.web.sysmgmt.config.receiver.domain.ReceiverStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -26,7 +26,7 @@ public class DataReceiverCreateRequest {
     @Size(max = 500, message = "接收地址最长 500 字符")
     private String receiverAddress;
 
-    private ReceiverStatus receiverStatus;
+    private EnableDisableStatus receiverStatus;
 
     /**
      * 获取接收方名称。
@@ -87,7 +87,7 @@ public class DataReceiverCreateRequest {
      *
      * @return 状态枚举（可为 null，创建时默认 ENABLED）
      */
-    public ReceiverStatus getReceiverStatus() {
+    public EnableDisableStatus getReceiverStatus() {
         return receiverStatus;
     }
 
@@ -96,7 +96,7 @@ public class DataReceiverCreateRequest {
      *
      * @param receiverStatus 状态枚举
      */
-    public void setReceiverStatus(final ReceiverStatus receiverStatus) {
+    public void setReceiverStatus(final EnableDisableStatus receiverStatus) {
         this.receiverStatus = receiverStatus;
     }
 }

@@ -1,5 +1,6 @@
 package com.puchain.fep.web.sysmgmt.config.pushinterface.domain;
 
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -58,7 +59,7 @@ public class SysPushInterface {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "interface_status", nullable = false, length = 20)
-    private InterfaceStatus interfaceStatus;
+    private EnableDisableStatus interfaceStatus;
 
     @CreatedDate
     @Column(name = "create_time", nullable = false, updatable = false)
@@ -163,7 +164,7 @@ public class SysPushInterface {
      *
      * @return 接口状态枚举
      */
-    public InterfaceStatus getInterfaceStatus() {
+    public EnableDisableStatus getInterfaceStatus() {
         return interfaceStatus;
     }
 
@@ -273,7 +274,7 @@ public class SysPushInterface {
      *
      * @param interfaceStatus 接口状态枚举
      */
-    public void setInterfaceStatus(final InterfaceStatus interfaceStatus) {
+    public void setInterfaceStatus(final EnableDisableStatus interfaceStatus) {
         this.interfaceStatus = interfaceStatus;
     }
 }

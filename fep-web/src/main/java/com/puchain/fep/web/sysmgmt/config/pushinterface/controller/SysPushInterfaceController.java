@@ -1,6 +1,7 @@
 package com.puchain.fep.web.sysmgmt.config.pushinterface.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.dto.PushInterfaceCreateRequest;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.dto.PushInterfaceResponse;
@@ -133,7 +134,8 @@ public class SysPushInterfaceController {
     @ApiResponse(responseCode = "404", description = "接口不存在")
     public ApiResult<PushInterfaceResponse> enable(
             @Parameter(description = "接口 ID") @PathVariable final String interfaceId) {
-        return ApiResult.success(pushInterfaceService.enable(interfaceId));
+        return ApiResult.success(
+                pushInterfaceService.toggleStatus(interfaceId, EnableDisableStatus.ENABLED));
     }
 
     /**
@@ -149,6 +151,7 @@ public class SysPushInterfaceController {
     @ApiResponse(responseCode = "404", description = "接口不存在")
     public ApiResult<PushInterfaceResponse> disable(
             @Parameter(description = "接口 ID") @PathVariable final String interfaceId) {
-        return ApiResult.success(pushInterfaceService.disable(interfaceId));
+        return ApiResult.success(
+                pushInterfaceService.toggleStatus(interfaceId, EnableDisableStatus.DISABLED));
     }
 }

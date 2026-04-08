@@ -1,6 +1,6 @@
 package com.puchain.fep.web.sysmgmt.config.outputtype.dto;
 
-import com.puchain.fep.web.sysmgmt.config.outputtype.domain.OutputTypeStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.outputtype.domain.SysOutputType;
 
 import java.time.LocalDateTime;
@@ -18,7 +18,7 @@ public class OutputTypeResponse {
     private String outputTypeId;
     private String typeName;
     private String typeCode;
-    private OutputTypeStatus typeStatus;
+    private EnableDisableStatus typeStatus;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -98,7 +98,7 @@ public class OutputTypeResponse {
      *
      * @return 类型状态枚举
      */
-    public OutputTypeStatus getTypeStatus() {
+    public EnableDisableStatus getTypeStatus() {
         return typeStatus;
     }
 
@@ -107,7 +107,7 @@ public class OutputTypeResponse {
      *
      * @param typeStatus 类型状态枚举
      */
-    public void setTypeStatus(final OutputTypeStatus typeStatus) {
+    public void setTypeStatus(final EnableDisableStatus typeStatus) {
         this.typeStatus = typeStatus;
     }
 

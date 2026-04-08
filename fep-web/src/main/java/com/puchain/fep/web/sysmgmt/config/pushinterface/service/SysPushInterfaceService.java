@@ -1,5 +1,6 @@
 package com.puchain.fep.web.sysmgmt.config.pushinterface.service;
 
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
@@ -7,7 +8,6 @@ import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessType;
 import com.puchain.fep.web.sysmgmt.config.businesstype.repository.SysBusinessTypeRepository;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.domain.AuthType;
-import com.puchain.fep.web.sysmgmt.config.pushinterface.domain.InterfaceStatus;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.domain.SysPushInterface;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.dto.PushInterfaceCreateRequest;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.dto.PushInterfaceResponse;
@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 推送接口管理服务。
@@ -79,8 +81,16 @@ public class SysPushInterfaceService {
             page = pushInterfaceRepository.findByInterfaceNameContaining(keyword, pageable);
         }
 
+        List<String> typeIds = page.getContent().stream()
+                .map(SysPushInterface::getBusinessTypeId)
+                .filter(id -> id != null && !id.isBlank())
+                .distinct().toList();
+        Map<String, String> typeNames = businessTypeRepository.findAllById(typeIds).stream()
+                .collect(Collectors.toMap(SysBusinessType::getTypeId, SysBusinessType::getTypeName));
+
         List<PushInterfaceResponse> records = page.getContent().stream()
-                .map(entity -> toResponse(entity))
+                .map(e -> PushInterfaceResponse.from(e,
+                        typeNames.getOrDefault(e.getBusinessTypeId(), null)))
                 .toList();
 
         return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
@@ -105,7 +115,7 @@ public class SysPushInterfaceService {
         SysPushInterface entity = new SysPushInterface();
         entity.setInterfaceId(IdGenerator.uuid32());
         applyRequestToEntity(entity, request);
-        entity.setInterfaceStatus(InterfaceStatus.ENABLED);
+        entity.setInterfaceStatus(EnableDisableStatus.ENABLED);
 
         SysPushInterface saved = pushInterfaceRepository.save(entity);
         log.info("PushInterface created: name={}", saved.getInterfaceName());
@@ -159,40 +169,23 @@ public class SysPushInterfaceService {
     }
 
     /**
-     * 启用推送接口。
+     * 切换推送接口状态（启用/禁用）。
      *
      * @param interfaceId 接口 ID
+     * @param status      目标状态
      * @return 更新后的推送接口响应
      * @throws FepBusinessException 接口不存在（BIZ_5001）
      */
     @Transactional
-    public PushInterfaceResponse enable(final String interfaceId) {
+    public PushInterfaceResponse toggleStatus(final String interfaceId,
+                                              final EnableDisableStatus status) {
         SysPushInterface entity = pushInterfaceRepository.findById(interfaceId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "推送接口不存在: " + interfaceId));
 
-        entity.setInterfaceStatus(InterfaceStatus.ENABLED);
+        entity.setInterfaceStatus(status);
         SysPushInterface saved = pushInterfaceRepository.save(entity);
-        log.info("PushInterface enabled: name={}", saved.getInterfaceName());
-        return toResponse(saved);
-    }
-
-    /**
-     * 禁用推送接口。
-     *
-     * @param interfaceId 接口 ID
-     * @return 更新后的推送接口响应
-     * @throws FepBusinessException 接口不存在（BIZ_5001）
-     */
-    @Transactional
-    public PushInterfaceResponse disable(final String interfaceId) {
-        SysPushInterface entity = pushInterfaceRepository.findById(interfaceId)
-                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
-                        "推送接口不存在: " + interfaceId));
-
-        entity.setInterfaceStatus(InterfaceStatus.DISABLED);
-        SysPushInterface saved = pushInterfaceRepository.save(entity);
-        log.info("PushInterface disabled: name={}", saved.getInterfaceName());
+        log.info("PushInterface status changed: name={}, status={}", saved.getInterfaceName(), status);
         return toResponse(saved);
     }
 

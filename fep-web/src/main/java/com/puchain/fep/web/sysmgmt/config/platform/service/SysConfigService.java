@@ -1,5 +1,7 @@
 package com.puchain.fep.web.sysmgmt.config.platform.service;
 
+import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.sysmgmt.config.platform.domain.SysConfig;
 import com.puchain.fep.web.sysmgmt.config.platform.dto.ConfigBatchUpdateRequest;
 import com.puchain.fep.web.sysmgmt.config.platform.dto.ConfigGroupResponse;
@@ -71,7 +73,7 @@ public class SysConfigService {
      * @param group   配置分组
      * @param request 批量更新请求
      * @return 更新后的配置组响应
-     * @throws IllegalArgumentException 当 SERVICE_PHONE 或 PLATFORM_NAME 格式不合法时
+     * @throws FepBusinessException 当 SERVICE_PHONE 或 PLATFORM_NAME 格式不合法时（PARAM_4002）
      */
     @Transactional
     public ConfigGroupResponse batchUpdate(final String group,
@@ -80,14 +82,17 @@ public class SysConfigService {
         validateKnownKeys(updates);
 
         LocalDateTime now = LocalDateTime.now();
+        List<SysConfig> configs = configRepository.findByConfigGroupOrderBySortOrderAsc(group);
+        Map<String, SysConfig> configMap = configs.stream()
+                .collect(java.util.stream.Collectors.toMap(SysConfig::getConfigKey, c -> c));
         for (Map.Entry<String, String> entry : updates.entrySet()) {
-            configRepository.findByConfigGroupAndConfigKey(group, entry.getKey())
-                    .ifPresent(config -> {
-                        config.setConfigValue(entry.getValue());
-                        config.setUpdateTime(now);
-                        configRepository.save(config);
-                    });
+            SysConfig config = configMap.get(entry.getKey());
+            if (config != null) {
+                config.setConfigValue(entry.getValue());
+                config.setUpdateTime(now);
+            }
         }
+        configRepository.saveAll(configs);
 
         LOG.info("Config group updated: group={}, keys={}", group, updates.keySet());
         return getByGroup(group);
@@ -97,19 +102,19 @@ public class SysConfigService {
      * 校验已知 key 的值格式。
      *
      * @param updates 待更新的 key-value Map
-     * @throws IllegalArgumentException 格式不合法
+     * @throws FepBusinessException 格式不合法（PARAM_4002）
      */
     private void validateKnownKeys(final Map<String, String> updates) {
         if (updates.containsKey("SERVICE_PHONE")) {
             String phone = updates.get("SERVICE_PHONE");
             if (phone != null && !phone.isEmpty() && !phone.matches(PHONE_PATTERN)) {
-                throw new IllegalArgumentException("SERVICE_PHONE 格式不合法，须为 1-11 位数字");
+                throw new FepBusinessException(FepErrorCode.PARAM_4002,"SERVICE_PHONE 格式不合法，须为 1-11 位数字");
             }
         }
         if (updates.containsKey("PLATFORM_NAME")) {
             String name = updates.get("PLATFORM_NAME");
             if (name == null || name.isEmpty() || name.length() > PLATFORM_NAME_MAX_LEN) {
-                throw new IllegalArgumentException(
+                throw new FepBusinessException(FepErrorCode.PARAM_4002,
                         "PLATFORM_NAME 长度须为 1-" + PLATFORM_NAME_MAX_LEN + " 字符");
             }
         }

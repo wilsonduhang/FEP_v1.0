@@ -282,7 +282,7 @@
         <Or>
             <Class name="com.puchain.fep.web.sysmgmt.config.businesstype.service.SysBusinessTypeService"/>
             <Class name="com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessType"/>
-            <Class name="com.puchain.fep.web.sysmgmt.config.businesstype.domain.BusinessTypeStatus"/>
+            <Class name="com.puchain.fep.common.domain.EnableDisableStatus"/>
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>

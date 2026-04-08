@@ -1,7 +1,7 @@
 package com.puchain.fep.web.sysmgmt.config.pushinterface.dto;
 
 import com.puchain.fep.web.sysmgmt.config.pushinterface.domain.AuthType;
-import com.puchain.fep.web.sysmgmt.config.pushinterface.domain.InterfaceStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.domain.PushMethod;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.domain.SysPushInterface;
 
@@ -27,7 +27,7 @@ public class PushInterfaceResponse {
     private String businessTypeId;
     private String businessTypeName;
     private LocalDateTime lastPushTime;
-    private InterfaceStatus interfaceStatus;
+    private EnableDisableStatus interfaceStatus;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -252,7 +252,7 @@ public class PushInterfaceResponse {
      *
      * @return 接口状态枚举
      */
-    public InterfaceStatus getInterfaceStatus() {
+    public EnableDisableStatus getInterfaceStatus() {
         return interfaceStatus;
     }
 
@@ -261,7 +261,7 @@ public class PushInterfaceResponse {
      *
      * @param interfaceStatus 接口状态枚举
      */
-    public void setInterfaceStatus(final InterfaceStatus interfaceStatus) {
+    public void setInterfaceStatus(final EnableDisableStatus interfaceStatus) {
         this.interfaceStatus = interfaceStatus;
     }
 
