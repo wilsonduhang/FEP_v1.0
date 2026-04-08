@@ -88,10 +88,9 @@ public class SubSubmissionRecordService {
                     String bizTypeId = (String) row[AGG_COL_BIZ_TYPE];
                     long total = (Long) row[AGG_COL_TOTAL];
                     long pushed = pushedMap.getOrDefault(msgType, 0L);
-                    long pending = total - pushed;
                     return new MessageSummaryResponse(
                             msgType, msgName, bizTypeId,
-                            total, pushed, pending);
+                            total, pushed);
                 })
                 .toList();
     }

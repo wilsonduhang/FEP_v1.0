@@ -62,6 +62,7 @@ public class SubDashboardService {
         resp.setTotalDataSourceCount(dataSourceRepository.count());
         resp.setTotalRecordCount(recordRepository.count());
         resp.setPushedRecordCount(recordRepository.countByPushStatus(PushStatus.PUSHED));
+        // pendingRecordCount 仅统计 PushStatus.PENDING，不含 PUSHING/FAILED
         resp.setPendingRecordCount(recordRepository.countByPushStatus(PushStatus.PENDING));
         return resp;
     }
