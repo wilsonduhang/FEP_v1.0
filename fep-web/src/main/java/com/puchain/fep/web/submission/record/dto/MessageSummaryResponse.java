@@ -25,9 +25,6 @@ public class MessageSummaryResponse {
     /** 已推送数。 */
     private long pushedCount;
 
-    /** 待推送数。 */
-    private long pendingCount;
-
     /**
      * 构造 MessageSummaryResponse。
      *
@@ -36,20 +33,17 @@ public class MessageSummaryResponse {
      * @param businessTypeId 关联业务类型 ID
      * @param totalCount     总记录数
      * @param pushedCount    已推送数
-     * @param pendingCount   待推送数
      */
     public MessageSummaryResponse(final String messageType,
                                   final String messageName,
                                   final String businessTypeId,
                                   final long totalCount,
-                                  final long pushedCount,
-                                  final long pendingCount) {
+                                  final long pushedCount) {
         this.messageType = messageType;
         this.messageName = messageName;
         this.businessTypeId = businessTypeId;
         this.totalCount = totalCount;
         this.pushedCount = pushedCount;
-        this.pendingCount = pendingCount;
     }
 
     /**
@@ -98,11 +92,11 @@ public class MessageSummaryResponse {
     }
 
     /**
-     * 获取待推送数。
+     * 获取待推送数（推导值 = totalCount - pushedCount）。
      *
      * @return 待推送数
      */
     public long getPendingCount() {
-        return pendingCount;
+        return totalCount - pushedCount;
     }
 }
