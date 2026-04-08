@@ -259,6 +259,15 @@
                         <exclude>**/bizdata/definition/dto/DefinitionResponse.class</exclude>
                         <!-- P6e 报文类型定义 Controller: 集成测试覆盖在 Task 7 -->
                         <exclude>**/bizdata/definition/controller/BizMessageDefinitionController.class</exclude>
+                        <!-- P6e 报文记录管理: Entity/DTO/enum getter/setter 纯 POJO，无业务逻辑 -->
+                        <exclude>**/bizdata/record/domain/BizMessageRecord.class</exclude>
+                        <exclude>**/bizdata/record/domain/MessageProcessStatus.class</exclude>
+                        <exclude>**/bizdata/record/domain/EntryMethod.class</exclude>
+                        <exclude>**/bizdata/record/dto/RecordCreateRequest.class</exclude>
+                        <exclude>**/bizdata/record/dto/RecordResponse.class</exclude>
+                        <exclude>**/bizdata/record/dto/RecordSummaryItem.class</exclude>
+                        <!-- P6e 报文记录 Controller: 集成测试覆盖在 Task 7 -->
+                        <exclude>**/bizdata/record/controller/BizMessageRecordController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
