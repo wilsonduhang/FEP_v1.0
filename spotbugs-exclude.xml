@@ -461,4 +461,82 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+    <!-- ===== P6d 数据报送管理 ===== -->
+
+    <!-- P6d 输出接口 Controller: Spring DI 注入的单例引用 + JWT 认证端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.outputinterface.controller.SubOutputInterfaceController"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="SPRING_ENDPOINT"/>
+        </Or>
+    </Match>
+
+    <!-- P6d 输出接口 Service: 接口名称/ID 来自数据库受控值，无 CRLF 注入风险；
+         testConnectivity URL 来自数据库配置，非用户直接输入；
+         URLCONNECTION_SSRF_FD: URL 来自管理员配置的输出接口地址，非外部用户输入 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.outputinterface.service.SubOutputInterfaceService"/>
+        <Or>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+            <Bug pattern="URLCONNECTION_SSRF_FD"/>
+        </Or>
+    </Match>
+
+    <!-- P6d 数据源 Controller: Spring DI + JWT 端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.datasource.controller.SubDataSourceController"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="SPRING_ENDPOINT"/>
+        </Or>
+    </Match>
+
+    <!-- P6d 数据源 Service: 数据源名称来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.datasource.service.SubDataSourceService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- P6d 业务场景 Controller: Spring DI + JWT 端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.scene.controller.SubBusinessSceneController"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="SPRING_ENDPOINT"/>
+        </Or>
+    </Match>
+
+    <!-- P6d 业务场景 Service: 场景名称/bizTypeId 来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.scene.service.SubBusinessSceneService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- P6d 报文汇总 Controller: JWT 端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.record.controller.SubMessageSummaryController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- P6d 报送管理 Controller: Spring DI + JWT 端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.record.controller.SubReportController"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="SPRING_ENDPOINT"/>
+        </Or>
+    </Match>
+
+    <!-- P6d 报送记录 Service: messageType/recordId 来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.record.service.SubSubmissionRecordService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- P6d 数据概况 Controller: JWT 端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.dashboard.controller.SubDashboardController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
 </FindBugsFilter>

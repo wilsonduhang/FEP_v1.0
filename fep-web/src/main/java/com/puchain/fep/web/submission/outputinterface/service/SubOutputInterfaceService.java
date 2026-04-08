@@ -223,7 +223,7 @@ public class SubOutputInterfaceService {
             conn.disconnect();
             log.info("Connectivity test for interface {}: HTTP {}", interfaceId, code);
             return code >= HTTP_OK_MIN && code < HTTP_OK_MAX;
-        } catch (Exception e) {
+        } catch (java.io.IOException e) {
             log.warn("Connectivity test failed for interface {}: {}",
                     interfaceId, e.getMessage());
             return false;
