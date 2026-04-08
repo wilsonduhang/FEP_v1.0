@@ -341,6 +341,28 @@ class EntQueryTaskControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /**
+     * 创建 BATCH 类型查询任务应返回 200，queryType 为 BATCH。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void createBatchTask_shouldReturn200() throws Exception {
+        QueryTaskCreateRequest request = new QueryTaskCreateRequest();
+        request.setEnterpriseId(testEnterpriseId);
+        request.setQueryType("BATCH");
+        request.setUsci("91430100MA4L2YWK0T");
+        request.setBatchFilePath("/data/batch/query_20260407.csv");
+
+        mockMvc.perform(post(BASE_URL)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.queryType", is("BATCH")))
+                .andExpect(jsonPath("$.data.batchFilePath", is("/data/batch/query_20260407.csv")));
+    }
+
     // ===== Helper Methods =====
 
     private QueryTaskCreateRequest buildRequest(final String queryType) {

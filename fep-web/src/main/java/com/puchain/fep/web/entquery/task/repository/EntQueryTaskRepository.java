@@ -34,8 +34,7 @@ public interface EntQueryTaskRepository extends JpaRepository<EntQueryTask, Stri
             + "(:queryType IS NULL OR CAST(t.queryType AS string) = :queryType) "
             + "AND (:taskStatus IS NULL OR CAST(t.taskStatus AS string) = :taskStatus) "
             + "AND (:keyword IS NULL OR t.usci LIKE CONCAT('%', :keyword, '%') "
-            + "OR t.queryTargetName LIKE CONCAT('%', :keyword, '%')) "
-            + "ORDER BY t.createTime DESC")
+            + "OR t.queryTargetName LIKE CONCAT('%', :keyword, '%'))")
     Page<EntQueryTask> search(@Param("queryType") String queryType,
                               @Param("taskStatus") String taskStatus,
                               @Param("keyword") String keyword,

@@ -214,6 +214,7 @@ public class EntQueryTaskService {
                     "查询任务不存在: " + taskId);
         }
         return resultRepository.findById(resultId)
+                .filter(r -> r.getTaskId().equals(taskId))
                 .map(QueryResultResponse::from)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "查询结果不存在: " + resultId));

@@ -2,6 +2,8 @@ package com.puchain.fep.web.entquery.result.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -43,8 +45,9 @@ public class EntQueryResult {
     private String resultData;
 
     /** 结果状态: NORMAL / ERROR。 */
+    @Enumerated(EnumType.STRING)
     @Column(name = "result_status", nullable = false, length = 20)
-    private String resultStatus;
+    private ResultStatus resultStatus;
 
     /** HNDEMP 错误码。 */
     @Column(name = "error_code", length = 20)
@@ -117,7 +120,7 @@ public class EntQueryResult {
      *
      * @return NORMAL 或 ERROR
      */
-    public String getResultStatus() {
+    public ResultStatus getResultStatus() {
         return resultStatus;
     }
 
@@ -200,7 +203,7 @@ public class EntQueryResult {
      *
      * @param resultStatus NORMAL 或 ERROR
      */
-    public void setResultStatus(final String resultStatus) {
+    public void setResultStatus(final ResultStatus resultStatus) {
         this.resultStatus = resultStatus;
     }
 
