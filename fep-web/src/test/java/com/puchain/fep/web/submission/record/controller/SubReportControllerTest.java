@@ -273,11 +273,13 @@ class SubReportControllerTest {
      * @throws Exception on request failure
      */
     @Test
-    void getBlockedRecords_shouldReturnList() throws Exception {
+    void getBlockedRecords_shouldReturnPagedResult() throws Exception {
         mockMvc.perform(get(BASE_URL + "/push/blocked")
-                        .header("Authorization", "Bearer " + accessToken))
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("pageNum", "1")
+                        .param("pageSize", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray());
+                .andExpect(jsonPath("$.data.records").isArray());
     }
 
     /**

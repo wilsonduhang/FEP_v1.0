@@ -66,6 +66,16 @@ public interface SubSubmissionRecordRepository
     long countByMessageTypeAndPushStatus(String messageType, PushStatus pushStatus);
 
     /**
+     * 批量统计已推送记录数（按报文类型分组）。
+     *
+     * @return 聚合结果列表（Object[] 数组：[messageType, count]）
+     */
+    @Query("SELECT r.messageType, COUNT(r) FROM SubSubmissionRecord r "
+            + "WHERE r.pushStatus = com.puchain.fep.web.submission.record.domain.PushStatus.PUSHED "
+            + "GROUP BY r.messageType")
+    List<Object[]> countPushedGroupByMessageType();
+
+    /**
      * 按报文类型查询记录（分页）。
      *
      * @param messageType 报文类型
@@ -89,6 +99,16 @@ public interface SubSubmissionRecordRepository
      * @return 匹配的记录列表
      */
     List<SubSubmissionRecord> findByPushStatusIn(List<PushStatus> pushStatuses);
+
+    /**
+     * 查询指定推送状态列表中的记录（分页）。
+     *
+     * @param pushStatuses 推送状态列表
+     * @param pageable     分页参数
+     * @return 分页结果
+     */
+    Page<SubSubmissionRecord> findByPushStatusIn(List<PushStatus> pushStatuses,
+                                                  Pageable pageable);
 
     /**
      * 按推送状态和记录 ID 列表查询（用于批量推送）。
