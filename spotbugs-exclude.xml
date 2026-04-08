@@ -561,4 +561,22 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6e 报文类型定义管理 ===== -->
+
+    <!-- 报文类型定义 Controller: Spring DI 注入的单例引用 + JWT 认证端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.bizdata.definition.controller.BizMessageDefinitionController"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="SPRING_ENDPOINT"/>
+        </Or>
+    </Match>
+
+    <!-- 报文类型定义 Service: messageCode 已通过 LogSanitizer.sanitize() 清理，
+         definitionId/newStatus 来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.bizdata.definition.service.BizMessageDefinitionService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
