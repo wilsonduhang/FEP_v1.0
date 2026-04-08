@@ -113,9 +113,10 @@ class SubSubmissionRecordServiceTest {
         rows.add(row);
         when(recordRepository.aggregateByMessageType())
                 .thenReturn(rows);
-        when(recordRepository.countByMessageTypeAndPushStatus(
-                "3101", PushStatus.PUSHED))
-                .thenReturn(80L);
+        List<Object[]> pushedRows = new ArrayList<>();
+        pushedRows.add(new Object[]{"3101", 80L});
+        when(recordRepository.countPushedGroupByMessageType())
+                .thenReturn(pushedRows);
 
         List<MessageSummaryResponse> result = service.getMessageSummary();
 

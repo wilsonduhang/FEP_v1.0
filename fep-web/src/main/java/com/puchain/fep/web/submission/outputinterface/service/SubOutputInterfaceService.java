@@ -5,6 +5,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import com.puchain.fep.web.submission.outputinterface.dto.OutputInterfaceCreateRequest;
 import com.puchain.fep.web.submission.outputinterface.dto.OutputInterfaceResponse;
@@ -45,6 +46,9 @@ public class SubOutputInterfaceService {
 
     /** HTTP 成功响应码上界（不含）。 */
     private static final int HTTP_OK_MAX = 400;
+
+    /** 连通性测试最大超时秒数。 */
+    private static final int MAX_TEST_TIMEOUT_SECONDS = 10;
 
     private final SubOutputInterfaceRepository outputInterfaceRepository;
     private final SysBusinessTypeRepository businessTypeRepository;
@@ -126,7 +130,7 @@ public class SubOutputInterfaceService {
 
         SubOutputInterface saved = outputInterfaceRepository.save(entity);
         log.info("Created output interface: id={}, name={}",
-                saved.getInterfaceId(), saved.getInterfaceName());
+                saved.getInterfaceId(), LogSanitizer.sanitize(saved.getInterfaceName()));
         return OutputInterfaceResponse.from(saved);
     }
 
@@ -217,8 +221,10 @@ public class SubOutputInterfaceService {
             HttpURLConnection conn = (HttpURLConnection)
                     URI.create(entity.getInterfaceUrl()).toURL().openConnection();
             conn.setRequestMethod("HEAD");
-            conn.setConnectTimeout(entity.getTimeoutSeconds() * MILLIS_PER_SECOND);
-            conn.setReadTimeout(entity.getTimeoutSeconds() * MILLIS_PER_SECOND);
+            int effectiveTimeout = Math.min(entity.getTimeoutSeconds(),
+                    MAX_TEST_TIMEOUT_SECONDS) * MILLIS_PER_SECOND;
+            conn.setConnectTimeout(effectiveTimeout);
+            conn.setReadTimeout(effectiveTimeout);
             int code = conn.getResponseCode();
             conn.disconnect();
             log.info("Connectivity test for interface {}: HTTP {}", interfaceId, code);

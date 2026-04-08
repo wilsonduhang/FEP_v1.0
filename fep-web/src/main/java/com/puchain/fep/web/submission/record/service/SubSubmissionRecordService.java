@@ -76,21 +76,24 @@ public class SubSubmissionRecordService {
      * @return 报文汇总列表
      */
     public List<MessageSummaryResponse> getMessageSummary() {
-        List<Object[]> rows = recordRepository.aggregateByMessageType();
-        List<MessageSummaryResponse> result = new ArrayList<>(rows.size());
-        for (Object[] row : rows) {
-            String msgType = (String) row[AGG_COL_MSG_TYPE];
-            String msgName = (String) row[AGG_COL_MSG_NAME];
-            String bizTypeId = (String) row[AGG_COL_BIZ_TYPE];
-            long totalCount = (Long) row[AGG_COL_TOTAL];
-            long pushedCount = recordRepository
-                    .countByMessageTypeAndPushStatus(msgType, PushStatus.PUSHED);
-            long pendingCount = totalCount - pushedCount;
-            result.add(new MessageSummaryResponse(
-                    msgType, msgName, bizTypeId,
-                    totalCount, pushedCount, pendingCount));
+        // Build pushed count map in 1 query instead of N
+        Map<String, Long> pushedMap = new HashMap<>();
+        for (Object[] row : recordRepository.countPushedGroupByMessageType()) {
+            pushedMap.put((String) row[0], (Long) row[1]);
         }
-        return result;
+        return recordRepository.aggregateByMessageType().stream()
+                .map(row -> {
+                    String msgType = (String) row[AGG_COL_MSG_TYPE];
+                    String msgName = (String) row[AGG_COL_MSG_NAME];
+                    String bizTypeId = (String) row[AGG_COL_BIZ_TYPE];
+                    long total = (Long) row[AGG_COL_TOTAL];
+                    long pushed = pushedMap.getOrDefault(msgType, 0L);
+                    long pending = total - pushed;
+                    return new MessageSummaryResponse(
+                            msgType, msgName, bizTypeId,
+                            total, pushed, pending);
+                })
+                .toList();
     }
 
     /**
@@ -201,16 +204,22 @@ public class SubSubmissionRecordService {
     }
 
     /**
-     * 获取阻塞记录列表（状态为 PUSHING 或 FAILED）。
+     * 获取阻塞记录列表（状态为 PUSHING 或 FAILED，分页）。
      *
-     * @return 阻塞记录列表
+     * @param pageNum  页码（1-based）
+     * @param pageSize 每页大小
+     * @return 分页阻塞记录
      */
-    public List<SubmissionRecordResponse> getBlockedRecords() {
-        List<SubSubmissionRecord> records =
-                recordRepository.findByPushStatusIn(
-                        List.of(PushStatus.PUSHING, PushStatus.FAILED));
-        return records.stream()
-                .map(SubmissionRecordResponse::from).toList();
+    public PageResult<SubmissionRecordResponse> getBlockedRecords(
+            final int pageNum, final int pageSize) {
+        Page<SubSubmissionRecord> page = recordRepository.findByPushStatusIn(
+                List.of(PushStatus.PUSHING, PushStatus.FAILED),
+                PageRequest.of(pageNum - 1, pageSize,
+                        Sort.by(Sort.Direction.DESC, "createTime")));
+        return new PageResult<>(
+                page.getContent().stream()
+                        .map(SubmissionRecordResponse::from).toList(),
+                page.getTotalElements(), pageNum, pageSize);
     }
 
     /**
