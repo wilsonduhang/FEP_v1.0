@@ -39,6 +39,9 @@ public class EntQueryTaskService {
 
     private static final Logger log = LoggerFactory.getLogger(EntQueryTaskService.class);
 
+    /** Number of trailing characters to show when masking USCI in logs. */
+    private static final int USCI_MASK_SUFFIX_LEN = 4;
+
     private final EntQueryTaskRepository taskRepository;
     private final EntQueryResultRepository resultRepository;
     private final SysEnterpriseRepository enterpriseRepository;
@@ -85,8 +88,9 @@ public class EntQueryTaskService {
         entity.setUpdateTime(now);
 
         EntQueryTask saved = taskRepository.save(entity);
-        log.info("Query task created: taskId={}, queryType={}, usci={}",
-                saved.getTaskId(), saved.getQueryType(), saved.getUsci());
+        log.info("Query task created: taskId={}, queryType={}, usci=****{}",
+                saved.getTaskId(), saved.getQueryType(),
+                saved.getUsci().substring(saved.getUsci().length() - USCI_MASK_SUFFIX_LEN));
         return QueryTaskResponse.from(saved);
     }
 

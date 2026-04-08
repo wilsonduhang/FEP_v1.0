@@ -1,6 +1,6 @@
 package com.puchain.fep.web.sysmgmt.config.datatypeconfig.dto;
 
-import com.puchain.fep.web.sysmgmt.config.datatypeconfig.domain.DataTypeConfigStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.datatypeconfig.domain.SysDataTypeConfig;
 
 import java.time.LocalDateTime;
@@ -18,7 +18,7 @@ public class DataTypeConfigResponse {
     private String dataTypeId;
     private String typeName;
     private String typeCode;
-    private DataTypeConfigStatus typeStatus;
+    private EnableDisableStatus typeStatus;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -98,7 +98,7 @@ public class DataTypeConfigResponse {
      *
      * @return 类型状态枚举
      */
-    public DataTypeConfigStatus getTypeStatus() {
+    public EnableDisableStatus getTypeStatus() {
         return typeStatus;
     }
 
@@ -107,7 +107,7 @@ public class DataTypeConfigResponse {
      *
      * @param typeStatus 类型状态枚举
      */
-    public void setTypeStatus(final DataTypeConfigStatus typeStatus) {
+    public void setTypeStatus(final EnableDisableStatus typeStatus) {
         this.typeStatus = typeStatus;
     }
 

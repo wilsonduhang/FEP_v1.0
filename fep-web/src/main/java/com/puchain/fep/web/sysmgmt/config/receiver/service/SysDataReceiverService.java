@@ -4,7 +4,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
-import com.puchain.fep.web.sysmgmt.config.receiver.domain.ReceiverStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.receiver.domain.SysDataReceiver;
 import com.puchain.fep.web.sysmgmt.config.receiver.dto.DataReceiverCreateRequest;
 import com.puchain.fep.web.sysmgmt.config.receiver.dto.DataReceiverResponse;
@@ -94,7 +94,7 @@ public class SysDataReceiverService {
         entity.setReceiverName(request.getReceiverName());
         entity.setReceiverMethod(request.getReceiverMethod());
         entity.setReceiverAddress(request.getReceiverAddress());
-        entity.setReceiverStatus(ReceiverStatus.ENABLED);
+        entity.setReceiverStatus(EnableDisableStatus.ENABLED);
 
         SysDataReceiver saved = receiverRepository.save(entity);
         log.info("DataReceiver created: name={}", saved.getReceiverName());

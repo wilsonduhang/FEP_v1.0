@@ -4,7 +4,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
-import com.puchain.fep.web.sysmgmt.config.outputtype.domain.OutputTypeStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.outputtype.domain.SysOutputType;
 import com.puchain.fep.web.sysmgmt.config.outputtype.dto.OutputTypeCreateRequest;
 import com.puchain.fep.web.sysmgmt.config.outputtype.dto.OutputTypeResponse;
@@ -93,7 +93,7 @@ public class SysOutputTypeService {
         entity.setOutputTypeId(IdGenerator.uuid32());
         entity.setTypeName(request.getTypeName());
         entity.setTypeCode(request.getTypeCode());
-        entity.setTypeStatus(OutputTypeStatus.ENABLED);
+        entity.setTypeStatus(EnableDisableStatus.ENABLED);
 
         SysOutputType saved = outputTypeRepository.save(entity);
         log.info("OutputType created: code={}", saved.getTypeCode());

@@ -1,7 +1,7 @@
 package com.puchain.fep.web.sysmgmt.config.receiver.dto;
 
 import com.puchain.fep.web.sysmgmt.config.receiver.domain.ReceiverMethod;
-import com.puchain.fep.web.sysmgmt.config.receiver.domain.ReceiverStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.receiver.domain.SysDataReceiver;
 
 import java.time.LocalDateTime;
@@ -20,7 +20,7 @@ public class DataReceiverResponse {
     private String receiverName;
     private ReceiverMethod receiverMethod;
     private String receiverAddress;
-    private ReceiverStatus receiverStatus;
+    private EnableDisableStatus receiverStatus;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -119,7 +119,7 @@ public class DataReceiverResponse {
      *
      * @return 状态枚举
      */
-    public ReceiverStatus getReceiverStatus() {
+    public EnableDisableStatus getReceiverStatus() {
         return receiverStatus;
     }
 
@@ -128,7 +128,7 @@ public class DataReceiverResponse {
      *
      * @param receiverStatus 状态枚举
      */
-    public void setReceiverStatus(final ReceiverStatus receiverStatus) {
+    public void setReceiverStatus(final EnableDisableStatus receiverStatus) {
         this.receiverStatus = receiverStatus;
     }
 

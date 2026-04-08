@@ -1,5 +1,6 @@
 package com.puchain.fep.web.sysmgmt.config.receiver.domain;
 
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -42,7 +43,7 @@ public class SysDataReceiver {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "receiver_status", nullable = false, length = 20)
-    private ReceiverStatus receiverStatus;
+    private EnableDisableStatus receiverStatus;
 
     @CreatedDate
     @Column(name = "create_time", nullable = false, updatable = false)
@@ -102,7 +103,7 @@ public class SysDataReceiver {
      *
      * @return 状态枚举
      */
-    public ReceiverStatus getReceiverStatus() {
+    public EnableDisableStatus getReceiverStatus() {
         return receiverStatus;
     }
 
@@ -167,7 +168,7 @@ public class SysDataReceiver {
      *
      * @param receiverStatus 状态枚举
      */
-    public void setReceiverStatus(final ReceiverStatus receiverStatus) {
+    public void setReceiverStatus(final EnableDisableStatus receiverStatus) {
         this.receiverStatus = receiverStatus;
     }
 }
