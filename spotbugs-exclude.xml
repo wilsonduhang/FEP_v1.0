@@ -539,4 +539,26 @@
         <Class name="com.puchain.fep.web.submission.dashboard.controller.SubDashboardController"/>
         <Bug pattern="SPRING_ENDPOINT"/>
     </Match>
+
+    <!-- ===== P6e 首页待办事项管理 ===== -->
+
+    <!-- 待办事项 Controller: Spring DI 注入的单例引用 + JWT 认证端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.dashboard.todo.controller.DashboardTodoController"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="SPRING_ENDPOINT"/>
+        </Or>
+    </Match>
+
+    <!-- 待办事项 Service/Domain/Controller: todoId/title 已通过 LogSanitizer.sanitize() 清理或来自数据库受控值，
+         SpotBugs 无法跨方法跟踪清理逻辑，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.dashboard.todo.service.DashboardTodoService"/>
+            <Class name="com.puchain.fep.web.dashboard.todo.domain.DashboardTodo"/>
+            <Class name="com.puchain.fep.web.dashboard.todo.controller.DashboardTodoController"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
