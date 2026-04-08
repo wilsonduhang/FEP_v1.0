@@ -5,6 +5,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.submission.datasource.domain.SubDataSource;
 import com.puchain.fep.web.submission.datasource.dto.DataSourceCreateRequest;
 import com.puchain.fep.web.submission.datasource.dto.DataSourceResponse;
@@ -106,7 +107,7 @@ public class SubDataSourceService {
 
         SubDataSource saved = dataSourceRepository.save(entity);
         log.info("Created data source: id={}, name={}",
-                saved.getSourceId(), saved.getSourceName());
+                saved.getSourceId(), LogSanitizer.sanitize(saved.getSourceName()));
         return DataSourceResponse.from(saved);
     }
 

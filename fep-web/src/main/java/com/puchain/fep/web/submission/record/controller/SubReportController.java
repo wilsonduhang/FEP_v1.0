@@ -159,18 +159,25 @@ public class SubReportController {
     }
 
     /**
-     * 获取阻塞记录列表（PUSHING / FAILED）。
+     * 获取阻塞记录列表（PUSHING / FAILED，分页）。
      *
-     * @return 阻塞记录列表
+     * @param pageNum  页码（1-based，默认 1）
+     * @param pageSize 每页大小（默认 100）
+     * @return 分页阻塞记录列表
      */
     @GetMapping("/push/blocked")
     @OperationLog(module = "报送管理", type = OperationType.QUERY,
             description = "查询阻塞记录")
     @Operation(summary = "阻塞记录列表",
-            description = "查询状态为 PUSHING 或 FAILED 的记录")
+            description = "查询状态为 PUSHING 或 FAILED 的记录（分页）")
     @ApiResponse(responseCode = "200", description = "查询成功")
-    public ApiResult<List<SubmissionRecordResponse>> getBlockedRecords() {
-        return ApiResult.success(recordService.getBlockedRecords());
+    public ApiResult<PageResult<SubmissionRecordResponse>> getBlockedRecords(
+            @Parameter(description = "页码（从1开始）")
+            @RequestParam(defaultValue = "1") final int pageNum,
+            @Parameter(description = "每页条数")
+            @RequestParam(defaultValue = "100") final int pageSize) {
+        return ApiResult.success(
+                recordService.getBlockedRecords(pageNum, pageSize));
     }
 
     /**

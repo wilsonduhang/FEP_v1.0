@@ -5,6 +5,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.submission.scene.domain.ScenePushMethod;
 import com.puchain.fep.web.submission.scene.domain.SubBusinessScene;
 import com.puchain.fep.web.submission.scene.dto.SceneCreateRequest;
@@ -119,7 +120,7 @@ public class SubBusinessSceneService {
 
         SubBusinessScene saved = sceneRepository.save(entity);
         log.info("Created business scene: id={}, name={}",
-                saved.getSceneId(), saved.getSceneName());
+                saved.getSceneId(), LogSanitizer.sanitize(saved.getSceneName()));
         return SceneResponse.from(saved);
     }
 
