@@ -25,24 +25,24 @@ class V8MigrationTest {
     @Test
     void v8Migration_shouldCreateEntQueryTaskTable() {
         Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM t_ent_query_task",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE UPPER(TABLE_NAME) = 'T_ENT_QUERY_TASK'",
                 Integer.class);
-        assertThat(count).isNotNull().isGreaterThanOrEqualTo(0);
+        assertThat(count).isEqualTo(1);
     }
 
     @Test
     void v8Migration_shouldCreateEntAuthLetterTable() {
         Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM t_ent_auth_letter",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE UPPER(TABLE_NAME) = 'T_ENT_AUTH_LETTER'",
                 Integer.class);
-        assertThat(count).isNotNull().isGreaterThanOrEqualTo(0);
+        assertThat(count).isEqualTo(1);
     }
 
     @Test
     void v8Migration_shouldCreateEntQueryResultTable() {
         Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM t_ent_query_result",
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE UPPER(TABLE_NAME) = 'T_ENT_QUERY_RESULT'",
                 Integer.class);
-        assertThat(count).isNotNull().isGreaterThanOrEqualTo(0);
+        assertThat(count).isEqualTo(1);
     }
 }

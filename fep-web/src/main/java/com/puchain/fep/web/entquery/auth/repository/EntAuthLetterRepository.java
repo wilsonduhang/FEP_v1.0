@@ -34,8 +34,7 @@ public interface EntAuthLetterRepository extends JpaRepository<EntAuthLetter, St
             + "(:authType IS NULL OR CAST(l.authType AS string) = :authType) "
             + "AND (:letterStatus IS NULL OR CAST(l.letterStatus AS string) = :letterStatus) "
             + "AND (:keyword IS NULL OR l.authorizedUsci LIKE CONCAT('%', :keyword, '%') "
-            + "OR l.authorizedName LIKE CONCAT('%', :keyword, '%')) "
-            + "ORDER BY l.createTime DESC")
+            + "OR l.authorizedName LIKE CONCAT('%', :keyword, '%'))")
     Page<EntAuthLetter> search(@Param("authType") String authType,
                                @Param("letterStatus") String letterStatus,
                                @Param("keyword") String keyword,
