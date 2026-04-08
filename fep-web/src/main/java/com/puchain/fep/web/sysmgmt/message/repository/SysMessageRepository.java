@@ -1,5 +1,6 @@
 package com.puchain.fep.web.sysmgmt.message.repository;
 
+import com.puchain.fep.web.sysmgmt.message.domain.MessageStatus;
 import com.puchain.fep.web.sysmgmt.message.domain.SysMessage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -64,4 +65,13 @@ public interface SysMessageRepository extends JpaRepository<SysMessage, String> 
             + "  WHERE r.messageId = m.messageId AND r.userId = :userId)")
     long countUnread(@Param("userId") String userId,
                      @Param("roleIds") List<String> roleIds);
+
+    /**
+     * 按消息状态分页查询，按 createTime 降序。
+     *
+     * @param status   消息状态
+     * @param pageable 分页参数
+     * @return 分页消息列表
+     */
+    Page<SysMessage> findByMessageStatus(MessageStatus status, Pageable pageable);
 }
