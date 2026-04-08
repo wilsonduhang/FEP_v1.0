@@ -276,6 +276,14 @@
                         <exclude>**/dashboard/stats/dto/TimeRange.class</exclude>
                         <!-- P6e 统计看板 Controller: 集成测试覆盖在 Task 7 -->
                         <exclude>**/dashboard/stats/controller/DashboardStatsController.class</exclude>
+                        <!-- P6e 快捷入口: Entity/DTO getter/setter 纯 POJO，无业务逻辑 -->
+                        <exclude>**/dashboard/shortcut/domain/DashboardShortcut.class</exclude>
+                        <exclude>**/dashboard/shortcut/dto/ShortcutCreateRequest.class</exclude>
+                        <exclude>**/dashboard/shortcut/dto/ShortcutResponse.class</exclude>
+                        <exclude>**/dashboard/shortcut/dto/ShortcutReorderRequest.class</exclude>
+                        <exclude>**/dashboard/shortcut/dto/ShortcutReorderRequest$ReorderItem.class</exclude>
+                        <!-- P6e 快捷入口 Controller: 集成测试覆盖在 Task 7 -->
+                        <exclude>**/dashboard/shortcut/controller/DashboardShortcutController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

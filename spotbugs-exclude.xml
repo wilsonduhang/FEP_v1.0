@@ -611,4 +611,35 @@
         <Class name="com.puchain.fep.web.dashboard.stats.service.DashboardStatsService"/>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6e 首页快捷入口管理 ===== -->
+
+    <!-- 快捷入口 Controller: Spring DI 注入的单例引用 + JWT 认证端点 -->
+    <Match>
+        <Class name="com.puchain.fep.web.dashboard.shortcut.controller.DashboardShortcutController"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="SPRING_ENDPOINT"/>
+        </Or>
+    </Match>
+
+    <!-- 快捷入口 Service/Domain/Controller: shortcutName 已通过 LogSanitizer.sanitize() 清理，
+         shortcutId/visible 来自数据库受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.dashboard.shortcut.service.DashboardShortcutService"/>
+            <Class name="com.puchain.fep.web.dashboard.shortcut.domain.DashboardShortcut"/>
+            <Class name="com.puchain.fep.web.dashboard.shortcut.controller.DashboardShortcutController"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- ShortcutReorderRequest: 请求 DTO 由 Jackson 反序列化填充，可变列表是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.dashboard.shortcut.dto.ShortcutReorderRequest"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
 </FindBugsFilter>
