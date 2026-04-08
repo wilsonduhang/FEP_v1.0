@@ -2,6 +2,7 @@ package com.puchain.fep.web.sysmgmt.message.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.web.common.SecurityContextHelper;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import com.puchain.fep.web.sysmgmt.message.dto.MessageCreateRequest;
@@ -12,8 +13,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,7 +63,7 @@ public class SysMessageController {
     @ApiResponse(responseCode = "400", description = "参数校验失败或 receiverId 缺失")
     @OperationLog(module = "消息管理", type = OperationType.CREATE)
     public ApiResult<MessageResponse> publish(@Valid @RequestBody final MessageCreateRequest request) {
-        return ApiResult.success(messageService.publish(request, currentUserId()));
+        return ApiResult.success(messageService.publish(request, SecurityContextHelper.currentUserId()));
     }
 
     /**
@@ -106,7 +105,7 @@ public class SysMessageController {
             @RequestParam(defaultValue = "1") final int pageNum,
             @Parameter(description = "每页大小")
             @RequestParam(defaultValue = "20") final int pageSize) {
-        return ApiResult.success(messageService.myMessages(currentUserId(), pageNum, pageSize));
+        return ApiResult.success(messageService.myMessages(SecurityContextHelper.currentUserId(), pageNum, pageSize));
     }
 
     /**
@@ -118,7 +117,7 @@ public class SysMessageController {
     @Operation(summary = "未读消息数量", description = "查询当前用户未读消息总数")
     @ApiResponse(responseCode = "200", description = "查询成功")
     public ApiResult<Long> unreadCount() {
-        return ApiResult.success(messageService.unreadCount(currentUserId()));
+        return ApiResult.success(messageService.unreadCount(SecurityContextHelper.currentUserId()));
     }
 
     /**
@@ -135,7 +134,7 @@ public class SysMessageController {
     @ApiResponse(responseCode = "400", description = "消息不存在")
     public ApiResult<Void> markRead(
             @Parameter(description = "消息 ID") @PathVariable final String messageId) {
-        messageService.markRead(messageId, currentUserId());
+        messageService.markRead(messageId, SecurityContextHelper.currentUserId());
         return ApiResult.success();
     }
 
@@ -148,7 +147,7 @@ public class SysMessageController {
     @Operation(summary = "全部已读", description = "将当前用户所有可见消息标记为已读")
     @ApiResponse(responseCode = "200", description = "操作成功")
     public ApiResult<Void> markAllRead() {
-        messageService.markAllRead(currentUserId());
+        messageService.markAllRead(SecurityContextHelper.currentUserId());
         return ApiResult.success();
     }
 
@@ -171,22 +170,4 @@ public class SysMessageController {
         return ApiResult.success();
     }
 
-    /**
-     * 从 SecurityContext 中获取当前登录用户 ID。
-     *
-     * <p>若未认证（如匿名访问），返回 "anonymous"。</p>
-     *
-     * @return 当前用户 ID，未认证时返回 "anonymous"
-     */
-    private String currentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
-            return "anonymous";
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof String userId) {
-            return userId;
-        }
-        return "anonymous";
-    }
 }

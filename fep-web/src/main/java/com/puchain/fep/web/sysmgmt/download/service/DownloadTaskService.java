@@ -16,6 +16,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -93,14 +96,15 @@ public class DownloadTaskService {
                              final String fileName,
                              final String filePath,
                              final Long fileSize) {
+        LocalDateTime now = LocalDateTime.now();
         SysDownloadTask task = loadOrThrow(taskId);
         task.setTaskStatus(TaskStatus.COMPLETED);
         task.setTaskProgress(PROGRESS_COMPLETE);
         task.setFileName(fileName);
         task.setFilePath(filePath);
         task.setFileSize(fileSize);
-        task.setExpireTime(LocalDateTime.now().plusDays(FILE_RETENTION_DAYS));
-        task.setUpdateTime(LocalDateTime.now());
+        task.setExpireTime(now.plusDays(FILE_RETENTION_DAYS));
+        task.setUpdateTime(now);
 
         taskRepository.save(task);
         log.info("Download task completed: taskId={}, fileName={}", taskId, fileName);
@@ -115,10 +119,11 @@ public class DownloadTaskService {
      */
     @Transactional
     public void failTask(final String taskId, final String reason) {
+        LocalDateTime now = LocalDateTime.now();
         SysDownloadTask task = loadOrThrow(taskId);
         task.setTaskStatus(TaskStatus.FAILED);
         task.setFailureReason(reason);
-        task.setUpdateTime(LocalDateTime.now());
+        task.setUpdateTime(now);
 
         taskRepository.save(task);
         log.warn("Download task failed: taskId={}, reason={}", taskId, reason);
@@ -146,25 +151,30 @@ public class DownloadTaskService {
     }
 
     /**
-     * 根据任务 ID 查询下载任务。
+     * 根据任务 ID 查询下载任务，并验证请求人身份。
      *
      * @param taskId 任务 ID
+     * @param userId 当前用户 ID
      * @return 下载任务响应 DTO
-     * @throws FepBusinessException 任务不存在（BIZ_5001）
+     * @throws FepBusinessException 任务不存在（BIZ_5001）或无权操作（AUTH_0403）
      */
-    public DownloadTaskResponse findById(final String taskId) {
-        return DownloadTaskResponse.from(loadOrThrow(taskId));
+    public DownloadTaskResponse findById(final String taskId, final String userId) {
+        SysDownloadTask task = loadOrThrow(taskId);
+        verifyOwnership(task, userId);
+        return DownloadTaskResponse.from(task);
     }
 
     /**
      * 获取任务文件路径，仅 {@link TaskStatus#COMPLETED} 状态的任务可获取。
      *
      * @param taskId 任务 ID
+     * @param userId 当前用户 ID
      * @return 文件存储路径
-     * @throws FepBusinessException 任务不存在（BIZ_5001）或任务非 COMPLETED 状态（BIZ_5003）
+     * @throws FepBusinessException 任务不存在（BIZ_5001）、无权操作（AUTH_0403）或任务非 COMPLETED 状态（BIZ_5003）
      */
-    public String getFilePath(final String taskId) {
+    public String getFilePath(final String taskId, final String userId) {
         SysDownloadTask task = loadOrThrow(taskId);
+        verifyOwnership(task, userId);
         if (task.getTaskStatus() != TaskStatus.COMPLETED) {
             throw new FepBusinessException(FepErrorCode.BIZ_5003,
                     "任务状态不允许下载，当前状态: " + task.getTaskStatus());
@@ -173,14 +183,17 @@ public class DownloadTaskService {
     }
 
     /**
-     * 删除下载任务记录。
+     * 删除下载任务记录及其磁盘文件。
      *
      * @param taskId 任务 ID
-     * @throws FepBusinessException 任务不存在（BIZ_5001）
+     * @param userId 当前用户 ID
+     * @throws FepBusinessException 任务不存在（BIZ_5001）或无权操作（AUTH_0403）
      */
     @Transactional
-    public void delete(final String taskId) {
+    public void delete(final String taskId, final String userId) {
         SysDownloadTask task = loadOrThrow(taskId);
+        verifyOwnership(task, userId);
+        deleteFileFromDisk(task.getFilePath());
         taskRepository.delete(task);
         log.info("Download task deleted: taskId={}", taskId);
     }
@@ -200,11 +213,12 @@ public class DownloadTaskService {
                 taskRepository.findByTaskStatusAndExpireTimeBefore(TaskStatus.COMPLETED, now);
 
         for (SysDownloadTask task : expiredTasks) {
+            deleteFileFromDisk(task.getFilePath());
             task.setTaskStatus(TaskStatus.EXPIRED);
             task.setFilePath(null);
             task.setUpdateTime(now);
-            taskRepository.save(task);
         }
+        taskRepository.saveAll(expiredTasks);
 
         if (!expiredTasks.isEmpty()) {
             log.info("Cleaned expired download tasks: count={}", expiredTasks.size());
@@ -224,5 +238,33 @@ public class DownloadTaskService {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "下载任务不存在: " + taskId));
+    }
+
+    /**
+     * 验证当前用户是否为任务的请求人，不匹配时抛出 AUTH_0403。
+     *
+     * @param task   下载任务
+     * @param userId 当前用户 ID
+     * @throws FepBusinessException 无权操作
+     */
+    private void verifyOwnership(final SysDownloadTask task, final String userId) {
+        if (!task.getRequesterId().equals(userId)) {
+            throw new FepBusinessException(FepErrorCode.AUTH_0403, "无权操作此下载任务");
+        }
+    }
+
+    /**
+     * 从磁盘删除文件，忽略删除失败（仅记录警告日志）。
+     *
+     * @param filePath 文件路径，为 null 时跳过
+     */
+    private void deleteFileFromDisk(final String filePath) {
+        if (filePath != null) {
+            try {
+                Files.deleteIfExists(Path.of(filePath));
+            } catch (IOException e) {
+                log.warn("Failed to delete expired file: path={}", filePath);
+            }
+        }
     }
 }
