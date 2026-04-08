@@ -1,6 +1,6 @@
 package com.puchain.fep.web.sysmgmt.config.businesstype.dto;
 
-import com.puchain.fep.web.sysmgmt.config.businesstype.domain.BusinessTypeStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessType;
 
 import java.time.LocalDateTime;
@@ -19,7 +19,7 @@ public class BusinessTypeResponse {
     private String typeName;
     private String typeCode;
     private Integer sortOrder;
-    private BusinessTypeStatus typeStatus;
+    private EnableDisableStatus typeStatus;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -118,7 +118,7 @@ public class BusinessTypeResponse {
      *
      * @return 类型状态枚举
      */
-    public BusinessTypeStatus getTypeStatus() {
+    public EnableDisableStatus getTypeStatus() {
         return typeStatus;
     }
 
@@ -127,7 +127,7 @@ public class BusinessTypeResponse {
      *
      * @param typeStatus 类型状态枚举
      */
-    public void setTypeStatus(final BusinessTypeStatus typeStatus) {
+    public void setTypeStatus(final EnableDisableStatus typeStatus) {
         this.typeStatus = typeStatus;
     }
 

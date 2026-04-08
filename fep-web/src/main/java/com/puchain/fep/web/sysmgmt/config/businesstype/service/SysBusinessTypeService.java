@@ -4,7 +4,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
-import com.puchain.fep.web.sysmgmt.config.businesstype.domain.BusinessTypeStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessType;
 import com.puchain.fep.web.sysmgmt.config.businesstype.dto.BusinessTypeCreateRequest;
 import com.puchain.fep.web.sysmgmt.config.businesstype.dto.BusinessTypeResponse;
@@ -94,7 +94,7 @@ public class SysBusinessTypeService {
         entity.setTypeName(request.getTypeName());
         entity.setTypeCode(request.getTypeCode());
         entity.setSortOrder(request.getSortOrder());
-        entity.setTypeStatus(BusinessTypeStatus.ENABLED);
+        entity.setTypeStatus(EnableDisableStatus.ENABLED);
 
         SysBusinessType saved = businessTypeRepository.save(entity);
         log.info("BusinessType created: code={}", saved.getTypeCode());
@@ -156,7 +156,7 @@ public class SysBusinessTypeService {
      */
     @Transactional
     public BusinessTypeResponse toggleStatus(final String typeId,
-                                             final BusinessTypeStatus status) {
+                                             final EnableDisableStatus status) {
         SysBusinessType entity = businessTypeRepository.findById(typeId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "业务类型不存在: " + typeId));

@@ -44,6 +44,9 @@ public class SysEnterpriseService {
 
     private static final Logger log = LoggerFactory.getLogger(SysEnterpriseService.class);
 
+    /** Number of trailing characters to show when masking USCI in logs. */
+    private static final int USCI_MASK_SUFFIX_LEN = 4;
+
     private final SysEnterpriseRepository enterpriseRepository;
     private final SysEnterpriseBizRepository bizRepository;
     private final SysEnterpriseQueryConfigRepository queryConfigRepository;
@@ -106,7 +109,7 @@ public class SysEnterpriseService {
     public EnterpriseResponse create(final EnterpriseCreateRequest request) {
         if (enterpriseRepository.findByUsci(request.getUsci()).isPresent()) {
             throw new FepBusinessException(FepErrorCode.BIZ_5002,
-                    "统一社会信用代码已存在: " + request.getUsci());
+                    "统一社会信用代码已存在");
         }
 
         SysEnterprise entity = new SysEnterprise();
@@ -121,7 +124,8 @@ public class SysEnterpriseService {
         entity.setBizCount(0);
 
         SysEnterprise saved = enterpriseRepository.save(entity);
-        log.info("Enterprise created: name={}, usci={}", saved.getEnterpriseName(), saved.getUsci());
+        log.info("Enterprise created: name={}, usci=****{}", saved.getEnterpriseName(),
+                saved.getUsci().substring(saved.getUsci().length() - USCI_MASK_SUFFIX_LEN));
         return EnterpriseResponse.from(saved);
     }
 
@@ -139,6 +143,10 @@ public class SysEnterpriseService {
         SysEnterprise entity = enterpriseRepository.findById(enterpriseId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "企业主体不存在: " + enterpriseId));
+
+        if (request.getUsci() != null && !entity.getUsci().equals(request.getUsci())) {
+            throw new FepBusinessException(FepErrorCode.BIZ_5003, "USCI 创建后不可变更");
+        }
 
         entity.setEnterpriseName(request.getEnterpriseName());
         entity.setContentType(request.getContentType());
@@ -176,6 +184,9 @@ public class SysEnterpriseService {
         SysEnterprise entity = enterpriseRepository.findById(enterpriseId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "企业主体不存在: " + enterpriseId));
+
+        bizRepository.deleteAll(bizRepository.findByEnterpriseId(enterpriseId));
+        queryConfigRepository.findByEnterpriseId(enterpriseId).ifPresent(queryConfigRepository::delete);
 
         enterpriseRepository.delete(entity);
         log.info("Enterprise deleted: id={}, name={}", entity.getEnterpriseId(), entity.getEnterpriseName());

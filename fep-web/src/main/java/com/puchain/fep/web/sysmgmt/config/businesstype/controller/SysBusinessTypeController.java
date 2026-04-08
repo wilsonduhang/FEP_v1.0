@@ -2,7 +2,7 @@ package com.puchain.fep.web.sysmgmt.config.businesstype.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
 import com.puchain.fep.common.domain.PageResult;
-import com.puchain.fep.web.sysmgmt.config.businesstype.domain.BusinessTypeStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.businesstype.dto.BusinessTypeCreateRequest;
 import com.puchain.fep.web.sysmgmt.config.businesstype.dto.BusinessTypeResponse;
 import com.puchain.fep.web.sysmgmt.config.businesstype.service.SysBusinessTypeService;
@@ -133,7 +133,7 @@ public class SysBusinessTypeController {
     @ApiResponse(responseCode = "404", description = "业务类型不存在")
     public ApiResult<BusinessTypeResponse> enable(
             @Parameter(description = "业务类型 ID") @PathVariable final String typeId) {
-        return ApiResult.success(businessTypeService.toggleStatus(typeId, BusinessTypeStatus.ENABLED));
+        return ApiResult.success(businessTypeService.toggleStatus(typeId, EnableDisableStatus.ENABLED));
     }
 
     /**
@@ -149,6 +149,6 @@ public class SysBusinessTypeController {
     @ApiResponse(responseCode = "404", description = "业务类型不存在")
     public ApiResult<BusinessTypeResponse> disable(
             @Parameter(description = "业务类型 ID") @PathVariable final String typeId) {
-        return ApiResult.success(businessTypeService.toggleStatus(typeId, BusinessTypeStatus.DISABLED));
+        return ApiResult.success(businessTypeService.toggleStatus(typeId, EnableDisableStatus.DISABLED));
     }
 }

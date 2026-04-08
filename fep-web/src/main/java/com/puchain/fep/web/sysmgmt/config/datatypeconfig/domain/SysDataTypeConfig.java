@@ -1,5 +1,6 @@
 package com.puchain.fep.web.sysmgmt.config.datatypeconfig.domain;
 
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
@@ -38,7 +39,7 @@ public class SysDataTypeConfig {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type_status", nullable = false, length = 20)
-    private DataTypeConfigStatus typeStatus;
+    private EnableDisableStatus typeStatus;
 
     @CreatedDate
     @Column(name = "create_time", nullable = false, updatable = false)
@@ -89,7 +90,7 @@ public class SysDataTypeConfig {
      *
      * @return 类型状态枚举
      */
-    public DataTypeConfigStatus getTypeStatus() {
+    public EnableDisableStatus getTypeStatus() {
         return typeStatus;
     }
 
@@ -145,7 +146,7 @@ public class SysDataTypeConfig {
      *
      * @param typeStatus 类型状态枚举
      */
-    public void setTypeStatus(final DataTypeConfigStatus typeStatus) {
+    public void setTypeStatus(final EnableDisableStatus typeStatus) {
         this.typeStatus = typeStatus;
     }
 }

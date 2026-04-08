@@ -6,7 +6,7 @@ import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.service.CaptchaService;
 import com.puchain.fep.web.config.TestRedisConfiguration;
-import com.puchain.fep.web.sysmgmt.config.businesstype.domain.BusinessTypeStatus;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessType;
 import com.puchain.fep.web.sysmgmt.config.businesstype.repository.SysBusinessTypeRepository;
 import com.puchain.fep.web.sysmgmt.config.pushinterface.domain.PushMethod;
@@ -101,7 +101,7 @@ class SysPushInterfaceControllerTest {
             bt.setTypeName("测试业务类型");
             bt.setTypeCode("TEST_BT_001");
             bt.setSortOrder(99);
-            bt.setTypeStatus(BusinessTypeStatus.ENABLED);
+            bt.setTypeStatus(EnableDisableStatus.ENABLED);
             businessTypeRepository.save(bt);
         }
 
