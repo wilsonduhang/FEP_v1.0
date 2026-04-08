@@ -597,4 +597,18 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6e 首页数据统计看板 ===== -->
+
+    <!-- 统计看板 Controller: JWT 认证端点，SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.dashboard.stats.controller.DashboardStatsController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 统计看板 Service: range 参数为 TimeRange 枚举，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.dashboard.stats.service.DashboardStatsService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>

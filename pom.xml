@@ -268,6 +268,14 @@
                         <exclude>**/bizdata/record/dto/RecordSummaryItem.class</exclude>
                         <!-- P6e 报文记录 Controller: 集成测试覆盖在 Task 7 -->
                         <exclude>**/bizdata/record/controller/BizMessageRecordController.class</exclude>
+                        <!-- P6e 首页数据统计看板: DTO/enum getter/setter 纯 POJO，无业务逻辑 -->
+                        <exclude>**/dashboard/stats/dto/StatsCardsResponse.class</exclude>
+                        <exclude>**/dashboard/stats/dto/TrendDataPoint.class</exclude>
+                        <exclude>**/dashboard/stats/dto/DistributionItem.class</exclude>
+                        <exclude>**/dashboard/stats/dto/StatusDistributionItem.class</exclude>
+                        <exclude>**/dashboard/stats/dto/TimeRange.class</exclude>
+                        <!-- P6e 统计看板 Controller: 集成测试覆盖在 Task 7 -->
+                        <exclude>**/dashboard/stats/controller/DashboardStatsController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
