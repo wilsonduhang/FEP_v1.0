@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for dashboard statistics aggregation.
@@ -150,23 +152,27 @@ public class DashboardStatsService {
     public List<StatusDistributionItem> getStatusDistribution() {
         LOG.debug("Aggregating status distribution");
 
-        final MessageProcessStatus[] statuses =
-                MessageProcessStatus.values();
-        long total = 0;
-        final long[] counts = new long[statuses.length];
+        final List<Object[]> rows =
+                messageRecordRepository.countGroupByProcessStatus();
 
-        for (int i = 0; i < statuses.length; i++) {
-            counts[i] = messageRecordRepository
-                    .countByProcessStatus(statuses[i]);
-            total += counts[i];
+        final Map<String, Long> countMap = new HashMap<>();
+        long total = 0;
+        for (final Object[] row : rows) {
+            final String status = ((MessageProcessStatus) row[0]).name();
+            final long count = (Long) row[1];
+            countMap.put(status, count);
+            total += count;
         }
 
         final List<StatusDistributionItem> items =
-                new ArrayList<>(statuses.length);
-        for (int i = 0; i < statuses.length; i++) {
-            final double pct = calcPercentage(counts[i], total);
+                new ArrayList<>(MessageProcessStatus.values().length);
+        for (final MessageProcessStatus status
+                : MessageProcessStatus.values()) {
+            final long count =
+                    countMap.getOrDefault(status.name(), 0L);
+            final double pct = calcPercentage(count, total);
             items.add(new StatusDistributionItem(
-                    statuses[i].name(), counts[i], pct));
+                    status.name(), count, pct));
         }
         return items;
     }

@@ -66,4 +66,13 @@ public interface BizMessageDefinitionRepository
      * @return list of matching definitions
      */
     List<BizMessageDefinition> findByDefinitionStatus(EnableDisableStatus status);
+
+    /**
+     * Find definitions whose message code is in the given set.
+     *
+     * @param messageCodes set of message codes
+     * @return matching definitions
+     */
+    List<BizMessageDefinition> findByMessageCodeIn(
+            java.util.Collection<String> messageCodes);
 }

@@ -124,4 +124,15 @@ public interface BizMessageRecordRepository
     @Query("SELECT r.messageCode, COUNT(r) "
             + "FROM BizMessageRecord r GROUP BY r.messageCode")
     List<Object[]> countGroupByMessageCode();
+
+    /**
+     * Count records grouped by process status.
+     *
+     * <p>Returns rows of [processStatus, count].</p>
+     *
+     * @return grouping result
+     */
+    @Query("SELECT r.processStatus, COUNT(r) "
+            + "FROM BizMessageRecord r GROUP BY r.processStatus")
+    List<Object[]> countGroupByProcessStatus();
 }

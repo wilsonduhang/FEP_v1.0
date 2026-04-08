@@ -56,6 +56,7 @@ public class BizMessageDefinitionService {
      * @param pageSize page size
      * @return paginated results
      */
+    @Transactional(readOnly = true)
     public PageResult<DefinitionResponse> search(final String keyword,
                                                   final int pageNum,
                                                   final int pageSize) {
@@ -78,6 +79,7 @@ public class BizMessageDefinitionService {
      * @return definition response
      * @throws FepBusinessException definition not found (BIZ_5012)
      */
+    @Transactional(readOnly = true)
     public DefinitionResponse getById(final String definitionId) {
         BizMessageDefinition entity = definitionRepository.findById(definitionId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5012,

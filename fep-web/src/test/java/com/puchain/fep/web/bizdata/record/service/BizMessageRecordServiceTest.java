@@ -116,7 +116,8 @@ class BizMessageRecordServiceTest {
         BizMessageDefinition def = new BizMessageDefinition();
         def.setMessageCode("3000");
         def.setMessageName("电子凭证信息登记");
-        when(definitionRepository.findAll()).thenReturn(List.of(def));
+        when(definitionRepository.findByMessageCodeIn(List.of("3000")))
+                .thenReturn(List.of(def));
 
         List<RecordSummaryItem> result = recordService.getSummary();
 
