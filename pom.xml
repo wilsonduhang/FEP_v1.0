@@ -251,6 +251,14 @@
                         <exclude>**/dashboard/todo/domain/TodoStatus.class</exclude>
                         <exclude>**/dashboard/todo/dto/TodoCreateRequest.class</exclude>
                         <exclude>**/dashboard/todo/dto/TodoResponse.class</exclude>
+                        <!-- P6e 报文类型定义: Entity/DTO/enum getter/setter 纯 POJO，无业务逻辑 -->
+                        <exclude>**/bizdata/domain/MessageDirection.class</exclude>
+                        <exclude>**/bizdata/definition/domain/BizMessageDefinition.class</exclude>
+                        <exclude>**/bizdata/definition/dto/DefinitionCreateRequest.class</exclude>
+                        <exclude>**/bizdata/definition/dto/DefinitionUpdateRequest.class</exclude>
+                        <exclude>**/bizdata/definition/dto/DefinitionResponse.class</exclude>
+                        <!-- P6e 报文类型定义 Controller: 集成测试覆盖在 Task 7 -->
+                        <exclude>**/bizdata/definition/controller/BizMessageDefinitionController.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
