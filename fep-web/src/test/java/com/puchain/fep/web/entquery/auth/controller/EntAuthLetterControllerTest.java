@@ -318,6 +318,48 @@ class EntAuthLetterControllerTest {
                 .andExpect(jsonPath("$.code", is("BIZ_5003")));
     }
 
+    /**
+     * 更新非 DRAFT 状态授权书应返回 400。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void updateLetter_notDraft_shouldReturn400() throws Exception {
+        // Create + submit
+        AuthLetterCreateRequest createReq = new AuthLetterCreateRequest();
+        createReq.setEnterpriseId(testEnterpriseId);
+        createReq.setAuthType("ELECTRONIC");
+        createReq.setAuthorizedUsci("91430100MA4LUPD00X");
+        createReq.setAuthorizedName("被授权目标企业");
+
+        MvcResult result = mockMvc.perform(post(BASE_URL)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createReq)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String letterId = objectMapper.readTree(result.getResponse().getContentAsString())
+                .at("/data/letterId").asText();
+
+        mockMvc.perform(post(BASE_URL + "/" + letterId + "/submit")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+
+        // Try update -> 400
+        AuthLetterCreateRequest updateReq = new AuthLetterCreateRequest();
+        updateReq.setEnterpriseId(testEnterpriseId);
+        updateReq.setAuthType("ELECTRONIC");
+        updateReq.setAuthorizedUsci("91430100MA4LUPD00X");
+        updateReq.setAuthorizedName("被授权目标企业");
+        updateReq.setAuthScope("should fail");
+
+        mockMvc.perform(put(BASE_URL + "/" + letterId)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateReq)))
+                .andExpect(status().isBadRequest());
+    }
+
     // ===== Helper Methods =====
 
     private AuthLetterCreateRequest buildRequest(final String authType) {

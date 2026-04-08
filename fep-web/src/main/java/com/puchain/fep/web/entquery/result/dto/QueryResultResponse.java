@@ -35,7 +35,8 @@ public class QueryResultResponse {
         resp.resultUsci = entity.getResultUsci();
         resp.enterpriseName = entity.getEnterpriseName();
         resp.resultData = entity.getResultData();
-        resp.resultStatus = entity.getResultStatus();
+        resp.resultStatus = entity.getResultStatus() != null
+                ? entity.getResultStatus().name() : null;
         resp.errorCode = entity.getErrorCode();
         resp.errorMessage = entity.getErrorMessage();
         resp.createTime = entity.getCreateTime() != null
