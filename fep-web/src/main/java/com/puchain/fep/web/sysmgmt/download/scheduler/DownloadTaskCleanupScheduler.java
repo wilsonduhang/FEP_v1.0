@@ -44,7 +44,11 @@ public class DownloadTaskCleanupScheduler {
     @Scheduled(cron = "0 0 2 * * ?", zone = "Asia/Shanghai")
     public void cleanExpiredTasks() {
         log.info("Download task cleanup started");
-        int count = downloadTaskService.cleanExpiredTasks();
-        log.info("Download task cleanup completed: expiredCount={}", count);
+        try {
+            int count = downloadTaskService.cleanExpiredTasks();
+            log.info("Download task cleanup completed: expiredCount={}", count);
+        } catch (Exception ex) {
+            log.error("Download task cleanup failed", ex);
+        }
     }
 }

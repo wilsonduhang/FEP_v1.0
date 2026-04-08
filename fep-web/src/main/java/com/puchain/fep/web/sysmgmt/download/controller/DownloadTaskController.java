@@ -4,6 +4,7 @@ import com.puchain.fep.common.domain.ApiResult;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.web.common.SecurityContextHelper;
 import com.puchain.fep.web.sysmgmt.download.dto.DownloadTaskResponse;
 import com.puchain.fep.web.sysmgmt.download.service.DownloadTaskService;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
@@ -17,8 +18,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -74,7 +73,7 @@ public class DownloadTaskController {
             @RequestParam(defaultValue = "1") final int pageNum,
             @Parameter(description = "每页大小")
             @RequestParam(defaultValue = "20") final int pageSize) {
-        return ApiResult.success(downloadTaskService.myTasks(currentUserId(), pageNum, pageSize));
+        return ApiResult.success(downloadTaskService.myTasks(SecurityContextHelper.currentUserId(), pageNum, pageSize));
     }
 
     /**
@@ -89,7 +88,7 @@ public class DownloadTaskController {
     @ApiResponse(responseCode = "400", description = "任务不存在")
     public ApiResult<DownloadTaskResponse> findById(
             @Parameter(description = "任务 ID") @PathVariable final String taskId) {
-        return ApiResult.success(downloadTaskService.findById(taskId));
+        return ApiResult.success(downloadTaskService.findById(taskId, SecurityContextHelper.currentUserId()));
     }
 
     /**
@@ -110,7 +109,7 @@ public class DownloadTaskController {
     public ResponseEntity<Resource> downloadFile(
             @Parameter(description = "任务 ID") @PathVariable final String taskId) {
         // 若任务非 COMPLETED 状态，此处抛出 FepBusinessException(BIZ_5003)
-        String filePath = downloadTaskService.getFilePath(taskId);
+        String filePath = downloadTaskService.getFilePath(taskId, SecurityContextHelper.currentUserId());
 
         File file = new File(filePath);
         if (!file.exists()) {
@@ -144,26 +143,8 @@ public class DownloadTaskController {
     @OperationLog(module = "下载任务", type = OperationType.DELETE, description = "删除下载任务")
     public ApiResult<Void> delete(
             @Parameter(description = "任务 ID") @PathVariable final String taskId) {
-        downloadTaskService.delete(taskId);
+        downloadTaskService.delete(taskId, SecurityContextHelper.currentUserId());
         return ApiResult.success();
     }
 
-    /**
-     * 从 SecurityContext 中获取当前登录用户 ID。
-     *
-     * <p>若未认证（如匿名访问），返回 "anonymous"。</p>
-     *
-     * @return 当前用户 ID，未认证时返回 "anonymous"
-     */
-    private String currentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
-            return "anonymous";
-        }
-        Object principal = auth.getPrincipal();
-        if (principal instanceof String userId) {
-            return userId;
-        }
-        return "anonymous";
-    }
 }

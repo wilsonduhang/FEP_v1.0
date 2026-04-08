@@ -78,7 +78,7 @@ class DownloadTaskServiceTest {
 
         assertTrue(resultA.getRecords().stream()
                         .allMatch(t -> USER_A.equals(
-                                downloadTaskService.findById(t.getTaskId()).getTaskId() != null
+                                downloadTaskService.findById(t.getTaskId(), USER_A).getTaskId() != null
                                         ? USER_A : null)),
                 "USER_A 的结果不应包含其他用户的任务");
 
@@ -98,7 +98,7 @@ class DownloadTaskServiceTest {
 
         downloadTaskService.completeTask(taskId, "report.xlsx", "/data/export/report.xlsx", 204800L);
 
-        DownloadTaskResponse resp = downloadTaskService.findById(taskId);
+        DownloadTaskResponse resp = downloadTaskService.findById(taskId, USER_A);
 
         assertEquals(TaskStatus.COMPLETED, resp.getTaskStatus(), "完成后状态应为 COMPLETED");
         assertEquals(100, resp.getTaskProgress(), "完成后进度应为 100");
@@ -121,7 +121,7 @@ class DownloadTaskServiceTest {
         String reason = "数据库连接超时，导出失败";
         downloadTaskService.failTask(taskId, reason);
 
-        DownloadTaskResponse resp = downloadTaskService.findById(taskId);
+        DownloadTaskResponse resp = downloadTaskService.findById(taskId, USER_A);
 
         assertEquals(TaskStatus.FAILED, resp.getTaskStatus(), "失败后状态应为 FAILED");
         assertEquals(reason, resp.getFailureReason(), "失败原因应与传入一致");
@@ -137,7 +137,7 @@ class DownloadTaskServiceTest {
                 "未完成任务", TaskType.DATA_EXPORT, USER_A);
 
         assertThrows(FepBusinessException.class,
-                () -> downloadTaskService.getFilePath(created.getTaskId()),
+                () -> downloadTaskService.getFilePath(created.getTaskId(), USER_A),
                 "WAITING 状态的任务不允许获取文件路径");
     }
 
@@ -161,7 +161,7 @@ class DownloadTaskServiceTest {
         int cleaned = downloadTaskService.cleanExpiredTasks();
 
         assertTrue(cleaned >= 1, "应至少清理 1 条过期任务");
-        DownloadTaskResponse resp = downloadTaskService.findById(taskId);
+        DownloadTaskResponse resp = downloadTaskService.findById(taskId, USER_A);
         assertEquals(TaskStatus.EXPIRED, resp.getTaskStatus(), "过期任务状态应更新为 EXPIRED");
     }
 }

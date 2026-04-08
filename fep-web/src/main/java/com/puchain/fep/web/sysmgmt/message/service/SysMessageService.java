@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 消息管理服务。
@@ -114,9 +115,15 @@ public class SysMessageService {
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
         Page<SysMessage> page = messageRepository.findVisibleMessages(userId, roleIds, pageable);
 
+        List<String> messageIds = page.getContent().stream()
+                .map(SysMessage::getMessageId)
+                .toList();
+        Set<String> readIds = messageIds.isEmpty()
+                ? Set.of()
+                : messageReadRepository.findReadMessageIds(userId, messageIds);
+
         List<MessageResponse> records = page.getContent().stream()
-                .map(m -> MessageResponse.from(m,
-                        messageReadRepository.existsByMessageIdAndUserId(m.getMessageId(), userId)))
+                .map(m -> MessageResponse.from(m, readIds.contains(m.getMessageId())))
                 .toList();
 
         return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
@@ -132,15 +139,13 @@ public class SysMessageService {
     public PageResult<MessageResponse> adminList(final int pageNum, final int pageSize) {
         Pageable pageable = PageRequest.of(pageNum - 1, pageSize,
                 Sort.by("createTime").descending());
-        Page<SysMessage> page = messageRepository.findAll(pageable);
+        Page<SysMessage> page = messageRepository.findByMessageStatus(MessageStatus.NORMAL, pageable);
 
         List<MessageResponse> records = page.getContent().stream()
-                .filter(m -> m.getMessageStatus() == MessageStatus.NORMAL)
                 .map(m -> MessageResponse.from(m, false))
                 .toList();
 
-        long total = messageRepository.count();
-        return new PageResult<>(records, total, pageNum, pageSize);
+        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
     }
 
     /**
@@ -175,14 +180,19 @@ public class SysMessageService {
         Pageable unpaged = Pageable.unpaged();
         Page<SysMessage> page = messageRepository.findVisibleMessages(userId, roleIds, unpaged);
 
-        int count = 0;
-        for (SysMessage message : page.getContent()) {
-            if (!messageReadRepository.existsByMessageIdAndUserId(message.getMessageId(), userId)) {
-                messageReadRepository.save(new SysMessageRead(message.getMessageId(), userId));
-                count++;
-            }
-        }
-        log.info("Mark all read: userId={}, markedCount={}", userId, count);
+        List<String> allMessageIds = page.getContent().stream()
+                .map(SysMessage::getMessageId)
+                .toList();
+        Set<String> alreadyRead = allMessageIds.isEmpty()
+                ? Set.of()
+                : messageReadRepository.findReadMessageIds(userId, allMessageIds);
+
+        List<SysMessageRead> newReads = page.getContent().stream()
+                .filter(m -> !alreadyRead.contains(m.getMessageId()))
+                .map(m -> new SysMessageRead(m.getMessageId(), userId))
+                .toList();
+        messageReadRepository.saveAll(newReads);
+        log.info("Mark all read: userId={}, markedCount={}", userId, newReads.size());
     }
 
     /**
