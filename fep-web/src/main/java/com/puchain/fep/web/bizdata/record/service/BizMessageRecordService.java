@@ -139,6 +139,7 @@ public class BizMessageRecordService {
      * @param pageSize     page size
      * @return paginated results
      */
+    @Transactional(readOnly = true)
     public PageResult<RecordResponse> search(
             final String messageCode,
             final MessageProcessStatus status,
@@ -166,14 +167,18 @@ public class BizMessageRecordService {
      *
      * @return summary list (empty if no records)
      */
+    @Transactional(readOnly = true)
     public List<RecordSummaryItem> getSummary() {
         List<Object[]> rows = recordRepository.getMessageSummary();
         if (rows.isEmpty()) {
             return List.of();
         }
 
+        List<String> codes = rows.stream()
+                .map(row -> (String) row[SUMMARY_COL_CODE])
+                .toList();
         Map<String, String> nameMap = new HashMap<>();
-        definitionRepository.findAll().forEach(
+        definitionRepository.findByMessageCodeIn(codes).forEach(
                 def -> nameMap.put(def.getMessageCode(),
                         def.getMessageName()));
 

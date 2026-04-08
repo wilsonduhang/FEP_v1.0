@@ -160,14 +160,13 @@ class DashboardStatsServiceTest {
 
     @Test
     void getStatusDistribution_shouldReturnAllStatusesWithCounts() {
-        when(messageRecordRepository.countByProcessStatus(
-                MessageProcessStatus.SUCCESS)).thenReturn(COUNT_70);
-        when(messageRecordRepository.countByProcessStatus(
-                MessageProcessStatus.FAILED)).thenReturn(COUNT_20);
-        when(messageRecordRepository.countByProcessStatus(
-                MessageProcessStatus.PROCESSING)).thenReturn(COUNT_5);
-        when(messageRecordRepository.countByProcessStatus(
-                MessageProcessStatus.PENDING)).thenReturn(COUNT_5);
+        List<Object[]> statusRows = List.of(
+                new Object[]{MessageProcessStatus.PENDING, COUNT_5},
+                new Object[]{MessageProcessStatus.PROCESSING, COUNT_5},
+                new Object[]{MessageProcessStatus.SUCCESS, COUNT_70},
+                new Object[]{MessageProcessStatus.FAILED, COUNT_20});
+        when(messageRecordRepository.countGroupByProcessStatus())
+                .thenReturn(statusRows);
 
         final List<StatusDistributionItem> items =
                 service.getStatusDistribution();
