@@ -579,4 +579,22 @@
         <Class name="com.puchain.fep.web.bizdata.definition.service.BizMessageDefinitionService"/>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- ===== P6e 报文记录管理 ===== -->
+
+    <!-- 报文记录 Controller: JWT 认证端点，SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.bizdata.record.controller.BizMessageRecordController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 报文记录 Service/Controller: serialNo 已通过 LogSanitizer.sanitize() 清理，
+         recordId/messageCode/processStatus 来自数据库受控值或枚举，无 CRLF 注入风险 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.bizdata.record.service.BizMessageRecordService"/>
+            <Class name="com.puchain.fep.web.bizdata.record.controller.BizMessageRecordController"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
