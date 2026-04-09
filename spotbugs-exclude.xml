@@ -664,4 +664,11 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- TLQ 连通性测试 Service: nodeId/recordId 为 UUID 经 LogSanitizer.sanitize() 清理；
+         rate 为 double 计算值，total/success 为 long 计数值，均为受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.web.tlq.connectivity.service.TlqConnectivityService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
