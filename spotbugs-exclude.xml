@@ -707,4 +707,10 @@
         <Class name="com.puchain.fep.web.tlq.connectivity.controller.TlqConnectivityController"/>
         <Bug pattern="SPRING_ENDPOINT"/>
     </Match>
+
+    <!-- TLQ 节点状态: UNKNOWN→ONLINE 和 OFFLINE→ONLINE 是有意的相同分支（状态机语义不同但目标相同） -->
+    <Match>
+        <Class name="com.puchain.fep.web.tlq.node.domain.TlqNodeStatus"/>
+        <Bug pattern="DB_DUPLICATE_SWITCH_CLAUSES"/>
+    </Match>
 </FindBugsFilter>

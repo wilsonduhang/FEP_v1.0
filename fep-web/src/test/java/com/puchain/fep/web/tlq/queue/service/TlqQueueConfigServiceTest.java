@@ -22,10 +22,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
@@ -131,23 +130,23 @@ class TlqQueueConfigServiceTest {
 
         List<String> names = result.stream().map(TlqQueueConfigResponse::getQueueName).toList();
         // Per PRD §3.1.2 naming convention
-        assertFalse(names.stream().noneMatch(n -> n.equals("QLOCAL." + orgCode + ".REAL.1")),
+        assertTrue(names.contains("QLOCAL." + orgCode + ".REAL.1"),
                 "应包含 QLOCAL.B1234567890123.REAL.1");
-        assertFalse(names.stream().noneMatch(n -> n.equals("QLOCAL." + orgCode + ".BATCH.1")),
+        assertTrue(names.contains("QLOCAL." + orgCode + ".BATCH.1"),
                 "应包含 QLOCAL.B1234567890123.BATCH.1");
-        assertFalse(names.stream().noneMatch(n -> n.equals("QREMOTE.A1000143000104.REAL.1")),
+        assertTrue(names.contains("QREMOTE.A1000143000104.REAL.1"),
                 "应包含 QREMOTE.A1000143000104.REAL.1");
-        assertFalse(names.stream().noneMatch(n -> n.equals("QREMOTE.A1000143000104.BATCH.1")),
+        assertTrue(names.contains("QREMOTE.A1000143000104.BATCH.1"),
                 "应包含 QREMOTE.A1000143000104.BATCH.1");
-        assertFalse(names.stream().noneMatch(n -> n.equals("QLOCAL.A1000143000104.REAL.1")),
+        assertTrue(names.contains("QLOCAL.A1000143000104.REAL.1"),
                 "应包含 QLOCAL.A1000143000104.REAL.1");
-        assertFalse(names.stream().noneMatch(n -> n.equals("QLOCAL.A1000143000104.BATCH.1")),
+        assertTrue(names.contains("QLOCAL.A1000143000104.BATCH.1"),
                 "应包含 QLOCAL.A1000143000104.BATCH.1");
-        assertFalse(names.stream().noneMatch(n -> n.equals("QSEND.A1000143000104.REAL.1")),
+        assertTrue(names.contains("QSEND.A1000143000104.REAL.1"),
                 "应包含 QSEND.A1000143000104.REAL.1");
-        assertFalse(names.stream().noneMatch(n -> n.equals("QSEND.A1000143000104.BATCH.1")),
+        assertTrue(names.contains("QSEND.A1000143000104.BATCH.1"),
                 "应包含 QSEND.A1000143000104.BATCH.1");
-        assertFalse(names.stream().noneMatch(n -> n.equals("QDEAD." + orgCode)),
+        assertTrue(names.contains("QDEAD." + orgCode),
                 "应包含 QDEAD.B1234567890123");
     }
 

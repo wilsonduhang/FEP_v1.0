@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,13 +56,11 @@ class TlqConnectivityServiceTest {
 
         ConnectivityTestResponse response = connectivityService.triggerTest("node1");
 
-        assertNotNull(response.getRecordId(), "recordId 不应为 null");
         assertEquals(32, response.getRecordId().length(), "recordId 应为 32 位 UUID");
         assertEquals("node1", response.getNodeId());
         assertEquals(ConnectivityTestResult.SUCCESS, response.getResult(),
                 "占位符实现应返回 SUCCESS");
         assertEquals(0, response.getRttMs(), "占位符 RTT 应为 0");
-        assertNotNull(response.getMessage(), "message 不应为 null");
         assertTrue(response.getMessage().toLowerCase().contains("placeholder"),
                 "message 应包含 'placeholder' 说明为占位符实现");
 

@@ -13,8 +13,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -89,8 +87,7 @@ public class TlqConnectivityController {
             @RequestParam(defaultValue = "0") final int page,
             @Parameter(description = "每页条数")
             @RequestParam(defaultValue = "20") final int size) {
-        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "testTime"));
-        Page<ConnectivityRecordResponse> result = connectivityService.listRecords(nodeId, pageable);
+        Page<ConnectivityRecordResponse> result = connectivityService.listRecords(nodeId, page + 1, size);
         return ApiResult.success(new PageResult<>(
                 result.getContent(),
                 result.getTotalElements(),

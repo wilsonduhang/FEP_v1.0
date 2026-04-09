@@ -14,7 +14,7 @@ import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,13 +104,16 @@ public class TlqConnectivityService {
      * 分页查询指定节点的连通性历史记录（测试时间倒序）。
      *
      * @param nodeId   目标节点 ID
-     * @param pageable 分页参数
+     * @param pageNum  页码（1-based）
+     * @param pageSize 每页大小
      * @return 分页历史记录
      * @throws FepBusinessException 节点不存在（BIZ_5015）
      */
     public Page<ConnectivityRecordResponse> listRecords(final String nodeId,
-                                                         final Pageable pageable) {
+                                                         final int pageNum,
+                                                         final int pageSize) {
         validateNodeExists(nodeId);
+        PageRequest pageable = PageRequest.of(pageNum - 1, pageSize);
         return recordRepository.findByNodeIdOrderByTestTimeDesc(nodeId, pageable)
                 .map(ConnectivityRecordResponse::fromEntity);
     }

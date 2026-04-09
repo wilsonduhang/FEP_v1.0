@@ -18,7 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -76,7 +75,7 @@ class TlqConnectivityControllerTest {
     void listRecords_returns200() throws Exception {
         Page<ConnectivityRecordResponse> page =
                 new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
-        when(connectivityService.listRecords(eq(NODE_ID), any())).thenReturn(page);
+        when(connectivityService.listRecords(eq(NODE_ID), eq(1), eq(20))).thenReturn(page);
 
         mockMvc.perform(get(BASE_URL + "/" + NODE_ID + "/records")
                         .param("page", "0")
