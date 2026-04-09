@@ -38,7 +38,7 @@ public enum TlqNodeStatus {
         return switch (this) {
             case UNKNOWN -> target == ONLINE;
             case ONLINE -> target == OFFLINE;
-            case OFFLINE -> target != OFFLINE && target != UNKNOWN;
+            case OFFLINE -> target == ONLINE;
         };
     }
 }

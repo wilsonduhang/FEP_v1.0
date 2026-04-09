@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * TLQ 队列配置管理 Service。
@@ -115,33 +116,21 @@ public class TlqQueueConfigService {
 
         // Per-channel LOCAL and REMOTE queues for each TlqChannelType
         for (TlqChannelType channelType : TlqChannelType.values()) {
-            String suffix = channelType == TlqChannelType.REALTIME ? "REAL" : "BATCH";
+            String suffix = channelTypeSuffix(channelType);
 
-            // QLOCAL.{orgCode}.{suffix}.1
-            addIfNotNull(result, saveGeneratedQueue(nodeId,
-                    "QLOCAL." + orgCode + "." + suffix + ".1",
-                    channelType, TlqQueueType.LOCAL));
-
-            // QREMOTE.{HNDEMP_CODE}.{suffix}.1
-            addIfNotNull(result, saveGeneratedQueue(nodeId,
-                    "QREMOTE." + HNDEMP_CODE + "." + suffix + ".1",
-                    channelType, TlqQueueType.REMOTE));
-
-            // QLOCAL.{HNDEMP_CODE}.{suffix}.1
-            addIfNotNull(result, saveGeneratedQueue(nodeId,
-                    "QLOCAL." + HNDEMP_CODE + "." + suffix + ".1",
-                    channelType, TlqQueueType.LOCAL));
-
-            // QSEND.{HNDEMP_CODE}.{suffix}.1
-            addIfNotNull(result, saveGeneratedQueue(nodeId,
-                    "QSEND." + HNDEMP_CODE + "." + suffix + ".1",
-                    channelType, TlqQueueType.SEND));
+            saveGeneratedQueue(nodeId, "QLOCAL." + orgCode + "." + suffix + ".1",
+                    channelType, TlqQueueType.LOCAL).ifPresent(result::add);
+            saveGeneratedQueue(nodeId, "QREMOTE." + HNDEMP_CODE + "." + suffix + ".1",
+                    channelType, TlqQueueType.REMOTE).ifPresent(result::add);
+            saveGeneratedQueue(nodeId, "QLOCAL." + HNDEMP_CODE + "." + suffix + ".1",
+                    channelType, TlqQueueType.LOCAL).ifPresent(result::add);
+            saveGeneratedQueue(nodeId, "QSEND." + HNDEMP_CODE + "." + suffix + ".1",
+                    channelType, TlqQueueType.SEND).ifPresent(result::add);
         }
 
         // Single DEAD queue (no channel suffix)
-        addIfNotNull(result, saveGeneratedQueue(nodeId,
-                "QDEAD." + orgCode,
-                TlqChannelType.REALTIME, TlqQueueType.DEAD));
+        saveGeneratedQueue(nodeId, "QDEAD." + orgCode,
+                TlqChannelType.REALTIME, TlqQueueType.DEAD).ifPresent(result::add);
 
         log.info("Batch generated {} TLQ queues for node={}", result.size(),
                 LogSanitizer.sanitize(nodeId));
@@ -172,10 +161,7 @@ public class TlqQueueConfigService {
      * @throws FepBusinessException 资源不存在（BIZ_5001）
      */
     public TlqQueueConfigResponse getById(final String queueId) {
-        TlqQueueConfig entity = queueConfigRepository.findById(queueId)
-                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
-                        "TLQ 队列不存在: " + queueId));
-        return TlqQueueConfigResponse.fromEntity(entity);
+        return TlqQueueConfigResponse.fromEntity(findQueueOrThrow(queueId));
     }
 
     /**
@@ -186,9 +172,7 @@ public class TlqQueueConfigService {
      */
     @Transactional
     public void deleteQueue(final String queueId) {
-        queueConfigRepository.findById(queueId)
-                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
-                        "TLQ 队列不存在: " + queueId));
+        findQueueOrThrow(queueId);
         queueConfigRepository.deleteById(queueId);
         log.info("Deleted TLQ queue config: id={}", LogSanitizer.sanitize(queueId));
     }
@@ -207,22 +191,22 @@ public class TlqQueueConfigService {
     }
 
     /**
-     * 生成并保存单条队列配置；若队列名已存在则记录 warn 日志并返回 null。
+     * 生成并保存单条队列配置；若队列名已存在则记录 warn 日志并返回空 Optional。
      *
      * @param nodeId      所属节点 ID
      * @param queueName   队列名称
      * @param channelType 通道类型
      * @param queueType   队列类型
-     * @return 保存成功则返回响应 DTO，已存在则返回 null
+     * @return 保存成功则返回含响应 DTO 的 Optional，已存在则返回 empty
      */
-    private TlqQueueConfigResponse saveGeneratedQueue(final String nodeId,
-                                                       final String queueName,
-                                                       final TlqChannelType channelType,
-                                                       final TlqQueueType queueType) {
+    private Optional<TlqQueueConfigResponse> saveGeneratedQueue(final String nodeId,
+                                                                  final String queueName,
+                                                                  final TlqChannelType channelType,
+                                                                  final TlqQueueType queueType) {
         if (queueConfigRepository.existsByQueueName(queueName)) {
             log.warn("Skipping existing queue during batch generation: name={}",
                     LogSanitizer.sanitize(queueName));
-            return null;
+            return Optional.empty();
         }
 
         TlqQueueConfig entity = new TlqQueueConfig();
@@ -233,20 +217,33 @@ public class TlqQueueConfigService {
         entity.setQueueType(queueType);
         entity.setQueueStatus(EnableDisableStatus.ENABLED);
 
-        TlqQueueConfig saved = queueConfigRepository.save(entity);
-        return TlqQueueConfigResponse.fromEntity(saved);
+        return Optional.of(TlqQueueConfigResponse.fromEntity(queueConfigRepository.save(entity)));
     }
 
     /**
-     * 将非 null 元素添加到列表的工具方法。
+     * 按 ID 查找队列配置，不存在则抛 BIZ_5001。
      *
-     * @param list 目标列表
-     * @param item 待添加元素（null 时跳过）
-     * @param <T>  元素类型
+     * @param queueId 队列 ID
+     * @return TlqQueueConfig 实体
+     * @throws FepBusinessException 队列不存在（BIZ_5001）
      */
-    private <T> void addIfNotNull(final List<T> list, final T item) {
-        if (item != null) {
-            list.add(item);
+    private TlqQueueConfig findQueueOrThrow(final String queueId) {
+        return queueConfigRepository.findById(queueId)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
+                        "TLQ 队列不存在: " + queueId));
+    }
+
+    /**
+     * 将 TlqChannelType 映射为队列名称中的通道后缀。
+     *
+     * @param channelType 通道类型
+     * @return 队列名称后缀字符串（REAL 或 BATCH）
+     */
+    private String channelTypeSuffix(final TlqChannelType channelType) {
+        switch (channelType) {
+            case REALTIME: return "REAL";
+            case BATCH:    return "BATCH";
+            default: throw new IllegalArgumentException("Unknown channel type: " + channelType);
         }
     }
 }
