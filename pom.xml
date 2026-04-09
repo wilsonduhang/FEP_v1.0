@@ -284,6 +284,24 @@
                         <exclude>**/dashboard/shortcut/dto/ShortcutReorderRequest$ReorderItem.class</exclude>
                         <!-- P6e 快捷入口 Controller: 集成测试覆盖在 Task 7 -->
                         <exclude>**/dashboard/shortcut/controller/DashboardShortcutController.class</exclude>
+                        <!-- P6f TLQ 节点/队列/连通性: Entity/DTO/enum getter/setter 纯 POJO，无业务逻辑 -->
+                        <exclude>**/tlq/node/domain/TlqNode.class</exclude>
+                        <exclude>**/tlq/node/domain/TlqNodeRole.class</exclude>
+                        <exclude>**/tlq/node/domain/TlqNodeStatus.class</exclude>
+                        <exclude>**/tlq/node/dto/TlqNodeCreateRequest.class</exclude>
+                        <exclude>**/tlq/node/dto/TlqNodeUpdateRequest.class</exclude>
+                        <exclude>**/tlq/node/dto/TlqNodeResponse.class</exclude>
+                        <exclude>**/tlq/queue/domain/TlqQueueConfig.class</exclude>
+                        <exclude>**/tlq/queue/domain/TlqChannelType.class</exclude>
+                        <exclude>**/tlq/queue/domain/TlqQueueType.class</exclude>
+                        <exclude>**/tlq/queue/dto/TlqQueueBatchGenerateRequest.class</exclude>
+                        <exclude>**/tlq/queue/dto/TlqQueueConfigCreateRequest.class</exclude>
+                        <exclude>**/tlq/queue/dto/TlqQueueConfigResponse.class</exclude>
+                        <exclude>**/tlq/connectivity/domain/TlqConnectivityRecord.class</exclude>
+                        <exclude>**/tlq/connectivity/domain/ConnectivityTestResult.class</exclude>
+                        <exclude>**/tlq/connectivity/dto/ConnectivityRecordResponse.class</exclude>
+                        <exclude>**/tlq/connectivity/dto/ConnectivityTestResponse.class</exclude>
+                        <exclude>**/tlq/connectivity/dto/ConnectivitySummaryResponse.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
