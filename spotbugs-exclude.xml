@@ -654,4 +654,14 @@
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
+
+    <!-- TLQ 队列配置 Service: queueId/nodeId 为 UUID，queueName 已通过 LogSanitizer.sanitize() 清理；
+         SpotBugs 无法跨方法追踪 LogSanitizer，故排除 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.tlq.queue.service.TlqQueueConfigService"/>
+            <Class name="com.puchain.fep.web.tlq.queue.domain.TlqQueueConfig"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
