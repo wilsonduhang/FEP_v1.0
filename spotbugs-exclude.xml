@@ -642,4 +642,16 @@
             <Bug pattern="EI_EXPOSE_REP2"/>
         </Or>
     </Match>
+
+    <!-- ===== P6f TLQ 节点管理 ===== -->
+
+    <!-- TLQ 节点 Service: nodeId 为 UUID（无 CRLF 风险），nodeName/status 已通过 LogSanitizer.sanitize() 清理；
+         SpotBugs 无法跨方法追踪 LogSanitizer，故排除 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.tlq.node.service.TlqNodeService"/>
+            <Class name="com.puchain.fep.web.tlq.node.domain.TlqNode"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
 </FindBugsFilter>
