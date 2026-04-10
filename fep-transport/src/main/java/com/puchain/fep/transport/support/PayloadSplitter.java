@@ -4,6 +4,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 /**
  * Large-message splitter for TLQ transport.
@@ -60,7 +61,8 @@ public final class PayloadSplitter {
      * @throws FepBusinessException if payload exceeds 24 KB (TRANS_7001)
      */
     public static SplitResult split(final String payload) {
-        if (payload == null || payload.isEmpty()) {
+        Objects.requireNonNull(payload, "payload must not be null");
+        if (payload.isEmpty()) {
             return new SplitResult("", null, null);
         }
 
@@ -98,17 +100,10 @@ public final class PayloadSplitter {
      * @return the reassembled payload
      */
     public static String reassemble(final String xmlstr, final String xmlstr1, final String xmlstr2) {
-        StringBuilder sb = new StringBuilder();
-        if (xmlstr != null) {
-            sb.append(xmlstr);
-        }
-        if (xmlstr1 != null) {
-            sb.append(xmlstr1);
-        }
-        if (xmlstr2 != null) {
-            sb.append(xmlstr2);
-        }
-        return sb.toString();
+        String s1 = xmlstr != null ? xmlstr : "";
+        String s2 = xmlstr1 != null ? xmlstr1 : "";
+        String s3 = xmlstr2 != null ? xmlstr2 : "";
+        return s1 + s2 + s3;
     }
 
     /**

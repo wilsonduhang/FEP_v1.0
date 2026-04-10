@@ -12,7 +12,7 @@ import java.util.Objects;
  * @author FEP Team
  * @since 1.0.0
  */
-public class QueueNameResolver {
+public final class QueueNameResolver {
 
     /** HNDEMP centre node code. */
     public static final String HNDEMP_CODE = "A1000143000104";
