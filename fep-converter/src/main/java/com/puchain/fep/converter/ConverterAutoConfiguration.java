@@ -1,15 +1,18 @@
 package com.puchain.fep.converter;
 
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * FEP Converter 模块自动配置。
+ * fep-converter 模块自动配置类。
  *
- * <p>P0 阶段为空骨架，后续将注册报文模板引擎、字段映射器等 Bean。</p>
+ * <p>通过 {@code @ComponentScan} 扫描 converter 包下所有 {@code @Component}/{@code @Service}，
+ * 使 XmlCodec、MessageSigner、MessageEncoder 等 bean 可被 Spring 上下文管理。</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @Configuration
+@ComponentScan(basePackages = "com.puchain.fep.converter")
 public class ConverterAutoConfiguration {
 }
