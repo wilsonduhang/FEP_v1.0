@@ -47,6 +47,9 @@ public enum FepErrorCode {
 
     // 通信层错误 7000-7999
     TRANS_7001("TRANS_7001", "报文大小超过 TLQ 最大限制 24KB"),
+    TRANS_7002("TRANS_7002", "TLQ 连接失败"),
+    TRANS_7003("TRANS_7003", "TLQ 消息发送失败"),
+    TRANS_7004("TRANS_7004", "节点状态不允许此操作"),
 
     // 系统错误 0500
     SYS_0500("SYS_0500", "系统内部错误"),
