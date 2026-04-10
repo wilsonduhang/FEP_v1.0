@@ -112,4 +112,33 @@ public enum MessageType {
     public Optional<String> responseMsgNo() {
         return Optional.ofNullable(responseMsgNo);
     }
+
+    /**
+     * 根据 HNDEMP 4 位报文号反查枚举值。
+     *
+     * <p>复杂度 O(1)：首次调用时构建静态 {@code Map<String, MessageType>} 缓存。
+     * 线程安全：enum + final static map 在类加载时完成初始化。</p>
+     *
+     * @param msgNo 4 位报文号（如 "1001"），null 或未知报文号返回 {@code Optional.empty()}
+     * @return 对应 MessageType 或 {@code Optional.empty()}
+     */
+    public static Optional<MessageType> byMsgNo(final String msgNo) {
+        if (msgNo == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(ByMsgNoHolder.INDEX.get(msgNo));
+    }
+
+    /** Lazy-initialized reverse index (initialization-on-demand holder pattern). */
+    private static final class ByMsgNoHolder {
+        private static final java.util.Map<String, MessageType> INDEX;
+
+        static {
+            java.util.Map<String, MessageType> map = new java.util.HashMap<>(64);
+            for (MessageType type : MessageType.values()) {
+                map.put(type.msgNo, type);
+            }
+            INDEX = java.util.Collections.unmodifiableMap(map);
+        }
+    }
 }

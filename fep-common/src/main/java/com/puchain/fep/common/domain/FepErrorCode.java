@@ -64,7 +64,15 @@ public enum FepErrorCode {
     CONV_8004("CONV_8004", "报文签名范围提取失败"),
     CONV_8005("CONV_8005", "报文压缩/解压失败"),
     CONV_8006("CONV_8006", "报文加密/解密失败"),
-    CONV_8007("CONV_8007", "报文 payload 超过 TLQ 24KB 上限");
+    CONV_8007("CONV_8007", "报文 payload 超过 TLQ 24KB 上限"),
+
+    // 业务处理层错误 8500-8599（P2 业务处理层）
+    PROC_8501("PROC_8501", "报文 XSD 结构校验失败"),
+    PROC_8502("PROC_8502", "报文处理状态非法转移"),
+    PROC_8503("PROC_8503", "XSD 资源加载失败"),
+    PROC_8504("PROC_8504", "不支持的报文类型"),
+    PROC_8505("PROC_8505", "同步处理流水线执行失败"),
+    PROC_8506("PROC_8506", "处理记录存储不可用");
 
     private final String code;
     private final String defaultMessage;
