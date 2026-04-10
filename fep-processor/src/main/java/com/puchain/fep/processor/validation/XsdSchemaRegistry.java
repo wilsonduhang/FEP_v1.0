@@ -62,6 +62,8 @@ public class XsdSchemaRegistry {
         this.factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
         } catch (SAXException e) {
             throw new FepBusinessException(FepErrorCode.PROC_8503,
                     "Failed to enable secure XML processing", e);
@@ -95,6 +97,12 @@ public class XsdSchemaRegistry {
                 throw new FepBusinessException(FepErrorCode.PROC_8503,
                         "XSD resource not found: " + path);
             }
+            // Re-assert XXE hardening at the call site so static analyzers (FindSecBugs
+            // XXE_SCHEMA_FACTORY) can recognize the protection via intra-procedural flow.
+            // Idempotent with the hardening already applied in the constructor.
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             Schema schema = factory.newSchema(new StreamSource(is, path));
             log.info("Loaded XSD schema for message type {}", code);
             return schema;
@@ -108,7 +116,7 @@ public class XsdSchemaRegistry {
      * Resolves {@code <xsd:include>} references (e.g. {@code ./Base.xsd} or
      * {@code ./DataType.xsd}) from the classpath {@code /xsd/} directory.
      */
-    private static final class ClasspathXsdResolver implements LSResourceResolver {
+    static final class ClasspathXsdResolver implements LSResourceResolver {
 
         @Override
         public LSInput resolveResource(final String type,
@@ -133,7 +141,7 @@ public class XsdSchemaRegistry {
      * Minimal {@link LSInput} backed by a classpath {@link InputStream}, used by
      * {@link ClasspathXsdResolver} to feed XSD includes into the JAXP parser.
      */
-    private static final class ClasspathLSInput implements LSInput {
+    static final class ClasspathLSInput implements LSInput {
         private InputStream byteStream;
         private String systemId;
         private String publicId;

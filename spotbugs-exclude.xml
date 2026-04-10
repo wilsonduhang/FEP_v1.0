@@ -842,4 +842,18 @@
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
 
+    <!-- XsdSchemaRegistry: JAXP 初始化失败抛业务异常，构造函数失败路径无
+         Finalizer 攻击面（SchemaFactory 无 finalize 方法） -->
+    <Match>
+        <Class name="com.puchain.fep.processor.validation.XsdSchemaRegistry"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- XsdSchemaRegistry: 日志 code 参数来源于 SUPPORTED_CODES 白名单
+         Set.of() 字面量，不可能含 CRLF -->
+    <Match>
+        <Class name="com.puchain.fep.processor.validation.XsdSchemaRegistry"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
 </FindBugsFilter>
