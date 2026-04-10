@@ -35,7 +35,7 @@ public enum NodeState {
      * @param target 目标状态，不能为 {@code null}
      * @return 允许转换返回 {@code true}
      */
-    public boolean canTransitionTo(NodeState target) {
+    public boolean canTransitionTo(final NodeState target) {
         if (target == ERROR) {
             return true;
         }

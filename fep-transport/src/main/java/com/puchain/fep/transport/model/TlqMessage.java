@@ -27,7 +27,7 @@ public class TlqMessage {
      * @param channel    通信通道，不能为 {@code null}
      * @throws NullPointerException 如果任意参数为 null
      */
-    public TlqMessage(String payload, TlqMessageAttributes attributes, TlqChannel channel) {
+    public TlqMessage(final String payload, final TlqMessageAttributes attributes, final TlqChannel channel) {
         this.payload = Objects.requireNonNull(payload, "payload must not be null");
         this.attributes = Objects.requireNonNull(attributes, "attributes must not be null");
         this.channel = Objects.requireNonNull(channel, "channel must not be null");

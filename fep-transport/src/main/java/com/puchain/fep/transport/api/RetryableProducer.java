@@ -20,7 +20,7 @@ import java.util.Objects;
  */
 public class RetryableProducer implements TlqProducer {
 
-    private static final Logger log = LoggerFactory.getLogger(RetryableProducer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RetryableProducer.class);
 
     private final TlqProducer delegate;
     private final DeadLetterHandler deadLetterHandler;
@@ -69,6 +69,7 @@ public class RetryableProducer implements TlqProducer {
      */
     @Override
     public SendResult send(final TlqMessage message) {
+        Objects.requireNonNull(message, "message must not be null");
         final String msgId = message.getMsgId();
         SendResult result = delegate.send(message);
         if (result.success()) {
@@ -78,10 +79,14 @@ public class RetryableProducer implements TlqProducer {
         String lastError = result.error();
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             final long delay = baseDelayMs * (1L << (attempt - 1));
-            log.warn("Send failed for msgId={}, retry {}/{} after {}ms: {}",
+            LOG.warn("Send failed for msgId={}, retry {}/{} after {}ms: {}",
                     msgId, attempt, maxRetries, delay, lastError);
 
-            sleep(delay);
+            if (!sleep(delay)) {
+                LOG.warn("Retry interrupted for msgId={}, routing to dead letter", msgId);
+                deadLetterHandler.handle(message, "interrupted");
+                return SendResult.fail(msgId, "interrupted");
+            }
 
             result = delegate.send(message);
             if (result.success()) {
@@ -90,7 +95,7 @@ public class RetryableProducer implements TlqProducer {
             lastError = result.error();
         }
 
-        log.error("Send exhausted all {} retries for msgId={}, routing to dead letter: {}",
+        LOG.error("Send exhausted all {} retries for msgId={}, routing to dead letter: {}",
                 maxRetries, msgId, lastError);
         deadLetterHandler.handle(message, lastError);
         return SendResult.fail(msgId, lastError);
@@ -100,13 +105,15 @@ public class RetryableProducer implements TlqProducer {
      * 执行退避等待，正确处理中断。
      *
      * @param delayMs 等待毫秒数
+     * @return {@code true} if sleep completed normally; {@code false} if interrupted
      */
-    private void sleep(final long delayMs) {
+    private boolean sleep(final long delayMs) {
         try {
             Thread.sleep(delayMs);
-        } catch (InterruptedException e) {
+            return true;
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("Retry sleep interrupted for RetryableProducer");
+            return false;
         }
     }
 }
