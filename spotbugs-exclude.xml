@@ -713,4 +713,70 @@
         <Class name="com.puchain.fep.web.tlq.node.domain.TlqNodeStatus"/>
         <Bug pattern="DB_DUPLICATE_SWITCH_CLAUSES"/>
     </Match>
+
+    <!-- ==================== fep-transport 模块 ==================== -->
+
+    <!-- RetryableProducer: 日志参数来自 TlqMessage.msgId（UUID）和 retry 计数，
+         均为受控值，无 CRLF 注入风险 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.api.RetryableProducer"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- RetryableProducer: 构造器中的 IllegalArgumentException 是参数校验，
+         对象不会被部分初始化后暴露给调用方 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.api.RetryableProducer"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- SendResult/TlqMessage/TlqMessageAttributes: toString() 中的日志参数为受控值 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.transport.api.SendResult"/>
+            <Class name="com.puchain.fep.transport.model.TlqMessage"/>
+            <Class name="com.puchain.fep.transport.model.TlqMessageAttributes"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- TlqMessage: attributes 是不可变值对象，暴露内部引用无风险 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.model.TlqMessage"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+
+    <!-- InMemoryDeadLetterHandler: 日志参数为 msgId（UUID），受控值 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.mock.InMemoryDeadLetterHandler"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- InMemoryNodeLifecycleManager: 日志参数为 nodeId（受控标识符） -->
+    <Match>
+        <Class name="com.puchain.fep.transport.mock.InMemoryNodeLifecycleManager"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- InMemoryTlqConsumer: 日志参数为 queue/msgId，受控值 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.mock.InMemoryTlqConsumer"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- InMemoryTlqConsumer/Producer: mock 实现，broker 引用是设计上需要共享的可变对象 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.transport.mock.InMemoryTlqConsumer"/>
+            <Class name="com.puchain.fep.transport.mock.InMemoryTlqProducer"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- InMemoryTlqProducer: 日志参数为 queue/msgId，受控值 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.mock.InMemoryTlqProducer"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
 </FindBugsFilter>
