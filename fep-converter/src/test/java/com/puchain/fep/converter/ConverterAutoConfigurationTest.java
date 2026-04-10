@@ -1,16 +1,24 @@
 package com.puchain.fep.converter;
 
+import com.puchain.fep.security.api.SignService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 
 /**
  * 验证 ConverterAutoConfiguration 能被 Spring 上下文正确加载。
+ *
+ * <p>由于 {@code MessageSigner}/{@code MessageVerifier} 依赖
+ * {@link SignService}（实现类位于 {@code fep-security-impl} 的 AI 禁入区域），
+ * 测试通过 {@link TestSignServiceConfig} 提供 Mockito mock 避免测试期依赖真实 SM2 实现。</p>
  */
-@SpringBootTest(classes = ConverterAutoConfiguration.class)
+@SpringBootTest(classes = {ConverterAutoConfiguration.class, ConverterAutoConfigurationTest.TestSignServiceConfig.class})
 class ConverterAutoConfigurationTest {
 
     @Autowired
@@ -24,5 +32,20 @@ class ConverterAutoConfigurationTest {
     @Test
     void converterAutoConfigurationBeanExists() {
         assertNotNull(context.getBean(ConverterAutoConfiguration.class));
+    }
+
+    /**
+     * 为测试上下文提供 {@link SignService} Mock bean。
+     *
+     * <p>生产环境由 {@code fep-security-impl} 模块注入真实 SM2 实现；
+     * 本 Mock 仅用于验证 converter 自动配置的 bean 拓扑装配，不执行任何加密运算。</p>
+     */
+    @Configuration
+    static class TestSignServiceConfig {
+
+        @Bean
+        SignService signService() {
+            return mock(SignService.class);
+        }
     }
 }
