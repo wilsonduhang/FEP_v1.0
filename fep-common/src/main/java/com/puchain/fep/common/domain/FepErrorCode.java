@@ -55,7 +55,16 @@ public enum FepErrorCode {
     SYS_0500("SYS_0500", "系统内部错误"),
 
     // 依赖服务错误 6000-6999
-    DEP_6001("DEP_6001", "依赖服务暂时不可用");
+    DEP_6001("DEP_6001", "依赖服务暂时不可用"),
+
+    // 报文转换层错误 8000-8999
+    CONV_8001("CONV_8001", "报文 XML 序列化失败"),
+    CONV_8002("CONV_8002", "报文 XML 反序列化失败"),
+    CONV_8003("CONV_8003", "报文类型未注册"),
+    CONV_8004("CONV_8004", "报文签名范围提取失败"),
+    CONV_8005("CONV_8005", "报文压缩/解压失败"),
+    CONV_8006("CONV_8006", "报文加密/解密失败"),
+    CONV_8007("CONV_8007", "报文 payload 超过 TLQ 24KB 上限");
 
     private final String code;
     private final String defaultMessage;
