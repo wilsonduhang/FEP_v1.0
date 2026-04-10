@@ -779,4 +779,67 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- ============================================================
+         fep-converter 模块（P1b）
+         ============================================================ -->
+
+    <!-- CfxMessage: JAXB 绑定对象，getter/setter 必须直接返回可变引用
+         才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约 -->
+    <Match>
+        <Class name="com.puchain.fep.converter.model.CfxMessage"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- DecodeResult: 管道结果值对象，message 字段设计上共享引用供下游使用 -->
+    <Match>
+        <Class name="com.puchain.fep.converter.pipeline.DecodeResult"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- MessageDecoder: Spring 构造注入的单例组件，commentCodec 引用
+         的共享是 Spring DI 标准模式 -->
+    <Match>
+        <Class name="com.puchain.fep.converter.pipeline.MessageDecoder"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- MessagePipelineOptions: 持有密钥 byte[] 引用，由调用方控制生命周期；
+         由 security-api 层负责密钥的安全清理，converter 不做防御性复制 -->
+    <Match>
+        <Class name="com.puchain.fep.converter.pipeline.MessagePipelineOptions"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- MessageSigner: 日志参数来自 CommonHead.msgNo (受控枚举) 与
+         byte[] 长度 (数值)，非用户输入无 CRLF 注入面 -->
+    <Match>
+        <Class name="com.puchain.fep.converter.sign.MessageSigner"/>
+        <Or>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- MessageVerifier: Spring 构造注入，commentCodec 引用共享是标准 DI -->
+    <Match>
+        <Class name="com.puchain.fep.converter.sign.MessageVerifier"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- XmlCodec: 构造器 JAXBContext 初始化失败是 fail-fast 设计，
+         抛出 IllegalStateException 阻止对象被使用，非 Finalizer 攻击面 -->
+    <Match>
+        <Class name="com.puchain.fep.converter.xml.XmlCodec"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
 </FindBugsFilter>
