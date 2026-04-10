@@ -37,15 +37,31 @@ public final class InMemoryMessageDeduplicator implements MessageDeduplicator {
      */
     public InMemoryMessageDeduplicator(final int maxCapacity) {
         this.seen = Collections.synchronizedMap(
-                new LinkedHashMap<String, Boolean>(maxCapacity, DEFAULT_LOAD_FACTOR, false) {
-                    private static final long serialVersionUID = 1L;
-
-                    @Override
-                    protected boolean removeEldestEntry(final Map.Entry<String, Boolean> eldest) {
-                        return size() > maxCapacity;
-                    }
-                }
+                new LruLinkedHashMap<>(maxCapacity, DEFAULT_LOAD_FACTOR)
         );
+    }
+
+    /**
+     * A {@link LinkedHashMap} subclass that evicts the eldest entry when capacity is exceeded.
+     *
+     * @param <K> the key type
+     * @param <V> the value type
+     */
+    private static final class LruLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
+
+        private static final long serialVersionUID = 1L;
+
+        private final int maxCapacity;
+
+        LruLinkedHashMap(final int maxCapacity, final float loadFactor) {
+            super(maxCapacity, loadFactor, false);
+            this.maxCapacity = maxCapacity;
+        }
+
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
+            return size() > maxCapacity;
+        }
     }
 
     /**
