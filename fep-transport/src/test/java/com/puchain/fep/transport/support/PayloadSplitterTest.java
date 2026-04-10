@@ -55,12 +55,11 @@ class PayloadSplitterTest {
         String payload = "C".repeat(20000);
         SplitResult result = PayloadSplitter.split(payload);
 
-        assertThat(result.xmlstr()).isNotNull();
-        assertThat(result.xmlstr1()).isNotNull();
-        assertThat(result.xmlstr2()).isNotNull();
         assertThat(result.xmlstr().getBytes(StandardCharsets.UTF_8).length)
                 .isLessThanOrEqualTo(PayloadSplitter.MAX_PART_BYTES);
         assertThat(result.xmlstr1().getBytes(StandardCharsets.UTF_8).length)
+                .isLessThanOrEqualTo(PayloadSplitter.MAX_PART_BYTES);
+        assertThat(result.xmlstr2().getBytes(StandardCharsets.UTF_8).length)
                 .isLessThanOrEqualTo(PayloadSplitter.MAX_PART_BYTES);
         assertThat(PayloadSplitter.reassemble(result.xmlstr(), result.xmlstr1(), result.xmlstr2()))
                 .isEqualTo(payload);
