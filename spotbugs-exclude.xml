@@ -856,4 +856,24 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- ValidationResult: errors 在紧凑规范构造器内使用 List.copyOf 做不可变
+         防御性复制；返回的集合是 JDK ImmutableCollections 实例，无法被外部修改。
+         SpotBugs 无法识别 record 紧凑构造器的语义，此为确认的误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.processor.validation.ValidationResult"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- XsdValidator: 日志参数 msgNoLabel 源自 MessageType 枚举字面量
+         （"1001"/"1004"/... 4 位数字常量），且已显式走 LogSanitizer.sanitize；
+         errors.get(0) 亦已显式 sanitize。FindSecBugs 未识别 LogSanitizer 作为
+         sanitizer，属确认的误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.processor.validation.XsdValidator"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
 </FindBugsFilter>
