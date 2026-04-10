@@ -42,6 +42,12 @@ public final class FileNameGenerator {
         Objects.requireNonNull(bizSubCategory, "bizSubCategory must not be null");
         Objects.requireNonNull(bizDate, "bizDate must not be null");
         Objects.requireNonNull(extension, "extension must not be null");
+        if (dailySeqNo < 0) {
+            throw new IllegalArgumentException("dailySeqNo must not be negative: " + dailySeqNo);
+        }
+        if (retransmitNo != null && retransmitNo < 0) {
+            throw new IllegalArgumentException("retransmitNo must not be negative: " + retransmitNo);
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append(institutionCode)

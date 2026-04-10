@@ -3,6 +3,7 @@ package com.puchain.fep.transport.support;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * In-memory LRU implementation of {@link MessageDeduplicator}.
@@ -68,9 +69,12 @@ public final class InMemoryMessageDeduplicator implements MessageDeduplicator {
      * {@inheritDoc}
      *
      * <p>This method is thread-safe.</p>
+     *
+     * @throws NullPointerException if msgId is null
      */
     @Override
     public boolean isDuplicate(final String msgId) {
+        Objects.requireNonNull(msgId, "msgId must not be null");
         return seen.putIfAbsent(msgId, PRESENT) != null;
     }
 }
