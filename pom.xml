@@ -49,6 +49,13 @@
 
         <!-- Pitest 默认在每个模块跳过，需要的模块显式开启 -->
         <pitest.skip>true</pitest.skip>
+
+        <!-- JAXB 4.x (Jakarta) -->
+        <jaxb-api.version>4.0.2</jaxb-api.version>
+        <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
+
+        <!-- ArchUnit 层次测试 -->
+        <archunit.version>1.3.0</archunit.version>
     </properties>
 
     <dependencyManagement>
@@ -88,6 +95,25 @@
                 <groupId>com.puchain</groupId>
                 <artifactId>fep-collector</artifactId>
                 <version>${fep.version}</version>
+            </dependency>
+
+            <!-- JAXB 4.x (Jakarta) -->
+            <dependency>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
+                <version>${jaxb-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>${jaxb-runtime.version}</version>
+            </dependency>
+
+            <!-- ArchUnit 层次测试 -->
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

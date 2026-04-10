@@ -2,6 +2,8 @@ package com.puchain.fep.converter.exception;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 
+import java.util.Objects;
+
 /**
  * 报文转换层业务异常。封装 {@link FepErrorCode} 和上下文信息。
  *
@@ -25,8 +27,7 @@ public class MessageConverterException extends RuntimeException {
      * @param detail 上下文描述（禁止包含敏感数据）
      */
     public MessageConverterException(final FepErrorCode code, final String detail) {
-        super(code.getCode() + ": " + detail);
-        this.errorCode = code;
+        this(code, detail, null);
     }
 
     /**
@@ -37,8 +38,13 @@ public class MessageConverterException extends RuntimeException {
      * @param cause  根因异常
      */
     public MessageConverterException(final FepErrorCode code, final String detail, final Throwable cause) {
-        super(code.getCode() + ": " + detail, cause);
+        super(formatMessage(code, detail), cause);
         this.errorCode = code;
+    }
+
+    private static String formatMessage(final FepErrorCode code, final String detail) {
+        Objects.requireNonNull(code, "errorCode must not be null");
+        return code.getCode() + ": " + detail;
     }
 
     /**

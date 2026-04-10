@@ -2,7 +2,6 @@ package com.puchain.fep.common.domain;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,7 +47,5 @@ class FepErrorCodeTest {
             }
         }
         assertThat(actual).containsExactlyInAnyOrder(expected);
-        assertThat(Arrays.asList(expected)).allSatisfy(code ->
-                assertThat(actual).contains(code));
     }
 }
