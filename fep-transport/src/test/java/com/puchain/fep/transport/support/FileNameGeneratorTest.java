@@ -35,6 +35,27 @@ class FileNameGeneratorTest {
     }
 
     @Test
+    void generate_seqNoZero_shouldZeroPadToEightDigits() {
+        String result = FileNameGenerator.generate("B1234567890123", "GYL", "HX01", "20260410", 0, null, "xml");
+
+        assertThat(result).isEqualTo("B1234567890123_GYL_HX01_20260410_00000000.xml");
+    }
+
+    @Test
+    void generate_retransmitNoZero_shouldIncludeZeroPaddedSuffix() {
+        String result = FileNameGenerator.generate("B1234567890123", "GYL", "HX01", "20260410", 1, 0, "xml");
+
+        assertThat(result).isEqualTo("B1234567890123_GYL_HX01_20260410_00000001_0000.xml");
+    }
+
+    @Test
+    void generate_maxRetransmitNo_shouldZeroPadToFourDigits() {
+        String result = FileNameGenerator.generate("B1234567890123", "GYL", "HX01", "20260410", 1, 9999, "xml");
+
+        assertThat(result).isEqualTo("B1234567890123_GYL_HX01_20260410_00000001_9999.xml");
+    }
+
+    @Test
     void generate_nullInstitutionCode_shouldThrowNpe() {
         assertThatThrownBy(() -> FileNameGenerator.generate(null, "GYL", "HX01", "20260410", 1, null, "xml"))
                 .isInstanceOf(NullPointerException.class);

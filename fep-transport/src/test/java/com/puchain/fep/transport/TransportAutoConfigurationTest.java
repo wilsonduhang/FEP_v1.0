@@ -60,14 +60,28 @@ class TransportAutoConfigurationTest {
     private TransportProperties properties;
 
     @Test
-    void allBeans_shouldBeAvailableInDevProfile() {
-        assertThat(producer).isNotNull();
-        assertThat(consumer).isNotNull();
-        assertThat(connectionFactory).isNotNull();
-        assertThat(nodeLifecycleManager).isNotNull();
-        assertThat(deadLetterHandler).isNotNull();
+    void allBeans_shouldBeCorrectTypesInDevProfile() {
+        assertThat(producer).isInstanceOf(InMemoryTlqProducer.class);
+        assertThat(consumer).isInstanceOf(InMemoryTlqConsumer.class);
+        assertThat(connectionFactory).isInstanceOf(InMemoryTlqConnectionFactory.class);
+        assertThat(nodeLifecycleManager).isInstanceOf(InMemoryNodeLifecycleManager.class);
+        assertThat(deadLetterHandler).isInstanceOf(InMemoryDeadLetterHandler.class);
+    }
+
+    @Test
+    void messageDeduplicator_shouldHaveConfiguredCapacity() {
         assertThat(messageDeduplicator).isNotNull();
+        // dev profile uses default dedupCapacity=10000 — verifies binding wired correctly
+        assertThat(properties.getDedupCapacity()).isEqualTo(10000);
+    }
+
+    @Test
+    void queueNameResolver_shouldResolveWithConfiguredInstitutionCode() {
         assertThat(queueNameResolver).isNotNull();
+        // resolver must use the institution code from properties, not an empty/null value
+        final String institutionCode = properties.getInstitutionCode();
+        assertThat(institutionCode).isNotBlank();
+        assertThat(queueNameResolver.resolveQcu()).contains(institutionCode);
     }
 
     @Test
