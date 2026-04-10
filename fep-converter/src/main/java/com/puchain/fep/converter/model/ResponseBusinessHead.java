@@ -5,6 +5,8 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
+import java.util.regex.Pattern;
+
 /**
  * 回执类业务头。参见 PRD v1.3 §3.2.4。
  *
@@ -21,6 +23,10 @@ public class ResponseBusinessHead extends RequestBusinessHead {
 
     private static final int RESULT_LENGTH = 5;
     private static final int ADD_WORD_MAX_LENGTH = 200;
+
+    /** 5 位数字业务处理结果码校验模式。 */
+    private static final Pattern RESULT_PATTERN =
+            Pattern.compile("\\d{" + RESULT_LENGTH + "}");
 
     private String result;
     private String addWord;
@@ -41,7 +47,7 @@ public class ResponseBusinessHead extends RequestBusinessHead {
      * @param v 5 位数字结果码
      */
     public void setResult(final String v) {
-        if (v != null && !v.matches("\\d{" + RESULT_LENGTH + "}")) {
+        if (v != null && !RESULT_PATTERN.matcher(v).matches()) {
             throw new IllegalArgumentException("Result 必须为 5 位数字");
         }
         this.result = v;
