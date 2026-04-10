@@ -36,6 +36,12 @@ public class ZipBase64Compressor {
     private static final int BUFFER_SIZE = 4096;
 
     /**
+     * 解压输出缓冲区初始容量倍数。Deflate 压缩比一般 2~5 倍，
+     * 4 倍作为启发式初值避免 ByteArrayOutputStream 多次扩容。
+     */
+    private static final int DECOMPRESS_CAPACITY_MULTIPLIER = 4;
+
+    /**
      * 对输入字符串执行 Deflate 压缩后 Base64 编码。
      *
      * @param input 待压缩的 UTF-8 字符串，不得为 {@code null}
@@ -47,7 +53,7 @@ public class ZipBase64Compressor {
         final Deflater deflater = new Deflater();
         deflater.setInput(src);
         deflater.finish();
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream(src.length)) {
             final byte[] buf = new byte[BUFFER_SIZE];
             while (!deflater.finished()) {
                 final int n = deflater.deflate(buf);
@@ -78,7 +84,8 @@ public class ZipBase64Compressor {
         }
         final Inflater inflater = new Inflater();
         inflater.setInput(compressed);
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (ByteArrayOutputStream out =
+                     new ByteArrayOutputStream(compressed.length * DECOMPRESS_CAPACITY_MULTIPLIER)) {
             final byte[] buf = new byte[BUFFER_SIZE];
             while (!inflater.finished()) {
                 final int n = inflater.inflate(buf);
