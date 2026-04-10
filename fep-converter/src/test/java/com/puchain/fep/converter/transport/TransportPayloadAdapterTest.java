@@ -10,13 +10,12 @@ import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
 import com.puchain.fep.transport.model.TlqMessageAttributes;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -78,24 +77,32 @@ class TransportPayloadAdapterTest {
     }
 
     @Test
-    void fromTlqMessage_shouldOverrideOptionsFromAttributes() {
+    void fromTlqMessage_shouldOverrideOptionsFromAttributesWithoutMutatingCaller() {
         TlqMessageAttributes attrs = TlqMessageAttributes.forBatch("20260410120000000001");
         attrs.setZip(true);
         attrs.setEncrypt(true);
         TlqMessage tlq = new TlqMessage("PAYLOAD", attrs, TlqChannel.BATCH_SEND);
 
-        MessagePipelineOptions opts = new MessagePipelineOptions();
-        opts.setZip(false);
-        opts.setEncrypt(false);
+        MessagePipelineOptions callerOpts = new MessagePipelineOptions();
+        callerOpts.setZip(false);
+        callerOpts.setEncrypt(false);
 
+        ArgumentCaptor<MessagePipelineOptions> captor =
+                ArgumentCaptor.forClass(MessagePipelineOptions.class);
         DecodeResult fakeResult = mock(DecodeResult.class);
-        when(decoder.decode(eq("PAYLOAD"), any(MessagePipelineOptions.class))).thenReturn(fakeResult);
+        when(decoder.decode(eq("PAYLOAD"), captor.capture())).thenReturn(fakeResult);
 
-        DecodeResult r = adapter.fromTlqMessage(tlq, opts);
+        DecodeResult r = adapter.fromTlqMessage(tlq, callerOpts);
 
-        assertThat(opts.isZip()).isTrue();
-        assertThat(opts.isEncrypt()).isTrue();
-        verify(decoder).decode("PAYLOAD", opts);
+        // 调用方 opts 未被修改（无副作用）
+        assertThat(callerOpts.isZip()).isFalse();
+        assertThat(callerOpts.isEncrypt()).isFalse();
+
+        // decoder 收到的是不同实例（副本），且 zip/encrypt 被覆盖为 attrs 的值
+        MessagePipelineOptions passed = captor.getValue();
+        assertThat(passed).isNotSameAs(callerOpts);
+        assertThat(passed.isZip()).isTrue();
+        assertThat(passed.isEncrypt()).isTrue();
         assertThat(r).isSameAs(fakeResult);
     }
 }
