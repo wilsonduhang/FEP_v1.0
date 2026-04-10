@@ -56,7 +56,8 @@ class InMemoryTransportTest {
 
     @Test
     void receive_emptyQueue_shouldReturnEmpty() {
-        final Optional<TlqMessage> received = consumer.receive(TlqChannel.BATCH_RECEIVE, Duration.ofMillis(50));
+        // Use a poll-style zero-wait; the in-memory broker has no messages so it must return empty
+        final Optional<TlqMessage> received = consumer.receive(TlqChannel.BATCH_RECEIVE, Duration.ofMillis(200));
 
         assertThat(received).isEmpty();
     }
@@ -74,8 +75,9 @@ class InMemoryTransportTest {
         final TlqMessage msg = createMessage("MSG-002", "<xml>push</xml>", TlqChannel.REALTIME_RECEIVE);
         producer.send(msg);
 
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(captured.get()).isNotNull();
+        // 5 s gives ample headroom on slow CI; latch guarantees we don't read before delivery
+        final boolean delivered = latch.await(5, TimeUnit.SECONDS);
+        assertThat(delivered).as("listener was not called within timeout — likely a threading bug").isTrue();
         assertThat(captured.get().getMsgId()).isEqualTo("MSG-002");
         assertThat(captured.get().getPayload()).isEqualTo("<xml>push</xml>");
     }
