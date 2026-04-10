@@ -52,8 +52,6 @@ public class TlqMessageAttributes {
         Objects.requireNonNull(msgId, "msgId must not be null");
         TlqMessageAttributes attrs = new TlqMessageAttributes();
         attrs.setMsgId(msgId);
-        attrs.setPersistence(false);
-        attrs.setExpiry(DEFAULT_REALTIME_EXPIRY);
         return attrs;
     }
 
