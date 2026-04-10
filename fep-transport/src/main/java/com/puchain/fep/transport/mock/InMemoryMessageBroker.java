@@ -33,7 +33,11 @@ public class InMemoryMessageBroker {
     public void publish(final TlqMessage message) {
         Objects.requireNonNull(message, "message must not be null");
         final TlqChannel channel = message.getChannel();
-        queueFor(channel).add(message);
+        if (!queueFor(channel).offer(message)) {
+            // LinkedBlockingQueue is unbounded; this branch is unreachable in practice
+            // but must be handled to satisfy SpotBugs RV_RETURN_VALUE_IGNORED
+            throw new IllegalStateException("Failed to enqueue message: " + message.getMsgId());
+        }
 
         final MessageListener listener = listeners.get(channel);
         if (listener != null) {
