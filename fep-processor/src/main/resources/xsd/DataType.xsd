@@ -1,0 +1,1204 @@
+<!-- edited with XMLSpy v2013 (http://www.altova.com) by  () -->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<!-- 基础数据类型定义 -->
+	<!-- 字符串 -->
+	<xsd:simpleType name="String">
+		<xsd:annotation>
+			<xsd:documentation>字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<!-- 数字字符串 -->
+	<xsd:simpleType name="Number">
+		<xsd:annotation>
+			<xsd:documentation>数字字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 英文字符串 -->
+	<xsd:simpleType name="Word">
+		<xsd:annotation>
+			<xsd:documentation>数字字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[A-Za-z]*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 标识字符串 -->
+	<xsd:simpleType name="Token">
+		<xsd:annotation>
+			<xsd:documentation>标识字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[A-Za-z0-9]*"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 文本 -->
+	<xsd:simpleType name="Text">
+		<xsd:annotation>
+			<xsd:documentation>文本</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<!-- 金额 -->
+	<xsd:simpleType name="Currency">
+		<xsd:annotation>
+			<xsd:documentation>金额</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="\-?[1-9][0-9]{0,14}\.[0-9]{2}|\-?0\.[1-9][0-9]|\-?0\.[0-9][1-9]|0\.00"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 整数 -->
+	<xsd:simpleType name="Integer">
+		<xsd:annotation>
+			<xsd:documentation>整数</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:integer"/>
+	</xsd:simpleType>
+	<!-- 实数 -->
+	<xsd:simpleType name="Decimal">
+		<xsd:annotation>
+			<xsd:documentation>实数</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:double"/>
+	</xsd:simpleType>
+	<!-- 日期 -->
+	<xsd:simpleType name="Date">
+		<xsd:annotation>
+			<xsd:documentation>日期</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]{4}(0[1-9]|1[0-2])([0-2][1-9]|[12][0-9]|3[01])"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 时间 -->
+	<xsd:simpleType name="Time">
+		<xsd:annotation>
+			<xsd:documentation>时间</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]{2}[0-5][0-9][0-5][0-9]"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 日期时间 -->
+	<xsd:simpleType name="DateTime">
+		<xsd:annotation>
+			<xsd:documentation>日期时间</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]{4}(0[1-9]|1[0-2])([0-2][1-9]|[12][0-9]|3[01])[0-9]{2}[0-5][0-9][0-5][0-9]"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 十六进制字符串 -->
+	<xsd:simpleType name="Hex">
+		<xsd:annotation>
+			<xsd:documentation>十六进制字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9A-Fa-f]+"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- Base64字符串 -->
+	<xsd:simpleType name="Base64">
+		<xsd:annotation>
+			<xsd:documentation>Base64字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string"/>
+	</xsd:simpleType>
+	<!-- 布尔值 -->
+	<xsd:simpleType name="Boolean">
+		<xsd:annotation>
+			<xsd:documentation>布尔值</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="1"/>
+			<xsd:enumeration value="0"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 简单数据类型定义 -->
+	<!-- 1位数字字符串 -->
+	<xsd:simpleType name="Number1">
+		<xsd:annotation>
+			<xsd:documentation>1位数字字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:length value="1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 2位数字字符串 -->
+	<xsd:simpleType name="Number2">
+		<xsd:annotation>
+			<xsd:documentation>2位数字字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:length value="2"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 3位数字字符串 -->
+	<xsd:simpleType name="Number3">
+		<xsd:annotation>
+			<xsd:documentation>3位数字字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:length value="3"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 4位数字字符串 -->
+	<xsd:simpleType name="Number4">
+		<xsd:annotation>
+			<xsd:documentation>4位数字字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:length value="4"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 1-2位数字字符串 -->
+	<xsd:simpleType name="Number1to2">
+		<xsd:annotation>
+			<xsd:documentation>1-2位数字字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="2"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 0-10位数字字符串 -->
+	<xsd:simpleType name="Number0to10">
+		<xsd:annotation>
+			<xsd:documentation>0-10位数字字符串</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:minLength value="0"/>
+			<xsd:maxLength value="10"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 0-12字符 -->
+	<xsd:simpleType name="String0to12">
+		<xsd:restriction base="String">
+			<xsd:minLength value="0"/>
+			<xsd:maxLength value="12"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 2-10字符 -->
+	<xsd:simpleType name="String2to10">
+		<xsd:restriction base="String">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="10"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 8-20字符 -->
+	<xsd:simpleType name="String8to20">
+		<xsd:restriction base="String">
+			<xsd:minLength value="8"/>
+			<xsd:maxLength value="20"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 4固定字符 -->
+	<xsd:simpleType name="String4">
+		<xsd:restriction base="String">
+			<xsd:length value="4"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 6固定字符 -->
+	<xsd:simpleType name="String6">
+		<xsd:restriction base="String">
+			<xsd:length value="6"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 10固定字符 -->
+	<xsd:simpleType name="String10">
+		<xsd:restriction base="String">
+			<xsd:length value="10"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 2固定字符 -->
+	<xsd:simpleType name="String2">
+		<xsd:restriction base="String">
+			<xsd:length value="2"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 6-50字符 -->
+	<xsd:simpleType name="String6to50">
+		<xsd:restriction base="String">
+			<xsd:minLength value="6"/>
+			<xsd:maxLength value="50"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 10字符 -->
+	<xsd:simpleType name="String0to10">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="10"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 10-30字符 -->
+	<xsd:simpleType name="String10to30">
+		<xsd:restriction base="String">
+			<xsd:minLength value="10"/>
+			<xsd:maxLength value="30"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 20字符 -->
+	<xsd:simpleType name="String0to20">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="20"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 30字符 -->
+	<xsd:simpleType name="String0to30">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="30"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 8-30字符 -->
+	<xsd:simpleType name="String8to30">
+		<xsd:restriction base="String">
+			<xsd:minLength value="8"/>
+			<xsd:maxLength value="30"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 40字符 -->
+	<xsd:simpleType name="String0to40">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="40"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 50字符 -->
+	<xsd:simpleType name="String0to50">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="50"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 100字符 -->
+	<xsd:simpleType name="String0to100">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="100"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 200字符 -->
+	<xsd:simpleType name="String0to200">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="200"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 300字符 -->
+	<xsd:simpleType name="String0to300">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="300"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 1000字符 -->
+	<xsd:simpleType name="String0to1000">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="1000"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 2000字符 -->
+	<xsd:simpleType name="String0to2000">
+		<xsd:restriction base="String">
+			<xsd:maxLength value="2000"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 2到10短文本 -->
+	<xsd:simpleType name="Text2to10">
+		<xsd:restriction base="Text">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="10"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 100文本 -->
+	<xsd:simpleType name="Text0to100">
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="100"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 200文本 -->
+	<xsd:simpleType name="Text0to200">
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="200"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 500文本 -->
+	<xsd:simpleType name="Text0to500">
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="500"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 业务数据类型定义 -->
+	<!-- 金融机构代码 -->
+	<xsd:simpleType name="OrgCode">
+		<xsd:annotation>
+			<xsd:documentation>金融机构代码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:length value="14"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 版本号 -->
+	<xsd:simpleType name="Version">
+		<xsd:annotation>
+			<xsd:documentation>版本号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:minLength value="3"/>
+			<xsd:maxLength value="8"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 节点代码 -->
+	<xsd:simpleType name="NodeCode">
+		<xsd:annotation>
+			<xsd:documentation>节点代码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:length value="14"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 应用代码 -->
+	<xsd:simpleType name="App">
+		<xsd:annotation>
+			<xsd:documentation>应用代码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:minLength value="4"/>
+			<xsd:maxLength value="20"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 报文号 -->
+	<xsd:simpleType name="MsgNo">
+		<xsd:annotation>
+			<xsd:documentation>报文号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:length value="4"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 报文标识号 -->
+	<xsd:simpleType name="MsgId">
+		<xsd:annotation>
+			<xsd:documentation>报文标识号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:length value="20"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 文件名 -->
+	<xsd:simpleType name="MsgFileName">
+		<xsd:annotation>
+			<xsd:documentation>文件名</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="128"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 文件内容HASH -->
+	<xsd:simpleType name="FileContentHash">
+		<xsd:annotation>
+			<xsd:documentation>文件内容HASH</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Hex">
+			<xsd:maxLength value="64"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 文件大小 -->
+	<xsd:simpleType name="FileSize">
+		<xsd:annotation>
+			<xsd:documentation>文件大小</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="20"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 保留字段 -->
+	<xsd:simpleType name="Reserve">
+		<xsd:annotation>
+			<xsd:documentation>保留字段</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:maxLength value="30"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 当日业务流水号 -->
+	<xsd:simpleType name="TransitionNo">
+		<xsd:annotation>
+			<xsd:documentation>当日业务流水号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:length value="8"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 业务处理结果 -->
+	<xsd:simpleType name="Result">
+		<xsd:annotation>
+			<xsd:documentation>业务处理结果</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:length value="5"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 业务处理结果附言 -->
+	<xsd:simpleType name="AddWord">
+		<xsd:annotation>
+			<xsd:documentation>业务处理结果附言</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="200"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 企业名称 -->
+	<xsd:simpleType name="CompanyName">
+		<xsd:annotation>
+			<xsd:documentation>企业名称</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="100"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 企业代码 -->
+	<xsd:simpleType name="CompanyCode">
+		<xsd:annotation>
+			<xsd:documentation>企业代码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:length value="18"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 业务大类 -->
+	<xsd:simpleType name="MainClass">
+		<xsd:annotation>
+			<xsd:documentation>业务大类</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Token">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="16"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 业务小类 -->
+	<xsd:simpleType name="SecondClass">
+		<xsd:annotation>
+			<xsd:documentation>业务小类</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Token">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="16"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 授权书编号 -->
+	<xsd:simpleType name="AuthNo">
+		<xsd:annotation>
+			<xsd:documentation>授权书编号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:maxLength value="80"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 查询参数 -->
+	<xsd:simpleType name="Parameters">
+		<xsd:annotation>
+			<xsd:documentation>参数</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="2000"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 报送周期 -->
+	<xsd:simpleType name="Period">
+		<xsd:annotation>
+			<xsd:documentation>报送周期</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="2"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 报送类型 -->
+	<xsd:simpleType name="Type">
+		<xsd:annotation>
+			<xsd:documentation>报送类型</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="2"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 项ID -->
+	<xsd:simpleType name="ItemId">
+		<xsd:annotation>
+			<xsd:documentation>项ID</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="2"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 文件报送状态 -->
+	<xsd:simpleType name="TransferStatus">
+		<xsd:annotation>
+			<xsd:documentation>文件报送状态</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="2"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 节点状态 -->
+	<xsd:simpleType name="NodeStatus">
+		<xsd:annotation>
+			<xsd:documentation>节点状态</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Number">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="2"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 业务发起方内部代码 -->
+	<xsd:simpleType name="SrcOrgCode">
+		<xsd:annotation>
+			<xsd:documentation>业务发起方内部代码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="14"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 业务接收方内部代码 -->
+	<xsd:simpleType name="DesOrgCode">
+		<xsd:annotation>
+			<xsd:documentation>业务接收方内部代码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="14"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 数据内容 -->
+	<xsd:simpleType name="Content">
+		<xsd:annotation>
+			<xsd:documentation>数据内容</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text"/>
+	</xsd:simpleType>
+	<!-- 业务分类码 -->
+	<xsd:simpleType name="BusinessNo">
+		<xsd:annotation>
+			<xsd:documentation>业务分类码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:minLength value="1"/>
+			<xsd:maxLength value="20"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 密码 -->
+	<xsd:simpleType name="Password">
+		<xsd:annotation>
+			<xsd:documentation>密码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:minLength value="8"/>
+			<xsd:maxLength value="32"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 调试信息 -->
+	<xsd:simpleType name="Debug">
+		<xsd:annotation>
+			<xsd:documentation>调试信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="1000"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 供应链新增2025 -->
+	<!-- 流水号 -->
+	<xsd:simpleType name="SerialNo">
+		<xsd:annotation>
+			<xsd:documentation>流水号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:length value="30"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 清算流水号 -->
+	<xsd:simpleType name="qsSerialNo">
+		<xsd:annotation>
+			<xsd:documentation>清算流水号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:maxLength value="32"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 合同编号 -->
+	<xsd:simpleType name="htSerialNo">
+		<xsd:annotation>
+			<xsd:documentation>合同编号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:minLength value="6"/>
+			<xsd:maxLength value="50"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 企业名称 -->
+	<xsd:simpleType name="qyName">
+		<xsd:annotation>
+			<xsd:documentation>企业名称</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="50"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 企业社会信用代码 -->
+	<xsd:simpleType name="qyCode">
+		<xsd:annotation>
+			<xsd:documentation>企业社会信用代码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:length value="18"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 企业融资中征码 -->
+	<xsd:simpleType name="qyrzzzCode">
+		<xsd:annotation>
+			<xsd:documentation>企业融资中征码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="18"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 发票代码 -->
+	<xsd:simpleType name="fpCode">
+		<xsd:annotation>
+			<xsd:documentation>发票代码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="String">
+			<xsd:maxLength value="100"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 文件名 -->
+	<xsd:simpleType name="FileName">
+		<xsd:restriction base="Text">
+			<xsd:minLength value="5"/>
+			<xsd:maxLength value="100"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 账户名 -->
+	<xsd:simpleType name="AccName">
+		<xsd:restriction base="Text">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="50"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 账号 -->
+	<xsd:simpleType name="AccNumber">
+		<xsd:restriction base="Number">
+			<xsd:minLength value="10"/>
+			<xsd:maxLength value="30"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 开户银行名称 -->
+	<xsd:simpleType name="AccBankName">
+		<xsd:restriction base="Text">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="50"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 开户银行行号 -->
+	<xsd:simpleType name="AccBankCode">
+		<xsd:restriction base="Number">
+			<xsd:length value="12"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="rzqyPlatCode">
+		<xsd:annotation>
+			<xsd:documentation>融资企业平台编码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:minLength value="10"/>
+			<xsd:maxLength value="30"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="qyBankCusCode">
+		<xsd:annotation>
+			<xsd:documentation>融资企业银行客户编码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="50"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="PersonName">
+		<xsd:annotation>
+			<xsd:documentation>姓名</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:minLength value="2"/>
+			<xsd:maxLength value="20"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="PersonPhone">
+		<xsd:annotation>
+			<xsd:documentation>联系电话</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="20"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 身份证号码 -->
+	<xsd:simpleType name="CertNumber">
+		<xsd:annotation>
+			<xsd:documentation>身份证号码证件号码</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="30"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 利率 保留小数点后四位 0.0001 -->
+	<xsd:simpleType name="Rate">
+		<xsd:annotation>
+			<xsd:documentation>利率</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="[0-9]{1,2}\.[0-9]{4}"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 电子凭证编号 -->
+	<xsd:simpleType name="pzNo">
+		<xsd:annotation>
+			<xsd:documentation>电子凭证编号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Text">
+			<xsd:maxLength value="100"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- PKCS#7数字签名 -->
+	<xsd:simpleType name="PK7Sign">
+		<xsd:annotation>
+			<xsd:documentation>电子凭证编号</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="Base64">
+			<xsd:maxLength value="2000"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- 业务结构体类型定义 -->
+	<!-- 企业账户信息 -->
+	<xsd:complexType name="qyAccInfo">
+		<xsd:annotation>
+			<xsd:documentation>企业账户信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="AccName" type="AccName">
+				<xsd:annotation>
+					<xsd:documentation>账户名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AccNumber" type="AccNumber">
+				<xsd:annotation>
+					<xsd:documentation>账号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AccBankName" type="AccBankName">
+				<xsd:annotation>
+					<xsd:documentation>开户银行名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AccBankCode" type="AccBankCode">
+				<xsd:annotation>
+					<xsd:documentation>开户银行行号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 银行查询返回融资风险比例参考 -->
+	<xsd:complexType name="RiskRate">
+		<xsd:annotation>
+			<xsd:documentation>银行查询返回融资风险比例参考</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="Rate" type="Rate">
+				<xsd:annotation>
+					<xsd:documentation>融资风险比例参考</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RateMemo" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资风险比例参考说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 个人信息相关 -->
+	<xsd:complexType name="PersonInfo">
+		<xsd:annotation>
+			<xsd:documentation>公民个人信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="Name" type="PersonName">
+				<xsd:annotation>
+					<xsd:documentation>姓名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CertType" type="Number1" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>证件类型</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CertNumber" type="CertNumber" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>证件号码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CertStartDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发证日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CertEndDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>有效日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Phone" type="PersonPhone">
+				<xsd:annotation>
+					<xsd:documentation>联系电话</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PostAddr" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>通讯地址</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MailAddr" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>电子邮件地址</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 电子凭证信息 -->
+	<xsd:complexType name="pzInfo">
+		<xsd:annotation>
+			<xsd:documentation>电子凭证信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="PlatShortName" type="Text2to10">
+				<xsd:annotation>
+					<xsd:documentation>平台标准化简称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>平台统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExternalPlat" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>是否外部平台凭证</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>核心企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>核心企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzNo" type="pzNo">
+				<xsd:annotation>
+					<xsd:documentation>凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzClass" type="Number2">
+				<xsd:annotation>
+					<xsd:documentation>凭证类型</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzFunction" type="Number3">
+				<xsd:annotation>
+					<xsd:documentation>凭证功能</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="klzrfName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>开立/转让方名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="klzrfCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>开立/转让方统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="jsqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>接收企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="jsqyCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>接收企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="jsqyPlatNo" type="rzqyPlatCode">
+				<xsd:annotation>
+					<xsd:documentation>平台端接收企业编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>凭证金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzStartDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>凭证开立日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzEndDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>凭证有效日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzState" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>凭证状态</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzrzState" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>凭证融资状态</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzFlowNum" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>凭证流转次数</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzPreNo" type="pzNo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>上一级电子凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzMajorNo" type="pzNo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>主凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzrzSubAmt" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>子凭证已融资金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzFlowInfo" type="pzFlowInfo" minOccurs="0" maxOccurs="10">
+				<xsd:annotation>
+					<xsd:documentation>凭证流转历史信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>电子凭证文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SignElement" type="String0to200" default="hxqyName|pzNo|spqyName|pzAmt|pzStartDate|pzEndDate" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>凭证签名要素</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="klzrfSign" type="PK7Sign" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>开立/转让方数字签名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatSign" type="PK7Sign" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>平台数字签名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RemainQuota" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>剩余可开立额度</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="fxftRatio" type="String0to20" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>付息分摊比例</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ffftRatio" type="String0to20" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>付费分摊比例</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="fkcnNo" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>付款承诺/转让函编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="fkcnFile" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>付款承诺/转让函文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzMemo" type="Text0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>备注</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 电子凭证融资状态信息 -->
+	<xsd:complexType name="pzrzStatusInfo">
+		<xsd:annotation>
+			<xsd:documentation>电子凭证融资状态信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="pzNo" type="pzNo">
+				<xsd:annotation>
+					<xsd:documentation>凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzPhaseCode" type="Number2">
+				<xsd:annotation>
+					<xsd:documentation>凭证融资进度码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BankNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>受理银行代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 凭证流转记录 -->
+	<xsd:complexType name="pzFlowInfo">
+		<xsd:annotation>
+			<xsd:documentation>凭证流转记录</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNumber" type="Integer">
+				<xsd:annotation>
+					<xsd:documentation>序号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzNo" type="pzNo">
+				<xsd:annotation>
+					<xsd:documentation>凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PreNo" type="pzNo">
+				<xsd:annotation>
+					<xsd:documentation>上一级电子凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyAssignName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>转让方企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyAssignCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>转让方企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyRecvName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>接收方企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyRecvCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>接收方企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Amt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>凭证金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="UpdateDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>变更日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AssignSign" type="PK7Sign" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>转让方数字签名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FlowVoucherFile" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>流转单文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 报文扩展段 -->
+	<xsd:complexType name="extInfo">
+		<xsd:annotation>
+			<xsd:documentation>报文扩展段</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="ExtJSONFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>报文扩展JSON文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtData" type="Text0to500" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>报文扩展字段</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtGeneralFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>通用附件传递文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtReserve1" type="Text0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>扩展保留字段1</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtReserve2" type="Text0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>扩展保留字段2</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtReserve3" type="Text0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>扩展保留字段3</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtReserve4" type="Text0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>扩展保留字段4</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 附件文件信息 -->
+	<xsd:complexType name="FileInfo">
+		<xsd:annotation>
+			<xsd:documentation>附件文件信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="FileType" type="Number0to10" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>文件分类代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Filename" type="FileName">
+				<xsd:annotation>
+					<xsd:documentation>附件文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FileMemo" type="Text0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>附件文件备注说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

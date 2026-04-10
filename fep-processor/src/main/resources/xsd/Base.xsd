@@ -1,0 +1,156 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./DataType.xsd"/>
+	<xsd:complexType name="HEAD">
+		<xsd:annotation>
+			<xsd:documentation>报文头</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="Version" type="Version">
+				<xsd:annotation>
+					<xsd:documentation>版本号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SrcNode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>报文发起方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>报文接收方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="App" type="App">
+				<xsd:annotation>
+					<xsd:documentation>应用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MsgNo" type="MsgNo">
+				<xsd:annotation>
+					<xsd:documentation>报文号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MsgId" type="MsgId">
+				<xsd:annotation>
+					<xsd:documentation>报文标识号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CorrMsgId" type="MsgId">
+				<xsd:annotation>
+					<xsd:documentation>关联报文标识号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="WorkDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>工作日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FileName" type="MsgFileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FileContentHash" type="FileContentHash" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>文件内容HASH</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FileSize" type="FileSize" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>文件大小</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Reserve" type="Reserve" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>保留字段</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="RequestHead">
+		<xsd:annotation>
+			<xsd:documentation>请求类业务头</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SendOrgCode" type="OrgCode">
+				<xsd:annotation>
+					<xsd:documentation>业务发起机构代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EntrustDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>委托日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TransitionNo" type="TransitionNo">
+				<xsd:annotation>
+					<xsd:documentation>当日业务流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ResponseHead">
+		<xsd:annotation>
+			<xsd:documentation>回执/应答类业务头</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SendOrgCode" type="OrgCode">
+				<xsd:annotation>
+					<xsd:documentation>业务发起机构代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EntrustDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>委托日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TransitionNo" type="TransitionNo">
+				<xsd:annotation>
+					<xsd:documentation>当日业务流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Result" type="Result">
+				<xsd:annotation>
+					<xsd:documentation>业务处理结果</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AddWord" type="AddWord" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>业务处理结果附言</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="RequestResponseHead">
+		<xsd:annotation>
+			<xsd:documentation>回执/应答类业务头</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SendOrgCode" type="OrgCode">
+				<xsd:annotation>
+					<xsd:documentation>业务发起机构代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EntrustDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>委托日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TransitionNo" type="TransitionNo">
+				<xsd:annotation>
+					<xsd:documentation>当日业务流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Result" type="Result" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>业务处理结果</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AddWord" type="AddWord" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>业务处理结果附言</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

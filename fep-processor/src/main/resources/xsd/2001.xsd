@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[2001] 企业信息实时查询回执报文</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="RealHead2001" type="ResponseHead">
+				<xsd:annotation>
+					<xsd:documentation>2001报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CompanyInfoResponse2001" type="CompanyInfoResponse2001" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>企业信息实时查询回执</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="CompanyInfoResponse2001">
+		<xsd:annotation>
+			<xsd:documentation>企业信息实时查询回执</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="CompanyName" type="CompanyName">
+				<xsd:annotation>
+					<xsd:documentation>企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CompanyCode" type="CompanyCode">
+				<xsd:annotation>
+					<xsd:documentation>企业代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MainClass" type="MainClass">
+				<xsd:annotation>
+					<xsd:documentation>业务大类</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SecondClass" type="SecondClass">
+				<xsd:annotation>
+					<xsd:documentation>业务小类</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BeginDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>开始日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EndDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>结束日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="QueryResult" type="Result">
+				<xsd:annotation>
+					<xsd:documentation>查询结果</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="QueryAddWord" type="AddWord" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>查询结果附言</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>
