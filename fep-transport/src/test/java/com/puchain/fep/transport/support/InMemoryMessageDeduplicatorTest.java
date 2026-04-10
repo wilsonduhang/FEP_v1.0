@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 /**
  * Unit tests for {@link InMemoryMessageDeduplicator}.
@@ -16,6 +17,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 1.0.0
  */
 class InMemoryMessageDeduplicatorTest {
+
+    @Test
+    void isDuplicate_nullMsgId_shouldThrowNpe() {
+        final MessageDeduplicator dedup = new InMemoryMessageDeduplicator(100);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> dedup.isDuplicate(null))
+                .withMessageContaining("msgId");
+    }
 
     @Test
     void isDuplicate_firstCall_shouldReturnFalse() {

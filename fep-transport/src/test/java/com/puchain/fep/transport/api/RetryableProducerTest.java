@@ -83,6 +83,26 @@ class RetryableProducerTest {
         assertThat(deadLetters).hasSize(1);
     }
 
+    @Test
+    @DisplayName("send: zero retries configured — first failure goes straight to dead letter")
+    void send_zeroMaxRetries_shouldGoToDeadLetterImmediately() {
+        final AtomicInteger callCount = new AtomicInteger(0);
+        final List<TlqMessage> deadLetters = new ArrayList<>();
+
+        final TlqProducer inner = message -> {
+            callCount.incrementAndGet();
+            return SendResult.fail(message.getMsgId(), "always fails");
+        };
+        final DeadLetterHandler dlh = (message, reason) -> deadLetters.add(message);
+        final RetryableProducer producer = new RetryableProducer(inner, dlh, 0, 10L);
+
+        final SendResult result = producer.send(sampleMessage());
+
+        assertThat(result.success()).isFalse();
+        assertThat(callCount.get()).isEqualTo(1); // 1 initial attempt, 0 retries
+        assertThat(deadLetters).hasSize(1);
+    }
+
     /**
      * Create a sample TLQ message for testing.
      *
