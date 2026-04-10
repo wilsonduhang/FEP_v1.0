@@ -5,6 +5,8 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
+import java.util.regex.Pattern;
+
 /**
  * 请求类业务头。参见 PRD v1.3 §3.2.3。
  *
@@ -23,6 +25,12 @@ import jakarta.xml.bind.annotation.XmlType;
 public class RequestBusinessHead {
 
     private static final int ORG_CODE_LENGTH = 14;
+
+    /** 8 位数字委托日期 YYYYMMDD 校验模式。 */
+    private static final Pattern DATE_PATTERN = Pattern.compile("\\d{8}");
+
+    /** 8 位数字当日业务流水号校验模式（与日期正则文本相同但语义独立）。 */
+    private static final Pattern TRANSITION_NO_PATTERN = Pattern.compile("\\d{8}");
 
     private String sendOrgCode;
     private String entrustDate;
@@ -66,7 +74,7 @@ public class RequestBusinessHead {
      * @param v 委托日期 YYYYMMDD
      */
     public void setEntrustDate(final String v) {
-        if (v != null && !v.matches("\\d{8}")) {
+        if (v != null && !DATE_PATTERN.matcher(v).matches()) {
             throw new IllegalArgumentException("EntrustDate 必须为 YYYYMMDD");
         }
         this.entrustDate = v;
@@ -88,7 +96,7 @@ public class RequestBusinessHead {
      * @param v 8 位数字流水号
      */
     public void setTransitionNo(final String v) {
-        if (v != null && !v.matches("\\d{8}")) {
+        if (v != null && !TRANSITION_NO_PATTERN.matcher(v).matches()) {
             throw new IllegalArgumentException("TransitionNo 必须为 8 位数字");
         }
         this.transitionNo = v;

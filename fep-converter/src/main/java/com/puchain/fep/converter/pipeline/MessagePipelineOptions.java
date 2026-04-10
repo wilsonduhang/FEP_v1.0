@@ -17,6 +17,28 @@ public class MessagePipelineOptions {
     private byte[] signPublicKey;
     private byte[] encryptKey;
 
+    /** 默认无参构造器。 */
+    public MessagePipelineOptions() {
+        // default values applied via field initializers
+    }
+
+    /**
+     * 复制构造器，用于无副作用地派生变体。
+     *
+     * <p>byte[] 密钥字段为浅拷贝（共享引用）——它们由调用方的密钥生命周期
+     * 与 security-api 层统一管理，此处不做防御性复制。</p>
+     *
+     * @param other 要复制的源对象
+     */
+    public MessagePipelineOptions(final MessagePipelineOptions other) {
+        this.sign = other.sign;
+        this.zip = other.zip;
+        this.encrypt = other.encrypt;
+        this.signPrivateKey = other.signPrivateKey;
+        this.signPublicKey = other.signPublicKey;
+        this.encryptKey = other.encryptKey;
+    }
+
     /**
      * @return 是否启用签名
      */

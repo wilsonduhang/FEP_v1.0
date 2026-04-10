@@ -5,6 +5,8 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
+import java.util.regex.Pattern;
+
 /**
  * CFX 报文头。参见 PRD v1.3 §3.2.2。
  *
@@ -37,6 +39,12 @@ public class CommonHead {
 
     /** 报文标识号长度（14 日期时间 + 6 顺序号）。 */
     private static final int MSG_ID_LENGTH = 20;
+
+    /** 4 位数字报文号校验模式。 */
+    private static final Pattern MSG_NO_PATTERN = Pattern.compile("\\d{4}");
+
+    /** 8 位数字 YYYYMMDD 日期校验模式。 */
+    private static final Pattern DATE_PATTERN = Pattern.compile("\\d{8}");
 
     private String version = "1.0";
     private String srcNode;
@@ -149,7 +157,7 @@ public class CommonHead {
      * @param msgNo 4 位数字报文号
      */
     public void setMsgNo(final String msgNo) {
-        if (msgNo != null && !msgNo.matches("\\d{4}")) {
+        if (msgNo != null && !MSG_NO_PATTERN.matcher(msgNo).matches()) {
             throw new IllegalArgumentException("MsgNo 必须为 4 位数字");
         }
         this.msgNo = msgNo;
@@ -212,7 +220,7 @@ public class CommonHead {
      * @param workDate 工作日期 YYYYMMDD
      */
     public void setWorkDate(final String workDate) {
-        if (workDate != null && !workDate.matches("\\d{8}")) {
+        if (workDate != null && !DATE_PATTERN.matcher(workDate).matches()) {
             throw new IllegalArgumentException("WorkDate 必须为 YYYYMMDD");
         }
         this.workDate = workDate;

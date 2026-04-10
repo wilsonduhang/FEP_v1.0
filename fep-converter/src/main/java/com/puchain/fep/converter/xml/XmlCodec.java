@@ -40,6 +40,9 @@ public class XmlCodec {
     /** 标准 UTF-8 XML 声明（不含 standalone 属性）。 */
     private static final String XML_DECLARATION = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 
+    /** 典型 CFX 报文 XML 大小 ~1KB，预分配 2KB 避免扩容。 */
+    private static final int INITIAL_WRITER_CAPACITY = 2048;
+
     private final JAXBContext context;
 
     /**
@@ -70,7 +73,7 @@ public class XmlCodec {
             // JAXB_FRAGMENT=true 抑制 jaxb-runtime 默认输出的
             // {@code standalone="yes"} 属性；由本类显式前置标准 UTF-8 声明。
             m.setProperty(Marshaller.JAXB_FRAGMENT, true);
-            StringWriter sw = new StringWriter();
+            StringWriter sw = new StringWriter(INITIAL_WRITER_CAPACITY);
             sw.write(XML_DECLARATION);
             m.marshal(message, sw);
             return sw.toString();

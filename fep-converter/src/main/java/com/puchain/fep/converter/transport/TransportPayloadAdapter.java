@@ -9,6 +9,7 @@ import com.puchain.fep.converter.pipeline.MessagePipelineOptions;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
 import com.puchain.fep.transport.model.TlqMessageAttributes;
+import com.puchain.fep.transport.support.PayloadSplitter;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -30,9 +31,6 @@ import java.nio.charset.StandardCharsets;
  */
 @Component
 public class TransportPayloadAdapter {
-
-    /** TLQ 单消息最大 24KB（xmlstr + xmlstr1 + xmlstr2 合计上限）。 */
-    public static final int MAX_PAYLOAD_BYTES = 24 * 1024;
 
     private final MessageDecoder decoder;
 
@@ -62,7 +60,7 @@ public class TransportPayloadAdapter {
                                    final TlqChannel channel,
                                    final String msgId) {
         final byte[] payloadBytes = result.getPayload().getBytes(StandardCharsets.UTF_8);
-        if (payloadBytes.length > MAX_PAYLOAD_BYTES) {
+        if (payloadBytes.length > PayloadSplitter.MAX_TOTAL_BYTES) {
             throw new MessageConverterException(FepErrorCode.CONV_8007,
                     "payload size " + payloadBytes.length
                             + " bytes exceeds 24KB TLQ single-message limit; "
@@ -79,16 +77,19 @@ public class TransportPayloadAdapter {
     /**
      * 从 {@link TlqMessage} 反向解码。
      *
-     * <p>始终以 {@link TlqMessageAttributes} 的 zip / encrypt 为准覆盖调用方 opts，
-     * 防止调用方传入的 opts 与实际线上属性不一致导致解码失败。</p>
+     * <p>调用方传入的 {@code opts} 不会被修改；本方法使用其副本，
+     * 覆盖 zip / encrypt 为 {@link TlqMessageAttributes} 的实际值，
+     * 防止调用方 opts 与线上属性不一致导致解码失败。</p>
      *
      * @param message 入站 TLQ 消息
-     * @param opts 流水线选项（zip / encrypt 会被强制回填）
+     * @param opts 流水线选项（本方法不会修改此对象）
      * @return 解码结果
      */
     public DecodeResult fromTlqMessage(final TlqMessage message, final MessagePipelineOptions opts) {
-        opts.setZip(message.getAttributes().isZip());
-        opts.setEncrypt(message.getAttributes().isEncrypt());
-        return decoder.decode(message.getPayload(), opts);
+        // 复制 opts 避免 mutate 调用方对象（规避 subtle 副作用 bug）
+        final MessagePipelineOptions effective = new MessagePipelineOptions(opts);
+        effective.setZip(message.getAttributes().isZip());
+        effective.setEncrypt(message.getAttributes().isEncrypt());
+        return decoder.decode(message.getPayload(), effective);
     }
 }
