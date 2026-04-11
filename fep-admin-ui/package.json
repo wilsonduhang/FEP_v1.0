@@ -3,10 +3,41 @@
   "version": "1.0.0",
   "private": true,
   "description": "FEP 综合前置平台管理 Web 前端 (Vue3 + TypeScript + Element Plus)",
-  "scripts": {
-    "placeholder": "echo 'Vue3 project will be initialized in P1'"
-  },
+  "type": "module",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,vue}\"",
+    "format": "prettier --write \"src/**/*.{ts,vue,json,css,scss,md}\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "vue": "3.4.27",
+    "vue-router": "4.3.2",
+    "pinia": "2.1.7",
+    "element-plus": "2.7.3",
+    "@element-plus/icons-vue": "2.3.1",
+    "axios": "1.6.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "5.0.4",
+    "@vue/eslint-config-typescript": "13.0.0",
+    "@vue/test-utils": "2.4.6",
+    "@vue/tsconfig": "0.5.1",
+    "eslint": "9.2.0",
+    "eslint-plugin-vue": "9.26.0",
+    "jsdom": "24.0.0",
+    "prettier": "3.2.5",
+    "typescript": "5.4.5",
+    "vite": "5.2.11",
+    "vitest": "1.5.3",
+    "vue-tsc": "2.0.17"
   }
 }
