@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>10000000000001</SrcNode>
+        <DesNode>A1000143000104</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>3001</MsgNo>
+        <MsgId>20260411103000000031</MsgId>
+        <CorrMsgId>20260411103000000030</CorrMsgId>
+        <WorkDate>20260411</WorkDate>
+    </HEAD>
+    <MSG>
+        <RealHead3001>
+            <SendOrgCode>10000000000001</SendOrgCode>
+            <EntrustDate>20260411</EntrustDate>
+            <TransitionNo>00000031</TransitionNo>
+        </RealHead3001>
+        <ProgressQuery3001>
+            <SerialNo>SN2026041110300000000000000031</SerialNo>
+            <SendNodeCode>10000000000001</SendNodeCode>
+            <DesNodeCode>A1000143000104</DesNodeCode>
+            <hxqyName>核心企业湖南示例</hxqyName>
+            <hxqyCode>91430100MA4L5XXXX1</hxqyCode>
+            <QueryType>01</QueryType>
+            <QueryKey>BIZ20260411000001</QueryKey>
+        </ProgressQuery3001>
+    </MSG>
+</CFX>
