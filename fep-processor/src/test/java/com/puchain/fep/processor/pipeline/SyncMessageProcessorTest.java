@@ -1,0 +1,107 @@
+package com.puchain.fep.processor.pipeline;
+
+import com.puchain.fep.converter.type.MessageType;
+import com.puchain.fep.processor.state.InMemoryMessageProcessStore;
+import com.puchain.fep.processor.state.MessageProcessRecord;
+import com.puchain.fep.processor.state.MessageProcessStatus;
+import com.puchain.fep.processor.state.MessageStateMachine;
+import com.puchain.fep.processor.validation.XsdSchemaRegistry;
+import com.puchain.fep.processor.validation.XsdValidator;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class SyncMessageProcessorTest {
+
+    private SyncMessageProcessor processor;
+    private InMemoryMessageProcessStore store;
+
+    @BeforeEach
+    void setUp() {
+        XsdSchemaRegistry registry = new XsdSchemaRegistry();
+        XsdValidator validator = new XsdValidator(registry);
+        store = new InMemoryMessageProcessStore();
+        MessageStateMachine machine = new MessageStateMachine(store);
+        processor = new SyncMessageProcessor(validator, machine, store);
+    }
+
+    private byte[] loadSample(final String path) throws IOException {
+        try (InputStream is = SyncMessageProcessorTest.class.getResourceAsStream(path)) {
+            if (is == null) {
+                throw new IOException("sample missing: " + path);
+            }
+            return is.readAllBytes();
+        }
+    }
+
+    @Test
+    void processOutbound_shouldCompleteValidMessage() throws IOException {
+        byte[] xml = loadSample("/samples/1001-valid.xml");
+        MessageProcessRecord result = processor.processOutbound(
+                MessageType.MSG_1001, "TX20260411000001", xml);
+        assertThat(result.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+        assertThat(result.getErrorCode()).isNull();
+    }
+
+    @Test
+    void processOutbound_shouldFailOnInvalidXml() throws IOException {
+        byte[] xml = loadSample("/samples/1001-missing-company-name.xml");
+        MessageProcessRecord result = processor.processOutbound(
+                MessageType.MSG_1001, "TX20260411000002", xml);
+        assertThat(result.getStatus()).isEqualTo(MessageProcessStatus.FAILED);
+        assertThat(result.getErrorCode()).isEqualTo("PROC_8501");
+        assertThat(result.getErrorMessage()).containsIgnoringCase("CompanyName");
+    }
+
+    @Test
+    void processInbound_shouldCompleteValidMessage() throws IOException {
+        byte[] xml = loadSample("/samples/1001-valid.xml");
+        MessageProcessRecord result = processor.processInbound(
+                MessageType.MSG_1001, "TX20260411000003", xml);
+        assertThat(result.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+    }
+
+    @Test
+    void process_shouldRejectDuplicateTransitionNo() throws IOException {
+        byte[] xml = loadSample("/samples/1001-valid.xml");
+        processor.processOutbound(MessageType.MSG_1001, "TX-DUP", xml);
+        assertThatThrownBy(() -> processor.processOutbound(MessageType.MSG_1001, "TX-DUP", xml))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("TX-DUP");
+    }
+
+    @Test
+    void process_shouldRejectNullInputs() throws IOException {
+        byte[] xml = loadSample("/samples/1001-valid.xml");
+        assertThatThrownBy(() -> processor.processOutbound(null, "TX-N1", xml))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> processor.processOutbound(MessageType.MSG_1001, null, xml))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> processor.processOutbound(MessageType.MSG_1001, "TX-N3", null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void process_shouldRejectUnsupportedMessageType() throws IOException {
+        byte[] xml = loadSample("/samples/1001-valid.xml");
+        assertThatThrownBy(() -> processor.processOutbound(MessageType.MSG_1101, "TX-UO", xml))
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("1101");
+    }
+
+    @Test
+    void process_shouldCreateRecordInStore() throws IOException {
+        byte[] xml = loadSample("/samples/1001-valid.xml");
+        processor.processOutbound(MessageType.MSG_1001, "TX-STORED", xml);
+        assertThat(store.findByTransitionNo("TX-STORED"))
+                .isPresent()
+                .get()
+                .extracting(MessageProcessRecord::getStatus)
+                .isEqualTo(MessageProcessStatus.COMPLETED);
+    }
+}
