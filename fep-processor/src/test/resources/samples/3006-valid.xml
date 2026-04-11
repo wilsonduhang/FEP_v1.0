@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>A1000143000104</SrcNode>
+        <DesNode>10000000000001</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>3006</MsgNo>
+        <MsgId>20260411103500000036</MsgId>
+        <CorrMsgId>20260411103000000035</CorrMsgId>
+        <WorkDate>20260411</WorkDate>
+    </HEAD>
+    <MSG>
+        <RealHead3006>
+            <SendOrgCode>A1000143000104</SendOrgCode>
+            <EntrustDate>20260411</EntrustDate>
+            <TransitionNo>00000036</TransitionNo>
+            <Result>00000</Result>
+        </RealHead3006>
+        <qyAccQueryReturn3006>
+            <SerialNo>SN2026041110300000000000000035</SerialNo>
+            <SendNodeCode>A1000143000104</SendNodeCode>
+            <DesNodeCode>10000000000001</DesNodeCode>
+            <qyAccName>湖南示例实业有限公司基本账户</qyAccName>
+            <qyAccCode>6228480000000000001</qyAccCode>
+            <AccReturnCode>01</AccReturnCode>
+        </qyAccQueryReturn3006>
+    </MSG>
+</CFX>
