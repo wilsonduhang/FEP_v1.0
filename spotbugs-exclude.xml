@@ -876,4 +876,13 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- SyncMessageProcessor: transitionNo 与 firstError 均经 LogSanitizer.sanitize
+         剥离 CR/LF，direction 为方法内字面量 "OUT"/"IN"，type.msgNo() 来源
+         MessageType 枚举（4 位数字常量）。FindSecBugs 不识别自定义 sanitizer，
+         属确认的误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.processor.pipeline.SyncMessageProcessor"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
 </FindBugsFilter>
