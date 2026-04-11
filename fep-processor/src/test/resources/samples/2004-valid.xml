@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>A1000143000104</SrcNode>
+        <DesNode>10000000000001</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>2004</MsgNo>
+        <MsgId>20260411103500000004</MsgId>
+        <CorrMsgId>20260411103000000004</CorrMsgId>
+        <WorkDate>20260411</WorkDate>
+    </HEAD>
+    <MSG>
+        <RealHead2004>
+            <SendOrgCode>A1000143000104</SendOrgCode>
+            <EntrustDate>20260411</EntrustDate>
+            <TransitionNo>00000004</TransitionNo>
+            <Result>00000</Result>
+        </RealHead2004>
+        <CompanyAuthFileResponse2004>
+            <CompanyName>湖南示例实业有限公司</CompanyName>
+            <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
+            <AuthBeginDate>20260101</AuthBeginDate>
+            <AuthEndDate>20261231</AuthEndDate>
+            <AuthNo>AUTH2026041100004</AuthNo>
+            <AuthOrgCode>10000000000001</AuthOrgCode>
+            <RecordResult>00000</RecordResult>
+        </CompanyAuthFileResponse2004>
+    </MSG>
+</CFX>
