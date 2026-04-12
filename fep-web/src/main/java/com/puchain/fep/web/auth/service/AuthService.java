@@ -6,7 +6,10 @@ import com.puchain.fep.common.security.PasswordHasher;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.domain.LoginResponse;
+import com.puchain.fep.web.auth.domain.UserInfoResponse;
 import com.puchain.fep.web.auth.jwt.JwtTokenProvider;
+import com.puchain.fep.web.sysmgmt.menu.dto.MenuTreeNode;
+import com.puchain.fep.web.sysmgmt.menu.service.SysMenuService;
 import com.puchain.fep.web.sysmgmt.role.service.RoleQueryHelper;
 import com.puchain.fep.web.sysmgmt.user.domain.SysUser;
 import com.puchain.fep.web.sysmgmt.user.domain.UserStatus;
@@ -38,6 +41,8 @@ public class AuthService {
 
     private final SysUserRepository userRepository;
     private final RoleQueryHelper roleQueryHelper;
+    private final PermissionQueryHelper permissionQueryHelper;
+    private final SysMenuService menuService;
     private final PasswordHasher passwordHasher;
     private final CaptchaService captchaService;
     private final LoginAttemptService loginAttemptService;
@@ -47,16 +52,22 @@ public class AuthService {
     /**
      * 构造 AuthService。
      *
-     * @param userRepository      用户 Repository
-     * @param roleQueryHelper     角色查询辅助
-     * @param passwordHasher      密码散列服务
-     * @param captchaService      验证码服务
-     * @param loginAttemptService 登录尝试服务
-     * @param singleSignOnService SSO 服务
-     * @param tokenProvider       JWT 签发/解析
+     * <p>NOTE: 依赖数 = 9（超出 7 上限）。Task 5 将拆出 LoginVerifier 恢复合规。</p>
+     *
+     * @param userRepository         用户 Repository
+     * @param roleQueryHelper        角色查询辅助
+     * @param permissionQueryHelper  权限码聚合辅助
+     * @param menuService            菜单服务
+     * @param passwordHasher         密码散列服务
+     * @param captchaService         验证码服务
+     * @param loginAttemptService    登录尝试服务
+     * @param singleSignOnService    SSO 服务
+     * @param tokenProvider          JWT 签发/解析
      */
     public AuthService(final SysUserRepository userRepository,
                        final RoleQueryHelper roleQueryHelper,
+                       final PermissionQueryHelper permissionQueryHelper,
+                       final SysMenuService menuService,
                        final PasswordHasher passwordHasher,
                        final CaptchaService captchaService,
                        final LoginAttemptService loginAttemptService,
@@ -64,6 +75,8 @@ public class AuthService {
                        final JwtTokenProvider tokenProvider) {
         this.userRepository = userRepository;
         this.roleQueryHelper = roleQueryHelper;
+        this.permissionQueryHelper = permissionQueryHelper;
+        this.menuService = menuService;
         this.passwordHasher = passwordHasher;
         this.captchaService = captchaService;
         this.loginAttemptService = loginAttemptService;
@@ -199,6 +212,28 @@ public class AuthService {
         return new LoginResponse(newAccess, refreshToken,
                 user.getUserId(), user.getUserAccount(), user.getUserName(),
                 roleCodes, false);
+    }
+
+    /**
+     * Retrieves full user info including role codes, permission codes,
+     * and accessible menu tree for the current authenticated user.
+     *
+     * @param userId user ID (from JWT subject)
+     * @return aggregated user information
+     * @throws FepAuthException if user not found
+     */
+    @Transactional(readOnly = true)
+    public UserInfoResponse getUserInfo(final String userId) {
+        final SysUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new FepAuthException(FepErrorCode.AUTH_0401,
+                        "User not found for authenticated userId"));
+        final List<String> roleCodes = roleQueryHelper.getRoleCodes(userId);
+        final List<String> permissions = permissionQueryHelper.getPermissionCodes(userId);
+        final List<MenuTreeNode> menuTree = menuService.getUserMenuTree(userId);
+        return new UserInfoResponse(
+                user.getUserId(), user.getUserAccount(), user.getUserName(),
+                user.getPhone(), user.getEmail(), user.getDepartment(),
+                roleCodes, permissions, menuTree);
     }
 
 }

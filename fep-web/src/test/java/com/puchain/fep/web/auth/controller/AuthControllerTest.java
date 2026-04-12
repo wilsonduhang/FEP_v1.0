@@ -4,8 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.domain.LoginResponse;
+import com.puchain.fep.web.auth.domain.UserInfoResponse;
+import com.puchain.fep.web.auth.jwt.JwtTokenProvider;
 import com.puchain.fep.web.auth.service.AuthService;
 import com.puchain.fep.web.auth.service.CaptchaService;
+import com.puchain.fep.web.sysmgmt.menu.dto.MenuTreeNode;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -45,6 +49,9 @@ class AuthControllerTest {
 
     @MockBean
     private CaptchaService captchaService;
+
+    @Autowired
+    private JwtTokenProvider tokenProvider;
 
     @Test
     void captchaEndpointShouldReturnOk() throws Exception {
@@ -109,5 +116,45 @@ class AuthControllerTest {
                         .header("Authorization", "Bearer some-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"));
+    }
+
+    @Test
+    void getMeWhenAuthenticatedShouldReturnUserInfoResponse() throws Exception {
+        // Arrange: create a valid JWT for userId "u1"
+        String jwt = tokenProvider.createAccessToken("u1", "alice", List.of("ADMIN"));
+
+        MenuTreeNode homeNode = new MenuTreeNode();
+        homeNode.setMenuId("m1");
+        homeNode.setMenuCode("HOME");
+        homeNode.setMenuName("首页");
+
+        UserInfoResponse info = new UserInfoResponse(
+                "u1", "alice", "Alice", "13800000000", "alice@test.com", "IT",
+                List.of("ADMIN"),
+                List.of("sys:user:create", "sys:user:list"),
+                List.of(homeNode));
+        when(authService.getUserInfo("u1")).thenReturn(info);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("Authorization", "Bearer " + jwt))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.data.userId").value("u1"))
+                .andExpect(jsonPath("$.data.userAccount").value("alice"))
+                .andExpect(jsonPath("$.data.userName").value("Alice"))
+                .andExpect(jsonPath("$.data.phone").value("13800000000"))
+                .andExpect(jsonPath("$.data.roleCodes", hasSize(1)))
+                .andExpect(jsonPath("$.data.permissions", hasSize(2)))
+                .andExpect(jsonPath("$.data.permissions[0]").value("sys:user:create"))
+                .andExpect(jsonPath("$.data.menuTree", hasSize(1)))
+                .andExpect(jsonPath("$.data.menuTree[0].menuCode").value("HOME"));
+    }
+
+    @Test
+    void getMeWhenUnauthenticatedShouldReturn401() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH_0401"));
     }
 }
