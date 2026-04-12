@@ -40,6 +40,27 @@
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
 
+    <!-- UserInfoResponse: 响应 DTO，列表字段由 Jackson 序列化后返回客户端，不可变性在 Service 层保证 -->
+    <Match>
+        <Class name="com.puchain.fep.web.auth.domain.UserInfoResponse"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- PermissionQueryHelper: Spring-managed singleton, repository 注入后不再变更 -->
+    <Match>
+        <Class name="com.puchain.fep.web.auth.service.PermissionQueryHelper"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- LoginVerifier: Spring-managed singleton, service 注入后不再变更 -->
+    <Match>
+        <Class name="com.puchain.fep.web.auth.service.LoginVerifier"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
     <!-- AuthController: 认证端点必须公开，SPRING_ENDPOINT 是预期行为 -->
     <Match>
         <Class name="com.puchain.fep.web.auth.controller.AuthController"/>
