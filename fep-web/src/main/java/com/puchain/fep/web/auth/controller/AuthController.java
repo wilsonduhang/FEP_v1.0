@@ -1,10 +1,13 @@
 package com.puchain.fep.web.auth.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
+import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.exception.FepAuthException;
 import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.domain.LoginResponse;
 import com.puchain.fep.web.auth.domain.RefreshRequest;
+import com.puchain.fep.web.auth.domain.UserInfoResponse;
 import com.puchain.fep.web.auth.service.AuthService;
 import com.puchain.fep.web.auth.service.CaptchaService;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
@@ -15,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,8 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 认证相关 REST API。
  *
- * <p>提供验证码获取、用户登录、登出、Token 刷新四个接口。
- * 所有接口均为公开访问（不需要 JWT）。</p>
+ * <p>提供验证码获取、用户登录、登出、Token 刷新、当前用户信息查询五个接口。
+ * 除 {@code GET /me} 需要 JWT 鉴权外，其余接口为公开访问。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -108,5 +112,24 @@ public class AuthController {
     @ApiResponse(responseCode = "401", description = "Refresh Token 无效")
     public ApiResult<LoginResponse> refresh(@Valid @RequestBody final RefreshRequest request) {
         return ApiResult.success(authService.refresh(request.getRefreshToken()));
+    }
+
+    /**
+     * 获取当前登录用户信息（含权限码 + 菜单树）。
+     *
+     * @param userId JWT 中注入的用户 ID
+     * @return 用户详情、角色列表、权限码列表、可访问菜单树
+     */
+    @GetMapping("/me")
+    @Operation(summary = "获取当前用户信息",
+            description = "返回用户详情、角色列表、权限码列表和菜单树")
+    @ApiResponse(responseCode = "200", description = "查询成功")
+    @ApiResponse(responseCode = "401", description = "未登录或 Token 无效")
+    public ApiResult<UserInfoResponse> getMe(
+            @AuthenticationPrincipal final String userId) {
+        if (userId == null) {
+            throw new FepAuthException(FepErrorCode.AUTH_0401);
+        }
+        return ApiResult.success(authService.getUserInfo(userId));
     }
 }
