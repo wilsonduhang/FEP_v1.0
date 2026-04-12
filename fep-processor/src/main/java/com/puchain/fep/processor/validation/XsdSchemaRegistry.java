@@ -16,24 +16,20 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Loads HNDEMP message XSDs under {@code fep-processor/resources/xsd/} and caches
  * them keyed by {@link MessageType}.
  *
- * <p>Lazy-loading with {@link ConcurrentHashMap}. XSDs reference shared type
- * definitions via {@code <xsd:include schemaLocation="./Base.xsd"/>}, so a
- * classpath-based {@link LSResourceResolver} is registered.</p>
+ * <p>Eagerly loads all 11 XSDs at construction time using a single-threaded
+ * {@link SchemaFactory}, then discards the factory. The resulting {@link Schema}
+ * instances are thread-safe per JAXP and cached in an unmodifiable map.</p>
  *
  * <p>P2a scope supports 11 synchronous messages (1001/1004/2001/2004/3001-3006/9005);
  * all other {@link MessageType} values throw {@link UnsupportedOperationException}.</p>
- *
- * <p>Thread safety: the {@link SchemaFactory} is created once in the constructor and
- * assigned to a {@code final} field, guaranteeing safe publication under the JMM.
- * {@link Schema} instances returned by {@code newSchema} are thread-safe per JAXP.</p>
  */
 @Component
 public class XsdSchemaRegistry {
@@ -48,18 +44,16 @@ public class XsdSchemaRegistry {
 
     private static final String XSD_CLASSPATH_DIR = "/xsd/";
 
-    private final Map<String, Schema> cache = new ConcurrentHashMap<>();
-
-    private final SchemaFactory factory;
+    private final Map<String, Schema> cache;
 
     /**
-     * Creates the registry and eagerly initializes the {@link SchemaFactory} with
-     * XXE protection ({@link XMLConstants#FEATURE_SECURE_PROCESSING}) and a
-     * classpath-based {@link LSResourceResolver}. Schemas themselves are still
-     * loaded lazily via {@link #schemaOf(MessageType)}.
+     * Creates the registry, eagerly loading all 11 supported XSDs into an
+     * unmodifiable cache. The {@link SchemaFactory} is used only during
+     * construction (single-threaded), avoiding its documented thread-safety
+     * limitations.
      */
     public XsdSchemaRegistry() {
-        this.factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         try {
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
@@ -69,37 +63,41 @@ public class XsdSchemaRegistry {
                     "Failed to enable secure XML processing", e);
         }
         factory.setResourceResolver(new ClasspathXsdResolver());
+
+        Map<String, Schema> loaded = new HashMap<>(SUPPORTED_CODES.size());
+        for (String code : SUPPORTED_CODES) {
+            loaded.put(code, loadSchema(factory, code));
+        }
+        this.cache = Map.copyOf(loaded);
     }
 
     /**
-     * Returns the cached {@link Schema} for the given message type. Thread-safe;
-     * the schema is parsed on first access and cached for subsequent calls.
+     * Returns the pre-loaded {@link Schema} for the given message type.
      *
      * @param type the message type
      * @return non-null {@link Schema}
      * @throws UnsupportedOperationException if {@code type} is outside the P2a scope
-     * @throws FepBusinessException if the XSD resource cannot be loaded or parsed
      */
     public Schema schemaOf(final MessageType type) {
         String code = type.msgNo();
-        if (!SUPPORTED_CODES.contains(code)) {
+        Schema schema = cache.get(code);
+        if (schema == null) {
             throw new UnsupportedOperationException(
                     "MessageType " + code + " is not supported in P2a (sync mode). "
                             + "Supported: " + SUPPORTED_CODES);
         }
-        return cache.computeIfAbsent(code, this::loadSchema);
+        return schema;
     }
 
-    private Schema loadSchema(final String code) {
+    private static Schema loadSchema(final SchemaFactory factory, final String code) {
         String path = XSD_CLASSPATH_DIR + code + ".xsd";
         try (InputStream is = XsdSchemaRegistry.class.getResourceAsStream(path)) {
             if (is == null) {
                 throw new FepBusinessException(FepErrorCode.PROC_8503,
                         "XSD resource not found: " + path);
             }
-            // Re-assert XXE hardening at the call site so static analyzers (FindSecBugs
-            // XXE_SCHEMA_FACTORY) can recognize the protection via intra-procedural flow.
-            // Idempotent with the hardening already applied in the constructor.
+            // FindSecBugs XXE_SCHEMA_FACTORY: re-assert at call site for
+            // intra-procedural analysis (idempotent with constructor hardening).
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
             factory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");

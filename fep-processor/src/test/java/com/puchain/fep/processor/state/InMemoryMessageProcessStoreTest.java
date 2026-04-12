@@ -57,11 +57,11 @@ class InMemoryMessageProcessStoreTest {
     }
 
     @Test
-    void findByTransitionNo_shouldFailOnDuplicates() {
+    void save_shouldRejectDuplicateTransitionNo() {
         Instant now = Instant.now();
         store.save(MessageProcessRecord.initial(IdGenerator.uuid32(), MessageType.MSG_1001, "DUP", now));
-        store.save(MessageProcessRecord.initial(IdGenerator.uuid32(), MessageType.MSG_1001, "DUP", now));
-        assertThatThrownBy(() -> store.findByTransitionNo("DUP"))
+        assertThatThrownBy(() -> store.save(
+                MessageProcessRecord.initial(IdGenerator.uuid32(), MessageType.MSG_1001, "DUP", now)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("DUP");
     }

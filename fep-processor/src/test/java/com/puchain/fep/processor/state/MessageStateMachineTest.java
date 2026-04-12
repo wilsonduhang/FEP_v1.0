@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.state;
 
+import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.converter.type.MessageType;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,7 +83,7 @@ class MessageStateMachineTest {
     @Test
     void failWith_shouldTransitionToFailedFromAnyNonTerminal() {
         MessageProcessRecord r = newReceived();
-        MessageProcessRecord failed = machine.failWith(r.getId(), "PROC_8501", "xsd invalid");
+        MessageProcessRecord failed = machine.failWith(r.getId(), FepErrorCode.PROC_8501, "xsd invalid");
         assertThat(failed.getStatus()).isEqualTo(MessageProcessStatus.FAILED);
         assertThat(failed.getErrorCode()).isEqualTo("PROC_8501");
         assertThat(failed.getErrorMessage()).isEqualTo("xsd invalid");
@@ -94,7 +95,7 @@ class MessageStateMachineTest {
         machine.transition(r.getId(), MessageProcessStatus.VALIDATED);
         machine.transition(r.getId(), MessageProcessStatus.PROCESSING);
         machine.transition(r.getId(), MessageProcessStatus.COMPLETED);
-        assertThatThrownBy(() -> machine.failWith(r.getId(), "PROC_8505", "late fail"))
+        assertThatThrownBy(() -> machine.failWith(r.getId(), FepErrorCode.PROC_8505, "late fail"))
                 .isInstanceOf(IllegalMessageStateException.class);
     }
 
@@ -109,7 +110,7 @@ class MessageStateMachineTest {
     @Test
     void failWith_shouldThrow_whenRecordNotFound() {
         String missingId = "missing-id-0000000000000000";
-        assertThatThrownBy(() -> machine.failWith(missingId, "PROC_8501", "not found"))
+        assertThatThrownBy(() -> machine.failWith(missingId, FepErrorCode.PROC_8501, "not found"))
                 .isInstanceOf(NoSuchElementException.class)
                 .hasMessageContaining("missing-id");
     }
@@ -118,7 +119,7 @@ class MessageStateMachineTest {
     void failWith_shouldAllow_fromValidated() {
         MessageProcessRecord r = newReceived();
         machine.transition(r.getId(), MessageProcessStatus.VALIDATED);
-        MessageProcessRecord failed = machine.failWith(r.getId(), "PROC_8501", "validated fail");
+        MessageProcessRecord failed = machine.failWith(r.getId(), FepErrorCode.PROC_8501, "validated fail");
         assertThat(failed.getStatus()).isEqualTo(MessageProcessStatus.FAILED);
         assertThat(failed.getErrorCode()).isEqualTo("PROC_8501");
     }
@@ -128,7 +129,7 @@ class MessageStateMachineTest {
         MessageProcessRecord r = newReceived();
         machine.transition(r.getId(), MessageProcessStatus.VALIDATED);
         machine.transition(r.getId(), MessageProcessStatus.PROCESSING);
-        MessageProcessRecord failed = machine.failWith(r.getId(), "PROC_8503", "processing fail");
+        MessageProcessRecord failed = machine.failWith(r.getId(), FepErrorCode.PROC_8503, "processing fail");
         assertThat(failed.getStatus()).isEqualTo(MessageProcessStatus.FAILED);
     }
 }

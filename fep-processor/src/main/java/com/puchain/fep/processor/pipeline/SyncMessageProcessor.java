@@ -115,8 +115,8 @@ public class SyncMessageProcessor {
 
         String recordId = IdGenerator.uuid32();
         Instant now = Instant.now();
-        MessageProcessRecord initial = MessageProcessRecord.initial(recordId, type, transitionNo, now);
-        store.save(initial);
+        MessageProcessRecord saved = store.save(
+                MessageProcessRecord.initial(recordId, type, transitionNo, now));
 
         log.info("[{}] processing msg={} transitionNo={} recordId={}",
                 direction, type.msgNo(), LogSanitizer.sanitize(transitionNo), recordId);
@@ -128,14 +128,12 @@ public class SyncMessageProcessor {
                     direction, type.msgNo(),
                     LogSanitizer.sanitize(transitionNo),
                     LogSanitizer.sanitize(firstError));
-            return stateMachine.failWith(recordId,
-                    FepErrorCode.PROC_8501.getCode(),
-                    firstError);
+            return stateMachine.failWith(saved, FepErrorCode.PROC_8501, firstError);
         }
 
-        stateMachine.transition(recordId, MessageProcessStatus.VALIDATED);
-        stateMachine.transition(recordId, MessageProcessStatus.PROCESSING);
-        MessageProcessRecord completed = stateMachine.transition(recordId, MessageProcessStatus.COMPLETED);
+        MessageProcessRecord validated = stateMachine.transition(saved, MessageProcessStatus.VALIDATED);
+        MessageProcessRecord processing = stateMachine.transition(validated, MessageProcessStatus.PROCESSING);
+        MessageProcessRecord completed = stateMachine.transition(processing, MessageProcessStatus.COMPLETED);
 
         log.info("[{}] msg={} transitionNo={} recordId={} completed",
                 direction, type.msgNo(), LogSanitizer.sanitize(transitionNo), recordId);
