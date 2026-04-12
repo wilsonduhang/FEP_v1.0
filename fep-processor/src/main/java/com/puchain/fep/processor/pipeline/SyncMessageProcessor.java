@@ -12,7 +12,7 @@ import com.puchain.fep.processor.validation.ValidationResult;
 import com.puchain.fep.processor.validation.XsdValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
@@ -33,7 +33,7 @@ import java.time.Instant;
  * @author FEP Team
  * @since 1.0.0
  */
-@Service
+@Component
 public class SyncMessageProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(SyncMessageProcessor.class);
