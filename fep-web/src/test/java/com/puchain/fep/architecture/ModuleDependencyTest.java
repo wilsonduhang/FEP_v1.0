@@ -55,12 +55,14 @@ class ModuleDependencyTest {
             .whereLayer("SecurityMock").mayOnlyAccessLayers("SecurityApi", "Common")
             .whereLayer("SecurityMock").mayOnlyBeAccessedByLayers("Web")
 
-            // transport 依赖 common + security-api，被 processor / web 使用
+            // transport 依赖 common + security-api，被 converter（P1b TransportPayloadAdapter
+            // 桥接）/ processor / web 使用
             .whereLayer("Transport").mayOnlyAccessLayers("Common", "SecurityApi")
-            .whereLayer("Transport").mayOnlyBeAccessedByLayers("Processor", "Web")
+            .whereLayer("Transport").mayOnlyBeAccessedByLayers("Converter", "Processor", "Web")
 
-            // converter 依赖 common + security-api，被 processor / web 使用
-            .whereLayer("Converter").mayOnlyAccessLayers("Common", "SecurityApi")
+            // converter 依赖 common + security-api + transport（P1b TransportPayloadAdapter
+            // 有意桥接 Converter.EncodeResult → Transport.TlqMessage），被 processor / web 使用
+            .whereLayer("Converter").mayOnlyAccessLayers("Common", "SecurityApi", "Transport")
             .whereLayer("Converter").mayOnlyBeAccessedByLayers("Processor", "Web")
 
             // processor 依赖 common + security-api + transport + converter，被 collector / web 使用
