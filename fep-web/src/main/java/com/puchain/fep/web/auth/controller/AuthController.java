@@ -8,6 +8,8 @@ import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.domain.LoginResponse;
 import com.puchain.fep.web.auth.domain.RefreshRequest;
 import com.puchain.fep.web.auth.domain.UserInfoResponse;
+import com.puchain.fep.security.api.KeyService;
+import com.puchain.fep.web.auth.domain.PublicKeyResponse;
 import com.puchain.fep.web.auth.service.AuthService;
 import com.puchain.fep.web.auth.service.CaptchaService;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
@@ -28,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 认证相关 REST API。
  *
- * <p>提供验证码获取、用户登录、登出、Token 刷新、当前用户信息查询五个接口。
+ * <p>提供验证码获取、用户登录、登出、Token 刷新、当前用户信息查询、SM2 公钥分发六个接口。
  * 除 {@code GET /me} 需要 JWT 鉴权外，其余接口为公开访问。</p>
  *
  * @author FEP Team
@@ -42,17 +44,21 @@ public class AuthController {
 
     private final AuthService authService;
     private final CaptchaService captchaService;
+    private final KeyService keyService;
 
     /**
      * 构造 AuthController。
      *
      * @param authService    认证服务
      * @param captchaService 验证码服务
+     * @param keyService     SM2 密钥管理服务
      */
     public AuthController(final AuthService authService,
-                          final CaptchaService captchaService) {
+                          final CaptchaService captchaService,
+                          final KeyService keyService) {
         this.authService = authService;
         this.captchaService = captchaService;
+        this.keyService = keyService;
     }
 
     /**
@@ -131,5 +137,22 @@ public class AuthController {
             throw new FepAuthException(FepErrorCode.AUTH_0401);
         }
         return ApiResult.success(authService.getUserInfo(userId));
+    }
+
+    /**
+     * 获取 SM2 公钥（公开端点，登录前调用）。
+     *
+     * @return SM2 公钥 Base64、密钥版本号、算法标识
+     */
+    @GetMapping("/public-key")
+    @SecurityRequirements({})
+    @Operation(summary = "获取 SM2 公钥",
+            description = "返回当前有效的 SM2 公钥，用于前端加密登录密码")
+    @ApiResponse(responseCode = "200", description = "返回公钥")
+    public ApiResult<PublicKeyResponse> getPublicKey() {
+        return ApiResult.success(new PublicKeyResponse(
+                keyService.getSm2PublicKeyBase64(),
+                keyService.getKeyId(),
+                "SM2"));
     }
 }
