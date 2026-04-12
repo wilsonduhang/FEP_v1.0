@@ -77,21 +77,22 @@ public class XsdValidator {
         try (ByteArrayInputStream bis = new ByteArrayInputStream(xml)) {
             validator.validate(new StreamSource(bis));
         } catch (SAXException e) {
-            handler.errors.add(formatError(e));
+            handler.addError(formatError(e));
         } catch (IOException e) {
             throw new ValidationException("IO error while validating XML", e);
         }
 
+        List<String> errors = handler.getErrors();
         String msgNoLabel = LogSanitizer.sanitize(type.msgNo());
-        if (handler.errors.isEmpty()) {
+        if (errors.isEmpty()) {
             log.debug("XSD validation passed for {}", msgNoLabel);
             return ValidationResult.ok();
         }
         log.info("XSD validation failed for {}: {} error(s) - first: {}",
                 msgNoLabel,
-                handler.errors.size(),
-                LogSanitizer.sanitize(handler.errors.get(0)));
-        return ValidationResult.failed(handler.errors);
+                errors.size(),
+                LogSanitizer.sanitize(errors.get(0)));
+        return ValidationResult.failed(errors);
     }
 
     private static String formatError(final SAXException e) {
@@ -118,6 +119,14 @@ public class XsdValidator {
         @Override
         public void fatalError(final SAXParseException exception) {
             errors.add("fatal: " + formatError(exception));
+        }
+
+        void addError(final String message) {
+            errors.add(message);
+        }
+
+        List<String> getErrors() {
+            return errors;
         }
     }
 }

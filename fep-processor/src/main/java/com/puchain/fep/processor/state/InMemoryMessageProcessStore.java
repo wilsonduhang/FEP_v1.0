@@ -4,7 +4,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,10 +37,16 @@ import java.util.concurrent.ConcurrentMap;
 public class InMemoryMessageProcessStore implements MessageProcessStore {
 
     private final ConcurrentMap<String, MessageProcessRecord> byId = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, String> transitionNoToId = new ConcurrentHashMap<>();
 
     @Override
     public MessageProcessRecord save(final MessageProcessRecord record) {
         byId.put(record.getId(), record);
+        String prev = transitionNoToId.putIfAbsent(record.getTransitionNo(), record.getId());
+        if (prev != null && !prev.equals(record.getId())) {
+            throw new IllegalStateException(
+                    "Duplicate records for transitionNo=" + record.getTransitionNo());
+        }
         return record;
     }
 
@@ -52,14 +57,11 @@ public class InMemoryMessageProcessStore implements MessageProcessStore {
 
     @Override
     public Optional<MessageProcessRecord> findByTransitionNo(final String transitionNo) {
-        List<MessageProcessRecord> matches = byId.values().stream()
-                .filter(r -> r.getTransitionNo().equals(transitionNo))
-                .toList();
-        if (matches.size() > 1) {
-            throw new IllegalStateException(
-                    "Duplicate records for transitionNo=" + transitionNo + ", count=" + matches.size());
+        String id = transitionNoToId.get(transitionNo);
+        if (id == null) {
+            return Optional.empty();
         }
-        return matches.isEmpty() ? Optional.empty() : Optional.of(matches.get(0));
+        return Optional.ofNullable(byId.get(id));
     }
 
     @Override
