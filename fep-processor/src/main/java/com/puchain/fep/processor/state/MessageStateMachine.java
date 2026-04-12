@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.state;
 
+import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.util.LogSanitizer;
 import org.springframework.stereotype.Component;
 
@@ -63,7 +64,7 @@ public class MessageStateMachine {
     /**
      * 将指定记录的状态迁移至 {@code newStatus}。目标状态为
      * {@link MessageProcessStatus#FAILED} 时请改用
-     * {@link #failWith(String, String, String)} 以携带错误信息。
+     * {@link #failWith(String, FepErrorCode, String)} 以携带错误信息。
      *
      * @param recordId  目标记录主键（32 位 UUID），非空
      * @param newStatus 目标状态，非空
@@ -74,8 +75,22 @@ public class MessageStateMachine {
     public MessageProcessRecord transition(final String recordId, final MessageProcessStatus newStatus) {
         MessageProcessRecord current = store.findById(recordId)
                 .orElseThrow(() -> new NoSuchElementException("record not found: " + recordId));
+        return transition(current, newStatus);
+    }
+
+    /**
+     * 将已知记录迁移至 {@code newStatus}，跳过 {@code findById} 查询。
+     * 调用方必须保证 {@code current} 是该记录的最新状态快照。
+     *
+     * @param current   当前记录快照，非空
+     * @param newStatus 目标状态，非空
+     * @return 更新后的记录
+     * @throws IllegalMessageStateException 从当前状态到 {@code newStatus} 的转移非法
+     */
+    public MessageProcessRecord transition(final MessageProcessRecord current,
+                                           final MessageProcessStatus newStatus) {
         assertLegal(current, newStatus);
-        return store.updateStatus(recordId, newStatus, null, null);
+        return store.updateStatus(current.getId(), newStatus, null, null);
     }
 
     /**
@@ -83,19 +98,35 @@ public class MessageStateMachine {
      * 要求当前状态非终态，否则抛出 {@link IllegalMessageStateException}。
      *
      * @param recordId     目标记录主键，非空
-     * @param errorCode    错误码（建议取自 {@code FepErrorCode}）
+     * @param errorCode    错误码，非空
      * @param errorMessage 已脱敏的错误描述
      * @return 更新后的 FAILED 记录
      * @throws NoSuchElementException        指定 {@code recordId} 不存在
      * @throws IllegalMessageStateException  当前状态已为终态（COMPLETED / FAILED）
      */
     public MessageProcessRecord failWith(final String recordId,
-                                         final String errorCode,
+                                         final FepErrorCode errorCode,
                                          final String errorMessage) {
         MessageProcessRecord current = store.findById(recordId)
                 .orElseThrow(() -> new NoSuchElementException("record not found: " + recordId));
+        return failWith(current, errorCode, errorMessage);
+    }
+
+    /**
+     * 将已知记录迁移至 {@link MessageProcessStatus#FAILED}，跳过 {@code findById} 查询。
+     *
+     * @param current      当前记录快照，非空
+     * @param errorCode    错误码，非空
+     * @param errorMessage 已脱敏的错误描述
+     * @return 更新后的 FAILED 记录
+     * @throws IllegalMessageStateException 当前状态已为终态
+     */
+    public MessageProcessRecord failWith(final MessageProcessRecord current,
+                                         final FepErrorCode errorCode,
+                                         final String errorMessage) {
         assertLegal(current, MessageProcessStatus.FAILED);
-        return store.updateStatus(recordId, MessageProcessStatus.FAILED, errorCode, errorMessage);
+        return store.updateStatus(current.getId(), MessageProcessStatus.FAILED,
+                errorCode.getCode(), errorMessage);
     }
 
     private void assertLegal(final MessageProcessRecord current, final MessageProcessStatus target) {

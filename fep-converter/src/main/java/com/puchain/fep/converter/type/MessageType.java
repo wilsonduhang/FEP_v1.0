@@ -1,5 +1,8 @@
 package com.puchain.fep.converter.type;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -131,14 +134,14 @@ public enum MessageType {
 
     /** Lazy-initialized reverse index (initialization-on-demand holder pattern). */
     private static final class ByMsgNoHolder {
-        private static final java.util.Map<String, MessageType> INDEX;
+        private static final Map<String, MessageType> INDEX;
 
         static {
-            java.util.Map<String, MessageType> map = new java.util.HashMap<>(64);
+            Map<String, MessageType> map = new HashMap<>(64);
             for (MessageType type : MessageType.values()) {
                 map.put(type.msgNo, type);
             }
-            INDEX = java.util.Collections.unmodifiableMap(map);
+            INDEX = Collections.unmodifiableMap(map);
         }
     }
 }
