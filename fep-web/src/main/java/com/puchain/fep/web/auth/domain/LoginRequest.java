@@ -20,10 +20,15 @@ public class LoginRequest {
     @Pattern(regexp = "^[a-zA-Z][a-zA-Z0-9_]*$", message = "账号必须字母开头，仅字母数字下划线")
     private String account;
 
-    /** 密码：8-20位（登录时不做复杂度校验，兼容旧密码）。 */
-    @NotBlank(message = "密码不能为空")
+    /** 密码：8-20位（明文模式；与 encryptedPassword 二选一）。 */
     @Size(min = 8, max = 20)
     private String password;
+
+    /** SM2 加密后的密码 Base64 密文（可空；若非空，优先于 password 明文）。 */
+    private String encryptedPassword;
+
+    /** 加密使用的公钥版本（配合 encryptedPassword 使用）。 */
+    private String keyId;
 
     /** 验证码 UUID。 */
     @NotBlank(message = "验证码 ID 不能为空")
@@ -104,5 +109,41 @@ public class LoginRequest {
      */
     public void setCaptchaCode(final String captchaCode) {
         this.captchaCode = captchaCode;
+    }
+
+    /**
+     * 获取 SM2 加密密码密文。
+     *
+     * @return Base64 编码的 SM2 密文，可能为 null
+     */
+    public String getEncryptedPassword() {
+        return encryptedPassword;
+    }
+
+    /**
+     * 设置 SM2 加密密码密文。
+     *
+     * @param encryptedPassword Base64 编码的 SM2 密文
+     */
+    public void setEncryptedPassword(final String encryptedPassword) {
+        this.encryptedPassword = encryptedPassword;
+    }
+
+    /**
+     * 获取加密使用的公钥版本。
+     *
+     * @return 公钥版本标识，可能为 null
+     */
+    public String getKeyId() {
+        return keyId;
+    }
+
+    /**
+     * 设置加密使用的公钥版本。
+     *
+     * @param keyId 公钥版本标识
+     */
+    public void setKeyId(final String keyId) {
+        this.keyId = keyId;
     }
 }

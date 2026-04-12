@@ -2,7 +2,6 @@ package com.puchain.fep.web.auth.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepAuthException;
-import com.puchain.fep.common.security.PasswordHasher;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.domain.LoginResponse;
@@ -28,7 +27,8 @@ import java.util.List;
 /**
  * 认证服务（登录/登出/刷新）。
  *
- * <p>登录流程按 PRD §5.1.4 实现：验证码 -> 账号密码 -> 失败计数 -> 锁定 -> 签发 token -> SSO。</p>
+ * <p>登录流程按 PRD SS5.1.4 实现：验证码 -> 账号密码 -> 失败计数 -> 锁定 -> 签发 token -> SSO。
+ * 密码解析/验证和验证码校验委托给 {@link LoginVerifier}。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -43,24 +43,18 @@ public class AuthService {
     private final RoleQueryHelper roleQueryHelper;
     private final PermissionQueryHelper permissionQueryHelper;
     private final SysMenuService menuService;
-    private final PasswordHasher passwordHasher;
-    private final CaptchaService captchaService;
-    private final LoginAttemptService loginAttemptService;
+    private final LoginVerifier loginVerifier;
     private final SingleSignOnService singleSignOnService;
     private final JwtTokenProvider tokenProvider;
 
     /**
      * 构造 AuthService。
      *
-     * <p>NOTE: 依赖数 = 9（超出 7 上限）。Task 5 将拆出 LoginVerifier 恢复合规。</p>
-     *
      * @param userRepository         用户 Repository
      * @param roleQueryHelper        角色查询辅助
      * @param permissionQueryHelper  权限码聚合辅助
      * @param menuService            菜单服务
-     * @param passwordHasher         密码散列服务
-     * @param captchaService         验证码服务
-     * @param loginAttemptService    登录尝试服务
+     * @param loginVerifier          登录验证（验证码/密码解析/密码匹配/失败计数）
      * @param singleSignOnService    SSO 服务
      * @param tokenProvider          JWT 签发/解析
      */
@@ -68,18 +62,14 @@ public class AuthService {
                        final RoleQueryHelper roleQueryHelper,
                        final PermissionQueryHelper permissionQueryHelper,
                        final SysMenuService menuService,
-                       final PasswordHasher passwordHasher,
-                       final CaptchaService captchaService,
-                       final LoginAttemptService loginAttemptService,
+                       final LoginVerifier loginVerifier,
                        final SingleSignOnService singleSignOnService,
                        final JwtTokenProvider tokenProvider) {
         this.userRepository = userRepository;
         this.roleQueryHelper = roleQueryHelper;
         this.permissionQueryHelper = permissionQueryHelper;
         this.menuService = menuService;
-        this.passwordHasher = passwordHasher;
-        this.captchaService = captchaService;
-        this.loginAttemptService = loginAttemptService;
+        this.loginVerifier = loginVerifier;
         this.singleSignOnService = singleSignOnService;
         this.tokenProvider = tokenProvider;
     }
@@ -97,14 +87,14 @@ public class AuthService {
     @Transactional
     public LoginResponse login(final LoginRequest request) {
         // 1. 校验验证码
-        if (!captchaService.verifyAndConsume(request.getCaptchaId(), request.getCaptchaCode())) {
+        if (!loginVerifier.verifyCaptcha(request.getCaptchaId(), request.getCaptchaCode())) {
             throw new FepAuthException(FepErrorCode.AUTH_0404);
         }
 
         // 2. 查找用户
         SysUser user = userRepository.findByUserAccount(request.getAccount())
                 .orElseThrow(() -> {
-                    loginAttemptService.recordFailure(request.getAccount());
+                    loginVerifier.recordFailure(request.getAccount());
                     return new FepAuthException(FepErrorCode.AUTH_0402);
                 });
 
@@ -119,10 +109,11 @@ public class AuthService {
                     "账号已锁定，请 " + user.getLockedUntil() + " 后重试");
         }
 
-        // 4. 检查密码
-        if (!passwordHasher.matches(request.getPassword(), user.getPasswordHash())) {
-            int attempts = loginAttemptService.recordFailure(request.getAccount());
-            if (attempts >= loginAttemptService.getMaxAttempts()) {
+        // 4. 解析密码（支持明文或 SM2 加密）并校验
+        String clearPassword = loginVerifier.resolveClearPassword(request);
+        if (!loginVerifier.verifyPassword(clearPassword, user.getPasswordHash())) {
+            int attempts = loginVerifier.recordFailure(request.getAccount());
+            if (attempts >= loginVerifier.getMaxAttempts()) {
                 user.setUserStatus(UserStatus.LOCKED);
                 user.setLockedUntil(LocalDateTime.now().plus(LOCK_DURATION));
                 userRepository.save(user);
@@ -130,11 +121,11 @@ public class AuthService {
                         "账号已锁定 30 分钟，请稍后重试");
             }
             throw new FepAuthException(FepErrorCode.AUTH_0402,
-                    "账号或密码错误（剩余 " + (loginAttemptService.getMaxAttempts() - attempts) + " 次）");
+                    "账号或密码错误（剩余 " + (loginVerifier.getMaxAttempts() - attempts) + " 次）");
         }
 
         // 5. 登录成功 -> 清除失败计数 + 更新用户状态
-        loginAttemptService.clearFailures(request.getAccount());
+        loginVerifier.clearFailures(request.getAccount());
         if (user.getUserStatus() == UserStatus.LOCKED) {
             user.setUserStatus(UserStatus.ACTIVE);
             user.setLockedUntil(null);
@@ -152,7 +143,7 @@ public class AuthService {
         String refreshToken = tokenProvider.createRefreshToken(
                 user.getUserId(), user.getUserAccount());
 
-        // 8. 记录当前会话 jti（覆盖旧 jti，实现单点踢出 PRD §5.1.5）
+        // 8. 记录当前会话 jti（覆盖旧 jti，实现单点踢出 PRD SS5.1.5）
         String jti = tokenProvider.extractJti(accessToken);
         singleSignOnService.registerSession(user.getUserId(), jti, tokenProvider.getAccessTokenTtlSeconds());
 
@@ -166,7 +157,7 @@ public class AuthService {
     }
 
     /**
-     * 用户登出 — 将当前 JWT 加入黑名单 + 清除 SSO 会话。
+     * 用户登出 -- 将当前 JWT 加入黑名单 + 清除 SSO 会话。
      *
      * @param accessToken 当前 access token
      */
@@ -185,7 +176,7 @@ public class AuthService {
     }
 
     /**
-     * 刷新 Access Token — 解析 refresh token，签发新 access token，更新 SSO 会话。
+     * 刷新 Access Token -- 解析 refresh token，签发新 access token，更新 SSO 会话。
      *
      * @param refreshToken refresh token 字符串
      * @return 新的登录响应（含新 access token）
