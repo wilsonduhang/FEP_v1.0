@@ -38,8 +38,15 @@ public class SecurityConfiguration {
     /** CORS preflight 缓存时间（秒）：1 小时。 */
     private static final long CORS_MAX_AGE_SECONDS = 3600L;
 
+    // P6e.2 Task 2: replaced /api/v1/auth/** wildcard with explicit paths
+    // so that /api/v1/auth/me requires JWT authentication.
+    // /api/v1/auth/logout kept public: logout must work even with expired tokens.
     private static final String[] PUBLIC_PATHS = {
-            "/api/v1/auth/**",
+            "/api/v1/auth/login",
+            "/api/v1/auth/captcha",
+            "/api/v1/auth/public-key",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/logout",
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",
