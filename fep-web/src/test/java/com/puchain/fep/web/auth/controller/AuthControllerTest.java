@@ -8,6 +8,7 @@ import com.puchain.fep.web.auth.domain.UserInfoResponse;
 import com.puchain.fep.web.auth.jwt.JwtTokenProvider;
 import com.puchain.fep.web.auth.service.AuthService;
 import com.puchain.fep.web.auth.service.CaptchaService;
+import com.puchain.fep.security.api.KeyService;
 import com.puchain.fep.web.sysmgmt.menu.dto.MenuTreeNode;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,9 @@ class AuthControllerTest {
 
     @MockBean
     private CaptchaService captchaService;
+
+    @MockBean
+    private KeyService keyService;
 
     @Autowired
     private JwtTokenProvider tokenProvider;
@@ -156,5 +160,20 @@ class AuthControllerTest {
         mockMvc.perform(get("/api/v1/auth/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTH_0401"));
+    }
+
+    @Test
+    void getPublicKeyShouldReturnSm2PublicKey() throws Exception {
+        when(keyService.getSm2PublicKeyBase64())
+                .thenReturn("MOCK_SM2_PUBLIC_KEY_BASE64_FOR_DEV_ONLY");
+        when(keyService.getKeyId()).thenReturn("mock-key-v1");
+
+        mockMvc.perform(get("/api/v1/auth/public-key"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.data.publicKeyBase64")
+                        .value("MOCK_SM2_PUBLIC_KEY_BASE64_FOR_DEV_ONLY"))
+                .andExpect(jsonPath("$.data.keyId").value("mock-key-v1"))
+                .andExpect(jsonPath("$.data.algorithm").value("SM2"));
     }
 }
