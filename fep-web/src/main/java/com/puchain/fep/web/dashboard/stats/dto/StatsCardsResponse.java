@@ -1,5 +1,7 @@
 package com.puchain.fep.web.dashboard.stats.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import java.math.BigDecimal;
 
 /**
@@ -25,8 +27,12 @@ public class StatsCardsResponse {
     /**
      * Returns the cumulative transaction amount.
      *
+     * <p>Serialized as JSON string to avoid JavaScript number precision loss
+     * when the amount exceeds {@code Number.MAX_SAFE_INTEGER} (2^53 - 1).</p>
+     *
      * @return total amount (never null, {@link BigDecimal#ZERO} when no data)
      */
+    @JsonSerialize(using = ToStringSerializer.class)
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
