@@ -70,7 +70,10 @@ jobs:
 
   pr-size-check:
     name: PR Size Check (<=400 lines)
-    if: github.event_name == 'pull_request'
+    # Skipped when the PR carries the 'batch-import' label, which is reserved for
+    # historical/backfill imports that retro-land multi-phase work. Default path
+    # for regular feature PRs still enforces the 400-line cap.
+    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'batch-import')
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
