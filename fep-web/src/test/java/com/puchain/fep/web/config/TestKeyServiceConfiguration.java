@@ -1,6 +1,7 @@
 package com.puchain.fep.web.config;
 
 import com.puchain.fep.security.api.KeyService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,9 +25,15 @@ public class TestKeyServiceConfiguration {
     /**
      * Returns a KeyService that performs Base64 decode as SM2 decryption stand-in.
      *
+     * <p>Only registered when no other {@link KeyService} bean is present in the
+     * context. Under the default {@code dev} profile, {@code MockKeyService} from
+     * fep-security-mock is active and takes precedence; this bean then steps
+     * aside so {@code @MockBean KeyService} injection is unambiguous.</p>
+     *
      * @return test KeyService implementation
      */
     @Bean
+    @ConditionalOnMissingBean(KeyService.class)
     public KeyService keyService() {
         return new KeyService() {
             @Override
