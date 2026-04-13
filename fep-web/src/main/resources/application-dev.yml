@@ -3,10 +3,6 @@
 # - 安全模块使用 Mock 实现
 # - Redis 启用（P7.1 E2E 冒烟期间需要 Docker Redis 容器 fep-redis，端口 6379）
 # - 日志级别 DEBUG
-# - 端口 8090（避让其他容器占用的 8080）
-
-server:
-  port: 8090
 
 spring:
   datasource:
@@ -30,8 +26,6 @@ spring:
       host: localhost
       port: 6379
       database: 0
-      repositories:
-        enabled: false
 
 fep:
   cors:
