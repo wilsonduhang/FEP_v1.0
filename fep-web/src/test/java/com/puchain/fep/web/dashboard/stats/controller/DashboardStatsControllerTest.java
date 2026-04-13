@@ -133,6 +133,21 @@ class DashboardStatsControllerTest {
     }
 
     /**
+     * GET cards should serialize {@code totalAmount} as a JSON string to
+     * prevent JavaScript number precision loss for amounts exceeding
+     * {@code Number.MAX_SAFE_INTEGER} (2^53 - 1).
+     *
+     * @throws Exception on request failure
+     */
+    @Test
+    void getCards_shouldSerializeTotalAmountAsString() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/cards")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalAmount").isString());
+    }
+
+    /**
      * GET trend with TODAY range should return data points.
      *
      * @throws Exception on request failure
