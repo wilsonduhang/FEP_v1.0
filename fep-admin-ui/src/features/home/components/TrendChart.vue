@@ -8,13 +8,13 @@
           size="small"
           @change="load"
         >
-          <el-radio-button label="TODAY">
+          <el-radio-button value="TODAY">
             今日
           </el-radio-button>
-          <el-radio-button label="THIS_WEEK">
+          <el-radio-button value="THIS_WEEK">
             本周
           </el-radio-button>
-          <el-radio-button label="THIS_MONTH">
+          <el-radio-button value="THIS_MONTH">
             本月
           </el-radio-button>
         </el-radio-group>
