@@ -1,4 +1,5 @@
 import { httpClient } from '@/shared/http/client';
+import type { MenuTreeNode } from '@/shared/types/menu-tree-node';
 
 /** 对应 com.puchain.fep.web.auth.domain.CaptchaResponse */
 export interface CaptchaResponse {
@@ -54,6 +55,28 @@ export interface RefreshRequest {
   refreshToken: string;
 }
 
+/** 对应 com.puchain.fep.web.auth.domain.UserInfoResponse（P7.1 扩展，含权限点与菜单树） */
+export interface UserInfoResponse {
+  /** 用户 ID */
+  userId: string;
+  /** 登录账号 */
+  userAccount: string;
+  /** 显示姓名 */
+  userName: string;
+  /** 联系电话（可为空） */
+  phone: string | null;
+  /** 邮箱（可为空） */
+  email: string | null;
+  /** 所属部门（可为空） */
+  department: string | null;
+  /** 角色编码列表 */
+  roleCodes: string[];
+  /** 权限点编码列表（形如 sys:user:list） */
+  permissions: string[];
+  /** 授权菜单树（按角色过滤后的结构） */
+  menuTree: MenuTreeNode[];
+}
+
 export const authApi = {
   captcha: (): Promise<CaptchaResponse> =>
     httpClient.get('/api/v1/auth/captcha'),
@@ -64,4 +87,5 @@ export const authApi = {
   logout: (): Promise<void> => httpClient.post('/api/v1/auth/logout'),
   refresh: (payload: RefreshRequest): Promise<LoginResponse> =>
     httpClient.post('/api/v1/auth/refresh', payload),
+  getMe: (): Promise<UserInfoResponse> => httpClient.get('/api/v1/auth/me'),
 };
