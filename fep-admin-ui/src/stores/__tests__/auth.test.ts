@@ -148,4 +148,44 @@ describe('useAuthStore', () => {
     const store = useAuthStore();
     expect(store.hasPermission('any')).toBe(false);
   });
+
+  it('ensureProfile dedupes concurrent calls via profileLoading flag', async () => {
+    let resolveGetMe: (value: unknown) => void;
+    const getMePromise = new Promise((r) => {
+      resolveGetMe = r;
+    });
+    (authApi.getMe as any).mockReturnValueOnce(getMePromise);
+
+    TokenStorage.set('AT');
+    const store = useAuthStore();
+
+    // Fire 2 concurrent ensureProfile() calls. The first synchronously
+    // enters fetchMe() and sets profileLoading=true before awaiting
+    // the mocked getMe; the second caller sees the flag and bails out.
+    const call1 = store.ensureProfile();
+    const call2 = store.ensureProfile();
+
+    resolveGetMe!(sampleUserInfo);
+    await Promise.all([call1, call2]);
+
+    expect(authApi.getMe).toHaveBeenCalledOnce();
+    expect(store.profile?.userAccount).toBe('alicex');
+    expect(store.profileLoading).toBe(false);
+  });
+
+  it('ensureProfile is no-op when not authenticated', async () => {
+    localStorage.clear();
+    const store = useAuthStore();
+    await store.ensureProfile();
+    expect(authApi.getMe).not.toHaveBeenCalled();
+    expect(store.profile).toBeNull();
+  });
+
+  it('ensureProfile is no-op when profile already loaded', async () => {
+    TokenStorage.set('AT');
+    const store = useAuthStore();
+    store.$patch({ profile: sampleUserInfo });
+    await store.ensureProfile();
+    expect(authApi.getMe).not.toHaveBeenCalled();
+  });
 });

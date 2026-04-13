@@ -1,8 +1,21 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createRouter, createMemoryHistory } from 'vue-router';
 import { createPinia, setActivePinia } from 'pinia';
 import { useAuthStore } from '@/stores/auth';
 import { TokenStorage } from '@/shared/http/token-storage';
+
+vi.mock('@/features/auth/api/auth-api', () => ({
+  authApi: {
+    login: vi.fn(),
+    logout: vi.fn().mockResolvedValue(undefined),
+    captcha: vi.fn(),
+    getPublicKey: vi.fn(),
+    refresh: vi.fn(),
+    getMe: vi.fn(),
+  },
+}));
+
+import { authApi } from '@/features/auth/api/auth-api';
 
 /**
  * Minimal in-memory router used for isolated guard unit tests. We intentionally
@@ -30,8 +43,7 @@ function makeTestRouter() {
       },
     ],
   });
-  router.beforeEach((to) => {
-    const store = useAuthStore();
+  router.beforeEach(async (to) => {
     const authed = TokenStorage.get() !== null;
     if (to.meta.requiresAuth && !authed) {
       return { name: 'Login', query: { redirect: to.fullPath } };
@@ -39,8 +51,19 @@ function makeTestRouter() {
     if (to.name === 'Login' && authed) {
       return { name: 'Home' };
     }
-    if (to.meta.requiresAuth && to.meta.permission && !store.hasPermission(to.meta.permission)) {
-      return { name: 'Home', query: { forbidden: to.fullPath } };
+    if (to.meta.requiresAuth && authed) {
+      const store = useAuthStore();
+      if (store.profile === null) {
+        try {
+          await store.ensureProfile();
+        } catch {
+          store.localLogout();
+          return { name: 'Login', query: { redirect: to.fullPath } };
+        }
+      }
+      if (to.meta.permission && !store.hasPermission(to.meta.permission)) {
+        return { name: 'Home', query: { forbidden: to.fullPath } };
+      }
     }
     return true;
   });
@@ -51,6 +74,7 @@ describe('router guards', () => {
   beforeEach(() => {
     localStorage.clear();
     setActivePinia(createPinia());
+    vi.clearAllMocks();
   });
 
   it('unauth → home redirects to login with redirect query', async () => {
@@ -108,5 +132,40 @@ describe('router guards', () => {
     await router.push('/admin');
     expect(router.currentRoute.value.name).toBe('Home');
     expect(router.currentRoute.value.query.forbidden).toBe('/admin');
+  });
+
+  it('authed + profile null → guard lazy-hydrates via ensureProfile and allows navigation', async () => {
+    TokenStorage.set('AT');
+    (authApi.getMe as any).mockResolvedValueOnce({
+      userId: 'u1',
+      userAccount: 'alicex',
+      userName: '张三',
+      phone: null,
+      email: null,
+      department: null,
+      roleCodes: ['ADMIN'],
+      permissions: ['sys:user:list'],
+      menuTree: [],
+    });
+
+    const router = makeTestRouter();
+    await router.push('/home');
+
+    expect(router.currentRoute.value.name).toBe('Home');
+    const store = useAuthStore();
+    expect(store.profile?.userAccount).toBe('alicex');
+    expect(authApi.getMe).toHaveBeenCalledOnce();
+  });
+
+  it('authed + profile null + ensureProfile fails → clear token and redirect to login', async () => {
+    TokenStorage.set('AT');
+    (authApi.getMe as any).mockRejectedValueOnce(new Error('network'));
+
+    const router = makeTestRouter();
+    await router.push('/home');
+
+    expect(router.currentRoute.value.name).toBe('Login');
+    expect(router.currentRoute.value.query.redirect).toBe('/home');
+    expect(TokenStorage.get()).toBeNull();
   });
 });
