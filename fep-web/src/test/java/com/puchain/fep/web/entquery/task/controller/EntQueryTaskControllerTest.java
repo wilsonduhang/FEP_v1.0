@@ -108,7 +108,8 @@ class EntQueryTaskControllerTest {
         assertFalse(accessToken.isBlank(), "accessToken should not be blank");
 
         // Create a test enterprise for task creation
-        String uniqueUsci = "91430100MA" + String.valueOf(System.nanoTime()).substring(5, 13);
+        String uniqueUsci = "91430100MA" + String.format("%08d",
+                java.util.concurrent.ThreadLocalRandom.current().nextInt(100_000_000));
         EnterpriseCreateRequest entReq = new EnterpriseCreateRequest();
         entReq.setEnterpriseName("查询任务测试企业");
         entReq.setUsci(uniqueUsci);
