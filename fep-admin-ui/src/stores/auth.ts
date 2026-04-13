@@ -1,9 +1,17 @@
 import { defineStore } from 'pinia';
 import { TokenStorage } from '@/shared/http/token-storage';
-import { authApi, type LoginRequest, type LoginResponse } from '@/features/auth/api/auth-api';
+import {
+  authApi,
+  type LoginRequest,
+  type UserInfoResponse,
+} from '@/features/auth/api/auth-api';
 
-/** 登录后本地缓存的用户画像，字段与后端 LoginResponse 扁平一一对应（剔除 token）。 */
-export type UserProfile = Omit<LoginResponse, 'accessToken' | 'refreshToken'>;
+/**
+ * Flat user profile persisted in store after login.
+ * Fields align 1:1 with backend UserInfoResponse (P6e.2): includes
+ * permissions list and authorized menu tree for front-end gating.
+ */
+export type UserProfile = UserInfoResponse;
 
 interface AuthState {
   profile: UserProfile | null;
@@ -15,25 +23,42 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (): boolean => TokenStorage.get() !== null,
   },
   actions: {
+    /**
+     * Perform login then immediately fetch full user profile so that
+     * permissions and menu tree are available before router navigation.
+     */
     async login(payload: LoginRequest) {
       const response = await authApi.login(payload);
       TokenStorage.set(response.accessToken);
       TokenStorage.setRefresh(response.refreshToken);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { accessToken: _at, refreshToken: _rt, ...profile } = response;
-      this.profile = profile;
+      await this.fetchMe();
+    },
+    /**
+     * Retrieve current user info from GET /auth/me and cache in store.
+     * Used both after login and on page reload when token still valid.
+     */
+    async fetchMe() {
+      const info = await authApi.getMe();
+      this.profile = info;
     },
     async logout() {
       try {
         await authApi.logout();
       } catch {
-        // 静默失败：即使后端 logout 失败也要清理本地状态
+        // Silent: clear local state regardless of backend logout result.
       }
       this.localLogout();
     },
     localLogout() {
       TokenStorage.clear();
       this.profile = null;
+    },
+    /**
+     * Declarative permission check against cached permissions list.
+     * Returns false when not logged in or the code is absent.
+     */
+    hasPermission(code: string): boolean {
+      return this.profile?.permissions.includes(code) ?? false;
     },
     bindExpiryListener() {
       window.addEventListener('auth:expired', () => this.localLogout());
