@@ -13,6 +13,11 @@ vi.mock('@/features/auth/api/auth-api', () => ({
       imageBase64: 'data:image/png;base64,xxx',
       ttlSeconds: 300,
     }),
+    getPublicKey: vi.fn().mockResolvedValue({
+      publicKeyBase64: 'MOCK_SM2_PUBLIC_KEY_BASE64_FOR_DEV_ONLY',
+      keyId: 'mock-key-v1',
+      algorithm: 'SM2',
+    }),
     login: vi.fn().mockResolvedValue({
       accessToken: 'AT',
       refreshToken: 'RT',
@@ -85,7 +90,7 @@ describe('LoginPage validation', () => {
     expect(authApi.login).not.toHaveBeenCalled();
   });
 
-  it('calls authApi.login with flat payload on valid input', async () => {
+  it('calls authApi.login on valid input', async () => {
     const w = buildWrapper();
     await flush();
     await w.find('input[name="account"]').setValue('alicex');
@@ -93,12 +98,11 @@ describe('LoginPage validation', () => {
     await w.find('input[name="captchaCode"]').setValue('1234');
     await w.find('form').trigger('submit');
     await flush();
-    expect(authApi.login).toHaveBeenCalledWith({
-      account: 'alicex',
-      password: 'Abc12345',
-      captchaId: 'cap-1',
-      captchaCode: '1234',
-    });
+    expect(authApi.login).toHaveBeenCalledOnce();
+    const payload = (authApi.login as any).mock.calls[0][0];
+    expect(payload.account).toBe('alicex');
+    expect(payload.captchaId).toBe('cap-1');
+    expect(payload.captchaCode).toBe('1234');
   });
 
   it('loads captcha on mount and binds imageBase64 to <img src>', async () => {
@@ -108,5 +112,40 @@ describe('LoginPage validation', () => {
     const img = w.find('img.captcha-img');
     expect(img.exists()).toBe(true);
     expect(img.attributes('src')).toBe('data:image/png;base64,xxx');
+  });
+
+  it('loads captcha and public key in parallel on mount', async () => {
+    buildWrapper();
+    await flush();
+    expect(authApi.captcha).toHaveBeenCalledOnce();
+    expect(authApi.getPublicKey).toHaveBeenCalledOnce();
+  });
+
+  it('submits with encryptedPassword when public key is MOCK prefix', async () => {
+    const w = buildWrapper();
+    await flush();
+    await w.find('input[name="account"]').setValue('alicex');
+    await w.find('input[name="password"]').setValue('Abc12345');
+    await w.find('input[name="captchaCode"]').setValue('1234');
+    await w.find('form').trigger('submit');
+    await flush();
+
+    expect(authApi.login).toHaveBeenCalledWith({
+      account: 'alicex',
+      encryptedPassword: 'QWJjMTIzNDU=',
+      keyId: 'mock-key-v1',
+      captchaId: 'cap-1',
+      captchaCode: '1234',
+    });
+    const payload = (authApi.login as any).mock.calls[0][0];
+    expect(payload.password).toBeUndefined();
+  });
+
+  it('disables submit button when public key loading fails', async () => {
+    (authApi.getPublicKey as any).mockRejectedValueOnce(new Error('network'));
+    const w = buildWrapper();
+    await flush();
+    expect(w.text()).toContain('公钥加载失败');
+    expect(w.find('button[type="submit"]').attributes('disabled')).toBeDefined();
   });
 });

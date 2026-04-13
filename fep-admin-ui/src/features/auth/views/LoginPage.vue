@@ -48,7 +48,7 @@
       </p>
       <button
         type="submit"
-        :disabled="submitting"
+        :disabled="submitting || !publicKeyReady"
       >
         {{ submitting ? '登录中…' : '登录' }}
       </button>
@@ -60,11 +60,16 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { authApi } from '@/features/auth/api/auth-api';
+import type { LoginRequest } from '@/features/auth/api/auth-api';
 import { useAuthStore } from '@/stores/auth';
+import { sm2Cipher } from '@/features/auth/crypto/sm2-cipher';
 
 const form = reactive({ account: '', password: '', captchaCode: '' });
 const captchaImage = ref<string>('');
 const captchaId = ref<string>('');
+const publicKeyBase64 = ref<string>('');
+const keyId = ref<string>('');
+const publicKeyReady = ref(false);
 const errorMessage = ref<string>('');
 const submitting = ref(false);
 
@@ -94,6 +99,18 @@ async function loadCaptcha() {
   }
 }
 
+async function loadPublicKey() {
+  try {
+    const res = await authApi.getPublicKey();
+    publicKeyBase64.value = res.publicKeyBase64;
+    keyId.value = res.keyId;
+    publicKeyReady.value = true;
+  } catch {
+    errorMessage.value = '公钥加载失败，请刷新页面重试';
+    publicKeyReady.value = false;
+  }
+}
+
 async function onSubmit() {
   errorMessage.value = '';
   if (!ACCOUNT_RE.test(form.account)) {
@@ -108,14 +125,34 @@ async function onSubmit() {
     errorMessage.value = '验证码错误或已失效';
     return;
   }
+
+  const cipher = sm2Cipher.encryptLoginPassword(
+    form.password,
+    publicKeyBase64.value,
+    keyId.value || null,
+  );
+
+  const payload: LoginRequest = {
+    account: form.account,
+    captchaId: captchaId.value,
+    captchaCode: form.captchaCode,
+  };
+  if (cipher.mode === 'plaintext') {
+    if (cipher.plaintextPassword !== null) {
+      payload.password = cipher.plaintextPassword;
+    }
+  } else {
+    if (cipher.encryptedPassword !== null) {
+      payload.encryptedPassword = cipher.encryptedPassword;
+    }
+    if (cipher.keyId) {
+      payload.keyId = cipher.keyId;
+    }
+  }
+
   submitting.value = true;
   try {
-    await authStore.login({
-      account: form.account,
-      password: form.password,
-      captchaId: captchaId.value,
-      captchaCode: form.captchaCode,
-    });
+    await authStore.login(payload);
     const redirect = (route.query.redirect as string) || '/home';
     router.push(redirect);
   } catch {
@@ -127,7 +164,9 @@ async function onSubmit() {
   }
 }
 
-onMounted(loadCaptcha);
+onMounted(() => {
+  Promise.all([loadCaptcha(), loadPublicKey()]);
+});
 </script>
 
 <style scoped>
