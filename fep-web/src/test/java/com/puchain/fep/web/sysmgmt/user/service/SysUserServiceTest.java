@@ -57,7 +57,7 @@ class SysUserServiceTest {
     @Test
     void createDuplicateAccountShouldThrow() {
         UserCreateRequest request = new UserCreateRequest();
-        request.setAccount("admin");
+        request.setAccount("admin1");
         request.setUserName("重复用户");
         request.setInitialPassword("Test1234");
 
@@ -70,7 +70,7 @@ class SysUserServiceTest {
     void findAdminWithRoleShouldReturnSystemAdmin() {
         UserResponse response = userService.findById(ADMIN_USER_ID);
 
-        assertEquals("admin", response.getUserAccount());
+        assertEquals("admin1", response.getUserAccount());
         assertEquals("系统管理员", response.getUserName());
         assertTrue(response.getRoleCodes().contains("SYSTEM_ADMIN"),
                 "超管用户应拥有 SYSTEM_ADMIN 角色");

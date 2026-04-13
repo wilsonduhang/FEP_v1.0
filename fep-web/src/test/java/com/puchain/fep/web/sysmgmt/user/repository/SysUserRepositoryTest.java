@@ -27,7 +27,7 @@ class SysUserRepositoryTest {
 
     @Test
     void findByUserAccountShouldReturnSeededAdmin() {
-        Optional<SysUser> admin = repository.findByUserAccount("admin");
+        Optional<SysUser> admin = repository.findByUserAccount("admin1");
         assertTrue(admin.isPresent());
         assertEquals("系统管理员", admin.get().getUserName());
         assertEquals(UserStatus.ACTIVE, admin.get().getUserStatus());
@@ -35,7 +35,7 @@ class SysUserRepositoryTest {
 
     @Test
     void existsByUserAccountShouldReturnTrueForAdmin() {
-        assertTrue(repository.existsByUserAccount("admin"));
+        assertTrue(repository.existsByUserAccount("admin1"));
         assertFalse(repository.existsByUserAccount("nonexistent"));
     }
 

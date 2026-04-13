@@ -59,7 +59,7 @@ class FlywayMigrationTest {
     @Test
     void adminUserShouldBeSeeded() {
         Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM t_sys_user WHERE user_account = 'admin'", Integer.class);
+                "SELECT COUNT(*) FROM t_sys_user WHERE user_account = 'admin1'", Integer.class);
         assertNotNull(count);
         assertEquals(1, count);
     }
