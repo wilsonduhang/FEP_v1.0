@@ -1,5 +1,19 @@
 import type { RouteRecordRaw } from 'vue-router';
 
+/**
+ * Declarative route meta extension consumed by the global `beforeEach` guard
+ * in `src/router/index.ts`. Routes that require authentication set
+ * `requiresAuth: true`; routes that additionally require a permission code
+ * set `permission: 'sys:xxx:yyy'` and the guard checks it via
+ * `useAuthStore().hasPermission()`.
+ */
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean;
+    permission?: string;
+  }
+}
+
 export const routes: RouteRecordRaw[] = [
   {
     path: '/login',
