@@ -18,7 +18,7 @@ describe('httpClient', () => {
   it('injects Authorization header when token present', async () => {
     TokenStorage.set('tkn-1');
     const adapter = vi.fn().mockResolvedValue({
-      data: { code: 'SUCCESS', message: 'ok', data: { id: 1 } },
+      data: { code: '200', message: 'ok', data: { id: 1 } },
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -35,7 +35,7 @@ describe('httpClient', () => {
 
   it('unwraps successful ApiResult to data field', async () => {
     httpClient.defaults.adapter = vi.fn().mockResolvedValue({
-      data: { code: 'SUCCESS', message: 'ok', data: { id: 42 } },
+      data: { code: '200', message: 'ok', data: { id: 42 } },
       status: 200,
       statusText: 'OK',
       headers: {},

@@ -5,7 +5,6 @@ import com.puchain.fep.web.auth.RedisKeyConstants;
 import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.wf.captcha.SpecCaptcha;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +19,6 @@ import java.time.Duration;
  * @since 1.0.0
  */
 @Service
-@ConditionalOnBean(StringRedisTemplate.class)
 public class CaptchaService {
 
     private static final Duration TTL = Duration.ofMinutes(5);
@@ -51,8 +49,10 @@ public class CaptchaService {
         String code = captcha.text().toLowerCase(java.util.Locale.ROOT);
         String captchaId = IdGenerator.uuid32();
         redisTemplate.opsForValue().set(RedisKeyConstants.CAPTCHA_PREFIX + captchaId, code, TTL);
-        return new CaptchaResponse(
-                captchaId, "data:image/png;base64," + captcha.toBase64(), TTL.getSeconds());
+        // SpecCaptcha.toBase64() already returns a full "data:image/png;base64,..." URI;
+        // do not prepend the prefix again (would produce double-prefixed string that
+        // browsers reject). Fix discovered during P7.1 E2E smoke test.
+        return new CaptchaResponse(captchaId, captcha.toBase64(), TTL.getSeconds());
     }
 
     /**
