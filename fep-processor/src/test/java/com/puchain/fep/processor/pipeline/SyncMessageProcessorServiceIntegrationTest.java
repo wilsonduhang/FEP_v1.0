@@ -33,9 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author FEP Team
  * @since 1.0.0
  */
-class SyncMessageProcessorIntegrationTest {
+class SyncMessageProcessorServiceIntegrationTest {
 
-    private SyncMessageProcessor processor;
+    private SyncMessageProcessorService processor;
     private InMemoryMessageProcessStore store;
 
     private static final Map<String, MessageType> VALID_SAMPLES = new LinkedHashMap<>();
@@ -67,11 +67,11 @@ class SyncMessageProcessorIntegrationTest {
         XsdValidator validator = new XsdValidator(registry);
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
-        processor = new SyncMessageProcessor(validator, machine, store);
+        processor = new SyncMessageProcessorService(validator, machine, store);
     }
 
     private byte[] loadSample(final String name) throws IOException {
-        try (InputStream is = SyncMessageProcessorIntegrationTest.class.getResourceAsStream("/samples/" + name)) {
+        try (InputStream is = SyncMessageProcessorServiceIntegrationTest.class.getResourceAsStream("/samples/" + name)) {
             if (is == null) {
                 throw new IOException("missing sample: " + name);
             }

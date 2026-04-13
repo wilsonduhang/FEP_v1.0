@@ -34,9 +34,9 @@ import java.time.Instant;
  * @since 1.0.0
  */
 @Component
-public class SyncMessageProcessor {
+public class SyncMessageProcessorService {
 
-    private static final Logger log = LoggerFactory.getLogger(SyncMessageProcessor.class);
+    private static final Logger log = LoggerFactory.getLogger(SyncMessageProcessorService.class);
 
     private final XsdValidator validator;
     private final MessageStateMachine stateMachine;
@@ -49,9 +49,9 @@ public class SyncMessageProcessor {
      * @param stateMachine 报文级状态机，非空
      * @param store        报文处理记录存储端口，非空
      */
-    public SyncMessageProcessor(final XsdValidator validator,
-                                final MessageStateMachine stateMachine,
-                                final MessageProcessStore store) {
+    public SyncMessageProcessorService(final XsdValidator validator,
+                                       final MessageStateMachine stateMachine,
+                                       final MessageProcessStore store) {
         this.validator = validator;
         this.stateMachine = stateMachine;
         this.store = store;

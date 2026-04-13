@@ -16,9 +16,9 @@ import java.io.InputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class SyncMessageProcessorTest {
+class SyncMessageProcessorServiceTest {
 
-    private SyncMessageProcessor processor;
+    private SyncMessageProcessorService processor;
     private InMemoryMessageProcessStore store;
 
     @BeforeEach
@@ -27,11 +27,11 @@ class SyncMessageProcessorTest {
         XsdValidator validator = new XsdValidator(registry);
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
-        processor = new SyncMessageProcessor(validator, machine, store);
+        processor = new SyncMessageProcessorService(validator, machine, store);
     }
 
     private byte[] loadSample(final String path) throws IOException {
-        try (InputStream is = SyncMessageProcessorTest.class.getResourceAsStream(path)) {
+        try (InputStream is = SyncMessageProcessorServiceTest.class.getResourceAsStream(path)) {
             if (is == null) {
                 throw new IOException("sample missing: " + path);
             }
