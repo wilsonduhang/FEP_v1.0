@@ -44,7 +44,7 @@ export interface LoginResponse {
   userId: string;
   userAccount: string;
   userName: string;
-  /** 角色编码列表（仅角色码，无权限点；权限点延至 P7.1） */
+  /** 角色编码列表（仅角色码；权限点通过 GET /auth/me 单独获取，见 UserInfoResponse.permissions） */
   roleCodes: string[];
   /** 是否需要修改密码（首次登录或过期） */
   passwordChangeRequired: boolean;
