@@ -1,0 +1,9 @@
+# application-dev-e2e.yml
+#
+# 仅用于 E2E 冒烟测试的 profile, 继承 dev profile 后追加 captcha bypass 配置.
+# 启动方式: --spring.profiles.active=dev,dev-e2e
+# bypass token 默认 'e2e-bypass', 可通过 FEP_E2E_CAPTCHA_BYPASS_TOKEN 环境变量覆盖.
+# 生产环境严禁激活此 profile (默认 dev/prod profile 均不读取此文件).
+fep:
+  e2e:
+    captcha-bypass-token: ${FEP_E2E_CAPTCHA_BYPASS_TOKEN:e2e-bypass}

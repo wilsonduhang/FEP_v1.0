@@ -7,8 +7,9 @@
       @submit.prevent="onSubmit"
     >
       <div class="row">
-        <label>账号</label>
+        <label for="login-account">账号</label>
         <input
+          id="login-account"
           v-model="form.account"
           name="account"
           maxlength="20"
@@ -16,8 +17,9 @@
         >
       </div>
       <div class="row">
-        <label>密码</label>
+        <label for="login-password">密码</label>
         <input
+          id="login-password"
           v-model="form.password"
           name="password"
           type="password"
@@ -26,8 +28,9 @@
         >
       </div>
       <div class="row captcha-row">
-        <label>验证码</label>
+        <label for="login-captcha">验证码</label>
         <input
+          id="login-captcha"
           v-model="form.captchaCode"
           name="captchaCode"
           maxlength="4"

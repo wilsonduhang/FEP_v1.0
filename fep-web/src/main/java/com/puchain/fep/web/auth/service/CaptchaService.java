@@ -5,6 +5,7 @@ import com.puchain.fep.web.auth.RedisKeyConstants;
 import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.wf.captcha.SpecCaptcha;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,15 @@ public class CaptchaService {
     private static final int CAPTCHA_LENGTH = 4;
 
     private final StringRedisTemplate redisTemplate;
+
+    /**
+     * E2E 测试 bypass token。非空时，等于该值的用户输入即视为验证码校验通过
+     * （不查 Redis、不消费）。默认空字符串（禁用），仅通过 {@code dev-e2e}
+     * profile 或 {@code FEP_E2E_CAPTCHA_BYPASS_TOKEN} 环境变量激活。
+     * 生产环境必须保持未配置（默认空串）。
+     */
+    @Value("${fep.e2e.captcha-bypass-token:}")
+    private String bypassToken;
 
     /**
      * 构造 CaptchaService。
@@ -65,6 +75,12 @@ public class CaptchaService {
     public boolean verifyAndConsume(final String captchaId, final String userInput) {
         if (captchaId == null || userInput == null) {
             return false;
+        }
+        // E2E bypass: when an explicit bypass token is configured AND the user input
+        // matches it, accept without touching Redis. Default disabled (empty string).
+        if (bypassToken != null && !bypassToken.isEmpty()
+                && bypassToken.equalsIgnoreCase(userInput)) {
+            return true;
         }
         String key = RedisKeyConstants.CAPTCHA_PREFIX + captchaId;
         String stored = redisTemplate.opsForValue().get(key);

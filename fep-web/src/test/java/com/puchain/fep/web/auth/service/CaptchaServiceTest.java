@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,6 +23,8 @@ import static org.mockito.Mockito.*;
 class CaptchaServiceTest {
 
     private CaptchaService service;
+    private StringRedisTemplate redisTemplate;
+    private ValueOperations<String, String> valueOps;
     private final ConcurrentHashMap<String, String> store = new ConcurrentHashMap<>();
 
     @BeforeEach
@@ -29,7 +32,8 @@ class CaptchaServiceTest {
         store.clear();
 
         @SuppressWarnings("unchecked")
-        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+        ValueOperations<String, String> ops = mock(ValueOperations.class);
+        valueOps = ops;
 
         // Mock set: store into HashMap
         doAnswer(invocation -> {
@@ -45,7 +49,7 @@ class CaptchaServiceTest {
             return store.get(key);
         });
 
-        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
+        redisTemplate = mock(StringRedisTemplate.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
 
         // Mock delete: remove from HashMap
@@ -100,5 +104,48 @@ class CaptchaServiceTest {
     void verifyWithNullParamsShouldReturnFalse() {
         assertFalse(service.verifyAndConsume(null, "xxxx"));
         assertFalse(service.verifyAndConsume("id", null));
+    }
+
+    /**
+     * Bypass token 未配置（null）时，应回退到 Redis 路径，
+     * 既有验证逻辑保持 100% 不变。
+     */
+    @Test
+    void verifyAndConsumeWithNullBypassTokenFallsBackToRedis() {
+        ReflectionTestUtils.setField(service, "bypassToken", null);
+        store.put("fep:captcha:cid", "abcd");
+        assertTrue(service.verifyAndConsume("cid", "abcd"));
+        // 单次消费已生效：再次验证应失败（Redis 中已删除）
+        assertFalse(service.verifyAndConsume("cid", "abcd"));
+    }
+
+    /**
+     * Bypass token 已配置且用户输入与之匹配（忽略大小写）时，
+     * 应直接返回 true 且 <strong>不</strong> 触达 Redis。
+     */
+    @Test
+    void verifyAndConsumeWithBypassTokenMatchingSkipsRedis() {
+        ReflectionTestUtils.setField(service, "bypassToken", "e2e-bypass");
+        // 清除 setUp 阶段的 stubbing 调用，使 verifyNoInteractions 仅校验业务路径
+        clearInvocations(redisTemplate, valueOps);
+        assertTrue(service.verifyAndConsume("cid", "e2e-bypass"));
+        // 大小写不敏感
+        assertTrue(service.verifyAndConsume("cid", "E2E-BYPASS"));
+        verifyNoInteractions(redisTemplate);
+        verifyNoInteractions(valueOps);
+    }
+
+    /**
+     * Bypass token 已配置但用户输入不匹配时，应回退到 Redis 路径。
+     * 此处 Redis 中存有 "abcd"，用户输入也为 "abcd"（不等于 bypass token），
+     * 故 fallback 校验通过。
+     */
+    @Test
+    void verifyAndConsumeWithBypassTokenNonMatchingFallsBackToRedis() {
+        ReflectionTestUtils.setField(service, "bypassToken", "e2e-bypass");
+        store.put("fep:captcha:cid", "abcd");
+        assertTrue(service.verifyAndConsume("cid", "abcd"));
+        // 已消费
+        verify(redisTemplate).delete(anyString());
     }
 }
