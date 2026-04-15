@@ -2,10 +2,13 @@ package com.puchain.fep.web.dashboard.stats.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.puchain.fep.common.security.PasswordHasher;
 import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.service.CaptchaService;
 import com.puchain.fep.web.config.TestRedisConfiguration;
+import com.puchain.fep.web.sysmgmt.user.domain.SysUser;
+import com.puchain.fep.web.sysmgmt.user.repository.SysUserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,10 +54,10 @@ class DashboardStatsControllerTest {
     private CaptchaService captchaService;
 
     @Autowired
-    private com.puchain.fep.web.sysmgmt.user.repository.SysUserRepository userRepository;
+    private SysUserRepository userRepository;
 
     @Autowired
-    private com.puchain.fep.common.security.PasswordHasher passwordHasher;
+    private PasswordHasher passwordHasher;
 
     private String accessToken;
     private String originalAccount;
@@ -69,8 +72,7 @@ class DashboardStatsControllerTest {
     void setUp() throws Exception {
         TestRedisConfiguration.getStore().clear();
 
-        com.puchain.fep.web.sysmgmt.user.domain.SysUser admin =
-                userRepository.findById(ADMIN_USER_ID).orElseThrow();
+        SysUser admin = userRepository.findById(ADMIN_USER_ID).orElseThrow();
         originalAccount = admin.getUserAccount();
         originalPasswordHash = admin.getPasswordHash();
         admin.setUserAccount(TEST_ACCOUNT);
@@ -106,8 +108,7 @@ class DashboardStatsControllerTest {
      */
     @AfterEach
     void tearDown() {
-        com.puchain.fep.web.sysmgmt.user.domain.SysUser admin =
-                userRepository.findById(ADMIN_USER_ID).orElseThrow();
+        SysUser admin = userRepository.findById(ADMIN_USER_ID).orElseThrow();
         admin.setUserAccount(originalAccount);
         admin.setPasswordHash(originalPasswordHash);
         admin.setLoginFailCount(0);
