@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * 认证服务（登录/登出/刷新）。
  *
- * <p>登录流程按 PRD SS5.1.4 实现：验证码 -> 账号密码 -> 失败计数 -> 锁定 -> 签发 token -> SSO。
+ * <p>登录流程按 PRD §5.1.4 实现：验证码 -> 账号密码 -> 失败计数 -> 锁定 -> 签发 token -> SSO。
  * 密码解析/验证和验证码校验委托给 {@link LoginVerifier}。</p>
  *
  * @author FEP Team
@@ -143,7 +143,7 @@ public class AuthService {
         String refreshToken = tokenProvider.createRefreshToken(
                 user.getUserId(), user.getUserAccount());
 
-        // 8. 记录当前会话 jti（覆盖旧 jti，实现单点踢出 PRD SS5.1.5）
+        // 8. 记录当前会话 jti（覆盖旧 jti，实现单点踢出 PRD §5.1.5）
         String jti = tokenProvider.extractJti(accessToken);
         singleSignOnService.registerSession(user.getUserId(), jti, tokenProvider.getAccessTokenTtlSeconds());
 
