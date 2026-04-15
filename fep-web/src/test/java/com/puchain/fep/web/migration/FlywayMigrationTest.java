@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Flyway V1-V3 迁移脚本验证。
@@ -25,7 +24,6 @@ class FlywayMigrationTest {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM t_sys_user", Integer.class);
         assertNotNull(count);
-        assertTrue(count >= 0);
     }
 
     @Test
