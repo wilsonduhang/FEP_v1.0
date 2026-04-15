@@ -11,7 +11,7 @@ vi.mock('vue-echarts', () => ({
 // Mock all home APIs to avoid network traffic.
 vi.mock('@/features/home/api/todo-api', () => ({
   todoApi: {
-    search: vi.fn().mockResolvedValue({ records: [], total: 0, current: 1, size: 10 }),
+    search: vi.fn().mockResolvedValue({ records: [], total: 0, pageNum: 1, pageSize: 10, totalPages: 0 }),
     countPending: vi.fn().mockResolvedValue(0),
     startProcessing: vi.fn(),
     complete: vi.fn(),
