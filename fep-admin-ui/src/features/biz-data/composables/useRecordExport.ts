@@ -16,6 +16,7 @@ export function useRecordExport() {
       ElMessage.success(`导出任务已创建，任务 ID: ${downloadTaskId}，请到下载中心查看`);
       return downloadTaskId;
     } catch {
+      ElMessage.error('导出任务创建失败，请重试');
       return null;
     } finally {
       exporting.value = false;

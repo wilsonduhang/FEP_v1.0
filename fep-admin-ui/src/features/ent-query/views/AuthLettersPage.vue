@@ -107,7 +107,7 @@
             <el-button
               link
               type="primary"
-              @click="onView(row)"
+              @click="onEdit(row)"
             >
               查看
             </el-button>
@@ -198,10 +198,6 @@ function onPageSizeChange(v: number) { searchForm.pageSize = v; searchForm.pageN
 
 function openCreate() {
   editingLetter.value = null;
-  dialogVisible.value = true;
-}
-function onView(letter: AuthLetterResponse) {
-  editingLetter.value = letter;
   dialogVisible.value = true;
 }
 function onEdit(letter: AuthLetterResponse) {

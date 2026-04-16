@@ -4,6 +4,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.entquery.result.dto.QueryResultResponse;
 import com.puchain.fep.web.entquery.result.repository.EntQueryResultRepository;
 import com.puchain.fep.web.entquery.task.domain.EntQueryTask;
@@ -38,9 +39,6 @@ import java.util.List;
 public class EntQueryTaskService {
 
     private static final Logger log = LoggerFactory.getLogger(EntQueryTaskService.class);
-
-    /** Number of trailing characters to show when masking USCI in logs. */
-    private static final int USCI_MASK_SUFFIX_LEN = 4;
 
     private final EntQueryTaskRepository taskRepository;
     private final EntQueryResultRepository resultRepository;
@@ -88,9 +86,9 @@ public class EntQueryTaskService {
         entity.setUpdateTime(now);
 
         EntQueryTask saved = taskRepository.save(entity);
-        log.info("Query task created: taskId={}, queryType={}, usci=****{}",
+        log.info("Query task created: taskId={}, queryType={}, usci={}",
                 saved.getTaskId(), saved.getQueryType(),
-                saved.getUsci().substring(saved.getUsci().length() - USCI_MASK_SUFFIX_LEN));
+                LogSanitizer.maskUsci(saved.getUsci()));
         return QueryTaskResponse.from(saved);
     }
 

@@ -4,6 +4,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.entquery.auth.domain.AuthType;
 import com.puchain.fep.web.entquery.auth.domain.EntAuthLetter;
 import com.puchain.fep.web.entquery.auth.domain.LetterStatus;
@@ -36,9 +37,6 @@ import java.util.List;
 public class EntAuthLetterService {
 
     private static final Logger log = LoggerFactory.getLogger(EntAuthLetterService.class);
-
-    /** Number of trailing characters to show when masking USCI in logs. */
-    private static final int USCI_MASK_SUFFIX_LEN = 4;
 
     private final EntAuthLetterRepository letterRepository;
     private final SysEnterpriseRepository enterpriseRepository;
@@ -83,10 +81,9 @@ public class EntAuthLetterService {
         entity.setUpdateTime(now);
 
         EntAuthLetter saved = letterRepository.save(entity);
-        log.info("Auth letter created: letterId={}, authType={}, authorizedUsci=****{}",
+        log.info("Auth letter created: letterId={}, authType={}, authorizedUsci={}",
                 saved.getLetterId(), saved.getAuthType(),
-                saved.getAuthorizedUsci().substring(
-                        saved.getAuthorizedUsci().length() - USCI_MASK_SUFFIX_LEN));
+                LogSanitizer.maskUsci(saved.getAuthorizedUsci()));
         return AuthLetterResponse.from(saved);
     }
 
