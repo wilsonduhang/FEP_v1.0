@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,7 +57,7 @@ class CaptchaServiceTest {
             return store.remove(key) != null;
         });
 
-        service = new CaptchaService(redisTemplate);
+        service = new CaptchaService(redisTemplate, "");
     }
 
     @Test
@@ -111,12 +110,12 @@ class CaptchaServiceTest {
      * 既有验证逻辑保持 100% 不变。
      */
     @Test
-    void verifyAndConsumeWithNullBypassTokenFallsBackToRedis() {
-        ReflectionTestUtils.setField(service, "bypassToken", null);
+    void verifyAndConsumeWithEmptyBypassTokenFallsBackToRedis() {
+        CaptchaService svc = new CaptchaService(redisTemplate, "");
         store.put("fep:captcha:cid", "abcd");
-        assertTrue(service.verifyAndConsume("cid", "abcd"));
+        assertTrue(svc.verifyAndConsume("cid", "abcd"));
         // 单次消费已生效：再次验证应失败（Redis 中已删除）
-        assertFalse(service.verifyAndConsume("cid", "abcd"));
+        assertFalse(svc.verifyAndConsume("cid", "abcd"));
     }
 
     /**
@@ -125,12 +124,12 @@ class CaptchaServiceTest {
      */
     @Test
     void verifyAndConsumeWithBypassTokenMatchingSkipsRedis() {
-        ReflectionTestUtils.setField(service, "bypassToken", "e2e-bypass");
+        CaptchaService svc = new CaptchaService(redisTemplate, "e2e-bypass");
         // 清除 setUp 阶段的 stubbing 调用，使 verifyNoInteractions 仅校验业务路径
         clearInvocations(redisTemplate, valueOps);
-        assertTrue(service.verifyAndConsume("cid", "e2e-bypass"));
+        assertTrue(svc.verifyAndConsume("cid", "e2e-bypass"));
         // 大小写不敏感
-        assertTrue(service.verifyAndConsume("cid", "E2E-BYPASS"));
+        assertTrue(svc.verifyAndConsume("cid", "E2E-BYPASS"));
         verifyNoInteractions(redisTemplate);
         verifyNoInteractions(valueOps);
     }
@@ -142,9 +141,9 @@ class CaptchaServiceTest {
      */
     @Test
     void verifyAndConsumeWithBypassTokenNonMatchingFallsBackToRedis() {
-        ReflectionTestUtils.setField(service, "bypassToken", "e2e-bypass");
+        CaptchaService svc = new CaptchaService(redisTemplate, "e2e-bypass");
         store.put("fep:captcha:cid", "abcd");
-        assertTrue(service.verifyAndConsume("cid", "abcd"));
+        assertTrue(svc.verifyAndConsume("cid", "abcd"));
         // 已消费
         verify(redisTemplate).delete(anyString());
     }

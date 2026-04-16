@@ -11,7 +11,9 @@ vi.mock('@/shared/http/client', () => ({
 }));
 
 describe('entQueryTaskApi', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('search calls GET /api/v1/ent-query/tasks with params', async () => {
     vi.mocked(httpClient.get).mockResolvedValue({

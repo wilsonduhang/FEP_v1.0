@@ -35,17 +35,19 @@ public class CaptchaService {
      * profile 或 {@code FEP_E2E_CAPTCHA_BYPASS_TOKEN} 环境变量激活。
      * 生产环境必须保持未配置（默认空串）。
      */
-    @Value("${fep.e2e.captcha-bypass-token:}")
-    private String bypassToken;
+    private final String bypassToken;
 
     /**
      * 构造 CaptchaService。
      *
      * @param redisTemplate Spring Redis 模板
+     * @param bypassToken   E2E captcha bypass token (empty string = disabled)
      */
     @Autowired
-    public CaptchaService(final StringRedisTemplate redisTemplate) {
+    public CaptchaService(final StringRedisTemplate redisTemplate,
+                          @Value("${fep.e2e.captcha-bypass-token:}") final String bypassToken) {
         this.redisTemplate = redisTemplate;
+        this.bypassToken = bypassToken;
     }
 
     /**

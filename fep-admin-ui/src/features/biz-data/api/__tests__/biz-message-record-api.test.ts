@@ -10,7 +10,9 @@ vi.mock('@/shared/http/client', () => ({
 }));
 
 describe('bizMessageRecordApi', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('search calls GET /api/v1/bizdata/records with params', async () => {
     vi.mocked(httpClient.get).mockResolvedValue({

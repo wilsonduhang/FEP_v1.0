@@ -12,7 +12,9 @@ vi.mock('@/shared/http/client', () => ({
 }));
 
 describe('bizMessageDefinitionApi', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('search calls GET /api/v1/bizdata/definitions with params', async () => {
     vi.mocked(httpClient.get).mockResolvedValue({

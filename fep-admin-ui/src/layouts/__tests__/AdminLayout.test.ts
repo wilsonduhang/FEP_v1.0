@@ -10,7 +10,9 @@ import type { MenuTreeNode } from '@/shared/types/menu-tree-node';
 const routes = [{ path: '/', component: { template: '<div/>' } }];
 
 describe('AdminLayout menu rendering', () => {
-  beforeEach(() => { setActivePinia(createPinia()); });
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
 
   function buildNode(overrides: Partial<MenuTreeNode> = {}): MenuTreeNode {
     return {

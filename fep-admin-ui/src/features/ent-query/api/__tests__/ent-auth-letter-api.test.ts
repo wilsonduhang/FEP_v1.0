@@ -12,7 +12,9 @@ vi.mock('@/shared/http/client', () => ({
 }));
 
 describe('entAuthLetterApi', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('search calls GET /api/v1/ent-query/auth-letters with params', async () => {
     vi.mocked(httpClient.get).mockResolvedValue({
