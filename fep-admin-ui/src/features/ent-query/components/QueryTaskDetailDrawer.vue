@@ -5,7 +5,14 @@
     size="60%"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <div v-if="loading" class="loading"><el-icon class="is-loading"><Loading /></el-icon></div>
+    <div
+      v-if="loading"
+      class="loading"
+    >
+      <el-icon class="is-loading">
+        <Loading />
+      </el-icon>
+    </div>
     <div v-else-if="task" class="content">
       <el-descriptions :column="2" border title="任务信息">
         <el-descriptions-item label="任务 ID">{{ task.taskId }}</el-descriptions-item>
