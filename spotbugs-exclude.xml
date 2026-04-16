@@ -914,6 +914,15 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- AsyncMessageProcessorService: 同 SyncMessageProcessorService，所有用户可控输入
+         (transitionNo/firstError) 均经 LogSanitizer.sanitize 剥离 CR/LF，
+         direction 为字面量 "IN"/"OUT"/"ASYNC-COMPLETE"，type.msgNo() 来源枚举常量。
+         FindSecBugs 不识别自定义 sanitizer，属确认的误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.processor.pipeline.AsyncMessageProcessorService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
     <!-- Supply chain Body POJOs (3001/3002): JAXB 绑定对象，getter/setter 必须直接返回
          可变 ExtInfo 引用才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
     <Match>
