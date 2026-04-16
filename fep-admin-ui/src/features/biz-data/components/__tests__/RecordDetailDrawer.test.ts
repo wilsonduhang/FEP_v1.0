@@ -35,7 +35,9 @@ const failedRecord: RecordResponse = {
 const globalOpts = { global: { plugins: [ElementPlus] } };
 
 describe('RecordDetailDrawer', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('loads record on open', async () => {
     vi.mocked(bizMessageRecordApi.getById).mockResolvedValue(mockRecord);

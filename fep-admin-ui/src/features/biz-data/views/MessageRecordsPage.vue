@@ -7,7 +7,7 @@
     >
       <template #extra>
         <el-tag type="warning">
-          ⚠️ TLQ Mock 模式
+          ⚠️ TLQ Mock 模式 (resubmit/export 为预留操作)
         </el-tag>
       </template>
     </el-page-header>
@@ -91,6 +91,15 @@
       </el-form-item>
     </SearchForm>
 
+    <el-button
+      type="primary"
+      :loading="exporting"
+      class="export-btn"
+      @click="onExport"
+    >
+      导出
+    </el-button>
+
     <DataTable
       :data="page.records"
       :columns="columns"
@@ -139,6 +148,14 @@
             >
               详情
             </el-button>
+            <el-button
+              link
+              type="warning"
+              :disabled="row.processStatus !== 'FAILED'"
+              @click="onResubmit(row.recordId)"
+            >
+              重提
+            </el-button>
           </template>
         </el-table-column>
       </template>
@@ -153,6 +170,7 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { SearchForm, DataTable, StatusTag } from '@/shared/components';
 import type { DataTableColumn } from '@/shared/components';
 import {
@@ -168,6 +186,7 @@ import {
 } from '../api/biz-message-record-api';
 import RecordSummaryCards from '../components/RecordSummaryCards.vue';
 import RecordDetailDrawer from '../components/RecordDetailDrawer.vue';
+import { useRecordExport } from '../composables/useRecordExport';
 import type { PageResult } from '@/shared/types/page-result';
 
 const cnyCurrencyFormat = new Intl.NumberFormat('zh-CN', {
@@ -185,6 +204,7 @@ const summaryItems = ref<RecordSummaryItem[]>([]);
 const loading = ref(false);
 const drawerVisible = ref(false);
 const selectedRecordId = ref<string>('');
+const { exporting, triggerExport } = useRecordExport();
 
 const columns: DataTableColumn[] = [
   { prop: 'recordId', label: '记录 ID', minWidth: 160 },
@@ -230,6 +250,17 @@ function onPageSizeChange(v: number) { searchForm.pageSize = v; searchForm.pageN
 function onShowDetail(recordId: string) {
   selectedRecordId.value = recordId;
   drawerVisible.value = true;
+}
+
+async function onResubmit(recordId: string) {
+  await ElMessageBox.confirm('确认重新提交该报文？', '提示', { type: 'warning' });
+  await bizMessageRecordApi.resubmit(recordId);
+  ElMessage.success('已触发重提（Mock Mode）');
+  refresh();
+}
+
+function onExport() {
+  triggerExport(searchForm);
 }
 
 onMounted(() => {

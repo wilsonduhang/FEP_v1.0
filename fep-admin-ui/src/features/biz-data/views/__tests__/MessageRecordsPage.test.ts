@@ -87,11 +87,36 @@ describe('MessageRecordsPage', () => {
     expect(wrapper.text()).toMatch(/12[,.]?345\.67/);
   });
 
-  it('displays Mock Mode badge', async () => {
+  it('displays Mock Mode badge with resubmit/export note', async () => {
     vi.mocked(bizMessageRecordApi.search).mockResolvedValue(mockPage);
     vi.mocked(bizMessageRecordApi.getSummary).mockResolvedValue([]);
     const wrapper = mount(MessageRecordsPage, globalPlugins);
     await flushPromises();
     expect(wrapper.text()).toContain('TLQ Mock 模式');
+    expect(wrapper.text()).toContain('resubmit/export 为预留操作');
+  });
+
+  it('disables resubmit button on non-FAILED records', async () => {
+    vi.mocked(bizMessageRecordApi.search).mockResolvedValue(mockPage);
+    vi.mocked(bizMessageRecordApi.getSummary).mockResolvedValue([]);
+    const wrapper = mount(MessageRecordsPage, globalPlugins);
+    await flushPromises();
+    const resubmitBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text() === '重提');
+    expect(resubmitBtn).toBeTruthy();
+    expect(resubmitBtn!.attributes('disabled')).toBeDefined();
+  });
+
+  it('has export button', async () => {
+    vi.mocked(bizMessageRecordApi.search).mockResolvedValue(mockPage);
+    vi.mocked(bizMessageRecordApi.getSummary).mockResolvedValue([]);
+    vi.mocked(bizMessageRecordApi.exportRecords).mockResolvedValue('TASK-001');
+    const wrapper = mount(MessageRecordsPage, globalPlugins);
+    await flushPromises();
+    const exportBtn = wrapper
+      .findAll('button')
+      .find((b) => b.text() === '导出');
+    expect(exportBtn).toBeTruthy();
   });
 });

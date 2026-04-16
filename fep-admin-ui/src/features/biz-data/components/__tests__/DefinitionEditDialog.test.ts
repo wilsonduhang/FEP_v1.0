@@ -2,10 +2,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import ElementPlus from 'element-plus';
 import DefinitionEditDialog from '../DefinitionEditDialog.vue';
-import {
-  bizMessageDefinitionApi,
-  type DefinitionResponse,
-} from '../../api/biz-message-definition-api';
+import type { DefinitionResponse } from '../../api/biz-message-definition-api';
 
 vi.mock('../../api/biz-message-definition-api');
 
