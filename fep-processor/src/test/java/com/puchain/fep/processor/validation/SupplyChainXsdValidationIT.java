@@ -1,0 +1,346 @@
+package com.puchain.fep.processor.validation;
+
+import com.puchain.fep.converter.type.MessageType;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import java.nio.charset.StandardCharsets;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Integration tests for XSD validation of supply chain message types (3001-3006)
+ * and the generic acknowledgement (9120). Each positive test constructs a complete
+ * CFX envelope with HEAD, RealHead/BatchHead, and Body elements that satisfy all
+ * XSD type constraints. Negative tests verify that structural violations are caught.
+ *
+ * <p>All 10 tests are expected to complete within 3 seconds total.</p>
+ */
+class SupplyChainXsdValidationIT {
+
+    private static XsdValidator validator;
+
+    /** Shared HEAD template; callers replace {@code {{MSG_NO}}} with the actual message number. */
+    private static final String HEAD_TEMPLATE = """
+            <HEAD>
+                <Version>1.0</Version>
+                <SrcNode>12345678901234</SrcNode>
+                <DesNode>A1000143000104</DesNode>
+                <App>HNDEMP</App>
+                <MsgNo>{{MSG_NO}}</MsgNo>
+                <MsgId>20260417120000000001</MsgId>
+                <CorrMsgId>20260417120000000001</CorrMsgId>
+                <WorkDate>20260417</WorkDate>
+            </HEAD>""";
+
+    private static final String REQUEST_HEAD = """
+                <SendOrgCode>12345678901234</SendOrgCode>
+                <EntrustDate>20260417</EntrustDate>
+                <TransitionNo>00000001</TransitionNo>""";
+
+    private static final String RESPONSE_HEAD = """
+                <SendOrgCode>12345678901234</SendOrgCode>
+                <EntrustDate>20260417</EntrustDate>
+                <TransitionNo>00000001</TransitionNo>
+                <Result>00000</Result>""";
+
+    /** 30-char SerialNo (Text, length=30). */
+    private static final String SERIAL_NO = "SN2026041700000000000000000001";
+
+    @BeforeAll
+    static void init() {
+        validator = new XsdValidator(new XsdSchemaRegistry());
+    }
+
+    // ── positive samples ──────────────────────────────────────────────
+
+    @Test
+    void valid3001_shouldPassValidation() {
+        String xml = cfx("3001", """
+                <RealHead3001>
+            """ + REQUEST_HEAD + """
+                </RealHead3001>
+                <ProgressQuery3001>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>""" + "\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A" + """
+            </hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <QueryType>1</QueryType>
+                    <QueryKey>KEY001</QueryKey>
+                </ProgressQuery3001>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3001, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    @Test
+    void valid3002_shouldPassValidation() {
+        String xml = cfx("3002", """
+                <RealHead3002>
+            """ + RESPONSE_HEAD + """
+                </RealHead3002>
+                <ProgressQueryReturn3002>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>""" + "\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A" + """
+            </hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <QueryType>1</QueryType>
+                    <QueryKey>KEY001</QueryKey>
+                    <ReturnCode>01</ReturnCode>
+                </ProgressQueryReturn3002>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3002, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    @Test
+    void valid3003_shouldPassValidation() {
+        String xml = cfx("3003", """
+                <RealHead3003>
+            """ + REQUEST_HEAD + """
+                </RealHead3003>
+                <pzInfoQuery3003>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>""" + "\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A" + """
+            </hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <pzNo>PZ202604170001</pzNo>
+                </pzInfoQuery3003>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3003, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    @Test
+    void valid3004_shouldPassValidation() {
+        String xml = cfx("3004", """
+                <RealHead3004>
+            """ + RESPONSE_HEAD + """
+                </RealHead3004>
+                <pzInfoReturn3004>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>""" + "\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A" + """
+            </hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <pzNo>PZ202604170001</pzNo>
+                    <pzState>1</pzState>
+                    <pzrzState>1</pzrzState>
+                    <pzrzStatusInfo>
+                        <pzNo>PZ202604170001</pzNo>
+                        <rzPhaseCode>01</rzPhaseCode>
+                        <BankNodeCode>12345678901234</BankNodeCode>
+                    </pzrzStatusInfo>
+                    <zpzAllInfo>
+                        <SerialNumber>1</SerialNumber>
+                        <pzNo>PZ202604170001SUB1</pzNo>
+                        <pzClass>01</pzClass>
+                        <qyAssignName>""" + "\u8F6C\u8BA9\u65B9\u4F01\u4E1A" + """
+            </qyAssignName>
+                        <qyAssignCode>123456789012345678</qyAssignCode>
+                        <qyRecvName>""" + "\u63A5\u6536\u65B9\u4F01\u4E1A" + """
+            </qyRecvName>
+                        <qyRecvCode>987654321098765432</qyRecvCode>
+                        <Amt>1000.00</Amt>
+                        <UpdateDate>20260417</UpdateDate>
+                        <pzFunction>001</pzFunction>
+                        <pzState>1</pzState>
+                        <pzrzState>1</pzrzState>
+                        <pzMajorNo>PZ202604170001</pzMajorNo>
+                        <LoanAmt>500.00</LoanAmt>
+                        <SubState>1</SubState>
+                    </zpzAllInfo>
+                </pzInfoReturn3004>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3004, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    @Test
+    void valid3005_shouldPassValidation() {
+        String xml = cfx("3005", """
+                <RealHead3005>
+            """ + REQUEST_HEAD + """
+                </RealHead3005>
+                <qyAccQuery3005>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <qyAccName>""" + "\u6D4B\u8BD5\u4F01\u4E1A\u8D26\u6237" + """
+            </qyAccName>
+                    <qyAccCode>1234567890123456</qyAccCode>
+                </qyAccQuery3005>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3005, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    @Test
+    void valid3006_shouldPassValidation() {
+        String xml = cfx("3006", """
+                <RealHead3006>
+            """ + RESPONSE_HEAD + """
+                </RealHead3006>
+                <qyAccQueryReturn3006>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <qyAccName>""" + "\u6D4B\u8BD5\u4F01\u4E1A\u8D26\u6237" + """
+            </qyAccName>
+                    <qyAccCode>1234567890123456</qyAccCode>
+                    <AccReturnCode>01</AccReturnCode>
+                </qyAccQueryReturn3006>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3006, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    @Test
+    void valid9120_shouldPassValidation() {
+        String xml = cfx("9120", """
+                <BatchHead9120>
+            """ + RESPONSE_HEAD + """
+                </BatchHead9120>
+                <MsgReturn9120>
+                    <OriMsgNo>3001</OriMsgNo>
+                </MsgReturn9120>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_9120, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    // ── negative samples ──────────────────────────────────────────────
+
+    @Test
+    void missing3001RequiredField_shouldFailValidation() {
+        // Missing SerialNo which is required in ProgressQuery3001
+        String xml = cfx("3001", """
+                <RealHead3001>
+            """ + REQUEST_HEAD + """
+                </RealHead3001>
+                <ProgressQuery3001>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>""" + "\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A" + """
+            </hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <QueryType>1</QueryType>
+                    <QueryKey>KEY001</QueryKey>
+                </ProgressQuery3001>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3001, toBytes(xml));
+
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors()).isNotEmpty();
+    }
+
+    @Test
+    void invalid3004NestedType_shouldFailValidation() {
+        // pzrzStatusInfo is missing required child BankNodeCode
+        String xml = cfx("3004", """
+                <RealHead3004>
+            """ + RESPONSE_HEAD + """
+                </RealHead3004>
+                <pzInfoReturn3004>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>""" + "\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A" + """
+            </hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <pzNo>PZ202604170001</pzNo>
+                    <pzState>1</pzState>
+                    <pzrzState>1</pzrzState>
+                    <pzrzStatusInfo>
+                        <pzNo>PZ202604170001</pzNo>
+                        <rzPhaseCode>01</rzPhaseCode>
+                    </pzrzStatusInfo>
+                </pzInfoReturn3004>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3004, toBytes(xml));
+
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors()).isNotEmpty();
+    }
+
+    @Test
+    void tooLong3006Field_shouldFailValidation() {
+        // AccReturnMemo type is String0to200; we supply 201 chars
+        String tooLong = "A".repeat(201);
+        String xml = cfx("3006", """
+                <RealHead3006>
+            """ + RESPONSE_HEAD + """
+                </RealHead3006>
+                <qyAccQueryReturn3006>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <qyAccName>""" + "\u6D4B\u8BD5\u4F01\u4E1A\u8D26\u6237" + """
+            </qyAccName>
+                    <qyAccCode>1234567890123456</qyAccCode>
+                    <AccReturnCode>01</AccReturnCode>
+                    <AccReturnMemo>""" + tooLong + """
+            </AccReturnMemo>
+                </qyAccQueryReturn3006>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3006, toBytes(xml));
+
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors()).isNotEmpty();
+    }
+
+    // ── helpers ────────────────────────────────────────────────────────
+
+    /**
+     * Wraps MSG content into a complete CFX envelope.
+     *
+     * @param msgNo      the 4-digit message number
+     * @param msgContent XML content inside {@code <MSG>}
+     * @return complete CFX XML string
+     */
+    private static String cfx(final String msgNo, final String msgContent) {
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<CFX>\n"
+                + HEAD_TEMPLATE.replace("{{MSG_NO}}", msgNo) + "\n"
+                + "    <MSG>\n" + msgContent + "\n    </MSG>\n</CFX>";
+    }
+
+    private static byte[] toBytes(final String xml) {
+        return xml.getBytes(StandardCharsets.UTF_8);
+    }
+}
