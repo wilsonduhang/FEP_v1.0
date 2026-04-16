@@ -8,25 +8,50 @@ import { entQueryTaskApi } from '../../api/ent-query-task-api';
 vi.mock('../../api/ent-query-task-api');
 
 const mockTask = {
-  taskId: 'T1', enterpriseId: 'E1', queryType: 'REALTIME' as const, usci: '91310000MA1K40XK7A',
-  queryTargetName: 'Acme', taskStatus: 'COMPLETED' as const, messageId: 'M1', batchFilePath: null,
-  resultSummary: null, errorMessage: null, createTime: '2026-04-15T10:00:00', updateTime: '',
+  taskId: 'T1',
+  enterpriseId: 'E1',
+  queryType: 'REALTIME' as const,
+  usci: '91310000MA1K40XK7A',
+  queryTargetName: 'Acme',
+  taskStatus: 'COMPLETED' as const,
+  messageId: 'M1',
+  batchFilePath: null,
+  resultSummary: null,
+  errorMessage: null,
+  createTime: '2026-04-15T10:00:00',
+  updateTime: '',
   completeTime: '2026-04-15T10:00:05',
 };
 
 const mockResults = [
-  { resultId: 'R1', taskId: 'T1', resultUsci: '91310000MA1K40XK7A', enterpriseName: 'Acme',
-    resultData: '{}', resultStatus: 'NORMAL' as const, errorCode: null, errorMessage: null,
-    createTime: '2026-04-15T10:00:05' },
-  { resultId: 'R2', taskId: 'T1', resultUsci: '9131XXXXXXXXXXXXXX', enterpriseName: null,
-    resultData: null, resultStatus: 'ERROR' as const, errorCode: 'ENT_4040', errorMessage: '企业不存在',
-    createTime: '2026-04-15T10:00:06' },
+  {
+    resultId: 'R1',
+    taskId: 'T1',
+    resultUsci: '91310000MA1K40XK7A',
+    enterpriseName: 'Acme',
+    resultData: '{}',
+    resultStatus: 'NORMAL' as const,
+    errorCode: null,
+    errorMessage: null,
+    createTime: '2026-04-15T10:00:05',
+  },
+  {
+    resultId: 'R2',
+    taskId: 'T1',
+    resultUsci: '9131XXXXXXXXXXXXXX',
+    enterpriseName: null,
+    resultData: null,
+    resultStatus: 'ERROR' as const,
+    errorCode: 'ENT_4040',
+    errorMessage: '企业不存在',
+    createTime: '2026-04-15T10:00:06',
+  },
 ];
 
 const globalOpts = { global: { plugins: [ElementPlus] } };
 
 describe('QueryTaskDetailDrawer', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('loads task and results when opened', async () => {
     vi.mocked(entQueryTaskApi.getById).mockResolvedValue(mockTask);
@@ -57,7 +82,9 @@ describe('QueryTaskDetailDrawer', () => {
     // el-table may not render row content in JSDOM; verify rowClassName fn via component internals
     const table = wrapper.findComponent({ name: 'ElTable' });
     if (table.exists()) {
-      const rowClassFn = table.props('rowClassName') as (args: { row: { resultStatus: string } }) => string;
+      const rowClassFn = table.props('rowClassName') as (args: {
+        row: { resultStatus: string };
+      }) => string;
       expect(rowClassFn({ row: { resultStatus: 'ERROR' } })).toBe('error-row');
       expect(rowClassFn({ row: { resultStatus: 'NORMAL' } })).toBe('');
     }
