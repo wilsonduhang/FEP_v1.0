@@ -68,13 +68,14 @@ describe('AuthLettersPage', () => {
 
   it('calls submit api with confirm on DRAFT letter', async () => {
     vi.mocked(entAuthLetterApi.search).mockResolvedValue(mockPage);
-    vi.mocked(entAuthLetterApi.submit).mockResolvedValue({ ...draftLetter, letterStatus: 'SUBMITTED' });
+    vi.mocked(entAuthLetterApi.submit).mockResolvedValue({
+      ...draftLetter,
+      letterStatus: 'SUBMITTED',
+    });
     const wrapper = mount(AuthLettersPage, globalPlugins);
     await flushPromises();
     // Find the submit button for DRAFT row (first row)
-    const submitBtns = wrapper
-      .findAll('button')
-      .filter((b) => b.text() === '提交');
+    const submitBtns = wrapper.findAll('button').filter((b) => b.text() === '提交');
     // The first submit button should be enabled (DRAFT)
     const draftSubmitBtn = submitBtns[0];
     expect(draftSubmitBtn.attributes('disabled')).toBeUndefined();
