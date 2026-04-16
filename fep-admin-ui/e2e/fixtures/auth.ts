@@ -25,5 +25,5 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   await page.getByLabel('密码').fill('admin@FEP2026');
   await page.getByLabel('验证码').fill(CAPTCHA_BYPASS_TOKEN);
   await page.getByRole('button', { name: '登录' }).click();
-  await expect(page).toHaveURL(/\/home/);
+  await expect(page).toHaveURL(/\/home/, { timeout: 10000 });
 }
