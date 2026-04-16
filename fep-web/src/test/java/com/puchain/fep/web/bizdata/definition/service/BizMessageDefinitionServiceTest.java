@@ -237,15 +237,88 @@ class BizMessageDefinitionServiceTest {
         BizMessageDefinition entity = buildEntity("id1", "3000",
                 "电子凭证", EnableDisableStatus.ENABLED);
         Page<BizMessageDefinition> page = new PageImpl<>(List.of(entity));
-        when(definitionRepository.search(eq("电子"), any(Pageable.class)))
-                .thenReturn(page);
+        when(definitionRepository.search(eq("电子"), eq(null), eq(null),
+                eq(null), any(Pageable.class))).thenReturn(page);
 
         PageResult<DefinitionResponse> result =
-                definitionService.search("电子", 1, 10);
+                definitionService.search("电子", null, null, null, 1, 10);
 
         assertThat(result.getRecords()).hasSize(1);
         assertThat(result.getRecords().get(0).getMessageCode()).isEqualTo("3000");
         assertThat(result.getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void search_allFiltersNull_shouldReturnAll() {
+        BizMessageDefinition e1 = buildEntity("id1", "3000",
+                "电子凭证", EnableDisableStatus.ENABLED);
+        BizMessageDefinition e2 = buildEntity("id2", "1001",
+                "企业信息查询", EnableDisableStatus.DISABLED);
+        Page<BizMessageDefinition> page = new PageImpl<>(List.of(e1, e2));
+        when(definitionRepository.search(eq(null), eq(null), eq(null),
+                eq(null), any(Pageable.class))).thenReturn(page);
+
+        PageResult<DefinitionResponse> result =
+                definitionService.search(null, null, null, null, 1, 10);
+
+        assertThat(result.getRecords()).hasSize(2);
+        assertThat(result.getTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void search_byMessageCode_shouldFilterExact() {
+        BizMessageDefinition entity = buildEntity("id1", "3000",
+                "电子凭证", EnableDisableStatus.ENABLED);
+        Page<BizMessageDefinition> page = new PageImpl<>(List.of(entity));
+        when(definitionRepository.search(eq(null), eq("3000"), eq(null),
+                eq(null), any(Pageable.class))).thenReturn(page);
+
+        PageResult<DefinitionResponse> result =
+                definitionService.search(null, "3000", null, null, 1, 10);
+
+        assertThat(result.getRecords()).hasSize(1);
+        assertThat(result.getRecords().get(0).getMessageCode()).isEqualTo("3000");
+    }
+
+    @Test
+    void search_byDirection_shouldFilterEnum() {
+        BizMessageDefinition entity = buildEntity("id1", "3000",
+                "电子凭证", EnableDisableStatus.ENABLED);
+        entity.setDirection(MessageDirection.INBOUND);
+        Page<BizMessageDefinition> page = new PageImpl<>(List.of(entity));
+        when(definitionRepository.search(eq(null), eq(null),
+                eq(MessageDirection.INBOUND), eq(null),
+                any(Pageable.class))).thenReturn(page);
+
+        PageResult<DefinitionResponse> result =
+                definitionService.search(null, null, MessageDirection.INBOUND,
+                        null, 1, 10);
+
+        assertThat(result.getRecords()).hasSize(1);
+        assertThat(result.getRecords().get(0).getDirection())
+                .isEqualTo(MessageDirection.INBOUND);
+    }
+
+    @Test
+    void search_byDirectionAndStatus_shouldApplyAndLogic() {
+        BizMessageDefinition entity = buildEntity("id1", "3000",
+                "电子凭证", EnableDisableStatus.DISABLED);
+        entity.setDirection(MessageDirection.OUTBOUND);
+        Page<BizMessageDefinition> page = new PageImpl<>(List.of(entity));
+        when(definitionRepository.search(eq(null), eq(null),
+                eq(MessageDirection.OUTBOUND),
+                eq(EnableDisableStatus.DISABLED),
+                any(Pageable.class))).thenReturn(page);
+
+        PageResult<DefinitionResponse> result =
+                definitionService.search(null, null, MessageDirection.OUTBOUND,
+                        EnableDisableStatus.DISABLED, 1, 10);
+
+        assertThat(result.getRecords()).hasSize(1);
+        assertThat(result.getRecords().get(0).getDirection())
+                .isEqualTo(MessageDirection.OUTBOUND);
+        assertThat(result.getRecords().get(0).getDefinitionStatus())
+                .isEqualTo(EnableDisableStatus.DISABLED);
     }
 
     @Test

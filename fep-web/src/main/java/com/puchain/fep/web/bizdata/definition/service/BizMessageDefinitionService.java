@@ -11,6 +11,7 @@ import com.puchain.fep.web.bizdata.definition.dto.DefinitionCreateRequest;
 import com.puchain.fep.web.bizdata.definition.dto.DefinitionResponse;
 import com.puchain.fep.web.bizdata.definition.dto.DefinitionUpdateRequest;
 import com.puchain.fep.web.bizdata.definition.repository.BizMessageDefinitionRepository;
+import com.puchain.fep.web.bizdata.domain.MessageDirection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -47,21 +48,29 @@ public class BizMessageDefinitionService {
     }
 
     /**
-     * Search message definitions with keyword (paginated).
+     * Search message definitions with keyword and optional filters (paginated).
      *
-     * <p>Keyword matches messageCode or messageName; null returns all.</p>
+     * <p>Keyword matches messageCode or messageName; all filter parameters are
+     * null-friendly (null means "no filter"). When all parameters are null,
+     * returns the full set — equivalent to the original search behavior.</p>
      *
-     * @param keyword  search keyword (may be null)
-     * @param pageNum  page number (1-based)
-     * @param pageSize page size
+     * @param keyword          search keyword (may be null)
+     * @param messageCode      exact message code filter (may be null)
+     * @param direction        message direction filter (may be null)
+     * @param definitionStatus definition status filter (may be null)
+     * @param pageNum          page number (1-based)
+     * @param pageSize         page size
      * @return paginated results
      */
     @Transactional(readOnly = true)
     public PageResult<DefinitionResponse> search(final String keyword,
+                                                  final String messageCode,
+                                                  final MessageDirection direction,
+                                                  final EnableDisableStatus definitionStatus,
                                                   final int pageNum,
                                                   final int pageSize) {
         Page<BizMessageDefinition> page = definitionRepository.search(
-                keyword,
+                keyword, messageCode, direction, definitionStatus,
                 PageRequest.of(pageNum - 1, pageSize,
                         Sort.by("sortOrder").ascending()
                                 .and(Sort.by("createTime").descending())));

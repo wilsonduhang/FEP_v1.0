@@ -1,11 +1,13 @@
 package com.puchain.fep.web.bizdata.definition.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.web.bizdata.definition.dto.DefinitionCreateRequest;
 import com.puchain.fep.web.bizdata.definition.dto.DefinitionResponse;
 import com.puchain.fep.web.bizdata.definition.dto.DefinitionUpdateRequest;
 import com.puchain.fep.web.bizdata.definition.service.BizMessageDefinitionService;
+import com.puchain.fep.web.bizdata.domain.MessageDirection;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,28 +52,38 @@ public class BizMessageDefinitionController {
     }
 
     /**
-     * Search message definitions (paginated).
+     * Search message definitions (paginated) with optional filters.
      *
-     * @param keyword  keyword matching messageCode or messageName (optional)
-     * @param pageNum  page number (1-based, default 1)
-     * @param pageSize page size (default 10)
+     * @param keyword          keyword matching messageCode or messageName (optional)
+     * @param messageCode      exact message code filter (optional)
+     * @param direction        message direction filter (optional)
+     * @param definitionStatus definition status filter (optional)
+     * @param pageNum          page number (1-based, default 1)
+     * @param pageSize         page size (default 10)
      * @return paginated definition list
      */
     @GetMapping
     @OperationLog(module = "报文类型定义管理", type = OperationType.QUERY,
             description = "搜索报文类型定义")
     @Operation(summary = "搜索报文类型定义",
-            description = "按报文编码或名称模糊搜索，分页返回")
+            description = "按报文编码或名称模糊搜索，支持精确过滤，分页返回")
     @ApiResponse(responseCode = "200", description = "搜索成功")
     public ApiResult<PageResult<DefinitionResponse>> search(
             @Parameter(description = "报文编码或名称关键字")
             @RequestParam(required = false) final String keyword,
+            @Parameter(description = "报文编码精确过滤")
+            @RequestParam(required = false) final String messageCode,
+            @Parameter(description = "报文方向过滤")
+            @RequestParam(required = false) final MessageDirection direction,
+            @Parameter(description = "定义状态过滤")
+            @RequestParam(required = false) final EnableDisableStatus definitionStatus,
             @Parameter(description = "页码（从1开始）")
             @RequestParam(defaultValue = "1") final int pageNum,
             @Parameter(description = "每页条数")
             @RequestParam(defaultValue = "10") final int pageSize) {
         return ApiResult.success(
-                definitionService.search(keyword, pageNum, pageSize));
+                definitionService.search(keyword, messageCode, direction,
+                        definitionStatus, pageNum, pageSize));
     }
 
     /**

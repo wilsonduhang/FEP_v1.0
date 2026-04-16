@@ -2,6 +2,7 @@ package com.puchain.fep.web.bizdata.definition.repository;
 
 import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.bizdata.definition.domain.BizMessageDefinition;
+import com.puchain.fep.web.bizdata.domain.MessageDirection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -46,18 +47,31 @@ public interface BizMessageDefinitionRepository
             @Param("id") String definitionId);
 
     /**
-     * Search definitions by keyword (matches messageCode or messageName).
+     * Search definitions by keyword and optional filters.
      *
-     * @param keyword  keyword (may be null for all)
-     * @param pageable pagination params
+     * <p>All filter parameters are null-friendly: a null value means "no filter".</p>
+     *
+     * @param keyword          keyword matching messageCode or messageName (may be null)
+     * @param messageCode      exact message code filter (may be null)
+     * @param direction        message direction filter (may be null)
+     * @param definitionStatus definition status filter (may be null)
+     * @param pageable         pagination params
      * @return paginated results
      */
     @Query("SELECT d FROM BizMessageDefinition d "
             + "WHERE (:keyword IS NULL "
             + "OR d.messageCode LIKE %:keyword% "
-            + "OR d.messageName LIKE %:keyword%)")
-    Page<BizMessageDefinition> search(@Param("keyword") String keyword,
-                                       Pageable pageable);
+            + "OR d.messageName LIKE %:keyword%) "
+            + "AND (:messageCode IS NULL OR d.messageCode = :messageCode) "
+            + "AND (:direction IS NULL OR d.direction = :direction) "
+            + "AND (:definitionStatus IS NULL "
+            + "OR d.definitionStatus = :definitionStatus)")
+    Page<BizMessageDefinition> search(
+            @Param("keyword") String keyword,
+            @Param("messageCode") String messageCode,
+            @Param("direction") MessageDirection direction,
+            @Param("definitionStatus") EnableDisableStatus definitionStatus,
+            Pageable pageable);
 
     /**
      * Find definitions by status.

@@ -1,5 +1,7 @@
 package com.puchain.fep.web.bizdata.record.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.puchain.fep.web.bizdata.domain.MessageDirection;
 import com.puchain.fep.web.bizdata.record.domain.BizMessageRecord;
 import com.puchain.fep.web.bizdata.record.domain.EntryMethod;
@@ -42,7 +44,8 @@ public class RecordResponse {
     /** Business number. */
     private String businessNo;
 
-    /** Transaction amount. */
+    /** Transaction amount (serialized as string to avoid JS precision loss). */
+    @JsonSerialize(using = ToStringSerializer.class)
     private BigDecimal amount;
 
     /** XML content. */
