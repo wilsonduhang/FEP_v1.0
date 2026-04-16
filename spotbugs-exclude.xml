@@ -804,10 +804,18 @@
          fep-converter 模块（P1b）
          ============================================================ -->
 
-    <!-- CfxMessage: JAXB 绑定对象，getter/setter 必须直接返回可变引用
-         才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约 -->
+    <!-- CfxMessage + MsgContainer: JAXB 绑定对象，getter/setter 必须直接返回可变引用
+         才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。
+         MsgContainer.getContents() 由 P1b-DEFECT-001 fix (5ce2c74) 引入 -->
     <Match>
         <Class name="com.puchain.fep.converter.model.CfxMessage"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+    <Match>
+        <Class name="com.puchain.fep.converter.model.CfxMessage$MsgContainer"/>
         <Or>
             <Bug pattern="EI_EXPOSE_REP"/>
             <Bug pattern="EI_EXPOSE_REP2"/>
@@ -904,6 +912,19 @@
     <Match>
         <Class name="com.puchain.fep.processor.pipeline.SyncMessageProcessorService"/>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- Supply chain Body POJOs (3001/3002): JAXB 绑定对象，getter/setter 必须直接返回
+         可变 ExtInfo 引用才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.processor.body.supplychain.ProgressQuery3001"/>
+            <Class name="com.puchain.fep.processor.body.supplychain.ProgressQueryReturn3002"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
     </Match>
 
 </FindBugsFilter>
