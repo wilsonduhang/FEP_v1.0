@@ -10,6 +10,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // P7.2a Task 10: exclude Playwright spec from Vitest run
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     coverage: { provider: 'v8', reporter: ['text', 'html'] },
   },
 });

@@ -7,3 +7,8 @@ dist-ssr
 coverage
 .env.local
 .env.*.local
+
+# Playwright (P7.2a Task 10)
+playwright-report/
+test-results/
+/e2e/.auth/
