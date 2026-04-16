@@ -8,12 +8,29 @@ import type { PageResult } from '@/shared/types/page-result';
 
 vi.mock('../../api/ent-query-task-api');
 
-const mockPage: PageResult<QueryTaskResponse> = { records: [{
-  taskId: 'T1', enterpriseId: 'E1', queryType: 'REALTIME', usci: '91310000MA1K40XK7A',
-  queryTargetName: 'Acme', taskStatus: 'DRAFT', messageId: null, batchFilePath: null,
-  resultSummary: null, errorMessage: null, createTime: '2026-04-15T10:00:00', updateTime: '',
-  completeTime: null,
-}], total: 1, pageNum: 1, pageSize: 20, totalPages: 1 };
+const mockPage: PageResult<QueryTaskResponse> = {
+  records: [
+    {
+      taskId: 'T1',
+      enterpriseId: 'E1',
+      queryType: 'REALTIME',
+      usci: '91310000MA1K40XK7A',
+      queryTargetName: 'Acme',
+      taskStatus: 'DRAFT',
+      messageId: null,
+      batchFilePath: null,
+      resultSummary: null,
+      errorMessage: null,
+      createTime: '2026-04-15T10:00:00',
+      updateTime: '',
+      completeTime: null,
+    },
+  ],
+  total: 1,
+  pageNum: 1,
+  pageSize: 20,
+  totalPages: 1,
+};
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -23,7 +40,9 @@ const router = createRouter({
 const globalPlugins = { global: { plugins: [router, ElementPlus] } };
 
 describe('QueryTasksPage', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('loads tasks on mount', async () => {
     vi.mocked(entQueryTaskApi.search).mockResolvedValue(mockPage);
@@ -46,7 +65,10 @@ describe('QueryTasksPage', () => {
     const wrapper = mount(QueryTasksPage, globalPlugins);
     await flushPromises();
     // Find execute button by text
-    await wrapper.findAll('button').find((b) => b.text() === '执行')?.trigger('click');
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === '执行')
+      ?.trigger('click');
     await flushPromises();
     expect(entQueryTaskApi.execute).toHaveBeenCalledWith('T1');
   });
@@ -56,7 +78,10 @@ describe('QueryTasksPage', () => {
     const wrapper = mount(QueryTasksPage, globalPlugins);
     await flushPromises();
     // search button inside SearchForm
-    await wrapper.findAll('button').find((b) => b.text() === '搜索')?.trigger('click');
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === '搜索')
+      ?.trigger('click');
     expect(entQueryTaskApi.search).toHaveBeenCalledTimes(2);
   });
 
@@ -67,6 +92,9 @@ describe('QueryTasksPage', () => {
     const table = wrapper.findComponent({ name: 'DataTable' });
     table.vm.$emit('update:pageSize', 50);
     await flushPromises();
-    expect(vi.mocked(entQueryTaskApi.search).mock.lastCall?.[0]).toMatchObject({ pageNum: 1, pageSize: 50 });
+    expect(vi.mocked(entQueryTaskApi.search).mock.lastCall?.[0]).toMatchObject({
+      pageNum: 1,
+      pageSize: 50,
+    });
   });
 });

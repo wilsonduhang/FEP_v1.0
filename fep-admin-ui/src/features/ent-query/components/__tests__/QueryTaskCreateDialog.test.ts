@@ -7,10 +7,19 @@ import { entQueryTaskApi } from '../../api/ent-query-task-api';
 vi.mock('../../api/ent-query-task-api');
 
 const mockCreated = {
-  taskId: 'T99', enterpriseId: 'E1', queryType: 'REALTIME' as const,
-  usci: '91310000MA1K40XK7A', queryTargetName: null, taskStatus: 'DRAFT' as const,
-  messageId: null, batchFilePath: null, resultSummary: null, errorMessage: null,
-  createTime: '2026-04-15T10:00:00', updateTime: '', completeTime: null,
+  taskId: 'T99',
+  enterpriseId: 'E1',
+  queryType: 'REALTIME' as const,
+  usci: '91310000MA1K40XK7A',
+  queryTargetName: null,
+  taskStatus: 'DRAFT' as const,
+  messageId: null,
+  batchFilePath: null,
+  resultSummary: null,
+  errorMessage: null,
+  createTime: '2026-04-15T10:00:00',
+  updateTime: '',
+  completeTime: null,
 };
 
 describe('QueryTaskCreateDialog', () => {
