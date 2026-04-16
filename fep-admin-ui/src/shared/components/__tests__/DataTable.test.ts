@@ -24,14 +24,14 @@ describe('DataTable', () => {
     expect(wrapper.find('.el-pagination').exists()).toBe(true);
   });
 
-  it('passes data to el-table as prop', () => {
+  it('passes data array to ElTable component', () => {
     const wrapper = mount(DataTable, {
       props: { data, columns, total: 2, pageNum: 1, pageSize: 10 },
       global: { plugins: [ElementPlus] },
     });
-    // el-table is rendered with the data-table wrapper
-    expect(wrapper.find('.data-table').exists()).toBe(true);
-    expect(wrapper.find('.el-table').exists()).toBe(true);
+    const table = wrapper.findComponent({ name: 'ElTable' });
+    expect(table.exists()).toBe(true);
+    expect(table.props('data')).toEqual(data);
   });
 
   it('renders empty table when data is empty', () => {
@@ -53,14 +53,15 @@ describe('DataTable', () => {
     expect(wrapper.text()).toContain('50');
   });
 
-  it('emits update:pageSize when page size changes', async () => {
+  it('emits update:pageNum when pagination current-page changes', async () => {
     const wrapper = mount(DataTable, {
       props: { data, columns, total: 50, pageNum: 1, pageSize: 10 },
       global: { plugins: [ElementPlus] },
     });
-    // Verify the pagination exists and the component structure is correct
-    const pager = wrapper.find('.el-pagination');
-    expect(pager.exists()).toBe(true);
-    expect(wrapper.find('.pager').exists()).toBe(true);
+    const pagination = wrapper.findComponent({ name: 'ElPagination' });
+    expect(pagination.exists()).toBe(true);
+    pagination.vm.$emit('update:current-page', 3);
+    expect(wrapper.emitted('update:pageNum')).toBeTruthy();
+    expect(wrapper.emitted('update:pageNum')![0]).toEqual([3]);
   });
 });

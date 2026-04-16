@@ -55,4 +55,18 @@ describe('DetailDrawer', () => {
     expect(drawer).not.toBeNull();
     expect(drawer!.classList.contains('rtl')).toBe(true);
   });
+
+  it('emits update:modelValue when drawer closes', async () => {
+    wrapper = mount(DetailDrawer, {
+      props: { modelValue: true, title: '详情' },
+      global: { plugins: [ElementPlus] },
+      attachTo: document.body,
+    });
+    await nextTick();
+    const drawerComponent = wrapper.findComponent({ name: 'ElDrawer' });
+    expect(drawerComponent.exists()).toBe(true);
+    drawerComponent.vm.$emit('update:model-value', false);
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy();
+    expect(wrapper.emitted('update:modelValue')![0]).toEqual([false]);
+  });
 });
