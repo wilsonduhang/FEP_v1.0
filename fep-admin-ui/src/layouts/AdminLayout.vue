@@ -15,6 +15,32 @@
           <el-icon><HomeFilled /></el-icon>
           <span>首页</span>
         </el-menu-item>
+        <template
+          v-for="node in menuTree"
+          :key="node.menuId"
+        >
+          <el-sub-menu
+            v-if="node.children.length > 0"
+            :index="node.menuCode"
+          >
+            <template #title>
+              {{ node.menuName }}
+            </template>
+            <el-menu-item
+              v-for="leaf in node.children"
+              :key="leaf.menuId"
+              :index="leaf.routePath || leaf.menuCode"
+            >
+              {{ leaf.menuName }}
+            </el-menu-item>
+          </el-sub-menu>
+          <el-menu-item
+            v-else
+            :index="node.routePath || node.menuCode"
+          >
+            {{ node.menuName }}
+          </el-menu-item>
+        </template>
       </el-menu>
     </el-aside>
     <el-container>
@@ -34,12 +60,15 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { HomeFilled } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
 const router = useRouter();
+
+const menuTree = computed(() => authStore.profile?.menuTree ?? []);
 
 async function onLogout() {
   await authStore.logout();

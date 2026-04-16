@@ -29,6 +29,26 @@ export const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/home' },
       { path: 'home', name: 'Home', component: () => import('@/features/home/views/HomePage.vue') },
+      {
+        path: 'enterprise/query-tasks',
+        name: 'QueryTasks',
+        component: () => import('@/features/ent-query/views/QueryTasksPage.vue'),
+      },
+      {
+        path: 'enterprise/auth-letters',
+        name: 'AuthLetters',
+        component: () => import('@/features/ent-query/views/AuthLettersPage.vue'),
+      },
+      {
+        path: 'biz/definitions',
+        name: 'MessageDefinitions',
+        component: () => import('@/features/biz-data/views/MessageDefinitionsPage.vue'),
+      },
+      {
+        path: 'biz/records',
+        name: 'MessageRecords',
+        component: () => import('@/features/biz-data/views/MessageRecordsPage.vue'),
+      },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/home' },
