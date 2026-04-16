@@ -4,7 +4,7 @@ import { bizMessageRecordApi, type RecordSearchParams } from '../../api/biz-mess
 
 vi.mock('../../api/biz-message-record-api');
 vi.mock('element-plus', () => ({
-  ElMessage: { success: vi.fn() },
+  ElMessage: { success: vi.fn(), error: vi.fn() },
 }));
 
 const params: RecordSearchParams = { pageNum: 1, pageSize: 20 };
@@ -32,7 +32,10 @@ describe('useRecordExport', () => {
   it('toggles exporting flag', async () => {
     let resolvePromise: (v: string) => void;
     vi.mocked(bizMessageRecordApi.exportRecords).mockImplementation(
-      () => new Promise<string>((resolve) => { resolvePromise = resolve; }),
+      () =>
+        new Promise<string>((resolve) => {
+          resolvePromise = resolve;
+        }),
     );
     const { exporting, triggerExport } = useRecordExport();
     expect(exporting.value).toBe(false);
