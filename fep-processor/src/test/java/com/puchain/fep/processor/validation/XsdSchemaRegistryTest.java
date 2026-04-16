@@ -22,7 +22,7 @@ class XsdSchemaRegistryTest {
             MessageType.MSG_3001, MessageType.MSG_3002,
             MessageType.MSG_3003, MessageType.MSG_3004,
             MessageType.MSG_3005, MessageType.MSG_3006,
-            MessageType.MSG_9005
+            MessageType.MSG_9005, MessageType.MSG_9120
     );
 
     private static XsdSchemaRegistry registry;

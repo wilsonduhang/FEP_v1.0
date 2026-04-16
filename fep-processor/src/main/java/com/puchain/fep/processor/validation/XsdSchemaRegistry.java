@@ -24,11 +24,11 @@ import java.util.Set;
  * Loads HNDEMP message XSDs under {@code fep-processor/resources/xsd/} and caches
  * them keyed by {@link MessageType}.
  *
- * <p>Eagerly loads all 11 XSDs at construction time using a single-threaded
+ * <p>Eagerly loads all 12 XSDs at construction time using a single-threaded
  * {@link SchemaFactory}, then discards the factory. The resulting {@link Schema}
  * instances are thread-safe per JAXP and cached in an unmodifiable map.</p>
  *
- * <p>P2a scope supports 11 synchronous messages (1001/1004/2001/2004/3001-3006/9005);
+ * <p>P2a/P2b scope supports 12 messages (1001/1004/2001/2004/3001-3006/9005/9120);
  * all other {@link MessageType} values throw {@link UnsupportedOperationException}.</p>
  */
 @Component
@@ -39,7 +39,7 @@ public class XsdSchemaRegistry {
     private static final Set<String> SUPPORTED_CODES = Set.of(
             "1001", "1004", "2001", "2004",
             "3001", "3002", "3003", "3004", "3005", "3006",
-            "9005"
+            "9005", "9120"
     );
 
     private static final String XSD_CLASSPATH_DIR = "/xsd/";
@@ -47,7 +47,7 @@ public class XsdSchemaRegistry {
     private final Map<String, Schema> cache;
 
     /**
-     * Creates the registry, eagerly loading all 11 supported XSDs into an
+     * Creates the registry, eagerly loading all 12 supported XSDs into an
      * unmodifiable cache. The {@link SchemaFactory} is used only during
      * construction (single-threaded), avoiding its documented thread-safety
      * limitations.
@@ -83,7 +83,7 @@ public class XsdSchemaRegistry {
         Schema schema = cache.get(code);
         if (schema == null) {
             throw new UnsupportedOperationException(
-                    "MessageType " + code + " is not supported in P2a (sync mode). "
+                    "MessageType " + code + " is not supported. "
                             + "Supported: " + SUPPORTED_CODES);
         }
         return schema;
