@@ -927,4 +927,18 @@
         </Or>
     </Match>
 
+    <!-- Supply chain Body POJOs (3003/3004): JAXB 绑定对象，getter/setter 必须直接返回
+         可变引用（ExtInfo/PzrzStatusInfo/PzInfo/List<RiskRate>/List<ZpzAllInfo>）才能让
+         JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.processor.body.supplychain.PzInfoQuery3003"/>
+            <Class name="com.puchain.fep.processor.body.supplychain.PzInfoReturn3004"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
 </FindBugsFilter>
