@@ -17,7 +17,8 @@ import { type Page, expect } from '@playwright/test';
  *  4. click login button
  *  5. expect navigation to /home
  */
-const CAPTCHA_BYPASS_TOKEN = process.env.FEP_E2E_CAPTCHA_BYPASS_TOKEN ?? 'e2e-bypass';
+// Must be <= 4 chars to match LoginPage captcha input maxlength="4"
+const CAPTCHA_BYPASS_TOKEN = process.env.FEP_E2E_CAPTCHA_BYPASS_TOKEN ?? 'e2e1';
 
 export async function loginAsAdmin(page: Page): Promise<void> {
   await page.goto('/login');
