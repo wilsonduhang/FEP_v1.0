@@ -151,7 +151,7 @@ public class AsyncMessageProcessorService {
 
         log.info("[ASYNC-COMPLETE] msg={} transitionNo={} recordId={} completed",
                 responseType.msgNo(), LogSanitizer.sanitize(originalTransitionNo),
-                original.getId());
+                completed.getId());
         return completed;
     }
 

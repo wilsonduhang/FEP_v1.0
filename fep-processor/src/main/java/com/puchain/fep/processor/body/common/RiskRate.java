@@ -30,18 +30,30 @@ public class RiskRate extends CfxBody {
     @XmlElement(name = "RateMemo")
     private String rateMemo;
 
+    /**
+     * @return risk rate value
+     */
     public String getRate() {
         return rate;
     }
 
+    /**
+     * @param v risk rate value
+     */
     public void setRate(final String v) {
         this.rate = v;
     }
 
+    /**
+     * @return risk rate memo, may be null
+     */
     public String getRateMemo() {
         return rateMemo;
     }
 
+    /**
+     * @param v risk rate memo
+     */
     public void setRateMemo(final String v) {
         this.rateMemo = v;
     }
