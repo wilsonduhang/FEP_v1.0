@@ -50,12 +50,26 @@ public class CaptchaService {
         this.bypassToken = bypassToken;
     }
 
+    /** Minimal 1x1 transparent PNG as data URI for E2E bypass mode. */
+    private static final String BYPASS_IMAGE =
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQAB"
+            + "Nl7BcQAAAABJRU5ErkJggg==";
+
     /**
      * 生成一个新的验证码，返回 captchaId + base64 图片。
+     *
+     * <p>当 E2E bypass token 已配置（非空）时，返回固定 dummy captcha
+     * （不访问 Redis），使 E2E 登录流程可在无 Redis 环境下完成。
+     * 生产/dev profile 的 bypass token 为空，此分支永远不会执行。</p>
      *
      * @return 包含 captchaId、base64 图片和有效期的响应
      */
     public CaptchaResponse generate() {
+        // E2E bypass: return a fixed dummy captcha without touching Redis.
+        if (bypassToken != null && !bypassToken.isEmpty()) {
+            return new CaptchaResponse("e2e-captcha-" + IdGenerator.uuid32(),
+                    BYPASS_IMAGE, TTL.getSeconds());
+        }
         SpecCaptcha captcha = new SpecCaptcha(CAPTCHA_WIDTH, CAPTCHA_HEIGHT, CAPTCHA_LENGTH);
         captcha.setCharType(SpecCaptcha.TYPE_DEFAULT); // 字母数字混合
         String code = captcha.text().toLowerCase(java.util.Locale.ROOT);
