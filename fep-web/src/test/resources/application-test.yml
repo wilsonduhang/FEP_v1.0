@@ -1,0 +1,39 @@
+# application-test.yml
+#
+# Stand-alone test profile used by integration tests that prefer an
+# isolated datasource URL from the one the dev profile exposes.
+# Mirrors the dev profile's datasource, JWT, and CORS settings.
+# Security mock beans (@Profile("dev")) and Redis come from the
+# additional profile / @Import combination declared by each test class.
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:fep_test;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+fep:
+  cors:
+    allowed-origins: http://localhost:*
+  jwt:
+    secret: dGVzdC10ZXN0LXRlc3QtdGVzdC10ZXN0LXRlc3QtdGVzdC10ZXN0LXRlc3QtdGVzdC10ZXN0LTEy
+    access-token-ttl-seconds: 7200
+    refresh-token-ttl-seconds: 604800
+    issuer: fep-test
+
+logging:
+  level:
+    com.puchain.fep: INFO
