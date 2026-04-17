@@ -78,8 +78,14 @@ async function onLogout() {
 
 <style scoped>
 .admin-layout { min-height: 100vh; }
-.aside { background: #1f2d5a; color: #fff; }
-.logo { padding: 16px; font-weight: 600; color: #fff; }
+.aside { background: #f5f5f5; border-right: 1px solid #e6e6e6; }
+.logo { padding: 16px; font-weight: 600; color: #333; font-size: 15px; }
 .header { display: flex; justify-content: flex-end; align-items: center; gap: 12px; background: #fff; border-bottom: 1px solid #eaeaea; }
 .user { font-size: 14px; color: #333; }
+
+/* el-menu 背景对齐侧栏浅灰 */
+:deep(.el-menu) { background-color: #f5f5f5; border-right: none; }
+:deep(.el-sub-menu__title) { color: #333; }
+:deep(.el-menu-item) { color: #333; }
+:deep(.el-menu-item.is-active) { color: #409eff; background-color: #e6f0ff; }
 </style>
