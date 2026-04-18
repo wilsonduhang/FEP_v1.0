@@ -1,5 +1,7 @@
 package com.puchain.fep.web.submission.record.dto;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.puchain.fep.web.submission.record.domain.EntryMethod;
 import com.puchain.fep.web.submission.record.domain.PushStatus;
 import com.puchain.fep.web.submission.record.domain.SubSubmissionRecord;
@@ -33,7 +35,8 @@ public class SubmissionRecordResponse {
     /** 业务编号。 */
     private String businessNo;
 
-    /** 金额（万元）。 */
+    /** 金额（万元）。序列化为 JSON string 以保全 JS number 精度（> 2^53）。 */
+    @JsonSerialize(using = ToStringSerializer.class)
     private BigDecimal amount;
 
     /** 数据条数。 */
