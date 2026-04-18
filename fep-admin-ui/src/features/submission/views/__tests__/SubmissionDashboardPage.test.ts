@@ -1,6 +1,6 @@
 import { mount, flushPromises } from '@vue/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import ElementPlus from 'element-plus';
+import ElementPlus, { ElMessage } from 'element-plus';
 
 // --- Spies on useAutoRefresh controller ---
 const startSpy = vi.fn();
@@ -32,6 +32,20 @@ vi.mock('../../components/SubmissionTrendChart.vue', () => ({
 vi.mock('../../components/SubmissionDistributionChart.vue', () => ({
   default: { name: 'SubmissionDistributionChart', props: ['data'], render: () => null },
 }));
+
+// --- Mock ElMessage so error-handling paths are observable ---
+vi.mock('element-plus', async () => {
+  const actual = await vi.importActual<typeof import('element-plus')>('element-plus');
+  return {
+    ...actual,
+    ElMessage: {
+      success: vi.fn(),
+      error: vi.fn(),
+      warning: vi.fn(),
+      info: vi.fn(),
+    },
+  };
+});
 
 // --- Mock API client ---
 vi.mock('../../api/sub-dashboard-api');
@@ -131,5 +145,31 @@ describe('SubmissionDashboardPage', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('shows ElMessage.error when loadAll fails (any endpoint rejects)', async () => {
+    vi.mocked(subDashboardApi.getOverview).mockRejectedValueOnce(new Error('net fail'));
+    mount(SubmissionDashboardPage, globalOpts);
+    await flushPromises();
+    expect(ElMessage.error).toHaveBeenCalledWith('数据概况加载失败');
+  });
+
+  it('shows ElMessage.error when handleTrendDaysChange fails', async () => {
+    const wrapper = mount(SubmissionDashboardPage, globalOpts);
+    await flushPromises();
+    vi.mocked(subDashboardApi.getTrend).mockRejectedValueOnce(new Error('net fail'));
+    await (wrapper.vm as unknown as { handleTrendDaysChange: (v: 7 | 30) => Promise<void> })
+      .handleTrendDaysChange(30);
+    expect(ElMessage.error).toHaveBeenCalledWith('趋势数据加载失败');
+  });
+
+  it('shows ElMessage.error when handleDistDimChange fails', async () => {
+    const wrapper = mount(SubmissionDashboardPage, globalOpts);
+    await flushPromises();
+    vi.mocked(subDashboardApi.getDistribution).mockRejectedValueOnce(new Error('net fail'));
+    await (wrapper.vm as unknown as {
+      handleDistDimChange: (v: 'messageType' | 'businessType') => Promise<void>;
+    }).handleDistDimChange('businessType');
+    expect(ElMessage.error).toHaveBeenCalledWith('分布数据加载失败');
   });
 });

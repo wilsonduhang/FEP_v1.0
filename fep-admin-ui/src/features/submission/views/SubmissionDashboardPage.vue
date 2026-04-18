@@ -142,6 +142,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { ElMessage } from 'element-plus';
 import { useAutoRefresh } from '@/features/home/composables/useAutoRefresh';
 import {
   subDashboardApi,
@@ -176,14 +177,20 @@ const trendDays = ref<DashboardTrendDays>(7);
 const distDim = ref<DashboardDistributionDim>('messageType');
 
 async function loadAll(): Promise<void> {
-  const [ov, tr, dist] = await Promise.all([
-    subDashboardApi.getOverview(),
-    subDashboardApi.getTrend(trendDays.value),
-    subDashboardApi.getDistribution(distDim.value),
-  ]);
-  overview.value = ov;
-  trend.value = tr;
-  distribution.value = dist;
+  try {
+    const [ov, tr, dist] = await Promise.all([
+      subDashboardApi.getOverview(),
+      subDashboardApi.getTrend(trendDays.value),
+      subDashboardApi.getDistribution(distDim.value),
+    ]);
+    overview.value = ov;
+    trend.value = tr;
+    distribution.value = dist;
+  } catch {
+    // Keep prior values visible; surface failure via toast instead of unhandled
+    // rejection (useAutoRefresh invokes `void loader()` which swallows errors).
+    ElMessage.error('数据概况加载失败');
+  }
 }
 
 const ctrl = useAutoRefresh(loadAll, 30_000);
@@ -193,13 +200,22 @@ async function handleManualRefresh(): Promise<void> {
 }
 
 async function handleTrendDaysChange(value: DashboardTrendDays): Promise<void> {
-  trendDays.value = value;
-  trend.value = await subDashboardApi.getTrend(value);
+  // `v-model` on el-radio-group already mutated `trendDays` before @change fires,
+  // so we use `value` directly in the API call without re-assigning the ref.
+  try {
+    trend.value = await subDashboardApi.getTrend(value);
+  } catch {
+    ElMessage.error('趋势数据加载失败');
+  }
 }
 
 async function handleDistDimChange(value: DashboardDistributionDim): Promise<void> {
-  distDim.value = value;
-  distribution.value = await subDashboardApi.getDistribution(value);
+  // Same rationale as handleTrendDaysChange: v-model already updated `distDim`.
+  try {
+    distribution.value = await subDashboardApi.getDistribution(value);
+  } catch {
+    ElMessage.error('分布数据加载失败');
+  }
 }
 
 onMounted(() => ctrl.start());
