@@ -12,7 +12,7 @@ import { httpClient } from '@/shared/http/client';
  * <p>Each summary item groups by {@code messageType} and carries
  * {@code totalCount} / {@code pushedCount} / {@code pendingCount}.
  * Clicking a card in the UI navigates to the message records list
- * ({@code /report/records?messageType=...}) — delivered by P7.2c.</p>
+ * ({@code /report/view?messageType=...}) — delivered by P7.2c.</p>
  *
  * <p>Server-side counts are Java {@code long} but counts here are well below
  * {@link Number.MAX_SAFE_INTEGER} (2^53) so JS {@code number} is safe.</p>
