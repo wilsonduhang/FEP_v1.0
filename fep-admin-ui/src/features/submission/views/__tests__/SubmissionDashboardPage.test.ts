@@ -74,9 +74,7 @@ describe('SubmissionDashboardPage', () => {
       pushedCounts: [5],
       pendingCounts: [2],
     });
-    vi.mocked(subDashboardApi.getDistribution).mockResolvedValue([
-      { name: '3001', value: 10 },
-    ]);
+    vi.mocked(subDashboardApi.getDistribution).mockResolvedValue([{ name: '3001', value: 10 }]);
   });
 
   it('renders 6 overview cards with correct values on mount', async () => {
@@ -107,17 +105,20 @@ describe('SubmissionDashboardPage', () => {
   it('switches trend window to 30 days', async () => {
     const wrapper = mount(SubmissionDashboardPage, globalOpts);
     await flushPromises();
-    await (wrapper.vm as unknown as { handleTrendDaysChange: (v: 7 | 30) => Promise<void> })
-      .handleTrendDaysChange(30);
+    await (
+      wrapper.vm as unknown as { handleTrendDaysChange: (v: 7 | 30) => Promise<void> }
+    ).handleTrendDaysChange(30);
     expect(subDashboardApi.getTrend).toHaveBeenLastCalledWith(30);
   });
 
   it('switches distribution dim to businessType', async () => {
     const wrapper = mount(SubmissionDashboardPage, globalOpts);
     await flushPromises();
-    await (wrapper.vm as unknown as {
-      handleDistDimChange: (v: 'messageType' | 'businessType') => Promise<void>;
-    }).handleDistDimChange('businessType');
+    await (
+      wrapper.vm as unknown as {
+        handleDistDimChange: (v: 'messageType' | 'businessType') => Promise<void>;
+      }
+    ).handleDistDimChange('businessType');
     expect(subDashboardApi.getDistribution).toHaveBeenLastCalledWith('businessType');
   });
 
@@ -158,8 +159,9 @@ describe('SubmissionDashboardPage', () => {
     const wrapper = mount(SubmissionDashboardPage, globalOpts);
     await flushPromises();
     vi.mocked(subDashboardApi.getTrend).mockRejectedValueOnce(new Error('net fail'));
-    await (wrapper.vm as unknown as { handleTrendDaysChange: (v: 7 | 30) => Promise<void> })
-      .handleTrendDaysChange(30);
+    await (
+      wrapper.vm as unknown as { handleTrendDaysChange: (v: 7 | 30) => Promise<void> }
+    ).handleTrendDaysChange(30);
     expect(ElMessage.error).toHaveBeenCalledWith('趋势数据加载失败');
   });
 
@@ -167,9 +169,11 @@ describe('SubmissionDashboardPage', () => {
     const wrapper = mount(SubmissionDashboardPage, globalOpts);
     await flushPromises();
     vi.mocked(subDashboardApi.getDistribution).mockRejectedValueOnce(new Error('net fail'));
-    await (wrapper.vm as unknown as {
-      handleDistDimChange: (v: 'messageType' | 'businessType') => Promise<void>;
-    }).handleDistDimChange('businessType');
+    await (
+      wrapper.vm as unknown as {
+        handleDistDimChange: (v: 'messageType' | 'businessType') => Promise<void>;
+      }
+    ).handleDistDimChange('businessType');
     expect(ElMessage.error).toHaveBeenCalledWith('分布数据加载失败');
   });
 });

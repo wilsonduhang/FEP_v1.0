@@ -151,8 +151,7 @@ describe('OutputInterfaceEditDialog', () => {
     };
     // Replace the FormInstance's validate with a rejection matching EP's
     // real contract for required-field failures.
-    vm.formRef.validate = () =>
-      Promise.reject({ interfaceName: [{ message: '请输入接口名称' }] });
+    vm.formRef.validate = () => Promise.reject({ interfaceName: [{ message: '请输入接口名称' }] });
     await vm.onSave();
     await flushPromises();
     expect(wrapper.emitted('save')).toBeUndefined();

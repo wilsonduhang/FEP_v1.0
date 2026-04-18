@@ -147,8 +147,7 @@ describe('DataSourceEditDialog', () => {
       formRef: { validate: () => Promise<boolean> };
       onSave: () => Promise<void>;
     };
-    vm.formRef.validate = () =>
-      Promise.reject({ sourceName: [{ message: '请输入数据源名称' }] });
+    vm.formRef.validate = () => Promise.reject({ sourceName: [{ message: '请输入数据源名称' }] });
     await vm.onSave();
     await flushPromises();
     expect(wrapper.emitted('save')).toBeUndefined();

@@ -3,10 +3,7 @@ import { createRouter, createMemoryHistory } from 'vue-router';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import ElementPlus from 'element-plus';
 import BusinessScenesPage from '../BusinessScenesPage.vue';
-import {
-  subBusinessSceneApi,
-  type BusinessSceneResponse,
-} from '../../api/sub-business-scene-api';
+import { subBusinessSceneApi, type BusinessSceneResponse } from '../../api/sub-business-scene-api';
 import type { PageResult } from '@/shared/types/page-result';
 
 vi.mock('../../api/sub-business-scene-api');
@@ -74,8 +71,9 @@ describe('BusinessScenesPage', () => {
     vi.mocked(subBusinessSceneApi.toggleStatus).mockResolvedValue(toggled);
     const wrapper = mount(BusinessScenesPage, globalPlugins);
     await flushPromises();
-    await (wrapper.vm as unknown as { onToggleStatus: (r: BusinessSceneResponse) => Promise<void> })
-      .onToggleStatus(mockRecord);
+    await (
+      wrapper.vm as unknown as { onToggleStatus: (r: BusinessSceneResponse) => Promise<void> }
+    ).onToggleStatus(mockRecord);
     await flushPromises();
     expect(subBusinessSceneApi.toggleStatus).toHaveBeenCalledWith('SC-1');
     // AC #2: no full re-fetch — search should only run once (the initial mount).

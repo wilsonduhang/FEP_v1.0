@@ -3,10 +3,7 @@ import { createRouter, createMemoryHistory } from 'vue-router';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import ElementPlus, { ElMessageBox } from 'element-plus';
 import DataSourcesPage from '../DataSourcesPage.vue';
-import {
-  subDataSourceApi,
-  type DataSourceResponse,
-} from '../../api/sub-data-source-api';
+import { subDataSourceApi, type DataSourceResponse } from '../../api/sub-data-source-api';
 import type { PageResult } from '@/shared/types/page-result';
 
 vi.mock('../../api/sub-data-source-api');
@@ -82,16 +79,18 @@ describe('DataSourcesPage', () => {
     vi.mocked(ElMessageBox.confirm).mockResolvedValueOnce(
       'confirm' as Awaited<ReturnType<typeof ElMessageBox.confirm>>,
     );
-    await (wrapper.vm as unknown as { onDelete: (r: DataSourceResponse) => Promise<void> })
-      .onDelete(mockRecord);
+    await (
+      wrapper.vm as unknown as { onDelete: (r: DataSourceResponse) => Promise<void> }
+    ).onDelete(mockRecord);
     await flushPromises();
     expect(ElMessageBox.confirm).toHaveBeenCalledTimes(1);
     expect(subDataSourceApi.remove).toHaveBeenCalledWith('S-1');
 
     // Cancel branch.
     vi.mocked(ElMessageBox.confirm).mockRejectedValueOnce('cancel');
-    await (wrapper.vm as unknown as { onDelete: (r: DataSourceResponse) => Promise<void> })
-      .onDelete(mockRecord);
+    await (
+      wrapper.vm as unknown as { onDelete: (r: DataSourceResponse) => Promise<void> }
+    ).onDelete(mockRecord);
     await flushPromises();
     expect(ElMessageBox.confirm).toHaveBeenCalledTimes(2);
     // remove still only called once (confirm branch above), not twice.

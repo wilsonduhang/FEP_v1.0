@@ -45,8 +45,7 @@ describe('BusinessSceneEditDialog', () => {
       formRef: { validate: () => Promise<boolean> };
       onSave: () => Promise<void>;
     };
-    vm.formRef.validate = () =>
-      Promise.reject({ sceneName: [{ message: '长度 3-30 字符' }] });
+    vm.formRef.validate = () => Promise.reject({ sceneName: [{ message: '长度 3-30 字符' }] });
     await vm.onSave();
     await flushPromises();
     expect(wrapper.emitted('save')).toBeUndefined();
@@ -67,8 +66,7 @@ describe('BusinessSceneEditDialog', () => {
     };
     // Rule declaration check (complementary to behavioral check below).
     expect(vm.rules.businessTypeId?.find((r) => r.required)?.required).toBe(true);
-    vm.formRef.validate = () =>
-      Promise.reject({ businessTypeId: [{ message: '业务类型必填' }] });
+    vm.formRef.validate = () => Promise.reject({ businessTypeId: [{ message: '业务类型必填' }] });
     await vm.onSave();
     await flushPromises();
     expect(wrapper.emitted('save')).toBeUndefined();
@@ -117,11 +115,7 @@ describe('BusinessSceneEditDialog', () => {
       rules: Record<
         string,
         Array<{
-          validator?: (
-            rule: unknown,
-            value: string,
-            cb: (err?: Error) => void,
-          ) => void;
+          validator?: (rule: unknown, value: string, cb: (err?: Error) => void) => void;
         }>
       >;
       formRef: { validate: () => Promise<boolean> };
@@ -167,8 +161,7 @@ describe('BusinessSceneEditDialog', () => {
     expect(patternRule!.pattern!.test('mailto:foo@bar.com')).toBe(false);
     expect(patternRule!.pattern!.test('https://x.example.com')).toBe(true);
     expect(patternRule!.pattern!.test('http://x.example.com')).toBe(true);
-    vm.formRef.validate = () =>
-      Promise.reject({ requestUrl: [{ message: '必须是 http(s) URL' }] });
+    vm.formRef.validate = () => Promise.reject({ requestUrl: [{ message: '必须是 http(s) URL' }] });
     await vm.onSave();
     await flushPromises();
     expect(wrapper.emitted('save')).toBeUndefined();
@@ -188,8 +181,7 @@ describe('BusinessSceneEditDialog', () => {
     };
     expect(vm.rules.sortOrder?.find((r) => r.required)?.required).toBe(true);
     expect(vm.rules.sortOrder?.find((r) => r.type === 'integer')?.type).toBe('integer');
-    vm.formRef.validate = () =>
-      Promise.reject({ sortOrder: [{ message: '必须是整数' }] });
+    vm.formRef.validate = () => Promise.reject({ sortOrder: [{ message: '必须是整数' }] });
     await vm.onSave();
     await flushPromises();
     expect(wrapper.emitted('save')).toBeUndefined();

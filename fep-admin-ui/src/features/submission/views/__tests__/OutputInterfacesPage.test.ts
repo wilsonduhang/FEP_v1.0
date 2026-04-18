@@ -76,8 +76,9 @@ describe('OutputInterfacesPage', () => {
     vi.mocked(subOutputInterfaceApi.toggleStatus).mockResolvedValue(toggled);
     const wrapper = mount(OutputInterfacesPage, globalPlugins);
     await flushPromises();
-    await (wrapper.vm as unknown as { onToggleStatus: (r: OutputInterfaceResponse) => Promise<void> })
-      .onToggleStatus(mockRecord);
+    await (
+      wrapper.vm as unknown as { onToggleStatus: (r: OutputInterfaceResponse) => Promise<void> }
+    ).onToggleStatus(mockRecord);
     await flushPromises();
     expect(subOutputInterfaceApi.toggleStatus).toHaveBeenCalledWith('I-1');
     // Should NOT have re-fetched the whole list (AC #2).

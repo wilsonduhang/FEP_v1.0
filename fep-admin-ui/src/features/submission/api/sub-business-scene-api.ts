@@ -56,8 +56,7 @@ export const subBusinessSceneApi = {
   search: (params: BusinessSceneSearchParams): Promise<PageResult<BusinessSceneResponse>> =>
     httpClient.get(BASE, { params }),
   getById: (id: string): Promise<BusinessSceneResponse> => httpClient.get(`${BASE}/${id}`),
-  create: (req: BusinessSceneRequest): Promise<BusinessSceneResponse> =>
-    httpClient.post(BASE, req),
+  create: (req: BusinessSceneRequest): Promise<BusinessSceneResponse> => httpClient.post(BASE, req),
   update: (id: string, req: BusinessSceneRequest): Promise<BusinessSceneResponse> =>
     httpClient.put(`${BASE}/${id}`, req),
   /**

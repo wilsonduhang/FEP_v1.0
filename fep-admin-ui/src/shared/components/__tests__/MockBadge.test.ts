@@ -12,14 +12,16 @@ describe('MockBadge', () => {
 
   it('honors small size prop', () => {
     expect(
-      mount(MockBadge, { ...g, props: { size: 'small' } }).find('.el-tag--small').exists(),
+      mount(MockBadge, { ...g, props: { size: 'small' } })
+        .find('.el-tag--small')
+        .exists(),
     ).toBe(true);
   });
 
   it('renders slot override', () => {
-    expect(
-      mount(MockBadge, { ...g, slots: { default: '待 TLQ 到位' } }).text(),
-    ).toContain('待 TLQ 到位');
+    expect(mount(MockBadge, { ...g, slots: { default: '待 TLQ 到位' } }).text()).toContain(
+      '待 TLQ 到位',
+    );
   });
 
   it('applies el-tag--info class', () => {
