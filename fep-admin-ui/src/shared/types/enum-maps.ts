@@ -57,3 +57,8 @@ export const INTERFACE_AUTH_TYPE_MAP: Record<string, StatusMapping> = {
   OAUTH2: { label: 'OAuth2', type: 'warning' },
   NONE: { label: '无', type: 'info' },
 };
+
+export const SCENE_PUSH_METHOD_MAP: Record<string, StatusMapping> = {
+  AUTO: { label: '自动', type: 'success' },
+  MANUAL: { label: '手动', type: 'warning' },
+};
