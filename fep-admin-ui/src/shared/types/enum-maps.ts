@@ -51,3 +51,9 @@ export const ENABLE_DISABLE_STATUS_MAP: Record<string, StatusMapping> = {
   ENABLED: { label: '启用', type: 'success' },
   DISABLED: { label: '禁用', type: 'info' },
 };
+
+export const INTERFACE_AUTH_TYPE_MAP: Record<string, StatusMapping> = {
+  TOKEN: { label: 'Token', type: 'primary' },
+  OAUTH2: { label: 'OAuth2', type: 'warning' },
+  NONE: { label: '无', type: 'info' },
+};
