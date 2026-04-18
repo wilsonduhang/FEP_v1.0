@@ -31,7 +31,7 @@
         <div class="card-stats">
           <div>总数：<strong>{{ item.totalCount }}</strong></div>
           <div>已推送：<strong>{{ item.pushedCount }}</strong></div>
-          <div>待推送：<strong>{{ item.totalCount - item.pushedCount }}</strong></div>
+          <div>待推送：<strong>{{ item.pendingCount }}</strong></div>
         </div>
       </el-card>
     </el-col>

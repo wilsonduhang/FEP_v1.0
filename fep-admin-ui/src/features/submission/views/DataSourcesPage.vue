@@ -142,6 +142,8 @@ async function refresh() {
   loading.value = true;
   try {
     page.value = await subDataSourceApi.search(searchForm);
+  } catch {
+    ElMessage.error('加载失败');
   } finally {
     loading.value = false;
   }
@@ -189,9 +191,15 @@ async function onDelete(record: DataSourceResponse) {
     // User cancelled — do nothing.
     return;
   }
-  await subDataSourceApi.remove(record.sourceId);
-  ElMessage.success('已删除');
-  refresh();
+  // User confirmed — surface backend failures as a toast instead of an
+  // uncaught rejection.
+  try {
+    await subDataSourceApi.remove(record.sourceId);
+    ElMessage.success('已删除');
+    await refresh();
+  } catch {
+    ElMessage.error('删除失败');
+  }
 }
 
 defineExpose({ onDelete, openCreate, dialogVisible, dialogMode, editingRecord, page });

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -72,11 +73,18 @@ public class E2eSeedRunner implements CommandLineRunner {
                 skipped++;
                 continue;
             }
-            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-            jdbcTemplate.update(INSERT_SQL,
-                    UUID.randomUUID().toString().replace("-", ""),
-                    row[1], row[0], now, now);
-            inserted++;
+            try {
+                Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+                jdbcTemplate.update(INSERT_SQL,
+                        UUID.randomUUID().toString().replace("-", ""),
+                        row[1], row[0], now, now);
+                inserted++;
+            } catch (DuplicateKeyException dup) {
+                // TOCTOU: concurrent startup (or parallel bean init) inserted the row
+                // between our SELECT COUNT and INSERT. t_sys_enterprise.usci is
+                // UNIQUE, so we count the race as skipped rather than failing startup.
+                skipped++;
+            }
         }
         LOG.info("[E2E-SEED] applied: {} rows (inserted={}, skipped={}, total={})",
                 inserted + skipped, inserted, skipped, SEED_ROWS.length);

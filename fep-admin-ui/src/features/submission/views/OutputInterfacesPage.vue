@@ -164,6 +164,11 @@ async function refresh() {
   loading.value = true;
   try {
     page.value = await subOutputInterfaceApi.search(searchForm);
+  } catch {
+    // Align with MessageSummaryPage convention: surface load failures so
+    // users aren't left staring at a half-loaded table. Detailed diagnostics
+    // flow via backend error codes; UI shows a short toast only.
+    ElMessage.error('加载失败');
   } finally {
     loading.value = false;
   }
@@ -224,9 +229,15 @@ async function onTest(interfaceId: string) {
 
 async function onDelete(interfaceId: string) {
   await ElMessageBox.confirm('确认删除该输出接口？', '提示', { type: 'warning' });
-  await subOutputInterfaceApi.remove(interfaceId);
-  ElMessage.success('已删除');
-  refresh();
+  // User confirmed — surface backend failures as a toast instead of an
+  // uncaught promise rejection (which shows no UI feedback).
+  try {
+    await subOutputInterfaceApi.remove(interfaceId);
+    ElMessage.success('已删除');
+    await refresh();
+  } catch {
+    ElMessage.error('删除失败');
+  }
 }
 
 defineExpose({ onTest, onToggleStatus, page });

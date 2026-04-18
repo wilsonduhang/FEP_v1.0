@@ -147,7 +147,12 @@ public interface SubSubmissionRecordRepository
      * <p>延用 {@code SUBSTRING(CAST(createTime AS string), 1, 10)} 日截断模式。
      * pushed 仅 PUSHED；pending 仅 PENDING（PUSHING/FAILED 不计入）。</p>
      *
-     * @param startTime 起始时间（含）
+     * <p>窗口为半开区间 {@code [startTime, endExclusive)}；调用方捕获一次
+     * {@link java.time.LocalDate#now()} 后同时传入两端，避免调用 SQL 与填充
+     * dates 列表之间跨过午夜造成最后一格错位，或请求发出之后产生的行落入显示窗口外。</p>
+     *
+     * @param startTime     起始时间（含）
+     * @param endExclusive  截止时间（不含，通常为 today+1 零点）
      * @return 聚合结果列表（Object[] 数组：[date(yyyy-MM-dd), pushedCount, pendingCount]）
      */
     @Query("SELECT SUBSTRING(CAST(r.createTime AS string), 1, 10), "
@@ -158,10 +163,11 @@ public interface SubSubmissionRecordRepository
             + "com.puchain.fep.web.submission.record.domain.PushStatus.PENDING "
             + "THEN 1L ELSE 0L END) "
             + "FROM SubSubmissionRecord r "
-            + "WHERE r.createTime >= :startTime "
+            + "WHERE r.createTime >= :startTime AND r.createTime < :endExclusive "
             + "GROUP BY SUBSTRING(CAST(r.createTime AS string), 1, 10) "
             + "ORDER BY SUBSTRING(CAST(r.createTime AS string), 1, 10)")
-    List<Object[]> aggregateTrendByDate(@Param("startTime") LocalDateTime startTime);
+    List<Object[]> aggregateTrendByDate(@Param("startTime") LocalDateTime startTime,
+                                        @Param("endExclusive") LocalDateTime endExclusive);
 
     /**
      * 按报文类型分布聚合 Top N（用 Pageable 做 LIMIT；JPQL 无 LIMIT 关键字）。

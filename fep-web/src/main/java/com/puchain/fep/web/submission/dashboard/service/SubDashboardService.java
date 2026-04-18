@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -102,10 +103,16 @@ public class SubDashboardService {
         }
         log.debug("Aggregating dashboard trend: days={}", days);
 
+        // Capture LocalDate once so the half-open [start, endExclusive) window
+        // passed to the repo query is identical to the window used to fill the
+        // dates list — avoids a midnight tick between SQL and loop skewing the
+        // last bucket, and excludes rows that arrive after the request started.
         final LocalDate today = LocalDate.now();
         final LocalDate start = today.minusDays((long) days - 1L);
+        final LocalDateTime startAt = start.atStartOfDay();
+        final LocalDateTime endExclusive = today.plusDays(1L).atStartOfDay();
         final Map<String, long[]> byDate = new HashMap<>();
-        for (Object[] row : recordRepository.aggregateTrendByDate(start.atStartOfDay())) {
+        for (Object[] row : recordRepository.aggregateTrendByDate(startAt, endExclusive)) {
             final String dateStr = (String) row[0];
             byDate.put(dateStr, new long[] {
                     ((Number) row[1]).longValue(),

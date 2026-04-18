@@ -4,6 +4,7 @@
     effect="plain"
     :size="size"
     class="mock-badge"
+    data-test="mock-badge"
   >
     <slot>Mock 模式</slot>
   </el-tag>

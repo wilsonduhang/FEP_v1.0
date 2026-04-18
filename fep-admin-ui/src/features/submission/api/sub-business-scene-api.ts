@@ -1,6 +1,6 @@
 import { httpClient } from '@/shared/http/client';
 import type { PageResult } from '@/shared/types/page-result';
-import type { EnableDisableStatus } from './sub-output-interface-api';
+import type { EnableDisableStatus } from '@/shared/types/enum-maps';
 
 /**
  * Business Scene REST client.

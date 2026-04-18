@@ -41,13 +41,29 @@ describe('SubMessageSummaryCards', () => {
     expect(text).toContain('BIZ001');
   });
 
-  it('computes pending as totalCount - pushedCount', () => {
-    const wrapper = mount(SubMessageSummaryCards, { ...globalOpts, props: { items } });
-    const cards = wrapper.findAll('.summary-card');
-    // Card 0: 100 - 80 = 20
-    expect(cards[0].text()).toContain('20');
-    // Card 1: 50 - 50 = 0
-    expect(cards[1].text()).toContain('0');
+  it('renders backend-provided pendingCount (not derived from total - pushed)', () => {
+    // Deliberate divergence: pendingCount=7 while totalCount-pushedCount=20.
+    // If the template still did the subtraction we would see "20"; since we
+    // render pendingCount directly the card must show "7". This pins the UI
+    // to the backend semantics where PUSHING/FAILED are excluded from pending.
+    const divergentItems: MessageSummaryItem[] = [
+      {
+        messageType: '3001',
+        messageName: '查询请求',
+        businessTypeId: 'BIZ001',
+        totalCount: 100,
+        pushedCount: 80,
+        pendingCount: 7,
+      },
+    ];
+    const wrapper = mount(SubMessageSummaryCards, {
+      ...globalOpts,
+      props: { items: divergentItems },
+    });
+    const card = wrapper.findAll('.summary-card')[0];
+    expect(card.text()).toContain('待推送：');
+    expect(card.text()).toContain('7');
+    expect(card.text()).not.toContain('待推送：20');
   });
 
   it('emits navigate with messageType payload on card click', async () => {

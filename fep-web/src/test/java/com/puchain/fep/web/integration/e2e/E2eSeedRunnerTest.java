@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -78,5 +79,21 @@ class E2eSeedRunnerTest {
                 .when(jdbcTemplate).queryForObject(anyString(), eq(Integer.class), any(Object[].class));
 
         assertThatThrownBy(runner::run).hasMessage("connection lost");
+    }
+
+    @Test
+    void run_shouldTreatDuplicateKeyAsSkipped() throws Exception {
+        // SELECT reports 0 (row not yet present), but parallel startup inserts
+        // the same USCI between our SELECT and INSERT. Unique index on usci
+        // triggers DuplicateKeyException — which should be counted as skipped,
+        // not re-thrown (would fail Spring boot startup under dev-e2e profile).
+        doReturn(0).when(jdbcTemplate).queryForObject(anyString(), eq(Integer.class), any(Object[].class));
+        doThrow(new DuplicateKeyException("usci dup"))
+                .when(jdbcTemplate).update(anyString(), any(Object[].class));
+
+        // Should not throw — exception is swallowed and counted as skipped.
+        runner.run();
+
+        verify(jdbcTemplate, times(2)).update(anyString(), any(Object[].class));
     }
 }

@@ -68,7 +68,7 @@ class SubDashboardServiceTest {
 
     @Test
     void getTrend_7days_shouldReturn7DateElements() {
-        when(recordRepository.aggregateTrendByDate(any())).thenReturn(List.of());
+        when(recordRepository.aggregateTrendByDate(any(), any())).thenReturn(List.of());
 
         final DashboardTrendResponse resp = service.getTrend(7);
 
@@ -86,7 +86,7 @@ class SubDashboardServiceTest {
 
     @Test
     void getTrend_30days_shouldReturn30DateElements() {
-        when(recordRepository.aggregateTrendByDate(any())).thenReturn(List.of());
+        when(recordRepository.aggregateTrendByDate(any(), any())).thenReturn(List.of());
 
         final DashboardTrendResponse resp = service.getTrend(30);
 
@@ -110,11 +110,31 @@ class SubDashboardServiceTest {
     }
 
     @Test
+    void getTrend_midWindowBucket_mapsCorrectly() {
+        // 7-day window: index 0 = today-6, index 6 = today. Mid bucket at
+        // index 3 = today-3. Pin the returned index so future refactors of the
+        // fill loop (e.g., reversed ordering) regress visibly.
+        final LocalDate today = LocalDate.now();
+        final LocalDate mid = today.minusDays(3L);
+        when(recordRepository.aggregateTrendByDate(any(), any()))
+                .thenReturn(List.<Object[]>of(new Object[] {mid.toString(), 9L, 4L}));
+
+        final DashboardTrendResponse resp = service.getTrend(7);
+
+        assertThat(resp.getDates()).hasSize(7);
+        assertThat(resp.getPushedCounts().get(3)).isEqualTo(9L);
+        assertThat(resp.getPendingCounts().get(3)).isEqualTo(4L);
+        // Neighboring buckets stay zero.
+        assertThat(resp.getPushedCounts().get(0)).isZero();
+        assertThat(resp.getPushedCounts().get(6)).isZero();
+    }
+
+    @Test
     void getTrend_onlyTodayHasData_shouldFillPrecedingDaysWithZero() {
         final String today = LocalDate.now().toString();
         // Repo returns one row for today: pushed=5, pending=2
         final List<Object[]> rows = List.<Object[]>of(new Object[] {today, 5L, 2L});
-        when(recordRepository.aggregateTrendByDate(any())).thenReturn(rows);
+        when(recordRepository.aggregateTrendByDate(any(), any())).thenReturn(rows);
 
         final DashboardTrendResponse resp = service.getTrend(7);
 

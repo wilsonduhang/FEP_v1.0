@@ -1,5 +1,6 @@
 import { httpClient } from '@/shared/http/client';
 import type { PageResult } from '@/shared/types/page-result';
+import type { EnableDisableStatus } from '@/shared/types/enum-maps';
 
 /**
  * Output Interface REST client.
@@ -12,7 +13,6 @@ import type { PageResult } from '@/shared/types/page-result';
  *    2^53 which is far beyond realistic invocation counts.
  */
 export type InterfaceAuthType = 'TOKEN' | 'OAUTH2' | 'NONE';
-export type EnableDisableStatus = 'ENABLED' | 'DISABLED';
 
 /**
  * Create / update request body — mirrors OutputInterfaceCreateRequest on the

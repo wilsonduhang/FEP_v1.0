@@ -174,6 +174,8 @@ async function refresh() {
   loading.value = true;
   try {
     page.value = await subBusinessSceneApi.search(searchForm);
+  } catch {
+    ElMessage.error('加载失败');
   } finally {
     loading.value = false;
   }
@@ -238,9 +240,15 @@ async function onDelete(record: BusinessSceneResponse) {
     // User cancelled — do nothing.
     return;
   }
-  await subBusinessSceneApi.remove(record.sceneId);
-  ElMessage.success('已删除');
-  refresh();
+  // User confirmed — surface backend failures as a toast instead of an
+  // uncaught rejection.
+  try {
+    await subBusinessSceneApi.remove(record.sceneId);
+    ElMessage.success('已删除');
+    await refresh();
+  } catch {
+    ElMessage.error('删除失败');
+  }
 }
 
 defineExpose({

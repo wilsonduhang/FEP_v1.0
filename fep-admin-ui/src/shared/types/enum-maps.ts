@@ -52,6 +52,14 @@ export const ENABLE_DISABLE_STATUS_MAP: Record<string, StatusMapping> = {
   DISABLED: { label: '禁用', type: 'info' },
 };
 
+/**
+ * Shared enable/disable status type, mirrors backend {@code EnableDisableStatus}.
+ * Centralized here to avoid sibling coupling between the submission API modules
+ * (previously exported from {@code sub-output-interface-api}, which the data-source
+ * and business-scene API modules imported from).
+ */
+export type EnableDisableStatus = 'ENABLED' | 'DISABLED';
+
 export const INTERFACE_AUTH_TYPE_MAP: Record<string, StatusMapping> = {
   TOKEN: { label: 'Token', type: 'primary' },
   OAUTH2: { label: 'OAuth2', type: 'warning' },

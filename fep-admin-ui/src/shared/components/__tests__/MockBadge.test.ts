@@ -25,4 +25,11 @@ describe('MockBadge', () => {
   it('applies el-tag--info class', () => {
     expect(mount(MockBadge, g).find('.el-tag').classes()).toContain('el-tag--info');
   });
+
+  it('exposes data-test="mock-badge" for E2E', () => {
+    // Durable selector: the CSS class .mock-badge is also available today, but
+    // data-test is guaranteed never to be renamed by a style refactor.
+    const wrapper = mount(MockBadge, g);
+    expect(wrapper.find('[data-test="mock-badge"]').exists()).toBe(true);
+  });
 });
