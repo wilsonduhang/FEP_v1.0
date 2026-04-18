@@ -40,7 +40,7 @@ async function loadSummary() {
 }
 
 function onNavigate({ messageType }: { messageType: string }) {
-  router.push({ path: '/report/records', query: { messageType } });
+  router.push({ path: '/report/view', query: { messageType } });
 }
 
 onMounted(loadSummary);

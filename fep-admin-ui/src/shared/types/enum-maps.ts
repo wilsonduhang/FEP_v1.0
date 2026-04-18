@@ -70,3 +70,17 @@ export const SCENE_PUSH_METHOD_MAP: Record<string, StatusMapping> = {
   AUTO: { label: '自动', type: 'success' },
   MANUAL: { label: '手动', type: 'warning' },
 };
+
+// v1b new — aligned with submission.EntryMethod = API_CALL/MANUAL_ENTRY
+export const SUB_ENTRY_METHOD_MAP: Record<string, StatusMapping> = {
+  API_CALL: { label: '接口调取', type: 'primary' },
+  MANUAL_ENTRY: { label: '手工录入', type: 'info' },
+};
+
+// v1b new — aligned with submission.PushStatus = PENDING/PUSHING/PUSHED/FAILED
+export const PUSH_STATUS_MAP: Record<string, StatusMapping> = {
+  PENDING: { label: '待推送', type: 'info' },
+  PUSHING: { label: '推送中', type: 'warning' },
+  PUSHED: { label: '已推送', type: 'success' },
+  FAILED: { label: '推送失败', type: 'danger' },
+};

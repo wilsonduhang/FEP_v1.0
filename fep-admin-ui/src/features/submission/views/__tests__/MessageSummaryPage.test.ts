@@ -38,14 +38,14 @@ describe('MessageSummaryPage', () => {
     expect(subMessageSummaryApi.getSummary).toHaveBeenCalledOnce();
   });
 
-  it('pushes to /report/records with messageType query on navigate event', async () => {
+  it('pushes to /report/view with messageType query on navigate event', async () => {
     const wrapper = mount(MessageSummaryPage, globalOpts);
     await flushPromises();
     (wrapper.vm as unknown as { onNavigate: (p: { messageType: string }) => void }).onNavigate({
       messageType: '3001',
     });
     expect(mockPush).toHaveBeenCalledWith({
-      path: '/report/records',
+      path: '/report/view',
       query: { messageType: '3001' },
     });
   });
