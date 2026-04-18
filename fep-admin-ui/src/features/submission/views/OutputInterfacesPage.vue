@@ -172,6 +172,8 @@ async function refresh() {
 function onSearch() { searchForm.pageNum = 1; refresh(); }
 function onReset() {
   Object.assign(searchForm, { pageNum: 1, pageSize: 10, keyword: undefined });
+  // Reload with default params so the table reflects the cleared filter.
+  refresh();
 }
 function onPageNumChange(v: number) { searchForm.pageNum = v; refresh(); }
 function onPageSizeChange(v: number) { searchForm.pageSize = v; searchForm.pageNum = 1; refresh(); }

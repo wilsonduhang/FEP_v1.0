@@ -132,4 +132,30 @@ describe('OutputInterfaceEditDialog', () => {
     expect(payload.timeoutSeconds).toBe(60);
     expect(payload.retryCount).toBe(2);
   });
+
+  it('does not emit save event when form validation rejects', async () => {
+    // Behavior test: when Element Plus FormInstance.validate() rejects
+    // (contract: invalid fields → Promise.reject(invalidFields)), onSave
+    // must NOT emit `save`. We stub the exposed formRef with a rejecting
+    // validate so this is a pure behavior test on onSave's logic,
+    // independent of JSDOM field-registration under teleported el-dialog.
+    const wrapper = mount(OutputInterfaceEditDialog, {
+      props: { modelValue: true, mode: 'create', record: null },
+      global: { plugins: [ElementPlus] },
+      attachTo: container,
+    });
+    await flushPromises();
+    const vm = wrapper.vm as unknown as {
+      formRef: { validate: () => Promise<boolean> };
+      onSave: () => Promise<void>;
+    };
+    // Replace the FormInstance's validate with a rejection matching EP's
+    // real contract for required-field failures.
+    vm.formRef.validate = () =>
+      Promise.reject({ interfaceName: [{ message: '请输入接口名称' }] });
+    await vm.onSave();
+    await flushPromises();
+    expect(wrapper.emitted('save')).toBeUndefined();
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+  });
 });

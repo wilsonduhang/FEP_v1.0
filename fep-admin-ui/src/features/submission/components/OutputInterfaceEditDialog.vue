@@ -203,17 +203,20 @@ watch(() => [props.modelValue, props.record] as const, ([visible]) => {
 
 async function onSave() {
   if (formRef.value) {
+    // Element Plus FormInstance.validate() rejects with invalidFields when
+    // any rule fails; inline errors auto-render via rules.message. Bail
+    // silently on reject — EP already surfaces the errors under each field.
     const valid = await formRef.value.validate().catch(() => false);
     if (!valid) return;
   }
-  if (!form.authType) return;
+  // authType is non-null here: the required rule rejects validate() otherwise.
   submitting.value = true;
   try {
     const payload: OutputInterfaceRequest = {
       interfaceName: form.interfaceName,
       interfaceUrl: form.interfaceUrl,
       businessTypeId: form.businessTypeId || null,
-      authType: form.authType,
+      authType: form.authType!,
       timeoutSeconds: form.timeoutSeconds,
       retryCount: form.retryCount,
     };
@@ -224,5 +227,5 @@ async function onSave() {
   }
 }
 
-defineExpose({ onSave, rules });
+defineExpose({ onSave, rules, formRef });
 </script>
