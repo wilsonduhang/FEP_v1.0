@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from './fixtures/auth';
+import { E2E_SEED_ENTERPRISES } from './fixtures/seed-data';
 
 test.describe('P7.2a smoke (10 scenarios)', () => {
   // Scenario 1: login flow is covered by beforeEach (home page reached)
@@ -24,13 +25,17 @@ test.describe('P7.2a smoke (10 scenarios)', () => {
   });
 
   test('4. create query task with valid USCI succeeds', async ({ page }) => {
+    // Task 7: use seeded USCI from E2eSeedRunner (dev-e2e profile). The row
+    // corresponding to E2E_SEED_ENTERPRISES[0] is upserted APPROVED on backend
+    // startup, unlocking EntQueryTaskService.create() APPROVED-enterprise check.
+    const seededUsci = E2E_SEED_ENTERPRISES[0].usci;
     await page.goto('/enterprise/query-tasks');
     await page.getByRole('button', { name: /新建查询任务/ }).click();
     await page.getByLabel('企业 ID').fill('E-TEST');
-    await page.getByLabel('被查询 USCI').fill('91310000MA1K40XK7A');
+    await page.getByLabel('被查询 USCI').fill(seededUsci);
     await page.getByRole('button', { name: '创建' }).click();
     // v2a P2-F: scope to table to avoid tooltip truncation
-    await expect(page.locator('.el-table').getByText('91310000MA1K40XK7A').first()).toBeVisible();
+    await expect(page.locator('.el-table').getByText(seededUsci).first()).toBeVisible();
   });
 
   test('5. create query task with 17-char USCI fails validation', async ({ page }) => {
