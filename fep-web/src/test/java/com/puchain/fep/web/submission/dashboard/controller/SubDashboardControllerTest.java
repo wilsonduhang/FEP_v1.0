@@ -16,6 +16,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -26,8 +29,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Dashboard controller integration test.
  *
- * <p>Covers the dashboard statistics endpoint.
- * See PRD v1.3 section 5.5.1 (FR-WEB-SUB-DASH).</p>
+ * <p>Covers the dashboard statistics endpoint plus trend + distribution
+ * extensions (Task 0b of P7.2b).
+ * See PRD v1.3 section 5.5.1 / 5.9.1 (FR-WEB-SUB-DASH / FR-WEB-SUB-API).</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -132,5 +136,63 @@ class SubDashboardControllerTest {
                 .andExpect(jsonPath("$.data.totalRecordCount", notNullValue()))
                 .andExpect(jsonPath("$.data.pushedRecordCount", notNullValue()))
                 .andExpect(jsonPath("$.data.pendingRecordCount", notNullValue()));
+    }
+
+    /**
+     * Get trend should return 7-length series for days=7.
+     *
+     * @throws Exception on request failure
+     */
+    @Test
+    void getTrend_defaultDays_shouldReturn7LengthSeries() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/trend")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.dates", hasSize(7)))
+                .andExpect(jsonPath("$.data.pushedCounts", hasSize(7)))
+                .andExpect(jsonPath("$.data.pendingCounts", hasSize(7)));
+    }
+
+    /**
+     * Invalid days parameter should map to 400 PARAM_4002.
+     *
+     * @throws Exception on request failure
+     */
+    @Test
+    void getTrend_invalidDays_shouldReturn400ParamError() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/trend")
+                        .param("days", "1")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("PARAM_4002")));
+    }
+
+    /**
+     * Get distribution by messageType should return a Top N list.
+     *
+     * @throws Exception on request failure
+     */
+    @Test
+    void getDistribution_messageType_shouldReturnList() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/distribution")
+                        .param("dim", "messageType")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", notNullValue()))
+                .andExpect(jsonPath("$.data.length()", greaterThanOrEqualTo(0)));
+    }
+
+    /**
+     * Invalid dim parameter should map to 400 PARAM_4002.
+     *
+     * @throws Exception on request failure
+     */
+    @Test
+    void getDistribution_invalidDim_shouldReturn400ParamError() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/distribution")
+                        .param("dim", "foo")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("PARAM_4002")));
     }
 }

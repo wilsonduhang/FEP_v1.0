@@ -1,7 +1,9 @@
 package com.puchain.fep.web.submission.dashboard.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
+import com.puchain.fep.web.submission.dashboard.dto.DashboardDistributionItem;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardResponse;
+import com.puchain.fep.web.submission.dashboard.dto.DashboardTrendResponse;
 import com.puchain.fep.web.submission.dashboard.service.SubDashboardService;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
@@ -10,7 +12,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * Submission dashboard REST Controller.
@@ -49,5 +54,39 @@ public class SubDashboardController {
     @ApiResponse(responseCode = "200", description = "查询成功")
     public ApiResult<DashboardResponse> getDashboard() {
         return ApiResult.success(dashboardService.getDashboard());
+    }
+
+    /**
+     * Returns push trend time-series grouped by day.
+     *
+     * @param days lookback window in days; must be 7 or 30
+     * @return pushed / pending daily count series aligned with a date series
+     */
+    @GetMapping("/trend")
+    @OperationLog(module = "报送管理数据概况", type = OperationType.QUERY,
+            description = "查询推送趋势")
+    @Operation(summary = "推送趋势", description = "按日粒度聚合 pushed/pending 数量")
+    @ApiResponse(responseCode = "200", description = "查询成功")
+    @ApiResponse(responseCode = "400", description = "days 参数非 7/30")
+    public ApiResult<DashboardTrendResponse> getTrend(
+            @RequestParam(defaultValue = "7") final int days) {
+        return ApiResult.success(dashboardService.getTrend(days));
+    }
+
+    /**
+     * Returns Top-10 distribution grouped by the given dimension.
+     *
+     * @param dim grouping dimension; must be {@code messageType} or {@code businessType}
+     * @return Top 10 distribution items sorted by count descending
+     */
+    @GetMapping("/distribution")
+    @OperationLog(module = "报送管理数据概况", type = OperationType.QUERY,
+            description = "查询分布统计")
+    @Operation(summary = "分布统计", description = "按 messageType/businessType 分组 Top 10")
+    @ApiResponse(responseCode = "200", description = "查询成功")
+    @ApiResponse(responseCode = "400", description = "dim 参数非法")
+    public ApiResult<List<DashboardDistributionItem>> getDistribution(
+            @RequestParam final String dim) {
+        return ApiResult.success(dashboardService.getDistribution(dim));
     }
 }

@@ -140,4 +140,48 @@ public interface SubSubmissionRecordRepository
             + "GROUP BY SUBSTRING(CAST(r.createTime AS string), 1, 7) "
             + "ORDER BY SUBSTRING(CAST(r.createTime AS string), 1, 7)")
     List<Object[]> trendByMessageType(@Param("messageType") String messageType);
+
+    /**
+     * 按日粒度聚合 pushed / pending 计数（用于 Dashboard 趋势图）。
+     *
+     * <p>延用 {@code SUBSTRING(CAST(createTime AS string), 1, 10)} 日截断模式。
+     * pushed 仅 PUSHED；pending 仅 PENDING（PUSHING/FAILED 不计入）。</p>
+     *
+     * @param startTime 起始时间（含）
+     * @return 聚合结果列表（Object[] 数组：[date(yyyy-MM-dd), pushedCount, pendingCount]）
+     */
+    @Query("SELECT SUBSTRING(CAST(r.createTime AS string), 1, 10), "
+            + "SUM(CASE WHEN r.pushStatus = "
+            + "com.puchain.fep.web.submission.record.domain.PushStatus.PUSHED "
+            + "THEN 1L ELSE 0L END), "
+            + "SUM(CASE WHEN r.pushStatus = "
+            + "com.puchain.fep.web.submission.record.domain.PushStatus.PENDING "
+            + "THEN 1L ELSE 0L END) "
+            + "FROM SubSubmissionRecord r "
+            + "WHERE r.createTime >= :startTime "
+            + "GROUP BY SUBSTRING(CAST(r.createTime AS string), 1, 10) "
+            + "ORDER BY SUBSTRING(CAST(r.createTime AS string), 1, 10)")
+    List<Object[]> aggregateTrendByDate(@Param("startTime") LocalDateTime startTime);
+
+    /**
+     * 按报文类型分布聚合 Top N（用 Pageable 做 LIMIT；JPQL 无 LIMIT 关键字）。
+     *
+     * @param pageable 分页参数（通常 PageRequest.of(0, 10) 取 Top 10）
+     * @return 聚合结果列表（Object[] 数组：[messageType, count]，按 count 降序）
+     */
+    @Query("SELECT r.messageType, COUNT(r) FROM SubSubmissionRecord r "
+            + "GROUP BY r.messageType ORDER BY COUNT(r) DESC")
+    List<Object[]> aggregateDistributionByMessageType(Pageable pageable);
+
+    /**
+     * 按业务类型分布聚合 Top N；null businessTypeId 映射为 {@code 'UNSPECIFIED'}。
+     *
+     * @param pageable 分页参数（通常 PageRequest.of(0, 10) 取 Top 10）
+     * @return 聚合结果列表（Object[] 数组：[businessTypeId, count]，按 count 降序）
+     */
+    @Query("SELECT COALESCE(r.businessTypeId, 'UNSPECIFIED'), COUNT(r) "
+            + "FROM SubSubmissionRecord r "
+            + "GROUP BY COALESCE(r.businessTypeId, 'UNSPECIFIED') "
+            + "ORDER BY COUNT(r) DESC")
+    List<Object[]> aggregateDistributionByBusinessType(Pageable pageable);
 }
