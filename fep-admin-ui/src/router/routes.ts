@@ -49,6 +49,31 @@ export const routes: RouteRecordRaw[] = [
         name: 'MessageRecords',
         component: () => import('@/features/biz-data/views/MessageRecordsPage.vue'),
       },
+      {
+        path: 'submit/dashboard',
+        name: 'SubmissionDashboard',
+        component: () => import('@/features/submission/views/SubmissionDashboardPage.vue'),
+      },
+      {
+        path: 'submit/output-interfaces',
+        name: 'OutputInterfaces',
+        component: () => import('@/features/submission/views/OutputInterfacesPage.vue'),
+      },
+      {
+        path: 'submit/data-sources',
+        name: 'DataSources',
+        component: () => import('@/features/submission/views/DataSourcesPage.vue'),
+      },
+      {
+        path: 'submit/scenes',
+        name: 'BusinessScenes',
+        component: () => import('@/features/submission/views/BusinessScenesPage.vue'),
+      },
+      {
+        path: 'submit/message-summary',
+        name: 'MessageSummary',
+        component: () => import('@/features/submission/views/MessageSummaryPage.vue'),
+      },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/home' },

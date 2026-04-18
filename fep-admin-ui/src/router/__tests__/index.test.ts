@@ -3,6 +3,7 @@ import { createRouter, createMemoryHistory } from 'vue-router';
 import { createPinia, setActivePinia } from 'pinia';
 import { useAuthStore } from '@/stores/auth';
 import { TokenStorage } from '@/shared/http/token-storage';
+import { routes } from '../routes';
 
 vi.mock('@/features/auth/api/auth-api', () => ({
   authApi: {
@@ -167,5 +168,15 @@ describe('router guards', () => {
     expect(router.currentRoute.value.name).toBe('Login');
     expect(router.currentRoute.value.query.redirect).toBe('/home');
     expect(TokenStorage.get()).toBeNull();
+  });
+
+  it('registers 5 P7.2b /submit/* routes under AdminLayout', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    const names = router.getRoutes().map((r) => r.name);
+    expect(names).toContain('SubmissionDashboard');
+    expect(names).toContain('OutputInterfaces');
+    expect(names).toContain('DataSources');
+    expect(names).toContain('BusinessScenes');
+    expect(names).toContain('MessageSummary');
   });
 });
