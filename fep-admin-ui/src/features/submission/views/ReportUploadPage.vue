@@ -16,6 +16,7 @@
       <el-form-item label="报文类型" prop="messageType">
         <el-select
           v-model="form.messageType"
+          :loading="loadingOptions"
           placeholder="请选择报文类型"
           style="width: 320px"
           filterable

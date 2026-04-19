@@ -120,6 +120,6 @@ describe('ReportUploadPage', () => {
     await flushPromises();
     expect(bizMessageDefinitionApi.search).toHaveBeenCalledWith({ pageNum: 1, pageSize: 100 });
     const vm = wrapper.vm as any;
-    expect(vm.messageTypeOptions?.value?.[0]?.code ?? vm.messageTypeOptions?.[0]?.code).toBe('3001');
+    expect(vm.messageTypeOptions?.[0]?.code).toBe('3001');
   });
 });
