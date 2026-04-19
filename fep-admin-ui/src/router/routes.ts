@@ -74,6 +74,26 @@ export const routes: RouteRecordRaw[] = [
         name: 'MessageSummary',
         component: () => import('@/features/submission/views/MessageSummaryPage.vue'),
       },
+      {
+        path: 'report/upload',
+        name: 'ReportUpload',
+        component: () => import('@/features/submission/views/ReportUploadPage.vue'),
+      },
+      {
+        path: 'report/records',
+        name: 'ReportRecords',
+        component: () => import('@/features/submission/views/ReportRecordsPage.vue'),
+      },
+      {
+        path: 'report/view',
+        name: 'ReportView',
+        component: () => import('@/features/submission/views/ReportViewPage.vue'),
+      },
+      {
+        path: 'report/push',
+        name: 'ReportPush',
+        component: () => import('@/features/submission/views/ReportPushPage.vue'),
+      },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/home' },

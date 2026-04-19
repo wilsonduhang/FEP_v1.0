@@ -179,4 +179,13 @@ describe('router guards', () => {
     expect(names).toContain('BusinessScenes');
     expect(names).toContain('MessageSummary');
   });
+
+  it('registers 4 P7.2c /report/* routes under AdminLayout', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    const names = router.getRoutes().map((r) => r.name);
+    expect(names).toContain('ReportUpload');
+    expect(names).toContain('ReportRecords');
+    expect(names).toContain('ReportView');
+    expect(names).toContain('ReportPush');
+  });
 });
