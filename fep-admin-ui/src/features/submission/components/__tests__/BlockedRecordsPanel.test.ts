@@ -4,6 +4,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import ElementPlus, { ElMessage } from 'element-plus';
 import BlockedRecordsPanel from '../BlockedRecordsPanel.vue';
 import { subReportApi } from '../../api/sub-report-api';
+import { makeRecord } from '../../__tests__/fixtures/record';
 
 vi.mock('../../api/sub-report-api', () => ({
   subReportApi: { getBlocked: vi.fn() },
@@ -25,28 +26,6 @@ vi.mock('element-plus', async () => {
 });
 
 const globalOpts = { global: { plugins: [ElementPlus] } };
-
-function makeRecord(overrides: Partial<Record<string, any>> = {}): any {
-  return {
-    recordId: 'R1',
-    messageType: '3001',
-    messageName: '供应链融资申请',
-    businessTypeId: null,
-    submitterName: null,
-    businessNo: null,
-    amount: null,
-    dataCount: 10,
-    entryMethod: 'API_CALL',
-    entryBy: null,
-    pushStatus: 'FAILED',
-    pushTime: '2026-04-18T10:00:00',
-    errorMessage: 'connection timeout',
-    sortOrder: 0,
-    createTime: '2026-04-18T10:00:00',
-    updateTime: '2026-04-18T10:00:00',
-    ...overrides,
-  };
-}
 
 beforeEach(() => {
   vi.clearAllMocks();

@@ -13,7 +13,7 @@
         </div>
         <div>
           <MockBadge size="small" style="margin-right: 12px">真实 TLQ 推送 P1 就绪后启用</MockBadge>
-          <el-button @click="$router.push('/submit/output-interfaces')">前往输出接口管理</el-button>
+          <el-button @click="goOutputInterfaces">前往输出接口管理</el-button>
         </div>
       </div>
     </el-card>
@@ -69,17 +69,23 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { MockBadge } from '@/shared/components';
 import { formatAmount, formatDateTime } from '@/shared/utils/format';
 import { subReportApi, type SubmissionRecordResponse } from '../api/sub-report-api';
 import BlockedRecordsPanel from '../components/BlockedRecordsPanel.vue';
 
+const router = useRouter();
 const pendingRecords = ref<SubmissionRecordResponse[]>([]);
 const selected = ref<SubmissionRecordResponse[]>([]);
 const loadingPending = ref(false);
 const pushing = ref(false);
 const blockedPanel = ref<InstanceType<typeof BlockedRecordsPanel>>();
+
+function goOutputInterfaces(): void {
+  router.push('/submit/output-interfaces');
+}
 
 async function loadPending(): Promise<void> {
   loadingPending.value = true;

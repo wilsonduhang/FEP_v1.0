@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils';
 import ElementPlus from 'element-plus';
 import ReportUploadPage from '../ReportUploadPage.vue';
 import { subReportApi } from '../../api/sub-report-api';
+import { makeRecord } from '../../__tests__/fixtures/record';
 
 vi.mock('../../api/sub-report-api', () => ({
   subReportApi: { uploadRecord: vi.fn() },
@@ -57,7 +58,7 @@ describe('ReportUploadPage', () => {
   });
 
   it('calls subReportApi.uploadRecord on submit with 5 params', async () => {
-    mockUpload.mockResolvedValue({ recordId: 'R1' } as any);
+    mockUpload.mockResolvedValue(makeRecord({ recordId: 'R1' }));
     const wrapper = mount(ReportUploadPage, { global: { plugins: [ElementPlus] } });
     const vm = wrapper.vm as any;
     vm.form.messageType = '3001';

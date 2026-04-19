@@ -2,11 +2,11 @@
 <template>
   <div class="view-stats-cards">
     <el-card class="stat-card total" shadow="never">
-      <div class="stat-value">{{ totalCount.toLocaleString() }}</div>
+      <div class="stat-value">{{ totalCount.toLocaleString('en-US') }}</div>
       <div class="stat-label">总数据量</div>
     </el-card>
     <el-card class="stat-card pushed" shadow="never">
-      <div class="stat-value">{{ pushedCount.toLocaleString() }}</div>
+      <div class="stat-value">{{ pushedCount.toLocaleString('en-US') }}</div>
       <div class="stat-label">已推送数据量</div>
     </el-card>
   </div>

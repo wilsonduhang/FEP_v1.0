@@ -8,7 +8,7 @@
 
     <div v-if="!messageType" class="guide">
       <el-empty description="请从报文数据列表或报送信息列表点击 '查看' 进入本页面">
-        <el-button type="primary" @click="$router.push('/submit/message-summary')">
+        <el-button type="primary" @click="goSummary">
           前往报文数据列表
         </el-button>
       </el-empty>
@@ -16,7 +16,8 @@
 
     <template v-else>
       <ViewStatsCards :total-count="totalCount" :pushed-count="pushedCount" />
-      <ViewFilterBar :data-type-options="[]" @apply="onFilterApply" />
+      <!-- TODO: wire businessTypeId options from biz-data API when P1 filter endpoint lands (ticket #3/#4) -->
+      <ViewFilterBar @apply="onFilterApply" />
 
       <el-alert
         v-if="isFiltering"
@@ -71,7 +72,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { MockBadge, StatusTag } from '@/shared/components';
 import { SUB_ENTRY_METHOD_MAP, PUSH_STATUS_MAP } from '@/shared/types/enum-maps';
@@ -112,6 +113,7 @@ import ViewFilterBar, { type FilterState } from '../components/ViewFilterBar.vue
  * cross-page confusion.</p>
  */
 const route = useRoute();
+const router = useRouter();
 const messageType = computed(() => (route.query.messageType as string) || '');
 const messageName = ref('');
 const totalCount = ref(0);
@@ -207,6 +209,10 @@ async function loadAll(): Promise<void> {
 
 function onFilterApply(v: FilterState): void {
   currentFilter.value = v;
+}
+
+function goSummary(): void {
+  router.push('/submit/message-summary');
 }
 
 watch(

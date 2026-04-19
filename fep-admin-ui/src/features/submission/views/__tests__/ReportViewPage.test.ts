@@ -6,6 +6,7 @@ import { createRouter, createMemoryHistory } from 'vue-router';
 import ReportViewPage from '../ReportViewPage.vue';
 import { subReportApi } from '../../api/sub-report-api';
 import { subMessageSummaryApi } from '../../api/sub-message-summary-api';
+import { makeRecord } from '../../__tests__/fixtures/record';
 
 vi.mock('../../api/sub-report-api', () => ({
   subReportApi: { getByMessageType: vi.fn(), getTrend: vi.fn() },
@@ -125,8 +126,8 @@ describe('ReportViewPage', () => {
     mockSummary.mockResolvedValue([]);
     mockByType.mockResolvedValue({
       records: [
-        { recordId: 'R1', entryMethod: 'API_CALL', createTime: '2026-04-10T00:00:00' } as any,
-        { recordId: 'R2', entryMethod: 'MANUAL_ENTRY', createTime: '2026-04-12T00:00:00' } as any,
+        makeRecord({ recordId: 'R1', entryMethod: 'API_CALL', createTime: '2026-04-10T00:00:00' }),
+        makeRecord({ recordId: 'R2', entryMethod: 'MANUAL_ENTRY', createTime: '2026-04-12T00:00:00' }),
       ],
       total: 2,
       pageNum: 1,
