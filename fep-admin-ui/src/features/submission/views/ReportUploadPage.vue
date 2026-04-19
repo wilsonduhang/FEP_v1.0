@@ -32,6 +32,7 @@
 
       <el-form-item label="上传文件" prop="fileName">
         <el-upload
+          :on-change="onFileChange"
           :before-upload="beforeFileUpload"
           :limit="1"
           :auto-upload="false"
@@ -198,7 +199,22 @@ function onReset(): void {
 
 onMounted(loadMessageTypeOptions);
 
-defineExpose({ form, beforeFileUpload, onSubmit, onReset, loadMessageTypeOptions });
+/**
+ * P7.2c-DEFECT-001 fix: Element Plus `<el-upload>` with `:auto-upload="false"`
+ * does NOT trigger `before-upload`; it only fires `on-change`. Unit tests pass
+ * because they invoke `beforeFileUpload(file)` directly on the vm, bypassing the
+ * el-upload dispatch. In real UI (and E2E), file selection goes through
+ * `on-change`. We adapt by delegating `on-change` (with status='ready') to the
+ * existing `beforeFileUpload` logic; `:before-upload` stays as defensive
+ * wiring in case `:auto-upload` is ever flipped to true.
+ */
+function onFileChange(uploadFile: { status?: string; raw?: File }): void {
+  if (uploadFile.status === 'ready' && uploadFile.raw) {
+    beforeFileUpload(uploadFile.raw);
+  }
+}
+
+defineExpose({ form, beforeFileUpload, onFileChange, onSubmit, onReset, loadMessageTypeOptions });
 </script>
 
 <style scoped>
