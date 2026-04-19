@@ -41,7 +41,7 @@
         data-test="pending-limit-alert"
         style="margin-bottom: 12px"
       >
-        最近 500 条记录中的 PENDING 子集；完整 PENDING 需后端加 `pushStatus` 过滤参数（ticket #11）。推送触发后请手动刷新。
+        最近 500 条记录中的 PENDING 子集；完整 PENDING 需后端加 pushStatus 过滤参数（ticket #11）。推送触发后请手动刷新。
       </el-alert>
 
       <el-table
