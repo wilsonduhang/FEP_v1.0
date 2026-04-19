@@ -90,6 +90,10 @@ describe('ReportRecordsPage', () => {
   });
 
   it('surfaces error via ElMessage when search fails', async () => {
+    // Use `new Error(...)` instead of a plain `{code, message}` object: Node 24's
+    // util.inspect has a stack-overflow on reactive objects containing CJK strings,
+    // which the other tests' happy-path mocks do not trigger (they resolve, not reject).
+    // Don't "normalize" this to `mockRejectedValue({code: '...', message: '...'})`.
     mockSearch.mockRejectedValue(new Error('boom'));
     mount(ReportRecordsPage, globalOpts);
     await flushPromises();
