@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>All 10 tests are expected to complete within 3 seconds total.</p>
  */
-class SupplyChainXsdValidationIT {
+class SupplyChainXsdValidationTest {
 
     private static XsdValidator validator;
 

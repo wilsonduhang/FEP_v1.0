@@ -30,7 +30,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles({"test", "dev", "dev-e2e"})
 @Import(TestRedisConfiguration.class)
-class E2eSeedRunnerIT {
+class E2eSeedRunnerSpringBootTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
