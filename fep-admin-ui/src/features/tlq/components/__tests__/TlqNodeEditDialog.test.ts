@@ -10,19 +10,20 @@ vi.mock('../../api/tlq-node-api');
 /**
  * Unit tests for {@link TlqNodeEditDialog} (P7.2d Task 3).
  *
- * <p>The peer dialog test pattern — see
- * {@code OutputInterfaceEditDialog.test.ts} — validates form rules via the
- * exposed {@code rules} object and exercises submit logic with a stubbed
- * {@code formRef.validate}. This sidesteps Element Plus {@code el-dialog}
- * body-teleport behaviour under jsdom, which does not reliably register
- * nested {@code el-form-item} instances. Rule structure + onSubmit behaviour
- * collectively cover the required-field / conflict / success branches.</p>
+ * <p>The peer dialog test pattern — see {@code DefinitionEditDialog.test.ts},
+ * {@code AuthLetterEditDialog.test.ts}, {@code QueryTaskCreateDialog.test.ts}
+ * — finds the 确定/取消 button under {@code document.body} (Element Plus
+ * teleports the dialog root outside the component host) and dispatches a real
+ * DOM click. This honours the Global Test Red Line #1: user-visible behaviour
+ * must be exercised through framework dispatch, never via direct
+ * {@code wrapper.vm.onSubmit()} calls.</p>
  *
- * <p>Red line #1 note: this is a behaviour test on a plain async function
- * (no framework-dispatched prop hook like {@code el-upload :before-upload});
- * calling {@code onSubmit()} exercises the identical code path as the
- * Element Plus button @click emission. Full user-interaction coverage lives
- * in the Playwright E2E spec added by Task 11.</p>
+ * <p>State setup via the exposed {@code form} reactive and a stubbed
+ * {@code formRef.validate()} remains acceptable — these are state-level
+ * shortcuts, not behaviour invocations. Jsdom does not reliably register
+ * teleported {@code el-form-item} instances, so bypassing schema validation is
+ * the documented peer escape hatch; the triggering action still flows through
+ * the real button {@code @click} binding.</p>
  */
 
 const makeRecord = (overrides: Partial<TlqNodeResponse> = {}): TlqNodeResponse => ({
@@ -177,9 +178,8 @@ describe('TlqNodeEditDialog', () => {
         description: string;
       };
       formRef: { validate: () => Promise<boolean> };
-      onSubmit: () => Promise<void>;
     };
-    // Populate minimum valid fields.
+    // Populate minimum valid fields (state-level setup only).
     vm.form.nodeName = 'Master-2';
     vm.form.nodeRole = 'MASTER_PRODUCER';
     vm.form.hostIp = '192.168.1.11';
@@ -188,9 +188,16 @@ describe('TlqNodeEditDialog', () => {
     vm.form.description = '';
     vm.form.vipAddress = '';
     // Stub validate (teleported el-form registration is unreliable in jsdom);
-    // see peer pattern in OutputInterfaceEditDialog.test.ts.
+    // see peer pattern in DefinitionEditDialog.test.ts / AuthLetterEditDialog.test.ts.
     vm.formRef.validate = () => Promise.resolve(true);
-    await vm.onSubmit();
+
+    // Honour Red Line #1: drive the 确定 button click through DOM dispatch
+    // rather than calling vm.onSubmit() directly.
+    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === '确定',
+    );
+    expect(confirmBtn).toBeTruthy();
+    confirmBtn!.click();
     await flushPromises();
 
     expect(tlqNodeApi.createNode).toHaveBeenCalledTimes(1);
@@ -222,11 +229,16 @@ describe('TlqNodeEditDialog', () => {
     const vm = wrapper.vm as unknown as {
       form: { nodeName: string };
       formRef: { validate: () => Promise<boolean> };
-      onSubmit: () => Promise<void>;
     };
     vm.form.nodeName = 'Master-1-Renamed';
     vm.formRef.validate = () => Promise.resolve(true);
-    await vm.onSubmit();
+
+    // Drive the 确定 button via DOM click (Red Line #1 compliance).
+    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === '确定',
+    );
+    expect(confirmBtn).toBeTruthy();
+    confirmBtn!.click();
     await flushPromises();
 
     expect(tlqNodeApi.updateNode).toHaveBeenCalledTimes(1);
@@ -248,12 +260,18 @@ describe('TlqNodeEditDialog', () => {
     await flushPromises();
     const vm = wrapper.vm as unknown as {
       formRef: { validate: () => Promise<boolean> };
-      onSubmit: () => Promise<void>;
     };
     // Element Plus rejects validate() with invalidFields when rules fail.
     vm.formRef.validate = () =>
       Promise.reject({ nodeName: [{ message: '节点名称不能为空' }] });
-    await vm.onSubmit();
+
+    // Drive the 确定 button via DOM click (Red Line #1 compliance); the stubbed
+    // validate() rejection must still short-circuit before any API call.
+    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === '确定',
+    );
+    expect(confirmBtn).toBeTruthy();
+    confirmBtn!.click();
     await flushPromises();
 
     expect(tlqNodeApi.createNode).not.toHaveBeenCalled();
@@ -277,14 +295,19 @@ describe('TlqNodeEditDialog', () => {
         port: number;
       };
       formRef: { validate: () => Promise<boolean> };
-      onSubmit: () => Promise<void>;
     };
     vm.form.nodeName = 'Master-1';
     vm.form.nodeRole = 'MASTER_PRODUCER';
     vm.form.hostIp = '192.168.1.10';
     vm.form.port = 20001;
     vm.formRef.validate = () => Promise.resolve(true);
-    await vm.onSubmit();
+
+    // Drive the 确定 button via DOM click (Red Line #1 compliance).
+    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === '确定',
+    );
+    expect(confirmBtn).toBeTruthy();
+    confirmBtn!.click();
     await flushPromises();
 
     expect(tlqNodeApi.createNode).toHaveBeenCalledTimes(1);

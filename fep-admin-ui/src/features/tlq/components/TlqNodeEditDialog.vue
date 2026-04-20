@@ -298,5 +298,7 @@ async function onSubmit(): Promise<void> {
 }
 
 // Exposed for unit tests (peer pattern — see OutputInterfaceEditDialog).
-defineExpose({ form, rules, formRef, onSubmit, mode: props.mode });
+// Deliberately does NOT expose `onSubmit` — tests must drive the 确定 button
+// click via DOM to honour the Global Test Red Line #1 (no framework bypass).
+defineExpose({ form, rules, formRef, mode: props.mode });
 </script>
