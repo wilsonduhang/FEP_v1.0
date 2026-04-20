@@ -188,4 +188,31 @@ describe('router guards', () => {
     expect(names).toContain('ReportView');
     expect(names).toContain('ReportPush');
   });
+
+  it('registers /tlq/nodes route with requiresAuth and no permission gate', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    const route = router.getRoutes().find((r) => r.name === 'TlqNodes');
+    expect(route).toBeDefined();
+    expect(route!.path).toBe('/tlq/nodes');
+    expect(route!.meta.requiresAuth).toBe(true);
+    expect(route!.meta.permission).toBeUndefined();
+  });
+
+  it('registers /tlq/queues route with requiresAuth and no permission gate', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    const route = router.getRoutes().find((r) => r.name === 'TlqQueues');
+    expect(route).toBeDefined();
+    expect(route!.path).toBe('/tlq/queues');
+    expect(route!.meta.requiresAuth).toBe(true);
+    expect(route!.meta.permission).toBeUndefined();
+  });
+
+  it('registers /tlq/connectivity route with requiresAuth and no permission gate', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    const route = router.getRoutes().find((r) => r.name === 'TlqConnectivity');
+    expect(route).toBeDefined();
+    expect(route!.path).toBe('/tlq/connectivity');
+    expect(route!.meta.requiresAuth).toBe(true);
+    expect(route!.meta.permission).toBeUndefined();
+  });
 });
