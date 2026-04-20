@@ -1,6 +1,7 @@
 package com.puchain.fep.web.submission.dashboard.service;
 
 import com.puchain.fep.common.domain.EnableDisableStatus;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardDistributionItem;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardResponse;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardTrendResponse;
@@ -150,7 +151,7 @@ public class SubDashboardService {
      */
     @Transactional(readOnly = true)
     public List<DashboardDistributionItem> getDistribution(final String dim) {
-        log.debug("Aggregating dashboard distribution: dim={}", dim);
+        log.debug("Aggregating dashboard distribution: dim={}", LogSanitizer.sanitize(dim));
         final List<Object[]> raw = switch (dim) {
             case "messageType" -> recordRepository.aggregateDistributionByMessageType(
                     PageRequest.of(0, TOP_N));

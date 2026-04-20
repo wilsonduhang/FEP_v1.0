@@ -561,6 +561,24 @@
         <Bug pattern="SPRING_ENDPOINT"/>
     </Match>
 
+    <!-- P6d DashboardTrendResponse: 响应 DTO 由 Jackson 序列化返回客户端，
+         List<String>/List<Long> 字段在 Service 层填充一次后不变，
+         无外部修改风险（Pattern 同 ConfigGroupResponse/UserResponse） -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.dashboard.dto.DashboardTrendResponse"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- P6d SubDashboardService: dim 参数已通过 LogSanitizer.sanitize() 清理，
+         SpotBugs 无法跨方法跟踪清理逻辑（Pattern 同 AuthService/TlqNodeService） -->
+    <Match>
+        <Class name="com.puchain.fep.web.submission.dashboard.service.SubDashboardService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
     <!-- ===== P6e 首页待办事项管理 ===== -->
 
     <!-- 待办事项 Controller: Spring DI 注入的单例引用 + JWT 认证端点 -->
@@ -961,6 +979,13 @@
             <Bug pattern="EI_EXPOSE_REP"/>
             <Bug pattern="EI_EXPOSE_REP2"/>
         </Or>
+    </Match>
+
+    <!-- E2eSeedRunner: Spring DI 注入的 JdbcTemplate 是容器管理单例，
+         通过构造器注入引用共享是标准 DI 模式，仅 dev-e2e profile 激活 -->
+    <Match>
+        <Class name="com.puchain.fep.web.integration.e2e.E2eSeedRunner"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
 </FindBugsFilter>
