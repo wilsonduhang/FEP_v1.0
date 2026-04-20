@@ -11,6 +11,11 @@ import {
   ENABLE_DISABLE_STATUS_MAP,
   SUB_ENTRY_METHOD_MAP,
   PUSH_STATUS_MAP,
+  TLQ_NODE_ROLE_MAP,
+  TLQ_NODE_STATUS_MAP,
+  TLQ_CHANNEL_TYPE_MAP,
+  TLQ_QUEUE_TYPE_MAP,
+  CONNECTIVITY_RESULT_MAP,
 } from '../enum-maps';
 
 describe('enum-maps', () => {
@@ -70,5 +75,52 @@ describe('enum-maps', () => {
     expect(PUSH_STATUS_MAP.PUSHING.type).toBe('warning');
     expect(PUSH_STATUS_MAP.PUSHED.type).toBe('success');
     expect(PUSH_STATUS_MAP.FAILED.type).toBe('danger');
+  });
+
+  it('TLQ_NODE_ROLE_MAP has 4 keys aligned with backend TlqNodeRole', () => {
+    const keys = Object.keys(TLQ_NODE_ROLE_MAP);
+    expect(keys).toHaveLength(4);
+    expect(keys).toEqual(
+      expect.arrayContaining(['MASTER_PRODUCER', 'MASTER_STANDBY', 'SLAVE_CONSUMER', 'SLAVE_STANDBY'])
+    );
+    expect(TLQ_NODE_ROLE_MAP.MASTER_PRODUCER.label).toBe('主节点（生产者）');
+    expect(TLQ_NODE_ROLE_MAP.MASTER_PRODUCER.type).toBe('primary');
+    expect(TLQ_NODE_ROLE_MAP.SLAVE_CONSUMER.label).toBe('从节点（消费者）');
+    expect(TLQ_NODE_ROLE_MAP.SLAVE_CONSUMER.type).toBe('success');
+  });
+
+  it('TLQ_NODE_STATUS_MAP has 3 keys with state machine UNKNOWN→ONLINE↔OFFLINE', () => {
+    const keys = Object.keys(TLQ_NODE_STATUS_MAP);
+    expect(keys).toHaveLength(3);
+    expect(keys).toEqual(expect.arrayContaining(['ONLINE', 'OFFLINE', 'UNKNOWN']));
+    expect(TLQ_NODE_STATUS_MAP.ONLINE.label).toBe('在线');
+    expect(TLQ_NODE_STATUS_MAP.ONLINE.type).toBe('success');
+    expect(TLQ_NODE_STATUS_MAP.OFFLINE.type).toBe('danger');
+  });
+
+  it('TLQ_CHANNEL_TYPE_MAP has 2 keys for channel types', () => {
+    const keys = Object.keys(TLQ_CHANNEL_TYPE_MAP);
+    expect(keys).toHaveLength(2);
+    expect(keys).toEqual(expect.arrayContaining(['REALTIME', 'BATCH']));
+    expect(TLQ_CHANNEL_TYPE_MAP.REALTIME.label).toBe('实时通道');
+    expect(TLQ_CHANNEL_TYPE_MAP.REALTIME.type).toBe('primary');
+  });
+
+  it('TLQ_QUEUE_TYPE_MAP has 5 keys for queue types', () => {
+    const keys = Object.keys(TLQ_QUEUE_TYPE_MAP);
+    expect(keys).toHaveLength(5);
+    expect(keys).toEqual(expect.arrayContaining(['LOCAL', 'REMOTE', 'DEST', 'SEND', 'DEAD']));
+    expect(TLQ_QUEUE_TYPE_MAP.LOCAL.label).toBe('本地队列');
+    expect(TLQ_QUEUE_TYPE_MAP.LOCAL.type).toBe('success');
+    expect(TLQ_QUEUE_TYPE_MAP.DEAD.type).toBe('danger');
+  });
+
+  it('CONNECTIVITY_RESULT_MAP has 3 keys for test results', () => {
+    const keys = Object.keys(CONNECTIVITY_RESULT_MAP);
+    expect(keys).toHaveLength(3);
+    expect(keys).toEqual(expect.arrayContaining(['SUCCESS', 'FAILURE', 'TIMEOUT']));
+    expect(CONNECTIVITY_RESULT_MAP.SUCCESS.label).toBe('成功');
+    expect(CONNECTIVITY_RESULT_MAP.SUCCESS.type).toBe('success');
+    expect(CONNECTIVITY_RESULT_MAP.FAILURE.type).toBe('danger');
   });
 });

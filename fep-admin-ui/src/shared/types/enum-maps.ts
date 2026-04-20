@@ -84,3 +84,40 @@ export const PUSH_STATUS_MAP: Record<string, StatusMapping> = {
   PUSHED: { label: '已推送', type: 'success' },
   FAILED: { label: '推送失败', type: 'danger' },
 };
+
+// §5.7 TLQ 节点角色（PRD §2.5.3 双主双从架构）
+export const TLQ_NODE_ROLE_MAP: Record<string, StatusMapping> = {
+  MASTER_PRODUCER: { label: '主节点（生产者）', type: 'primary' },
+  MASTER_STANDBY: { label: '主节点（备用）', type: 'info' },
+  SLAVE_CONSUMER: { label: '从节点（消费者）', type: 'success' },
+  SLAVE_STANDBY: { label: '从节点（备用）', type: 'warning' },
+};
+
+// §5.7 TLQ 节点状态（状态机: UNKNOWN→ONLINE↔OFFLINE）
+export const TLQ_NODE_STATUS_MAP: Record<string, StatusMapping> = {
+  ONLINE: { label: '在线', type: 'success' },
+  OFFLINE: { label: '离线', type: 'danger' },
+  UNKNOWN: { label: '未知', type: 'info' },
+};
+
+// §3.1.1 TLQ 通道类型
+export const TLQ_CHANNEL_TYPE_MAP: Record<string, StatusMapping> = {
+  REALTIME: { label: '实时通道', type: 'primary' },
+  BATCH: { label: '批量通道', type: 'info' },
+};
+
+// §3.1.2 TLQ 队列类型
+export const TLQ_QUEUE_TYPE_MAP: Record<string, StatusMapping> = {
+  LOCAL: { label: '本地队列', type: 'success' },
+  REMOTE: { label: '远端队列', type: 'primary' },
+  DEST: { label: '目标队列', type: 'info' },
+  SEND: { label: '发送队列', type: 'warning' },
+  DEAD: { label: '死信队列', type: 'danger' },
+};
+
+// §5.7.5 连通性测试结果
+export const CONNECTIVITY_RESULT_MAP: Record<string, StatusMapping> = {
+  SUCCESS: { label: '成功', type: 'success' },
+  FAILURE: { label: '失败', type: 'danger' },
+  TIMEOUT: { label: '超时', type: 'warning' },
+};
