@@ -12,9 +12,10 @@ test.describe('P7.2d §5.7 TLQ Node Management', () => {
 
   test('S1: navigates to /tlq/nodes and shows page header', async ({ page }) => {
     await page.goto(`${BASE}/tlq/nodes`);
-    // Page header uses el-page-header with title "TLQ 节点管理"
+    // el-page-header renders title= prop in .el-page-header__title slot
+    // (.el-page-header__content holds the `content=` prop — "§5.7.1 节点配置列表")
     await expect(
-      page.locator('.el-page-header__content', { hasText: 'TLQ 节点管理' }),
+      page.locator('.el-page-header__title', { hasText: 'TLQ 节点管理' }),
     ).toBeVisible();
   });
 
@@ -57,11 +58,13 @@ test.describe('P7.2d §5.7 TLQ Node Management', () => {
     await roleSelect.click();
     // Wait for dropdown to open
     await page.waitForSelector('.el-select-dropdown', { timeout: 5000 });
-    // Count dropdown items
-    const items = await page
-      .locator('.el-select-dropdown__item')
+    // Count ONLY role-specific dropdown items by matching unique role label prefixes
+    // (page also has status filter dropdown + el-pagination page-size select — all
+    // render items with the same .el-select-dropdown__item class; hence the text filter).
+    const roleItems = await page
+      .locator('.el-select-dropdown__item', { hasText: /主节点|从节点/ })
       .count();
-    expect(items).toBe(4);
+    expect(roleItems).toBe(4);
   });
 
   test('S5: navigate to /tlq/queues shows node picker', async ({ page }) => {
@@ -96,34 +99,28 @@ test.describe('P7.2d §5.7 TLQ Node Management', () => {
   test('S7: batch-generate dialog defaults organizationCode to A1000143000104', async ({
     page,
   }) => {
-    // Navigate to /tlq/queues
+    // Pre-check: skip if no TLQ nodes are seeded (same guard pattern as S6/S9/S10
+    // to avoid runtime branching and flaky timeouts when /tlq/queues has no rows).
+    await page.goto(`${BASE}/tlq/nodes`);
+    const rowCount = await page.locator('.el-table__body tr').count();
+    test.skip(rowCount === 0, 'No seeded TLQ nodes — S7 skipped (batch-generate button requires node selection)');
+
     await page.goto(`${BASE}/tlq/queues`);
-    // Select a node first (if any exist) to enable batch-generate button
     const nodeSelect = page.locator('.el-select', { hasText: '请选择节点' }).first();
-    const nodes = await nodeSelect.count();
-    if (nodes > 0) {
-      await nodeSelect.click();
-      await page.waitForSelector('.el-select-dropdown__item', { timeout: 5000 });
-      await page.locator('.el-select-dropdown__item').first().click();
-      await page.waitForTimeout(500); // Brief pause for button state update
-    }
-    // Click "§3.1.2 批量生成" button
+    await nodeSelect.click();
+    await page.waitForSelector('.el-select-dropdown__item', { timeout: 5000 });
+    await page.locator('.el-select-dropdown__item').first().click();
+    await page.waitForTimeout(500); // Brief pause for button state update
+    // Click "§3.1.2 批量生成" button (now enabled since a node is selected)
     const batchBtn = page.getByRole('button', { name: /§3\.1\.2 批量生成/ });
-    if ((await batchBtn.count()) > 0 && (await batchBtn.isEnabled())) {
-      await batchBtn.click();
-      // Assert dialog opens and input has default value A1000143000104
-      await page.waitForSelector('.el-dialog', { state: 'visible', timeout: 5000 });
-      // Input placeholder text hints "HNDEMP 中心代码" — check the input value
-      const orgCodeInput = page.locator('input[placeholder*="HNDEMP"]');
-      if ((await orgCodeInput.count()) > 0) {
-        await expect(orgCodeInput).toHaveValue('A1000143000104');
-      }
-      // Close dialog via cancel button
-      await page.getByRole('button', { name: '取消' }).click();
-      await expect(page.locator('.el-dialog')).not.toBeVisible({ timeout: 5000 });
-    } else {
-      test.skip(true, 'Batch-generate button not enabled — no node selected or not available');
-    }
+    await batchBtn.click();
+    await page.waitForSelector('.el-dialog', { state: 'visible', timeout: 5000 });
+    // Input placeholder text hints "HNDEMP 中心代码" — check the input value
+    const orgCodeInput = page.locator('input[placeholder*="HNDEMP"]');
+    await expect(orgCodeInput).toHaveValue('A1000143000104');
+    // Close dialog via cancel button
+    await page.getByRole('button', { name: '取消' }).click();
+    await expect(page.locator('.el-dialog')).not.toBeVisible({ timeout: 5000 });
   });
 
   test('S8: /tlq/connectivity shows empty state when no node selected', async ({ page }) => {
