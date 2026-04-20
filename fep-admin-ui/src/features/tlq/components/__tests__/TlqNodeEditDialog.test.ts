@@ -4,6 +4,7 @@ import ElementPlus, { ElMessage } from 'element-plus';
 import TlqNodeEditDialog from '../TlqNodeEditDialog.vue';
 import { tlqNodeApi } from '../../api/tlq-node-api';
 import type { TlqNodeResponse } from '../../types';
+import { findButtonByText, setupElMessageSpies } from '@/shared/test-utils';
 
 vi.mock('../../api/tlq-node-api');
 
@@ -47,8 +48,7 @@ describe('TlqNodeEditDialog', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(ElMessage, 'success').mockImplementation(() => ({}) as ReturnType<typeof ElMessage.success>);
-    vi.spyOn(ElMessage, 'error').mockImplementation(() => ({}) as ReturnType<typeof ElMessage.error>);
+    setupElMessageSpies();
     container = document.createElement('div');
     document.body.appendChild(container);
   });
@@ -193,9 +193,7 @@ describe('TlqNodeEditDialog', () => {
 
     // Honour Red Line #1: drive the 确定 button click through DOM dispatch
     // rather than calling vm.onSubmit() directly.
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '确定',
-    );
+    const confirmBtn = findButtonByText('确定');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -234,9 +232,7 @@ describe('TlqNodeEditDialog', () => {
     vm.formRef.validate = () => Promise.resolve(true);
 
     // Drive the 确定 button via DOM click (Red Line #1 compliance).
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '确定',
-    );
+    const confirmBtn = findButtonByText('确定');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -267,9 +263,7 @@ describe('TlqNodeEditDialog', () => {
 
     // Drive the 确定 button via DOM click (Red Line #1 compliance); the stubbed
     // validate() rejection must still short-circuit before any API call.
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '确定',
-    );
+    const confirmBtn = findButtonByText('确定');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -303,9 +297,7 @@ describe('TlqNodeEditDialog', () => {
     vm.formRef.validate = () => Promise.resolve(true);
 
     // Drive the 确定 button via DOM click (Red Line #1 compliance).
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '确定',
-    );
+    const confirmBtn = findButtonByText('确定');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -322,9 +314,7 @@ describe('TlqNodeEditDialog', () => {
       attachTo: container,
     });
     await flushPromises();
-    const cancelBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '取消',
-    );
+    const cancelBtn = findButtonByText('取消');
     expect(cancelBtn).toBeTruthy();
     cancelBtn!.click();
     await flushPromises();

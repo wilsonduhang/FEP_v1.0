@@ -182,7 +182,10 @@ const rules: FormRules<FormModel> = {
 };
 
 // Reset the form each time the dialog (re)opens so stale fields from a prior
-// open do not leak across successive invocations.
+// open do not leak across successive invocations. {@code immediate: true}
+// guarantees the reset runs on the mounted render, matching the peer
+// {@code TlqNodeEditDialog} watch pattern and keeping jsdom mounts
+// deterministic.
 watch(
   () => props.modelValue,
   (visible) => {

@@ -136,7 +136,7 @@ import {
   TLQ_CHANNEL_TYPE_MAP,
   TLQ_QUEUE_TYPE_MAP,
 } from '@/shared/types/enum-maps';
-import { tlqNodeApi } from '../api/tlq-node-api';
+import { ALL_NODES_PAGE_SIZE, tlqNodeApi } from '../api/tlq-node-api';
 import { tlqQueueApi } from '../api/tlq-queue-api';
 import type { TlqNodeResponse, TlqQueueConfigResponse } from '../types';
 import TlqQueueCreateDialog from '../components/TlqQueueCreateDialog.vue';
@@ -179,7 +179,7 @@ function formatDateTime(value: string | null | undefined): string {
 
 async function loadNodes(): Promise<void> {
   try {
-    const result = await tlqNodeApi.listNodes({ pageNum: 1, pageSize: 1000 });
+    const result = await tlqNodeApi.listNodes({ pageNum: 1, pageSize: ALL_NODES_PAGE_SIZE });
     nodes.value = result.records;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : '加载节点列表失败';

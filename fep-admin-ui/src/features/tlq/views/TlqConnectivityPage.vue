@@ -151,7 +151,7 @@ import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { MockBadge, StatusTag } from '@/shared/components';
 import { CONNECTIVITY_RESULT_MAP } from '@/shared/types/enum-maps';
-import { tlqNodeApi } from '../api/tlq-node-api';
+import { ALL_NODES_PAGE_SIZE, tlqNodeApi } from '../api/tlq-node-api';
 import { tlqConnectivityApi } from '../api/tlq-connectivity-api';
 import type {
   ConnectivityRecordResponse,
@@ -193,7 +193,9 @@ const triggering = ref(false);
 
 function formatSuccessRate(s: ConnectivitySummaryResponse | null): string {
   if (!s || s.totalTests === 0) return '-';
-  return `${s.successRate.toFixed(2)}%`;
+  // Defensive guard: backend contract guarantees successRate when totalTests>0,
+  // but coerce a hypothetical null to 0 to avoid throwing in the template.
+  return `${(s.successRate ?? 0).toFixed(2)}%`;
 }
 
 function formatTestTime(row: ConnectivityRecordResponse): string {
@@ -211,7 +213,7 @@ function formatRtt(row: ConnectivityRecordResponse): string {
 
 async function loadNodes(): Promise<void> {
   try {
-    const result = await tlqNodeApi.listNodes({ pageNum: 1, pageSize: 1000 });
+    const result = await tlqNodeApi.listNodes({ pageNum: 1, pageSize: ALL_NODES_PAGE_SIZE });
     nodes.value = result.records;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : '加载节点列表失败';
@@ -260,15 +262,18 @@ function onNodeChange(): void {
     recordsTotal.value = 0;
     return;
   }
+  // fire-and-forget refresh; errors surfaced via ElMessage inside the promise.
   void loadData();
 }
 
 function onPageChange(): void {
+  // fire-and-forget refresh; errors surfaced via ElMessage inside the promise.
   void loadRecords();
 }
 
 function onPageSizeChange(): void {
   pageNum.value = 1;
+  // fire-and-forget refresh; errors surfaced via ElMessage inside the promise.
   void loadRecords();
 }
 

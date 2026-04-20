@@ -30,6 +30,14 @@ import { toZeroBasedPage } from './paging';
 
 const BASE = '/api/v1/tlq/nodes';
 
+/**
+ * Page size used when a page needs the full node list (≤ 1000 nodes
+ * assumed adequate for TLQ deployment; larger deployments should
+ * paginate or filter). Used by {@code TlqQueuesPage} +
+ * {@code TlqConnectivityPage} node selectors.
+ */
+export const ALL_NODES_PAGE_SIZE = 1000;
+
 /** Query parameters for {@link tlqNodeApi.listNodes}. */
 export interface NodeListParams {
   /** 1-based page number (converted to 0-based on the wire). */
@@ -72,7 +80,7 @@ export const tlqNodeApi = {
     return httpClient.get(BASE, { params: query });
   },
 
-  /** PUT /nodes/{id} — partial update; nodeRole 不可修改 (backend contract). */
+  /** PUT /nodes/{id} — partial update; nodeRole not modifiable (backend contract). */
   updateNode: (nodeId: string, request: TlqNodeUpdateRequest): Promise<TlqNodeResponse> =>
     httpClient.put(`${BASE}/${nodeId}`, request),
 

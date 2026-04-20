@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import ElementPlus, { ElMessage } from 'element-plus';
 import TlqQueueCreateDialog from '../TlqQueueCreateDialog.vue';
 import { tlqQueueApi } from '../../api/tlq-queue-api';
+import { findButtonByText, setupElMessageSpies } from '@/shared/test-utils';
 
 vi.mock('../../api/tlq-queue-api');
 
@@ -26,12 +27,7 @@ describe('TlqQueueCreateDialog', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(ElMessage, 'success').mockImplementation(
-      () => ({}) as ReturnType<typeof ElMessage.success>,
-    );
-    vi.spyOn(ElMessage, 'error').mockImplementation(
-      () => ({}) as ReturnType<typeof ElMessage.error>,
-    );
+    setupElMessageSpies();
     container = document.createElement('div');
     document.body.appendChild(container);
   });
@@ -93,9 +89,7 @@ describe('TlqQueueCreateDialog', () => {
 
     // Drive 确定 via DOM click (Red Line #1) — the stubbed rejection must
     // short-circuit before any API call is issued.
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '确定',
-    );
+    const confirmBtn = findButtonByText('确定');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -137,9 +131,7 @@ describe('TlqQueueCreateDialog', () => {
     vm.form.description = '';
     vm.formRef.validate = () => Promise.resolve(true);
 
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '确定',
-    );
+    const confirmBtn = findButtonByText('确定');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -177,9 +169,7 @@ describe('TlqQueueCreateDialog', () => {
     vm.form.queueType = 'LOCAL';
     vm.formRef.validate = () => Promise.resolve(true);
 
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '确定',
-    );
+    const confirmBtn = findButtonByText('确定');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -196,9 +186,7 @@ describe('TlqQueueCreateDialog', () => {
       attachTo: container,
     });
     await flushPromises();
-    const cancelBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '取消',
-    );
+    const cancelBtn = findButtonByText('取消');
     expect(cancelBtn).toBeTruthy();
     cancelBtn!.click();
     await flushPromises();

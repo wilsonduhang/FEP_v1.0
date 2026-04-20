@@ -187,7 +187,8 @@ function onReset(): void {
   filters.role = undefined;
   filters.status = undefined;
   pageNum.value = 1;
-  void reload();
+  // SearchForm auto-emits 'search' after 'reset' (see SearchForm.vue onReset),
+  // so onSearch() will trigger reload(); no explicit call needed here.
 }
 
 function onPageChange(next: number): void {

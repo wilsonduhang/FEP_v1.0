@@ -197,6 +197,10 @@ const rules: FormRules<FormModel> = {
   ],
   hostIp: [
     { required: true, message: '主机 IP 不能为空', trigger: 'blur' },
+    // Permissive client-side pattern — accepts [A-Za-z0-9_.-] to cover IPv4
+    // literals and common hostname forms. Strict IP/hostname validation is
+    // authoritative on the backend (TlqNodeController); this client rule
+    // just rejects obviously malformed input early.
     { pattern: /^[\w.-]+$/, message: 'IP 或域名格式不正确', trigger: 'blur' },
   ],
   port: [

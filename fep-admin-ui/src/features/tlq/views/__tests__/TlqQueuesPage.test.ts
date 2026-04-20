@@ -3,11 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import ElementPlus, { ElMessage, ElMessageBox } from 'element-plus';
 import TlqQueuesPage from '../TlqQueuesPage.vue';
-import { tlqNodeApi } from '../../api/tlq-node-api';
+import { ALL_NODES_PAGE_SIZE, tlqNodeApi } from '../../api/tlq-node-api';
 import { tlqQueueApi } from '../../api/tlq-queue-api';
 import type { TlqNodeResponse, TlqQueueConfigResponse } from '../../types';
 
 vi.mock('../../api/tlq-node-api', () => ({
+  ALL_NODES_PAGE_SIZE: 1000,
   tlqNodeApi: {
     listNodes: vi.fn(),
   },
@@ -97,11 +98,11 @@ afterEach(() => {
 });
 
 describe('TlqQueuesPage', () => {
-  it('loads node list on mount via listNodes({pageNum:1, pageSize:1000})', async () => {
+  it('loads node list on mount via listNodes({pageNum:1, pageSize: ALL_NODES_PAGE_SIZE})', async () => {
     mockListNodes.mockResolvedValue(pageOf([makeNode()]));
     mount(TlqQueuesPage, globalOpts);
     await flushPromises();
-    expect(mockListNodes).toHaveBeenCalledWith({ pageNum: 1, pageSize: 1000 });
+    expect(mockListNodes).toHaveBeenCalledWith({ pageNum: 1, pageSize: ALL_NODES_PAGE_SIZE });
   });
 
   it('shows empty-state message when no node selected; does not call listByNode', async () => {

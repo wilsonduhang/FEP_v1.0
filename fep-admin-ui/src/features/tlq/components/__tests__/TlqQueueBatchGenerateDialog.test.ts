@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import ElementPlus, { ElMessage } from 'element-plus';
 import TlqQueueBatchGenerateDialog from '../TlqQueueBatchGenerateDialog.vue';
 import { tlqQueueApi } from '../../api/tlq-queue-api';
+import { findButtonByText, setupElMessageSpies } from '@/shared/test-utils';
 
 vi.mock('../../api/tlq-queue-api');
 
@@ -20,15 +21,7 @@ describe('TlqQueueBatchGenerateDialog', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(ElMessage, 'success').mockImplementation(
-      () => ({}) as ReturnType<typeof ElMessage.success>,
-    );
-    vi.spyOn(ElMessage, 'info').mockImplementation(
-      () => ({}) as ReturnType<typeof ElMessage.info>,
-    );
-    vi.spyOn(ElMessage, 'error').mockImplementation(
-      () => ({}) as ReturnType<typeof ElMessage.error>,
-    );
+    setupElMessageSpies();
     container = document.createElement('div');
     document.body.appendChild(container);
   });
@@ -102,9 +95,7 @@ describe('TlqQueueBatchGenerateDialog', () => {
     };
     vm.formRef.validate = () => Promise.resolve(true);
 
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '生成',
-    );
+    const confirmBtn = findButtonByText('生成');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -135,9 +126,7 @@ describe('TlqQueueBatchGenerateDialog', () => {
     };
     vm.formRef.validate = () => Promise.resolve(true);
 
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '生成',
-    );
+    const confirmBtn = findButtonByText('生成');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -164,9 +153,7 @@ describe('TlqQueueBatchGenerateDialog', () => {
     vm.formRef.validate = () =>
       Promise.reject({ organizationCode: [{ message: '机构代码不能为空' }] });
 
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '生成',
-    );
+    const confirmBtn = findButtonByText('生成');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -190,9 +177,7 @@ describe('TlqQueueBatchGenerateDialog', () => {
     };
     vm.formRef.validate = () => Promise.resolve(true);
 
-    const confirmBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '生成',
-    );
+    const confirmBtn = findButtonByText('生成');
     expect(confirmBtn).toBeTruthy();
     confirmBtn!.click();
     await flushPromises();
@@ -209,9 +194,7 @@ describe('TlqQueueBatchGenerateDialog', () => {
       attachTo: container,
     });
     await flushPromises();
-    const cancelBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === '取消',
-    );
+    const cancelBtn = findButtonByText('取消');
     expect(cancelBtn).toBeTruthy();
     cancelBtn!.click();
     await flushPromises();

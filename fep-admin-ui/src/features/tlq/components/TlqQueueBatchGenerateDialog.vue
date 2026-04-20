@@ -4,7 +4,7 @@
     title="§3.1.2 批量生成标准队列"
     width="520px"
     :close-on-click-modal="false"
-    @update:model-value="(v: boolean) => emit('update:modelValue', v)"
+    @update:model-value="onDialogUpdate"
   >
     <el-alert
       type="info"
@@ -109,8 +109,11 @@ const rules: FormRules<FormModel> = {
   ],
 };
 
-// Reset the form each time the dialog (re)opens so the default HNDEMP code is
-// restored if the user had modified it in a prior open.
+// Repopulate the form whenever the dialog (re)opens so the default HNDEMP code
+// is restored if the user had modified it in a prior open. {@code immediate:
+// true} guarantees the prefill runs on the mounted render, matching the peer
+// {@code TlqNodeEditDialog} / {@code TlqQueueCreateDialog} watch pattern and
+// keeping jsdom mounts deterministic.
 watch(
   () => props.modelValue,
   (visible) => {
@@ -120,6 +123,10 @@ watch(
   },
   { immediate: true },
 );
+
+function onDialogUpdate(value: boolean): void {
+  emit('update:modelValue', value);
+}
 
 function onCancel(): void {
   emit('update:modelValue', false);

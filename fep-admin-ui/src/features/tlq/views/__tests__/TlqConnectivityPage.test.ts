@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
 import ElementPlus, { ElMessage } from 'element-plus';
 import TlqConnectivityPage from '../TlqConnectivityPage.vue';
-import { tlqNodeApi } from '../../api/tlq-node-api';
+import { ALL_NODES_PAGE_SIZE, tlqNodeApi } from '../../api/tlq-node-api';
 import { tlqConnectivityApi } from '../../api/tlq-connectivity-api';
 import type {
   ConnectivityRecordResponse,
@@ -13,6 +13,7 @@ import type {
 } from '../../types';
 
 vi.mock('../../api/tlq-node-api', () => ({
+  ALL_NODES_PAGE_SIZE: 1000,
   tlqNodeApi: {
     listNodes: vi.fn(),
   },
@@ -136,11 +137,11 @@ afterEach(() => {
 });
 
 describe('TlqConnectivityPage', () => {
-  it('loads node list on mount via listNodes({pageNum:1, pageSize:1000})', async () => {
+  it('loads node list on mount via listNodes({pageNum:1, pageSize: ALL_NODES_PAGE_SIZE})', async () => {
     mockListNodes.mockResolvedValue(pageOfNodes([makeNode()]));
     mount(TlqConnectivityPage, globalOpts);
     await flushPromises();
-    expect(mockListNodes).toHaveBeenCalledWith({ pageNum: 1, pageSize: 1000 });
+    expect(mockListNodes).toHaveBeenCalledWith({ pageNum: 1, pageSize: ALL_NODES_PAGE_SIZE });
   });
 
   it('shows empty state when no node selected; does not call connectivity APIs', async () => {
