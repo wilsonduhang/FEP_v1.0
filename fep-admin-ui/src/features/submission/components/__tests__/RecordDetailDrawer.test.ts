@@ -5,12 +5,22 @@ import ElementPlus from 'element-plus';
 import RecordDetailDrawer from '../RecordDetailDrawer.vue';
 
 const record = {
-  recordId: 'R1', messageType: '3001', messageName: '查询请求',
-  businessTypeId: null, submitterName: '银行 A', businessNo: 'BN001',
-  amount: '1234.56', dataCount: 5, entryMethod: 'API_CALL' as const,
-  entryBy: 'zhang', pushStatus: 'PENDING' as const, pushTime: null,
-  errorMessage: null, sortOrder: 0,
-  createTime: '2026-04-18T10:00:00', updateTime: '2026-04-18T10:00:00',
+  recordId: 'R1',
+  messageType: '3001',
+  messageName: '查询请求',
+  businessTypeId: null,
+  submitterName: '银行 A',
+  businessNo: 'BN001',
+  amount: '1234.56',
+  dataCount: 5,
+  entryMethod: 'API_CALL' as const,
+  entryBy: 'zhang',
+  pushStatus: 'PENDING' as const,
+  pushTime: null,
+  errorMessage: null,
+  sortOrder: 0,
+  createTime: '2026-04-18T10:00:00',
+  updateTime: '2026-04-18T10:00:00',
 };
 
 describe('RecordDetailDrawer', () => {

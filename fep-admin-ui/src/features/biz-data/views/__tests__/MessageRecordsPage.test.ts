@@ -40,7 +40,14 @@ const mockPage: PageResult<RecordResponse> = {
 };
 
 const mockSummary: RecordSummaryItem[] = [
-  { messageCode: '1001', messageName: '查询请求', totalCount: 10, successCount: 8, pendingCount: 1, failedCount: 1 },
+  {
+    messageCode: '1001',
+    messageName: '查询请求',
+    totalCount: 10,
+    successCount: 8,
+    pendingCount: 1,
+    failedCount: 1,
+  },
 ];
 
 const router = createRouter({
@@ -101,9 +108,7 @@ describe('MessageRecordsPage', () => {
     vi.mocked(bizMessageRecordApi.getSummary).mockResolvedValue([]);
     const wrapper = mount(MessageRecordsPage, globalPlugins);
     await flushPromises();
-    const resubmitBtn = wrapper
-      .findAll('button')
-      .find((b) => b.text() === '重提');
+    const resubmitBtn = wrapper.findAll('button').find((b) => b.text() === '重提');
     expect(resubmitBtn).toBeTruthy();
     expect(resubmitBtn!.attributes('disabled')).toBeDefined();
   });
@@ -114,9 +119,7 @@ describe('MessageRecordsPage', () => {
     vi.mocked(bizMessageRecordApi.exportRecords).mockResolvedValue('TASK-001');
     const wrapper = mount(MessageRecordsPage, globalPlugins);
     await flushPromises();
-    const exportBtn = wrapper
-      .findAll('button')
-      .find((b) => b.text() === '导出');
+    const exportBtn = wrapper.findAll('button').find((b) => b.text() === '导出');
     expect(exportBtn).toBeTruthy();
   });
 });

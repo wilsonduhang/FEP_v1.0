@@ -85,9 +85,7 @@ describe('MessageDefinitionsPage', () => {
     const wrapper = mount(MessageDefinitionsPage, globalPlugins);
     await flushPromises();
     // For ENABLED status, button should say '禁用'
-    const toggleBtn = wrapper
-      .findAll('button')
-      .find((b) => b.text() === '禁用');
+    const toggleBtn = wrapper.findAll('button').find((b) => b.text() === '禁用');
     expect(toggleBtn).toBeTruthy();
   });
 
@@ -99,9 +97,7 @@ describe('MessageDefinitionsPage', () => {
     });
     const wrapper = mount(MessageDefinitionsPage, globalPlugins);
     await flushPromises();
-    const enableBtn = wrapper
-      .findAll('button')
-      .find((b) => b.text() === '启用');
+    const enableBtn = wrapper.findAll('button').find((b) => b.text() === '启用');
     expect(enableBtn).toBeTruthy();
   });
 
@@ -109,9 +105,7 @@ describe('MessageDefinitionsPage', () => {
     vi.mocked(bizMessageDefinitionApi.search).mockResolvedValue(mockPage);
     const wrapper = mount(MessageDefinitionsPage, globalPlugins);
     await flushPromises();
-    const deleteBtn = wrapper
-      .findAll('button')
-      .find((b) => b.text() === '删除');
+    const deleteBtn = wrapper.findAll('button').find((b) => b.text() === '删除');
     expect(deleteBtn).toBeTruthy();
   });
 });

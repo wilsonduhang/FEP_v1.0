@@ -51,7 +51,9 @@ const mockResults = [
 const globalOpts = { global: { plugins: [ElementPlus] } };
 
 describe('QueryTaskDetailDrawer', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('loads task and results when opened', async () => {
     vi.mocked(entQueryTaskApi.getById).mockResolvedValue(mockTask);

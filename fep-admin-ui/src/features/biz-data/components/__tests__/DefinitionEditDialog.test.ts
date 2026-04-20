@@ -61,9 +61,7 @@ describe('DefinitionEditDialog', () => {
     expect(body).toContain('编辑报文定义');
     // messageCode input should be disabled
     const inputs = document.body.querySelectorAll('input');
-    const codeInput = Array.from(inputs).find(
-      (inp) => (inp as HTMLInputElement).value === '1001',
-    );
+    const codeInput = Array.from(inputs).find((inp) => (inp as HTMLInputElement).value === '1001');
     expect(codeInput).toBeTruthy();
     expect((codeInput as HTMLInputElement).disabled).toBe(true);
   });
@@ -91,12 +89,8 @@ describe('DefinitionEditDialog', () => {
     });
     await flushPromises();
     // el-input-number renders the value; look for "0"
-    const spinButtons = document.body.querySelectorAll(
-      '.el-input-number input',
-    );
-    const values = Array.from(spinButtons).map(
-      (inp) => (inp as HTMLInputElement).value,
-    );
+    const spinButtons = document.body.querySelectorAll('.el-input-number input');
+    const values = Array.from(spinButtons).map((inp) => (inp as HTMLInputElement).value);
     // Both fieldCount and sortOrder should be "0"
     expect(values.filter((v) => v === '0').length).toBeGreaterThanOrEqual(2);
   });
@@ -109,9 +103,7 @@ describe('DefinitionEditDialog', () => {
     });
     await flushPromises();
     const buttons = document.body.querySelectorAll('button');
-    const createBtn = Array.from(buttons).find((b) =>
-      b.textContent?.includes('创建'),
-    );
+    const createBtn = Array.from(buttons).find((b) => b.textContent?.includes('创建'));
     expect(createBtn).toBeTruthy();
   });
 });

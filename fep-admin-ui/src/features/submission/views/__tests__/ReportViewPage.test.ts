@@ -69,7 +69,13 @@ describe('ReportViewPage', () => {
         businessTypeId: '',
       } as any,
     ]);
-    mockByType.mockResolvedValue({ records: [], total: 0, pageNum: 1, pageSize: 10, totalPages: 0 });
+    mockByType.mockResolvedValue({
+      records: [],
+      total: 0,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
     mockTrend.mockResolvedValue([{ period: '2026-01', count: 3 }]);
     const router = buildRouter();
     await router.push('/report/view?messageType=3001');
@@ -99,7 +105,13 @@ describe('ReportViewPage', () => {
         businessTypeId: '',
       } as any,
     ]);
-    mockByType.mockResolvedValue({ records: [], total: 0, pageNum: 1, pageSize: 10, totalPages: 0 });
+    mockByType.mockResolvedValue({
+      records: [],
+      total: 0,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
     mockTrend.mockResolvedValue([]);
     const router = buildRouter();
     await router.push('/report/view?messageType=3001');
@@ -113,7 +125,13 @@ describe('ReportViewPage', () => {
 
   it('watch({immediate: true}) triggers loadAll once on initial mount', async () => {
     mockSummary.mockResolvedValue([]);
-    mockByType.mockResolvedValue({ records: [], total: 0, pageNum: 1, pageSize: 10, totalPages: 0 });
+    mockByType.mockResolvedValue({
+      records: [],
+      total: 0,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
     mockTrend.mockResolvedValue([]);
     const router = buildRouter();
     await router.push('/report/view?messageType=3001');
@@ -127,7 +145,11 @@ describe('ReportViewPage', () => {
     mockByType.mockResolvedValue({
       records: [
         makeRecord({ recordId: 'R1', entryMethod: 'API_CALL', createTime: '2026-04-10T00:00:00' }),
-        makeRecord({ recordId: 'R2', entryMethod: 'MANUAL_ENTRY', createTime: '2026-04-12T00:00:00' }),
+        makeRecord({
+          recordId: 'R2',
+          entryMethod: 'MANUAL_ENTRY',
+          createTime: '2026-04-12T00:00:00',
+        }),
       ],
       total: 2,
       pageNum: 1,

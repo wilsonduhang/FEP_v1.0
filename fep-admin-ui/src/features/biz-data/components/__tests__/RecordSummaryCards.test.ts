@@ -5,8 +5,22 @@ import RecordSummaryCards from '../RecordSummaryCards.vue';
 import type { RecordSummaryItem } from '../../api/biz-message-record-api';
 
 const items: RecordSummaryItem[] = [
-  { messageCode: '1001', messageName: '查询请求', totalCount: 100, successCount: 80, pendingCount: 10, failedCount: 10 },
-  { messageCode: '2001', messageName: '查询响应', totalCount: 50, successCount: 40, pendingCount: 5, failedCount: 5 },
+  {
+    messageCode: '1001',
+    messageName: '查询请求',
+    totalCount: 100,
+    successCount: 80,
+    pendingCount: 10,
+    failedCount: 10,
+  },
+  {
+    messageCode: '2001',
+    messageName: '查询响应',
+    totalCount: 50,
+    successCount: 40,
+    pendingCount: 5,
+    failedCount: 5,
+  },
 ];
 
 const globalOpts = { global: { plugins: [ElementPlus] } };

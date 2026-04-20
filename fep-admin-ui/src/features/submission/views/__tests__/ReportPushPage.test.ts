@@ -40,7 +40,13 @@ const globalOpts = { global: { plugins: [ElementPlus] } };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetBlocked.mockResolvedValue({ records: [], total: 0, pageNum: 1, pageSize: 10, totalPages: 0 });
+  mockGetBlocked.mockResolvedValue({
+    records: [],
+    total: 0,
+    pageNum: 1,
+    pageSize: 10,
+    totalPages: 0,
+  });
 });
 
 describe('ReportPushPage', () => {
@@ -51,7 +57,10 @@ describe('ReportPushPage', () => {
         makeRecord({ recordId: 'R2', pushStatus: 'PUSHED' }),
         makeRecord({ recordId: 'R3', pushStatus: 'FAILED' }),
       ],
-      total: 3, pageNum: 1, pageSize: 500, totalPages: 1,
+      total: 3,
+      pageNum: 1,
+      pageSize: 500,
+      totalPages: 1,
     });
     const wrapper = mount(ReportPushPage, globalOpts);
     await flushPromises();
@@ -68,7 +77,13 @@ describe('ReportPushPage', () => {
   });
 
   it('renders the 500-row pending limit alert with ticket #11 wording', async () => {
-    mockSearch.mockResolvedValue({ records: [], total: 0, pageNum: 1, pageSize: 500, totalPages: 0 });
+    mockSearch.mockResolvedValue({
+      records: [],
+      total: 0,
+      pageNum: 1,
+      pageSize: 500,
+      totalPages: 0,
+    });
     const wrapper = mount(ReportPushPage, globalOpts);
     await flushPromises();
     const alert = wrapper.find('[data-test="pending-limit-alert"]');
@@ -80,17 +95,17 @@ describe('ReportPushPage', () => {
   it('onTriggerPush success: calls triggerPush with selected ids, shows success message, clears selection', async () => {
     mockSearch.mockResolvedValue({
       records: [makeRecord({ recordId: 'R1', pushStatus: 'PENDING' })],
-      total: 1, pageNum: 1, pageSize: 500, totalPages: 1,
+      total: 1,
+      pageNum: 1,
+      pageSize: 500,
+      totalPages: 1,
     });
     mockTriggerPush.mockResolvedValue([]);
     const wrapper = mount(ReportPushPage, globalOpts);
     await flushPromises();
     const vm = wrapper.vm as any;
     // Simulate selection of 2 rows
-    vm.selected = [
-      makeRecord({ recordId: 'R1' }),
-      makeRecord({ recordId: 'R2' }),
-    ];
+    vm.selected = [makeRecord({ recordId: 'R1' }), makeRecord({ recordId: 'R2' })];
     await vm.onTriggerPush();
     expect(mockTriggerPush).toHaveBeenCalledWith(['R1', 'R2']);
     expect(ElMessage.success).toHaveBeenCalledWith('已触发 2 条推送');
@@ -103,7 +118,10 @@ describe('ReportPushPage', () => {
   it('onTriggerPush BIZ_5003 error: shows warning "没有待推送的记录"', async () => {
     mockSearch.mockResolvedValue({
       records: [makeRecord({ recordId: 'R1', pushStatus: 'PENDING' })],
-      total: 1, pageNum: 1, pageSize: 500, totalPages: 1,
+      total: 1,
+      pageNum: 1,
+      pageSize: 500,
+      totalPages: 1,
     });
     // Use `new Error(...)` with extra `code` property instead of plain object: Node 24's
     // util.inspect has a stack-overflow on reactive objects containing CJK strings,
@@ -124,7 +142,10 @@ describe('ReportPushPage', () => {
   it('onTriggerPush generic error: shows ElMessage.error with err.message', async () => {
     mockSearch.mockResolvedValue({
       records: [makeRecord({ recordId: 'R1', pushStatus: 'PENDING' })],
-      total: 1, pageNum: 1, pageSize: 500, totalPages: 1,
+      total: 1,
+      pageNum: 1,
+      pageSize: 500,
+      totalPages: 1,
     });
     // Same Node 24 CJK workaround — use `new Error(...)` for rejection.
     mockTriggerPush.mockRejectedValue(new Error('boom'));
@@ -148,7 +169,10 @@ describe('ReportPushPage', () => {
   it('trigger-push button is disabled when no rows are selected', async () => {
     mockSearch.mockResolvedValue({
       records: [makeRecord({ recordId: 'R1', pushStatus: 'PENDING' })],
-      total: 1, pageNum: 1, pageSize: 500, totalPages: 1,
+      total: 1,
+      pageNum: 1,
+      pageSize: 500,
+      totalPages: 1,
     });
     const wrapper = mount(ReportPushPage, globalOpts);
     await flushPromises();

@@ -39,8 +39,21 @@ beforeEach(() => {
 describe('ReportRecordsPage', () => {
   it('renders 总报文数 stat with page.total', async () => {
     mockSearch.mockResolvedValue({
-      records: [makeRecord({ recordId: 'R1', messageType: '3001', messageName: 'Q', amount: '1234.56', dataCount: 10, entryMethod: 'API_CALL', createTime: '2026-04-18T10:00:00' })],
-      total: 42, pageNum: 1, pageSize: 10, totalPages: 5,
+      records: [
+        makeRecord({
+          recordId: 'R1',
+          messageType: '3001',
+          messageName: 'Q',
+          amount: '1234.56',
+          dataCount: 10,
+          entryMethod: 'API_CALL',
+          createTime: '2026-04-18T10:00:00',
+        }),
+      ],
+      total: 42,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 5,
     });
     const wrapper = mount(ReportRecordsPage, globalOpts);
     await flushPromises();
@@ -49,7 +62,13 @@ describe('ReportRecordsPage', () => {
   });
 
   it('calls searchRecords on mount with default params', async () => {
-    mockSearch.mockResolvedValue({ records: [], total: 0, pageNum: 1, pageSize: 10, totalPages: 0 });
+    mockSearch.mockResolvedValue({
+      records: [],
+      total: 0,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
     mount(ReportRecordsPage, globalOpts);
     await flushPromises();
     expect(mockSearch).toHaveBeenCalledWith(expect.objectContaining({ pageNum: 1, pageSize: 10 }));
@@ -57,8 +76,21 @@ describe('ReportRecordsPage', () => {
 
   it('formats amount with formatAmount helper', async () => {
     mockSearch.mockResolvedValue({
-      records: [makeRecord({ recordId: 'R1', messageType: '3001', messageName: 'Q', amount: '12345.67', dataCount: 10, entryMethod: 'API_CALL', createTime: '2026-04-18T10:00:00' })],
-      total: 1, pageNum: 1, pageSize: 10, totalPages: 1,
+      records: [
+        makeRecord({
+          recordId: 'R1',
+          messageType: '3001',
+          messageName: 'Q',
+          amount: '12345.67',
+          dataCount: 10,
+          entryMethod: 'API_CALL',
+          createTime: '2026-04-18T10:00:00',
+        }),
+      ],
+      total: 1,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 1,
     });
     const wrapper = mount(ReportRecordsPage, globalOpts);
     await flushPromises();
@@ -67,8 +99,21 @@ describe('ReportRecordsPage', () => {
 
   it('navigates to /report/view on row click', async () => {
     mockSearch.mockResolvedValue({
-      records: [makeRecord({ recordId: 'R1', messageType: '3001', messageName: 'Q', amount: null, dataCount: 1, entryMethod: 'API_CALL', createTime: '2026-04-18T10:00:00' })],
-      total: 1, pageNum: 1, pageSize: 10, totalPages: 1,
+      records: [
+        makeRecord({
+          recordId: 'R1',
+          messageType: '3001',
+          messageName: 'Q',
+          amount: null,
+          dataCount: 1,
+          entryMethod: 'API_CALL',
+          createTime: '2026-04-18T10:00:00',
+        }),
+      ],
+      total: 1,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 1,
     });
     const wrapper = mount(ReportRecordsPage, globalOpts);
     await flushPromises();
@@ -79,8 +124,21 @@ describe('ReportRecordsPage', () => {
 
   it('opens drawer on view click', async () => {
     mockSearch.mockResolvedValue({
-      records: [makeRecord({ recordId: 'R1', messageType: '3001', messageName: 'Q', amount: null, dataCount: 1, entryMethod: 'API_CALL', createTime: '2026-04-18T10:00:00' })],
-      total: 1, pageNum: 1, pageSize: 10, totalPages: 1,
+      records: [
+        makeRecord({
+          recordId: 'R1',
+          messageType: '3001',
+          messageName: 'Q',
+          amount: null,
+          dataCount: 1,
+          entryMethod: 'API_CALL',
+          createTime: '2026-04-18T10:00:00',
+        }),
+      ],
+      total: 1,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 1,
     });
     const wrapper = mount(ReportRecordsPage, globalOpts);
     await flushPromises();
@@ -104,8 +162,21 @@ describe('ReportRecordsPage', () => {
 
   it('renders selection column and disabled batch action with MockBadge', async () => {
     mockSearch.mockResolvedValue({
-      records: [makeRecord({ recordId: 'R1', messageType: '3001', messageName: 'Q', amount: null, dataCount: 1, entryMethod: 'API_CALL', createTime: '2026-04-18T10:00:00' })],
-      total: 1, pageNum: 1, pageSize: 10, totalPages: 1,
+      records: [
+        makeRecord({
+          recordId: 'R1',
+          messageType: '3001',
+          messageName: 'Q',
+          amount: null,
+          dataCount: 1,
+          entryMethod: 'API_CALL',
+          createTime: '2026-04-18T10:00:00',
+        }),
+      ],
+      total: 1,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 1,
     });
     const wrapper = mount(ReportRecordsPage, globalOpts);
     await flushPromises();

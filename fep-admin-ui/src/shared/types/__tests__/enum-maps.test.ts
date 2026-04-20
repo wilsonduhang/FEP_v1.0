@@ -64,9 +64,7 @@ describe('enum-maps', () => {
   it('PUSH_STATUS_MAP has 4 keys aligned with backend PushStatus enum', () => {
     const keys = Object.keys(PUSH_STATUS_MAP);
     expect(keys).toHaveLength(4);
-    expect(keys).toEqual(
-      expect.arrayContaining(['PENDING', 'PUSHING', 'PUSHED', 'FAILED']),
-    );
+    expect(keys).toEqual(expect.arrayContaining(['PENDING', 'PUSHING', 'PUSHED', 'FAILED']));
     expect(PUSH_STATUS_MAP.PENDING.label).toBe('待推送');
     expect(PUSH_STATUS_MAP.PENDING.type).toBe('info');
     expect(PUSH_STATUS_MAP.PUSHING.type).toBe('warning');

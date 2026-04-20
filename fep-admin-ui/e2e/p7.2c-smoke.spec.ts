@@ -13,7 +13,9 @@ test.describe('P7.2c §5.6 Report Management', () => {
     await page.goto(`${BASE}/report/upload`);
     // Post-run tuning: "手动报文上传" appears in both left menu item and page header;
     // target page-header content class to avoid strict-mode violation.
-    await expect(page.locator('.el-page-header__content', { hasText: '手动报文上传' })).toBeVisible();
+    await expect(
+      page.locator('.el-page-header__content', { hasText: '手动报文上传' }),
+    ).toBeVisible();
     await expect(page.getByText('文件解析 P1 就绪后启用')).toBeVisible();
   });
 
@@ -32,9 +34,9 @@ test.describe('P7.2c §5.6 Report Management', () => {
     });
     // v1b P1-new-#6 + post-run tuning: target ElMessage error container directly;
     // ElMessage auto-dismisses in ~3s so widen timeout + use .el-message--error class.
-    await expect(
-      page.locator('.el-message--error', { hasText: '不支持的扩展名' }),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.el-message--error', { hasText: '不支持的扩展名' })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('S4 xlsx file auto-fills messageName', async ({ page }) => {

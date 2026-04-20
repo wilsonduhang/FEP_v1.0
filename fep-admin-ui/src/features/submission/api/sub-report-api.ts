@@ -106,9 +106,7 @@ const BASE = '/api/v1/report';
 
 export const subReportApi = {
   /** §5.6.2 — Search records with pagination. */
-  searchRecords: (
-    params: ReportSearchParams,
-  ): Promise<PageResult<SubmissionRecordResponse>> =>
+  searchRecords: (params: ReportSearchParams): Promise<PageResult<SubmissionRecordResponse>> =>
     httpClient.get(`${BASE}/records`, { params }),
 
   /** Fetch single record by ID. 404 → {@code BIZ_5001}. */
@@ -122,9 +120,7 @@ export const subReportApi = {
    * {@code null}. True file parsing is deferred to P1; this endpoint only
    * creates metadata.</p>
    */
-  uploadRecord: (
-    request: UploadRecordRequest,
-  ): Promise<SubmissionRecordResponse> =>
+  uploadRecord: (request: UploadRecordRequest): Promise<SubmissionRecordResponse> =>
     httpClient.post(`${BASE}/upload`, null, { params: { ...request } }),
 
   /**
@@ -137,10 +133,7 @@ export const subReportApi = {
     httpClient.post(`${BASE}/push`, recordIds),
 
   /** §5.6.4 — Blocked records ({@code PushStatus IN (PUSHING, FAILED)}) paginated. */
-  getBlocked: (
-    pageNum = 1,
-    pageSize = 100,
-  ): Promise<PageResult<SubmissionRecordResponse>> =>
+  getBlocked: (pageNum = 1, pageSize = 100): Promise<PageResult<SubmissionRecordResponse>> =>
     httpClient.get(`${BASE}/push/blocked`, { params: { pageNum, pageSize } }),
 
   /** §5.6.3 — By-type records. */

@@ -35,7 +35,10 @@ describe('BlockedRecordsPanel', () => {
   it('calls getBlocked with (1, 10) on mount and populates page', async () => {
     mockGetBlocked.mockResolvedValue({
       records: [makeRecord({ recordId: 'R1', pushStatus: 'FAILED' })],
-      total: 1, pageNum: 1, pageSize: 10, totalPages: 1,
+      total: 1,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 1,
     });
     const wrapper = mount(BlockedRecordsPanel, globalOpts);
     await flushPromises();
@@ -52,7 +55,10 @@ describe('BlockedRecordsPanel', () => {
         makeRecord({ recordId: 'R2', pushStatus: 'PUSHING' }),
         makeRecord({ recordId: 'R3', pushStatus: 'FAILED' }),
       ],
-      total: 3, pageNum: 1, pageSize: 10, totalPages: 1,
+      total: 3,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 1,
     });
     const wrapper = mount(BlockedRecordsPanel, globalOpts);
     await flushPromises();
@@ -62,7 +68,13 @@ describe('BlockedRecordsPanel', () => {
   });
 
   it('renders FAILED-only semantic alert explaining PUSHING exclusion', async () => {
-    mockGetBlocked.mockResolvedValue({ records: [], total: 0, pageNum: 1, pageSize: 10, totalPages: 0 });
+    mockGetBlocked.mockResolvedValue({
+      records: [],
+      total: 0,
+      pageNum: 1,
+      pageSize: 10,
+      totalPages: 0,
+    });
     const wrapper = mount(BlockedRecordsPanel, globalOpts);
     await flushPromises();
     const alert = wrapper.find('[data-test="blocked-semantics-alert"]');
