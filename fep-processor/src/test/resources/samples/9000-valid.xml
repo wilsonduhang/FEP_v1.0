@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>10000000000001</SrcNode>
+        <DesNode>A1000143000104</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>9000</MsgNo>
+        <MsgId>20260421100000000001</MsgId>
+        <CorrMsgId>20260421100000000002</CorrMsgId>
+        <WorkDate>20260421</WorkDate>
+    </HEAD>
+    <MSG>
+        <RealHead9000>
+            <SendOrgCode>10000000000001</SendOrgCode>
+            <EntrustDate>20260421</EntrustDate>
+            <TransitionNo>00000001</TransitionNo>
+        </RealHead9000>
+        <Forward9000>
+            <SrcNodeCode>10000000000001</SrcNodeCode>
+            <SrcOrgCode>10000000000001</SrcOrgCode>
+            <DesNodeCode>A1000143000104</DesNodeCode>
+            <DesOrgCode>10000000000001</DesOrgCode>
+            <BusinessNo>BIZ001</BusinessNo>
+            <Content>generic-payload-content</Content>
+        </Forward9000>
+    </MSG>
+</CFX>

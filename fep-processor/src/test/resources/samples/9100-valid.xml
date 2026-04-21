@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>10000000000001</SrcNode>
+        <DesNode>A1000143000104</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>9100</MsgNo>
+        <MsgId>20260421100000000010</MsgId>
+        <CorrMsgId>20260421100000000011</CorrMsgId>
+        <WorkDate>20260421</WorkDate>
+    </HEAD>
+    <MSG>
+        <BatchHead9100>
+            <SendOrgCode>10000000000001</SendOrgCode>
+            <EntrustDate>20260421</EntrustDate>
+            <TransitionNo>00000007</TransitionNo>
+        </BatchHead9100>
+        <Forward9100>
+            <SrcNodeCode>10000000000001</SrcNodeCode>
+            <SrcOrgCode>10000000000001</SrcOrgCode>
+            <DesNodeCode>A1000143000104</DesNodeCode>
+            <DesOrgCode>10000000000001</DesOrgCode>
+            <BusinessNo>BIZ007</BusinessNo>
+            <Content>batch-forward-content</Content>
+        </Forward9100>
+    </MSG>
+</CFX>

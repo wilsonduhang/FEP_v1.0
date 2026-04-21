@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>10000000000001</SrcNode>
+        <DesNode>A1000143000104</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>9006</MsgNo>
+        <MsgId>20260421100000000003</MsgId>
+        <CorrMsgId>20260421100000000004</CorrMsgId>
+        <WorkDate>20260421</WorkDate>
+    </HEAD>
+    <MSG>
+        <RealHead9006>
+            <SendOrgCode>10000000000001</SendOrgCode>
+            <EntrustDate>20260421</EntrustDate>
+            <TransitionNo>00000002</TransitionNo>
+        </RealHead9006>
+        <LoginRequest9006>
+            <Password>p@ssw0rd</Password>
+            <NewPassword>n3wP@ss0</NewPassword>
+        </LoginRequest9006>
+    </MSG>
+</CFX>
