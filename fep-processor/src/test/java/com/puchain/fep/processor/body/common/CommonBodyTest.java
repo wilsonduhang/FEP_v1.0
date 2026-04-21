@@ -90,6 +90,12 @@ class CommonBodyTest {
         assertThat(output).doesNotContain("n3wP@ss");
     }
 
+    @Test
+    void loginRequest9006_toString_shouldReturnMaskedLiteralEvenWhenFieldsNull() {
+        assertThat(new LoginRequest9006().toString())
+                .isEqualTo("LoginRequest9006[Password=***,NewPassword=***]");
+    }
+
     // ── LoginResponse9007 ──────────────────────────────────
 
     @Test
@@ -133,6 +139,12 @@ class CommonBodyTest {
 
         assertThat(output).isEqualTo("LogoutRequest9008[Password=***]");
         assertThat(output).doesNotContain("s3cret");
+    }
+
+    @Test
+    void logoutRequest9008_toString_shouldReturnMaskedLiteralEvenWhenFieldNull() {
+        assertThat(new LogoutRequest9008().toString())
+                .isEqualTo("LogoutRequest9008[Password=***]");
     }
 
     // ── LogoutResponse9009 ─────────────────────────────────
