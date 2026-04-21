@@ -56,8 +56,7 @@ export const tlqNodeApi = {
     httpClient.post(BASE, request),
 
   /** GET /nodes/{id} — fetch single node. */
-  getNode: (nodeId: string): Promise<TlqNodeResponse> =>
-    httpClient.get(`${BASE}/${nodeId}`),
+  getNode: (nodeId: string): Promise<TlqNodeResponse> => httpClient.get(`${BASE}/${nodeId}`),
 
   /**
    * GET /nodes — paginated list.
@@ -85,8 +84,7 @@ export const tlqNodeApi = {
     httpClient.put(`${BASE}/${nodeId}`, request),
 
   /** DELETE /nodes/{id} — physical delete; returns 409 if node has associated queues. */
-  deleteNode: (nodeId: string): Promise<void> =>
-    httpClient.delete(`${BASE}/${nodeId}`),
+  deleteNode: (nodeId: string): Promise<void> => httpClient.delete(`${BASE}/${nodeId}`),
 
   /** PATCH /nodes/{id}/status?target=... — state machine transition. */
   changeStatus: (nodeId: string, target: TlqNodeStatus): Promise<TlqNodeResponse> =>

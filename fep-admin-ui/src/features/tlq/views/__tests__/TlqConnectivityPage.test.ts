@@ -200,9 +200,7 @@ describe('TlqConnectivityPage', () => {
     const text = wrapper.text();
     expect(text).not.toContain('NaN');
     // The 成功率 card body should render "-".
-    const rateCard = wrapper
-      .findAll('.stat-card')
-      .find((c) => c.text().includes('成功率'));
+    const rateCard = wrapper.findAll('.stat-card').find((c) => c.text().includes('成功率'));
     expect(rateCard).toBeDefined();
     expect(rateCard!.text()).toContain('-');
   });

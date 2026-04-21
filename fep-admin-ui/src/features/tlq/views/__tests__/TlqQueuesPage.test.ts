@@ -225,9 +225,7 @@ describe('TlqQueuesPage', () => {
     await flushPromises();
 
     const createBtn = wrapper.findAll('button').find((b) => b.text().trim() === '新建队列');
-    const batchBtn = wrapper
-      .findAll('button')
-      .find((b) => b.text().trim().includes('批量生成'));
+    const batchBtn = wrapper.findAll('button').find((b) => b.text().trim().includes('批量生成'));
 
     expect(createBtn).toBeDefined();
     expect(batchBtn).toBeDefined();

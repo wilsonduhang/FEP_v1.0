@@ -78,9 +78,39 @@ describe('TlqQueueBatchGenerateDialog', () => {
 
   it('sends batch-generate request with nodeId + organizationCode when response.length > 0', async () => {
     const response = [
-      { queueId: 'Q1', nodeId: 'N1', queueName: 'Q1', channelType: 'REALTIME' as const, queueType: 'LOCAL' as const, queueStatus: 'ENABLED' as const, description: null, createTime: '2026-04-20T10:00:00', updateTime: '2026-04-20T10:00:00' },
-      { queueId: 'Q2', nodeId: 'N1', queueName: 'Q2', channelType: 'REALTIME' as const, queueType: 'REMOTE' as const, queueStatus: 'ENABLED' as const, description: null, createTime: '2026-04-20T10:00:00', updateTime: '2026-04-20T10:00:00' },
-      { queueId: 'Q3', nodeId: 'N1', queueName: 'Q3', channelType: 'REALTIME' as const, queueType: 'DEST' as const, queueStatus: 'ENABLED' as const, description: null, createTime: '2026-04-20T10:00:00', updateTime: '2026-04-20T10:00:00' },
+      {
+        queueId: 'Q1',
+        nodeId: 'N1',
+        queueName: 'Q1',
+        channelType: 'REALTIME' as const,
+        queueType: 'LOCAL' as const,
+        queueStatus: 'ENABLED' as const,
+        description: null,
+        createTime: '2026-04-20T10:00:00',
+        updateTime: '2026-04-20T10:00:00',
+      },
+      {
+        queueId: 'Q2',
+        nodeId: 'N1',
+        queueName: 'Q2',
+        channelType: 'REALTIME' as const,
+        queueType: 'REMOTE' as const,
+        queueStatus: 'ENABLED' as const,
+        description: null,
+        createTime: '2026-04-20T10:00:00',
+        updateTime: '2026-04-20T10:00:00',
+      },
+      {
+        queueId: 'Q3',
+        nodeId: 'N1',
+        queueName: 'Q3',
+        channelType: 'REALTIME' as const,
+        queueType: 'DEST' as const,
+        queueStatus: 'ENABLED' as const,
+        description: null,
+        createTime: '2026-04-20T10:00:00',
+        updateTime: '2026-04-20T10:00:00',
+      },
     ];
     vi.mocked(tlqQueueApi.batchGenerate).mockResolvedValue(response);
     const wrapper = mount(TlqQueueBatchGenerateDialog, {
@@ -132,9 +162,7 @@ describe('TlqQueueBatchGenerateDialog', () => {
     await flushPromises();
 
     expect(tlqQueueApi.batchGenerate).toHaveBeenCalledTimes(1);
-    expect(ElMessage.info).toHaveBeenCalledWith(
-      expect.stringContaining('所有标准队列均已存在'),
-    );
+    expect(ElMessage.info).toHaveBeenCalledWith(expect.stringContaining('所有标准队列均已存在'));
     expect(wrapper.emitted('success')).toBeTruthy();
     const closeEvents = wrapper.emitted('update:modelValue');
     expect(closeEvents?.some((e) => e[0] === false)).toBe(true);
@@ -163,9 +191,7 @@ describe('TlqQueueBatchGenerateDialog', () => {
   });
 
   it('surfaces ElMessage.error on backend failure and does not emit success', async () => {
-    vi.mocked(tlqQueueApi.batchGenerate).mockRejectedValue(
-      new Error('服务暂时不可用'),
-    );
+    vi.mocked(tlqQueueApi.batchGenerate).mockRejectedValue(new Error('服务暂时不可用'));
     const wrapper = mount(TlqQueueBatchGenerateDialog, {
       props: { modelValue: true, nodeId: 'N1' },
       global: { plugins: [ElementPlus] },

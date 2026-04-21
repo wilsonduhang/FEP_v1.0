@@ -84,8 +84,7 @@ describe('TlqQueueCreateDialog', () => {
       formRef: { validate: () => Promise<boolean> };
     };
     // EP rejects validate() with invalidFields when rules fail — simulate.
-    vm.formRef.validate = () =>
-      Promise.reject({ queueName: [{ message: '队列名称不能为空' }] });
+    vm.formRef.validate = () => Promise.reject({ queueName: [{ message: '队列名称不能为空' }] });
 
     // Drive 确定 via DOM click (Red Line #1) — the stubbed rejection must
     // short-circuit before any API call is issued.

@@ -14,9 +14,7 @@ test.describe('P7.2d §5.7 TLQ Node Management', () => {
     await page.goto(`${BASE}/tlq/nodes`);
     // el-page-header renders title= prop in .el-page-header__title slot
     // (.el-page-header__content holds the `content=` prop — "§5.7.1 节点配置列表")
-    await expect(
-      page.locator('.el-page-header__title', { hasText: 'TLQ 节点管理' }),
-    ).toBeVisible();
+    await expect(page.locator('.el-page-header__title', { hasText: 'TLQ 节点管理' })).toBeVisible();
   });
 
   test('S2: nodes table renders or shows empty state', async ({ page }) => {
@@ -70,9 +68,7 @@ test.describe('P7.2d §5.7 TLQ Node Management', () => {
   test('S5: navigate to /tlq/queues shows node picker', async ({ page }) => {
     await page.goto(`${BASE}/tlq/queues`);
     // TlqQueuesPage renders an el-select with placeholder "请选择节点"
-    await expect(
-      page.locator('.el-select', { hasText: '请选择节点' }).first(),
-    ).toBeVisible();
+    await expect(page.locator('.el-select', { hasText: '请选择节点' }).first()).toBeVisible();
   });
 
   test('S6: selecting a node triggers listByNode network call (skip if no seeded nodes)', async ({
@@ -103,7 +99,10 @@ test.describe('P7.2d §5.7 TLQ Node Management', () => {
     // to avoid runtime branching and flaky timeouts when /tlq/queues has no rows).
     await page.goto(`${BASE}/tlq/nodes`);
     const rowCount = await page.locator('.el-table__body tr').count();
-    test.skip(rowCount === 0, 'No seeded TLQ nodes — S7 skipped (batch-generate button requires node selection)');
+    test.skip(
+      rowCount === 0,
+      'No seeded TLQ nodes — S7 skipped (batch-generate button requires node selection)',
+    );
 
     await page.goto(`${BASE}/tlq/queues`);
     const nodeSelect = page.locator('.el-select', { hasText: '请选择节点' }).first();
@@ -126,9 +125,7 @@ test.describe('P7.2d §5.7 TLQ Node Management', () => {
   test('S8: /tlq/connectivity shows empty state when no node selected', async ({ page }) => {
     await page.goto(`${BASE}/tlq/connectivity`);
     // TlqConnectivityPage renders el-empty with description "请先选择节点"
-    await expect(
-      page.locator('.el-empty', { hasText: '请先选择节点' }),
-    ).toBeVisible();
+    await expect(page.locator('.el-empty', { hasText: '请先选择节点' })).toBeVisible();
   });
 
   test('S9: selecting node shows MockBadge near trigger button (skip if no seeded nodes)', async ({

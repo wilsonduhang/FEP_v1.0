@@ -258,8 +258,7 @@ describe('TlqNodeEditDialog', () => {
       formRef: { validate: () => Promise<boolean> };
     };
     // Element Plus rejects validate() with invalidFields when rules fail.
-    vm.formRef.validate = () =>
-      Promise.reject({ nodeName: [{ message: '节点名称不能为空' }] });
+    vm.formRef.validate = () => Promise.reject({ nodeName: [{ message: '节点名称不能为空' }] });
 
     // Drive the 确定 button via DOM click (Red Line #1 compliance); the stubbed
     // validate() rejection must still short-circuit before any API call.
