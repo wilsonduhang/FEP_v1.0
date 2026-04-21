@@ -180,6 +180,73 @@ class SupplyChainXsdValidationTest {
     }
 
     @Test
+    void validate_3004_withPzFlowInfo_shouldSucceed() {
+        String xml = cfx("3004", """
+                <RealHead3004>
+                    <SendOrgCode>A1000143000104</SendOrgCode>
+                    <EntrustDate>20260421</EntrustDate>
+                    <TransitionNo>00000001</TransitionNo>
+                    <Result>00000</Result>
+                </RealHead3004>
+                <pzInfoReturn3004>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>A1000143000104</SendNodeCode>
+                    <DesNodeCode>10000000000001</DesNodeCode>
+                    <hxqyName>核心企业A</hxqyName>
+                    <hxqyCode>91110000000000001X</hxqyCode>
+                    <pzNo>PZ20260421000001</pzNo>
+                    <pzState>01</pzState>
+                    <pzrzState>01</pzrzState>
+                    <pzrzStatusInfo>
+                        <pzNo>PZ20260421000001</pzNo>
+                        <rzPhaseCode>01</rzPhaseCode>
+                        <BankNodeCode>10000000000001</BankNodeCode>
+                    </pzrzStatusInfo>
+                    <pzInfo>
+                        <PlatShortName>PLATA</PlatShortName>
+                        <PlatCode>91110000000000100X</PlatCode>
+                        <ExternalPlat>01</ExternalPlat>
+                        <hxqyName>核心企业A</hxqyName>
+                        <hxqyCode>91110000000000001X</hxqyCode>
+                        <pzNo>PZ20260421000001</pzNo>
+                        <pzClass>01</pzClass>
+                        <pzFunction>001</pzFunction>
+                        <klzrfName>开立方B</klzrfName>
+                        <klzrfCode>91110000000000002X</klzrfCode>
+                        <jsqyName>接收企业C</jsqyName>
+                        <jsqyCode>91110000000000003X</jsqyCode>
+                        <jsqyPlatNo>PLATC00001</jsqyPlatNo>
+                        <pzAmt>100000.00</pzAmt>
+                        <pzStartDate>20260421</pzStartDate>
+                        <pzEndDate>20260521</pzEndDate>
+                        <pzState>01</pzState>
+                        <pzrzState>01</pzrzState>
+                        <pzFlowNum>1</pzFlowNum>
+                        <pzFlowInfo>
+                            <SerialNumber>1</SerialNumber>
+                            <pzNo>PZ20260421000001</pzNo>
+                            <PreNo>PZ20260420000001</PreNo>
+                            <qyAssignName>转让方A</qyAssignName>
+                            <qyAssignCode>91110000000000001X</qyAssignCode>
+                            <qyRecvName>接收方B</qyRecvName>
+                            <qyRecvCode>91110000000000002X</qyRecvCode>
+                            <Amt>100000.00</Amt>
+                            <UpdateDate>20260421</UpdateDate>
+                        </pzFlowInfo>
+                        <pzMemo>备注</pzMemo>
+                    </pzInfo>
+                </pzInfoReturn3004>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3004, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+        assertThat(result.errors()).isEmpty();
+    }
+
+    @Test
     void valid3005_shouldPassValidation() {
         String xml = cfx("3005", """
                 <RealHead3005>

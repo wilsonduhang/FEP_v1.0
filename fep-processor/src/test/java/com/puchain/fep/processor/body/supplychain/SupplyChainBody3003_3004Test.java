@@ -2,6 +2,7 @@ package com.puchain.fep.processor.body.supplychain;
 
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
+import com.puchain.fep.processor.body.common.PzFlowInfo;
 import com.puchain.fep.processor.body.common.PzInfo;
 import com.puchain.fep.processor.body.common.PzrzStatusInfo;
 import com.puchain.fep.processor.body.common.RiskRate;
@@ -330,6 +331,88 @@ class SupplyChainBody3003_3004Test {
         assertThat(parsed.getPzInfo()).isNull();
         assertThat(parsed.getZpzAllInfoList()).isNull();
         assertThat(parsed.getExtInfo()).isNull();
+    }
+
+    @Test
+    void marshalAndUnmarshal_completeWithPzFlowInfo_roundtrip() throws Exception {
+        PzInfoReturn3004 body = buildCompleteResponse();
+        JAXBContext ctx = JAXBContext.newInstance(PzInfoReturn3004.class);
+        StringWriter sw = new StringWriter();
+        ctx.createMarshaller().marshal(body, sw);
+        String xml = sw.toString();
+
+        assertThat(xml).contains("<pzFlowInfo>");
+        assertThat(xml).contains("<SerialNumber>1</SerialNumber>");
+        assertThat(xml).contains("<pzMemo>备注</pzMemo>");
+
+        PzInfoReturn3004 rt = (PzInfoReturn3004) ctx.createUnmarshaller().unmarshal(new StringReader(xml));
+        assertThat(rt.getPzInfo().getPzFlowInfo()).hasSize(1);
+        assertThat(rt.getPzInfo().getPzFlowInfo().get(0).getPzNo()).isEqualTo("PZ20260421000001");
+        assertThat(rt.getPzInfo().getPzFlowInfo().get(0).getQyRecvCode()).isEqualTo("91110000000000002X");
+        assertThat(rt.getPzInfo().getPzMemo()).isEqualTo("备注");
+    }
+
+    /**
+     * Builds a complete {@link PzInfoReturn3004} instance with every required field plus
+     * a single {@code pzFlowInfo} item and the optional {@code pzMemo} — mirrors the inline
+     * CFX XML constructed by
+     * {@code SupplyChainXsdValidationTest#validate_3004_withPzFlowInfo_shouldSucceed()}.
+     * Field values are pre-checked against the P2c v1e XSD length constraints.
+     *
+     * @return a fully populated {@link PzInfoReturn3004}
+     */
+    private static PzInfoReturn3004 buildCompleteResponse() {
+        PzrzStatusInfo status = new PzrzStatusInfo();
+        status.setPzNo("PZ20260421000001");
+        status.setRzPhaseCode("01");
+        status.setBankNodeCode("10000000000001");
+
+        PzFlowInfo flow = new PzFlowInfo();
+        flow.setSerialNumber("1");
+        flow.setPzNo("PZ20260421000001");
+        flow.setPreNo("PZ20260420000001");
+        flow.setQyAssignName("转让方A");
+        flow.setQyAssignCode("91110000000000001X");
+        flow.setQyRecvName("接收方B");
+        flow.setQyRecvCode("91110000000000002X");
+        flow.setAmt("100000.00");
+        flow.setUpdateDate("20260421");
+
+        PzInfo pz = new PzInfo();
+        pz.setPlatShortName("PLATA");
+        pz.setPlatCode("91110000000000100X");
+        pz.setExternalPlat("01");
+        pz.setHxqyName("核心企业A");
+        pz.setHxqyCode("91110000000000001X");
+        pz.setPzNo("PZ20260421000001");
+        pz.setPzClass("01");
+        pz.setPzFunction("001");
+        pz.setKlzrfName("开立方B");
+        pz.setKlzrfCode("91110000000000002X");
+        pz.setJsqyName("接收企业C");
+        pz.setJsqyCode("91110000000000003X");
+        pz.setJsqyPlatNo("PLATC00001");
+        pz.setPzAmt("100000.00");
+        pz.setPzStartDate("20260421");
+        pz.setPzEndDate("20260521");
+        pz.setPzState("01");
+        pz.setPzrzState("01");
+        pz.setPzFlowNum("1");
+        pz.setPzMemo("备注");
+        pz.setPzFlowInfo(List.of(flow));
+
+        PzInfoReturn3004 body = new PzInfoReturn3004();
+        body.setSerialNo("SN2026042100000000000000000001");
+        body.setSendNodeCode("A1000143000104");
+        body.setDesNodeCode("10000000000001");
+        body.setHxqyName("核心企业A");
+        body.setHxqyCode("91110000000000001X");
+        body.setPzNo("PZ20260421000001");
+        body.setPzState("01");
+        body.setPzrzState("01");
+        body.setPzrzStatusInfo(status);
+        body.setPzInfo(pz);
+        return body;
     }
 
     // ── helpers ──────────────────────────────────────────────
