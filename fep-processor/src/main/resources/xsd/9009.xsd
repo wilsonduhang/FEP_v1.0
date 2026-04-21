@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:include schemaLocation="./Base.xsd"/>
+
+    <xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[9009] 节点登出回执报文</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+    <xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="RealHead9009" type="ResponseHead">
+				<xsd:annotation>
+					<xsd:documentation>9009报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+            <xsd:element name="LogoutResponse9009" type="LogoutResponse9009">
+				<xsd:annotation>
+					<xsd:documentation>节点登出回执</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="LogoutResponse9009">
+		<xsd:annotation>
+			<xsd:documentation>节点登出回执</xsd:documentation>
+		</xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="Status" type="NodeStatus">
+				<xsd:annotation>
+					<xsd:documentation>节点当前状态</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+</xsd:schema>

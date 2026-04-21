@@ -24,12 +24,13 @@ import java.util.Set;
  * Loads HNDEMP message XSDs under {@code fep-processor/resources/xsd/} and caches
  * them keyed by {@link MessageType}.
  *
- * <p>Eagerly loads all 12 XSDs at construction time using a single-threaded
+ * <p>Eagerly loads all 16 XSDs at construction time using a single-threaded
  * {@link SchemaFactory}, then discards the factory. The resulting {@link Schema}
  * instances are thread-safe per JAXP and cached in an unmodifiable map.</p>
  *
- * <p>P2a/P2b scope supports 12 messages (1001/1004/2001/2004/3001-3006/9005/9120);
- * all other {@link MessageType} values throw {@link UnsupportedOperationException}.</p>
+ * <p>P2a/P2b/P2c scope supports 16 messages
+ * (1001/1004/2001/2004/3001-3006/9005/9006-9009/9120); all other
+ * {@link MessageType} values throw {@link UnsupportedOperationException}.</p>
  */
 @Component
 public class XsdSchemaRegistry {
@@ -39,7 +40,7 @@ public class XsdSchemaRegistry {
     private static final Set<String> SUPPORTED_CODES = Set.of(
             "1001", "1004", "2001", "2004",
             "3001", "3002", "3003", "3004", "3005", "3006",
-            "9005", "9120"
+            "9005", "9006", "9007", "9008", "9009", "9120"
     );
 
     private static final String XSD_CLASSPATH_DIR = "/xsd/";
@@ -47,7 +48,7 @@ public class XsdSchemaRegistry {
     private final Map<String, Schema> cache;
 
     /**
-     * Creates the registry, eagerly loading all 12 supported XSDs into an
+     * Creates the registry, eagerly loading all 16 supported XSDs into an
      * unmodifiable cache. The {@link SchemaFactory} is used only during
      * construction (single-threaded), avoiding its documented thread-safety
      * limitations.
@@ -76,7 +77,7 @@ public class XsdSchemaRegistry {
      *
      * @param type the message type
      * @return non-null {@link Schema}
-     * @throws UnsupportedOperationException if {@code type} is outside the P2a scope
+     * @throws UnsupportedOperationException if {@code type} is outside the P2a/P2b/P2c scope
      */
     public Schema schemaOf(final MessageType type) {
         String code = type.msgNo();

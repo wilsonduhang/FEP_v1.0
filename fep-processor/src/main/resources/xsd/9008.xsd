@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:include schemaLocation="./Base.xsd"/>
+
+    <xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[9008] 节点登出请求报文</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+    <xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="RealHead9008" type="RequestHead">
+				<xsd:annotation>
+					<xsd:documentation>9008报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+            <xsd:element name="LogoutRequest9008" type="LogoutRequest9008">
+				<xsd:annotation>
+					<xsd:documentation>节点登出请求</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="LogoutRequest9008">
+		<xsd:annotation>
+			<xsd:documentation>节点登出请求</xsd:documentation>
+		</xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="Password" type="Password">
+				<xsd:annotation>
+					<xsd:documentation>节点登录密码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+</xsd:schema>

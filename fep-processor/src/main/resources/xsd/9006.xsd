@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:include schemaLocation="./Base.xsd"/>
+
+    <xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[9006] 节点登录请求报文</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+    <xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="RealHead9006" type="RequestHead">
+				<xsd:annotation>
+					<xsd:documentation>9006报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+            <xsd:element name="LoginRequest9006" type="LoginRequest9006">
+				<xsd:annotation>
+					<xsd:documentation>节点登录请求</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="LoginRequest9006">
+		<xsd:annotation>
+			<xsd:documentation>节点登录请求</xsd:documentation>
+		</xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="Password" type="Password">
+				<xsd:annotation>
+					<xsd:documentation>节点登录密码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+            <xsd:element name="NewPassword" type="Password" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>节点登录新密码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+        </xsd:sequence>
+    </xsd:complexType>
+</xsd:schema>

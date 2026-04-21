@@ -1,0 +1,52 @@
+package com.puchain.fep.processor.body.common;
+
+import com.puchain.fep.converter.model.CfxBody;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
+
+/**
+ * 9009 节点登出回执 Body POJO（PRD v1.3 §4.5 + §3.7 节点工作流程）。
+ *
+ * <p>Fields follow {@code 9009.xsd} {@code LogoutResponse9009} complexType sequence:
+ * {@code Status} (required, {@code NodeStatus} type).</p>
+ *
+ * <p><b>Security (v1b)</b>:
+ * <ul>
+ *   <li>{@code Status} 字段本身非敏感，采用默认 {@link Object#toString()} 实现。</li>
+ *   <li>但 9009 是 9008 登出请求的回执，与 {@link LogoutRequest9008} 同属节点鉴权流程；
+ *       业务代码 <b>禁止</b>直接打印 JAXB marshal 输出的 XML byte[]
+ *       ({@code log.info("xml: {}", new String(xml, UTF_8))})，
+ *       避免在同一日志流中混入上游 9008 的 Password 明文。排障请打印 POJO
+ *       或使用 P3 将引入的 XML 脱敏过滤器。</li>
+ * </ul></p>
+ *
+ * @author FEP Team
+ * @since 1.0.0
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement(name = "LogoutResponse9009")
+@XmlType(propOrder = {"status"})
+public class LogoutResponse9009 extends CfxBody {
+
+    @XmlElement(name = "Status", required = true)
+    private String status;
+
+    /**
+     * @return 节点当前状态（{@code NodeStatus} 枚举值）
+     */
+    public String getStatus() {
+        return status;
+    }
+
+    /**
+     * 设置节点当前状态。
+     *
+     * @param v 节点状态
+     */
+    public void setStatus(final String v) {
+        this.status = v;
+    }
+}
