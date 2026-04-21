@@ -981,6 +981,17 @@
         </Or>
     </Match>
 
+    <!-- Common complexType POJO PzInfo (P2c): JAXB 绑定对象，pzFlowInfo 是
+         List<PzFlowInfo>，getter/setter 必须直接返回可变引用才能让 JAXB marshaller
+         正常读写。与上方 Supply chain Body POJOs 同类处理（防御性复制会破坏 JAXB 契约）。 -->
+    <Match>
+        <Class name="com.puchain.fep.processor.body.common.PzInfo"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
     <!-- E2eSeedRunner: Spring DI 注入的 JdbcTemplate 是容器管理单例，
          通过构造器注入引用共享是标准 DI 模式，仅 dev-e2e profile 激活 -->
     <Match>

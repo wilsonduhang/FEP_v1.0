@@ -7,14 +7,14 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
+import java.util.List;
+
 /**
  * Shared complexType {@code pzInfo} — full certificate (凭证) detail record.
  *
- * <p>Fields follow the XSD {@code pzInfo} complexType sequence (32 of 33 fields mapped).
- * {@code pzFlowInfo} (maxOccurs=10, complexType) is intentionally omitted — its nested
- * structure is deferred to P2c; XSD validation still catches structural errors on raw XML.</p>
- *
- * <p>All field types are {@link String}; XSD constraints enforced by
+ * <p>All 33 fields mapped as of P2c, following the XSD {@code pzInfo} sequence.
+ * {@code pzFlowInfo} (maxOccurs=10) maps to {@link List}{@code <}{@link PzFlowInfo}{@code >};
+ * scalar fields are {@link String} and XSD constraints are enforced by
  * {@link com.puchain.fep.processor.validation.XsdValidator}.</p>
  *
  * @author FEP Team
@@ -27,7 +27,7 @@ import jakarta.xml.bind.annotation.XmlType;
         "hxqyName", "hxqyCode", "pzNo", "pzClass", "pzFunction",
         "klzrfName", "klzrfCode", "jsqyName", "jsqyCode", "jsqyPlatNo",
         "pzAmt", "pzStartDate", "pzEndDate", "pzState", "pzrzState", "pzFlowNum",
-        "pzPreNo", "pzMajorNo", "pzrzSubAmt",
+        "pzPreNo", "pzMajorNo", "pzrzSubAmt", "pzFlowInfo",
         "pzFilename", "signElement", "klzrfSign", "platSign",
         "remainQuota", "fxftRatio", "ffftRatio",
         "fkcnNo", "fkcnFile", "pzMemo"
@@ -91,8 +91,6 @@ public class PzInfo extends CfxBody {
     @XmlElement(name = "pzFlowNum", required = true)
     private String pzFlowNum;
 
-    // pzFlowInfo (maxOccurs=10, complexType) omitted — deferred to P2c
-
     @XmlElement(name = "pzPreNo")
     private String pzPreNo;
 
@@ -101,6 +99,9 @@ public class PzInfo extends CfxBody {
 
     @XmlElement(name = "pzrzSubAmt")
     private String pzrzSubAmt;
+
+    @XmlElement(name = "pzFlowInfo")
+    private List<PzFlowInfo> pzFlowInfo;
 
     @XmlElement(name = "pzFilename")
     private String pzFilename;
@@ -306,6 +307,14 @@ public class PzInfo extends CfxBody {
 
     public void setPzrzSubAmt(final String v) {
         this.pzrzSubAmt = v;
+    }
+
+    public List<PzFlowInfo> getPzFlowInfo() {
+        return pzFlowInfo;
+    }
+
+    public void setPzFlowInfo(final List<PzFlowInfo> v) {
+        this.pzFlowInfo = v;
     }
 
     public String getPzFilename() {
