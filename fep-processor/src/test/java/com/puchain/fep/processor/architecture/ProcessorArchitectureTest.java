@@ -51,4 +51,15 @@ class ProcessorArchitectureTest {
                 .allowEmptyShould(true);
         rule.check(processorClasses);
     }
+
+    @Test
+    void routingShouldNotDependOnBodyOrValidation() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.puchain.fep.processor.routing..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.puchain.fep.processor.body..",
+                        "com.puchain.fep.processor.validation..")
+                .because("routing 是独立协议层，不应依赖 body 或 validation（反向依赖方向）");
+        rule.check(processorClasses);
+    }
 }
