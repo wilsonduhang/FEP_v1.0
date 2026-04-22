@@ -5,7 +5,7 @@ package com.puchain.fep.processor.routing;
  *
  * <p>FR-MSG-DIR-MAP 的输出维度，共 3 种方向。</p>
  *
- * <p>See ADR-R-1 (Plan R 2026-04-22): reserved ACK values dropped per YAGNI; P3 may redesign if needed.
+ * <p>See ADR-R-1 (Plan R 2026-04-22): reserved ACK values dropped per YAGNI; P3 may redesign if needed.</p>
  *
  * <p><b>⚠️ 持久化警告</b>：若未来有系统需持久化本枚举（如 DB 列），<b>必须</b>
  * 存 {@link #name()} 而非 {@link #ordinal()}。插入新值到中间位置会改变

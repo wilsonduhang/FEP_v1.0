@@ -3,7 +3,7 @@ package com.puchain.fep.processor.routing;
 /**
  * PRD §4.7 报文处理模式。
  *
- * <p>See ADR-R-1 (Plan R 2026-04-22): reserved modes dropped per YAGNI; P3 may redesign if needed.
+ * <p>See ADR-R-1 (Plan R 2026-04-22): reserved modes dropped per YAGNI; P3 may redesign if needed.</p>
  *
  * <p><b>⚠️ 持久化警告</b>：若未来有系统需持久化本枚举（如 DB 列），<b>必须</b>
  * 存 {@link #name()} 而非 {@link #ordinal()}。插入新值到中间位置会改变

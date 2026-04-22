@@ -1,6 +1,8 @@
 package com.puchain.fep.web.migration;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -9,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Flyway V1-V3 迁移脚本验证。
+ * Flyway V1-V17 迁移脚本验证。
  *
- * <p>验证 5 张核心表创建成功 + 种子数据正确插入。</p>
+ * <p>验证核心表创建、种子数据插入，以及 V17 合成索引存在性。</p>
  */
 @SpringBootTest
 class FlywayMigrationTest {
@@ -76,22 +78,16 @@ class FlywayMigrationTest {
         assertEquals(9, count);
     }
 
-    @Test
-    void v17PushStatusCreateTimeIndexShouldExist() {
+    @ParameterizedTest(name = "V17 index {0} should exist")
+    @ValueSource(strings = {
+            "IDX_SUB_RECORD_PUSH_STATUS_CREATE_TIME",
+            "IDX_SUB_RECORD_BIZ_TYPE_CREATE_TIME"
+    })
+    void v17IndexesShouldExist(final String indexName) {
         Integer distinctCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(DISTINCT INDEX_NAME) FROM INFORMATION_SCHEMA.INDEXES "
-                        + "WHERE UPPER(INDEX_NAME) = 'IDX_SUB_RECORD_PUSH_STATUS_CREATE_TIME'",
-                Integer.class);
-        assertNotNull(distinctCount);
-        assertEquals(1, distinctCount);
-    }
-
-    @Test
-    void v17BizTypeCreateTimeIndexShouldExist() {
-        Integer distinctCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(DISTINCT INDEX_NAME) FROM INFORMATION_SCHEMA.INDEXES "
-                        + "WHERE UPPER(INDEX_NAME) = 'IDX_SUB_RECORD_BIZ_TYPE_CREATE_TIME'",
-                Integer.class);
+                        + "WHERE UPPER(INDEX_NAME) = ?",
+                Integer.class, indexName);
         assertNotNull(distinctCount);
         assertEquals(1, distinctCount);
     }
