@@ -1,74 +1,30 @@
 <template>
   <div class="message-records-page">
-    <el-page-header
-      title="业务数据管理"
-      content="报文记录"
-      class="page-header"
-    >
+    <el-page-header title="业务数据管理" content="报文记录" class="page-header">
       <template #extra>
-        <el-tag type="warning">
-          ⚠️ TLQ Mock 模式 (resubmit/export 为预留操作)
-        </el-tag>
+        <el-tag type="warning"> ⚠️ TLQ Mock 模式 (resubmit/export 为预留操作) </el-tag>
       </template>
     </el-page-header>
 
     <RecordSummaryCards :items="summaryItems" />
 
-    <SearchForm
-      @search="onSearch"
-      @reset="onReset"
-    >
+    <SearchForm @search="onSearch" @reset="onReset">
       <el-form-item label="报文编码">
-        <el-input
-          v-model="searchForm.messageCode"
-          placeholder="报文编码"
-          style="width: 140px"
-        />
+        <el-input v-model="searchForm.messageCode" placeholder="报文编码" style="width: 140px" />
       </el-form-item>
       <el-form-item label="状态">
-        <el-select
-          v-model="searchForm.status"
-          placeholder="全部"
-          clearable
-          style="width: 140px"
-        >
-          <el-option
-            label="待处理"
-            value="PENDING"
-          />
-          <el-option
-            label="处理中"
-            value="PROCESSING"
-          />
-          <el-option
-            label="成功"
-            value="SUCCESS"
-          />
-          <el-option
-            label="失败"
-            value="FAILED"
-          />
+        <el-select v-model="searchForm.status" placeholder="全部" clearable style="width: 140px">
+          <el-option label="待处理" value="PENDING" />
+          <el-option label="处理中" value="PROCESSING" />
+          <el-option label="成功" value="SUCCESS" />
+          <el-option label="失败" value="FAILED" />
         </el-select>
       </el-form-item>
       <el-form-item label="方向">
-        <el-select
-          v-model="searchForm.direction"
-          placeholder="全部"
-          clearable
-          style="width: 140px"
-        >
-          <el-option
-            label="出站"
-            value="OUTBOUND"
-          />
-          <el-option
-            label="入站"
-            value="INBOUND"
-          />
-          <el-option
-            label="双向"
-            value="BIDIRECTIONAL"
-          />
+        <el-select v-model="searchForm.direction" placeholder="全部" clearable style="width: 140px">
+          <el-option label="出站" value="OUTBOUND" />
+          <el-option label="入站" value="INBOUND" />
+          <el-option label="双向" value="BIDIRECTIONAL" />
         </el-select>
       </el-form-item>
       <el-form-item label="开始日期">
@@ -91,12 +47,7 @@
       </el-form-item>
     </SearchForm>
 
-    <el-button
-      type="primary"
-      :loading="exporting"
-      class="export-btn"
-      @click="onExport"
-    >
+    <el-button type="primary" :loading="exporting" class="export-btn" @click="onExport">
       导出
     </el-button>
 
@@ -111,22 +62,13 @@
       @update:page-size="onPageSizeChange"
     >
       <template #direction="{ row }">
-        <StatusTag
-          :value="row.direction"
-          :mapping="MESSAGE_DIRECTION_MAP"
-        />
+        <StatusTag :value="row.direction" :mapping="MESSAGE_DIRECTION_MAP" />
       </template>
       <template #processStatus="{ row }">
-        <StatusTag
-          :value="row.processStatus"
-          :mapping="MESSAGE_PROCESS_STATUS_MAP"
-        />
+        <StatusTag :value="row.processStatus" :mapping="MESSAGE_PROCESS_STATUS_MAP" />
       </template>
       <template #entryMethod="{ row }">
-        <StatusTag
-          :value="row.entryMethod"
-          :mapping="ENTRY_METHOD_MAP"
-        />
+        <StatusTag :value="row.entryMethod" :mapping="ENTRY_METHOD_MAP" />
       </template>
       <template #amount="{ row }">
         <span v-if="row.amount">
@@ -135,19 +77,9 @@
         <span v-else>-</span>
       </template>
       <template #operation>
-        <el-table-column
-          label="操作"
-          min-width="120"
-          fixed="right"
-        >
+        <el-table-column label="操作" min-width="120" fixed="right">
           <template #default="{ row }">
-            <el-button
-              link
-              type="primary"
-              @click="onShowDetail(row.recordId)"
-            >
-              详情
-            </el-button>
+            <el-button link type="primary" @click="onShowDetail(row.recordId)"> 详情 </el-button>
             <el-button
               link
               type="warning"
@@ -161,10 +93,7 @@
       </template>
     </DataTable>
 
-    <RecordDetailDrawer
-      v-model="drawerVisible"
-      :record-id="selectedRecordId"
-    />
+    <RecordDetailDrawer v-model="drawerVisible" :record-id="selectedRecordId" />
   </div>
 </template>
 
@@ -199,7 +128,13 @@ function formatCNY(value: string): string {
 }
 
 const searchForm = reactive<RecordSearchParams>({ pageNum: 1, pageSize: 20 });
-const page = ref<PageResult<RecordResponse>>({ records: [], total: 0, pageNum: 1, pageSize: 20, totalPages: 0 });
+const page = ref<PageResult<RecordResponse>>({
+  records: [],
+  total: 0,
+  pageNum: 1,
+  pageSize: 20,
+  totalPages: 0,
+});
 const summaryItems = ref<RecordSummaryItem[]>([]);
 const loading = ref(false);
 const drawerVisible = ref(false);
@@ -232,7 +167,10 @@ async function loadSummary() {
   summaryItems.value = await bizMessageRecordApi.getSummary();
 }
 
-function onSearch() { searchForm.pageNum = 1; refresh(); }
+function onSearch() {
+  searchForm.pageNum = 1;
+  refresh();
+}
 function onReset() {
   Object.assign(searchForm, {
     pageNum: 1,
@@ -244,8 +182,15 @@ function onReset() {
     endDate: undefined,
   });
 }
-function onPageNumChange(v: number) { searchForm.pageNum = v; refresh(); }
-function onPageSizeChange(v: number) { searchForm.pageSize = v; searchForm.pageNum = 1; refresh(); }
+function onPageNumChange(v: number) {
+  searchForm.pageNum = v;
+  refresh();
+}
+function onPageSizeChange(v: number) {
+  searchForm.pageSize = v;
+  searchForm.pageNum = 1;
+  refresh();
+}
 
 function onShowDetail(recordId: string) {
   selectedRecordId.value = recordId;
@@ -270,6 +215,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.message-records-page { display: flex; flex-direction: column; gap: 16px; }
-.page-header { padding-bottom: 12px; border-bottom: 1px solid #eaeaea; }
+.message-records-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.page-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eaeaea;
+}
 </style>

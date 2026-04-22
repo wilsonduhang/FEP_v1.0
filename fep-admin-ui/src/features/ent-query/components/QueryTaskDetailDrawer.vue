@@ -5,10 +5,7 @@
     size="60%"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <div
-      v-if="loading"
-      class="loading"
-    >
+    <div v-if="loading" class="loading">
       <el-icon class="is-loading">
         <Loading />
       </el-icon>
@@ -21,7 +18,9 @@
           <StatusTag :value="task.queryType" :mapping="QUERY_TYPE_MAP" />
         </el-descriptions-item>
         <el-descriptions-item label="USCI">{{ task.usci }}</el-descriptions-item>
-        <el-descriptions-item label="被查询企业">{{ task.queryTargetName ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="被查询企业">{{
+          task.queryTargetName ?? '-'
+        }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <StatusTag :value="task.taskStatus" :mapping="QUERY_TASK_STATUS_MAP" />
         </el-descriptions-item>
@@ -99,16 +98,36 @@ function rowClassName({ row }: { row: QueryResultResponse }): string {
 
 watch(
   () => [props.modelValue, props.taskId],
-  ([open]) => { if (open) refresh(); },
+  ([open]) => {
+    if (open) refresh();
+  },
   { immediate: true },
 );
 </script>
 
 <style scoped>
-.loading { display: flex; justify-content: center; padding: 40px; }
-.content { display: flex; flex-direction: column; gap: 16px; }
-.section-title { margin: 16px 0 8px; font-size: 16px; font-weight: 600; }
-.processing-hint { margin-top: 8px; }
-.error-text { color: #f56c6c; }
-:deep(.error-row) { background-color: #fef0f0; }
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.section-title {
+  margin: 16px 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.processing-hint {
+  margin-top: 8px;
+}
+.error-text {
+  color: #f56c6c;
+}
+:deep(.error-row) {
+  background-color: #fef0f0;
+}
 </style>

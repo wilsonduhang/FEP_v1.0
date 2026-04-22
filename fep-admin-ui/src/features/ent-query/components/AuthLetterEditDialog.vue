@@ -5,59 +5,27 @@
     width="560px"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      :disabled="isReadonly"
-      label-width="120px"
-    >
-      <el-form-item
-        label="企业 ID"
-        prop="enterpriseId"
-      >
-        <el-input
-          v-model="form.enterpriseId"
-          placeholder="发起授权的企业 ID"
-        />
+    <el-form ref="formRef" :model="form" :rules="rules" :disabled="isReadonly" label-width="120px">
+      <el-form-item label="企业 ID" prop="enterpriseId">
+        <el-input v-model="form.enterpriseId" placeholder="发起授权的企业 ID" />
       </el-form-item>
-      <el-form-item
-        label="授权类型"
-        prop="authType"
-      >
+      <el-form-item label="授权类型" prop="authType">
         <el-radio-group v-model="form.authType">
-          <el-radio value="PAPER">
-            纸质
-          </el-radio>
-          <el-radio value="ELECTRONIC">
-            电子
-          </el-radio>
+          <el-radio value="PAPER"> 纸质 </el-radio>
+          <el-radio value="ELECTRONIC"> 电子 </el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item
-        label="被授权 USCI"
-        prop="authorizedUsci"
-      >
+      <el-form-item label="被授权 USCI" prop="authorizedUsci">
         <el-input
           v-model="form.authorizedUsci"
           placeholder="18 位统一社会信用代码"
           maxlength="18"
         />
       </el-form-item>
-      <el-form-item
-        label="被授权名称"
-        prop="authorizedName"
-      >
-        <el-input
-          v-model="form.authorizedName"
-          placeholder="可选"
-          maxlength="200"
-        />
+      <el-form-item label="被授权名称" prop="authorizedName">
+        <el-input v-model="form.authorizedName" placeholder="可选" maxlength="200" />
       </el-form-item>
-      <el-form-item
-        label="授权范围"
-        prop="authScope"
-      >
+      <el-form-item label="授权范围" prop="authScope">
         <el-input
           v-model="form.authScope"
           type="textarea"
@@ -67,11 +35,7 @@
           placeholder="可选"
         />
       </el-form-item>
-      <el-form-item
-        v-if="form.authType === 'ELECTRONIC'"
-        label="文件路径"
-        prop="filePath"
-      >
+      <el-form-item v-if="form.authType === 'ELECTRONIC'" label="文件路径" prop="filePath">
         <el-input
           v-model="form.filePath"
           placeholder="服务器端文件路径占位（P7.2b 接入真实上传）"
@@ -83,12 +47,7 @@
       <el-button @click="emit('update:modelValue', false)">
         {{ isReadonly ? '关闭' : '取消' }}
       </el-button>
-      <el-button
-        v-if="!isReadonly"
-        type="primary"
-        :loading="submitting"
-        @click="onSave"
-      >
+      <el-button v-if="!isReadonly" type="primary" :loading="submitting" @click="onSave">
         {{ isCreate ? '创建' : '保存' }}
       </el-button>
     </template>
@@ -111,16 +70,14 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
-  'saved': [];
+  saved: [];
 }>();
 
 const formRef = ref<FormInstance>();
 const submitting = ref(false);
 
 const isCreate = computed(() => props.letter === null);
-const isReadonly = computed(
-  () => props.letter !== null && props.letter.letterStatus !== 'DRAFT',
-);
+const isReadonly = computed(() => props.letter !== null && props.letter.letterStatus !== 'DRAFT');
 const dialogTitle = computed(() => {
   if (isCreate.value) return '新建授权书';
   if (isReadonly.value) return '查看授权书';
@@ -157,29 +114,33 @@ const rules: FormRules<FormModel> = {
   filePath: [{ max: 500, message: '最多 500 字符', trigger: 'blur' }],
 };
 
-watch(() => props.modelValue, (v) => {
-  if (v) {
-    if (props.letter) {
-      Object.assign(form, {
-        enterpriseId: props.letter.enterpriseId,
-        authType: props.letter.authType,
-        authorizedUsci: props.letter.authorizedUsci,
-        authorizedName: props.letter.authorizedName ?? '',
-        authScope: props.letter.authScope ?? '',
-        filePath: props.letter.filePath ?? '',
-      });
-    } else {
-      Object.assign(form, {
-        enterpriseId: '',
-        authType: 'PAPER',
-        authorizedUsci: '',
-        authorizedName: '',
-        authScope: '',
-        filePath: '',
-      });
+watch(
+  () => props.modelValue,
+  (v) => {
+    if (v) {
+      if (props.letter) {
+        Object.assign(form, {
+          enterpriseId: props.letter.enterpriseId,
+          authType: props.letter.authType,
+          authorizedUsci: props.letter.authorizedUsci,
+          authorizedName: props.letter.authorizedName ?? '',
+          authScope: props.letter.authScope ?? '',
+          filePath: props.letter.filePath ?? '',
+        });
+      } else {
+        Object.assign(form, {
+          enterpriseId: '',
+          authType: 'PAPER',
+          authorizedUsci: '',
+          authorizedName: '',
+          authScope: '',
+          filePath: '',
+        });
+      }
     }
-  }
-}, { immediate: true });
+  },
+  { immediate: true },
+);
 
 async function onSave() {
   if (!formRef.value) return;

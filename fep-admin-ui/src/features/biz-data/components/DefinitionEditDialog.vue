@@ -5,52 +5,21 @@
     width="600px"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <el-form
-      ref="formRef"
-      :model="form"
-      :rules="rules"
-      label-width="120px"
-    >
-      <el-form-item
-        label="报文编码"
-        prop="messageCode"
-      >
-        <el-input
-          v-model="form.messageCode"
-          :disabled="!isCreate"
-          placeholder="1-5 位数字编码"
-        />
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+      <el-form-item label="报文编码" prop="messageCode">
+        <el-input v-model="form.messageCode" :disabled="!isCreate" placeholder="1-5 位数字编码" />
       </el-form-item>
-      <el-form-item
-        label="报文名称"
-        prop="messageName"
-      >
-        <el-input
-          v-model="form.messageName"
-          placeholder="2-200 个字符"
-          maxlength="200"
-        />
+      <el-form-item label="报文名称" prop="messageName">
+        <el-input v-model="form.messageName" placeholder="2-200 个字符" maxlength="200" />
       </el-form-item>
-      <el-form-item
-        label="方向"
-        prop="direction"
-      >
+      <el-form-item label="方向" prop="direction">
         <el-radio-group v-model="form.direction">
-          <el-radio value="OUTBOUND">
-            出站
-          </el-radio>
-          <el-radio value="INBOUND">
-            入站
-          </el-radio>
-          <el-radio value="BIDIRECTIONAL">
-            双向
-          </el-radio>
+          <el-radio value="OUTBOUND"> 出站 </el-radio>
+          <el-radio value="INBOUND"> 入站 </el-radio>
+          <el-radio value="BIDIRECTIONAL"> 双向 </el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item
-        label="业务类型"
-        prop="businessTypeId"
-      >
+      <el-form-item label="业务类型" prop="businessTypeId">
         <el-select
           v-model="form.businessTypeId"
           placeholder="请选择（可选）"
@@ -65,30 +34,13 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item
-        label="字段数"
-        prop="fieldCount"
-      >
-        <el-input-number
-          v-model="form.fieldCount"
-          :min="0"
-        />
+      <el-form-item label="字段数" prop="fieldCount">
+        <el-input-number v-model="form.fieldCount" :min="0" />
       </el-form-item>
-      <el-form-item
-        label="字段摘要"
-        prop="fieldSummary"
-      >
-        <el-input
-          v-model="form.fieldSummary"
-          type="textarea"
-          :rows="3"
-          placeholder="可选"
-        />
+      <el-form-item label="字段摘要" prop="fieldSummary">
+        <el-input v-model="form.fieldSummary" type="textarea" :rows="3" placeholder="可选" />
       </el-form-item>
-      <el-form-item
-        label="示例 XML"
-        prop="sampleXml"
-      >
+      <el-form-item label="示例 XML" prop="sampleXml">
         <el-input
           v-model="form.sampleXml"
           type="textarea"
@@ -97,25 +49,13 @@
           style="font-family: monospace"
         />
       </el-form-item>
-      <el-form-item
-        label="排序"
-        prop="sortOrder"
-      >
-        <el-input-number
-          v-model="form.sortOrder"
-          :min="0"
-        />
+      <el-form-item label="排序" prop="sortOrder">
+        <el-input-number v-model="form.sortOrder" :min="0" />
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">
-        取消
-      </el-button>
-      <el-button
-        type="primary"
-        :loading="submitting"
-        @click="onSave"
-      >
+      <el-button @click="emit('update:modelValue', false)"> 取消 </el-button>
+      <el-button type="primary" :loading="submitting" @click="onSave">
         {{ isCreate ? '创建' : '保存' }}
       </el-button>
     </template>
@@ -140,7 +80,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
-  'saved': [];
+  saved: [];
 }>();
 
 const formRef = ref<FormInstance>();
@@ -180,38 +120,40 @@ const rules: FormRules<FormModel> = {
     { required: true, message: '请输入报文名称', trigger: 'blur' },
     { min: 2, max: 200, message: '报文名称需 2-200 字符', trigger: 'blur' },
   ],
-  direction: [
-    { required: true, message: '请选择方向', trigger: 'change' },
-  ],
+  direction: [{ required: true, message: '请选择方向', trigger: 'change' }],
 };
 
-watch(() => props.modelValue, (v) => {
-  if (v) {
-    if (props.definition) {
-      Object.assign(form, {
-        messageCode: props.definition.messageCode,
-        messageName: props.definition.messageName,
-        direction: props.definition.direction,
-        businessTypeId: props.definition.businessTypeId ?? '',
-        fieldCount: props.definition.fieldCount,
-        fieldSummary: props.definition.fieldSummary ?? '',
-        sampleXml: props.definition.sampleXml ?? '',
-        sortOrder: props.definition.sortOrder,
-      });
-    } else {
-      Object.assign(form, {
-        messageCode: '',
-        messageName: '',
-        direction: 'OUTBOUND',
-        businessTypeId: '',
-        fieldCount: 0,
-        fieldSummary: '',
-        sampleXml: '',
-        sortOrder: 0,
-      });
+watch(
+  () => props.modelValue,
+  (v) => {
+    if (v) {
+      if (props.definition) {
+        Object.assign(form, {
+          messageCode: props.definition.messageCode,
+          messageName: props.definition.messageName,
+          direction: props.definition.direction,
+          businessTypeId: props.definition.businessTypeId ?? '',
+          fieldCount: props.definition.fieldCount,
+          fieldSummary: props.definition.fieldSummary ?? '',
+          sampleXml: props.definition.sampleXml ?? '',
+          sortOrder: props.definition.sortOrder,
+        });
+      } else {
+        Object.assign(form, {
+          messageCode: '',
+          messageName: '',
+          direction: 'OUTBOUND',
+          businessTypeId: '',
+          fieldCount: 0,
+          fieldSummary: '',
+          sampleXml: '',
+          sortOrder: 0,
+        });
+      }
     }
-  }
-}, { immediate: true });
+  },
+  { immediate: true },
+);
 
 async function onSave() {
   if (!formRef.value) return;

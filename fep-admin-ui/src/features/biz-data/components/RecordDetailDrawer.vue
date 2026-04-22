@@ -6,10 +6,7 @@
     @update:model-value="emit('update:modelValue', $event)"
   >
     <template v-if="record">
-      <el-descriptions
-        :column="2"
-        border
-      >
+      <el-descriptions :column="2" border>
         <el-descriptions-item label="记录 ID">
           {{ record.recordId }}
         </el-descriptions-item>
@@ -54,20 +51,14 @@
         </el-descriptions-item>
       </el-descriptions>
 
-      <div
-        v-if="record.processStatus === 'FAILED' && record.errorMessage"
-        class="error-section"
-      >
+      <div v-if="record.processStatus === 'FAILED' && record.errorMessage" class="error-section">
         <h4>错误信息</h4>
         <p class="error-message">
           {{ record.errorMessage }}
         </p>
       </div>
 
-      <div
-        v-if="record.xmlContent"
-        class="xml-section"
-      >
+      <div v-if="record.xmlContent" class="xml-section">
         <h4>报文内容</h4>
         <pre class="xml-preview">{{ record.xmlContent }}</pre>
       </div>
@@ -112,9 +103,16 @@ watch(
 </script>
 
 <style scoped>
-.error-section { margin-top: 16px; }
-.error-message { color: #f56c6c; white-space: pre-wrap; }
-.xml-section { margin-top: 16px; }
+.error-section {
+  margin-top: 16px;
+}
+.error-message {
+  color: #f56c6c;
+  white-space: pre-wrap;
+}
+.xml-section {
+  margin-top: 16px;
+}
 .xml-preview {
   font-family: monospace;
   background: #f5f7fa;
