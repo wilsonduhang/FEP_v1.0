@@ -17,7 +17,7 @@
             <TransitionNo>00000004</TransitionNo>
         </RealHead9008>
         <LogoutRequest9008>
-            <Password>p@ssw0rd</Password>
+            <Password>TEST_PWD_0001</Password>
         </LogoutRequest9008>
     </MSG>
 </CFX>

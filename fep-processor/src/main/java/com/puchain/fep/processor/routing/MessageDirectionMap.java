@@ -168,6 +168,9 @@ public final class MessageDirectionMap {
      * @param requiresFepOnly true 仅返回该角色需 FEP 接入的报文
      * @return 不可变 {@link List}
      * @throws NullPointerException role 为 null
+     * @implNote 排序按 {@link MessageType#msgNo()} 字符串升序。当前 msgNo
+     *     全为 4 位数字，字符串序与数值序等价；若未来扩展到 5+ 位需改为
+     *     数值比较器。
      */
     public static List<MessageType> messagesFor(final AccessRole role, final boolean requiresFepOnly) {
         Objects.requireNonNull(role, "role");

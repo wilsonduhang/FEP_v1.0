@@ -20,6 +20,18 @@ import jakarta.xml.bind.annotation.XmlType;
  * <p>Fields follow the {@code 9100.xsd} {@code Forward9100} complexType sequence:
  * SrcNodeCode, SrcOrgCode, DesNodeCode, DesOrgCode, BusinessNo (optional), Content.</p>
  *
+ * <p><b>Security (v1c)</b>:
+ * <ul>
+ *   <li>{@code Content} 字段承载业务方自协商数据，<b>可能包含敏感内容</b>
+ *       （如用户信息、金额、账号等）。</li>
+ *   <li>JAXB {@code Marshaller.marshal(req, ...)} 输出的 XML byte[] 中
+ *       {@code <Content>明文</Content>} 是业务合约所需的原样载荷。
+ *       业务代码 <b>禁止</b>直接
+ *       {@code log.info("outgoing xml: {}", new String(xml, UTF_8))}；
+ *       排障需打印 POJO（默认 {@link Object#toString()} 不展开
+ *       {@code content} 明文字段）或使用 P3 将引入的 XML 脱敏过滤器。</li>
+ * </ul></p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */

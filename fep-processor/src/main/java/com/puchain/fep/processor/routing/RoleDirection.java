@@ -6,6 +6,10 @@ package com.puchain.fep.processor.routing;
  * <p>FR-MSG-DIR-MAP 的输出维度。注意：{@link #OUTBOUND_ACK} / {@link #INBOUND_ACK}
  * 当前 §4.6 映射表未出现，保留供 P3 非实时回执流程使用。</p>
  *
+ * <p><b>⚠️ 持久化警告</b>：若未来有系统需持久化本枚举（如 DB 列），<b>必须</b>
+ * 存 {@link #name()} 而非 {@link #ordinal()}。插入新值到中间位置会改变
+ * ordinal，导致历史数据错位。当前 P2c 范围仅静态内存 Map，无持久化风险。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */

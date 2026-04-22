@@ -17,8 +17,8 @@
             <TransitionNo>00000002</TransitionNo>
         </RealHead9006>
         <LoginRequest9006>
-            <Password>p@ssw0rd</Password>
-            <NewPassword>n3wP@ss0</NewPassword>
+            <Password>TEST_PWD_0001</Password>
+            <NewPassword>TEST_PWD_0002</NewPassword>
         </LoginRequest9006>
     </MSG>
 </CFX>

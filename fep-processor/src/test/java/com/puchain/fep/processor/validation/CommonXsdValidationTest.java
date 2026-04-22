@@ -25,6 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CommonXsdValidationTest {
 
+    private static final String SAMPLE_DIR = "/samples/";
+
     private static XsdValidator validator;
 
     @BeforeAll
@@ -34,42 +36,42 @@ class CommonXsdValidationTest {
 
     @Test
     void valid9000_shouldPassValidation() throws IOException {
-        assertValid(MessageType.MSG_9000, "/samples/9000-valid.xml");
+        assertValid(MessageType.MSG_9000, SAMPLE_DIR + "9000-valid.xml");
     }
 
     @Test
     void valid9006_shouldPassValidation() throws IOException {
-        assertValid(MessageType.MSG_9006, "/samples/9006-valid.xml");
+        assertValid(MessageType.MSG_9006, SAMPLE_DIR + "9006-valid.xml");
     }
 
     @Test
     void valid9007_shouldPassValidation() throws IOException {
-        assertValid(MessageType.MSG_9007, "/samples/9007-valid.xml");
+        assertValid(MessageType.MSG_9007, SAMPLE_DIR + "9007-valid.xml");
     }
 
     @Test
     void valid9008_shouldPassValidation() throws IOException {
-        assertValid(MessageType.MSG_9008, "/samples/9008-valid.xml");
+        assertValid(MessageType.MSG_9008, SAMPLE_DIR + "9008-valid.xml");
     }
 
     @Test
     void valid9009_shouldPassValidation() throws IOException {
-        assertValid(MessageType.MSG_9009, "/samples/9009-valid.xml");
+        assertValid(MessageType.MSG_9009, SAMPLE_DIR + "9009-valid.xml");
     }
 
     @Test
     void valid9020_shouldPassValidation() throws IOException {
-        assertValid(MessageType.MSG_9020, "/samples/9020-valid.xml");
+        assertValid(MessageType.MSG_9020, SAMPLE_DIR + "9020-valid.xml");
     }
 
     @Test
     void valid9100_shouldPassValidation() throws IOException {
-        assertValid(MessageType.MSG_9100, "/samples/9100-valid.xml");
+        assertValid(MessageType.MSG_9100, SAMPLE_DIR + "9100-valid.xml");
     }
 
     @Test
     void invalid9006MissingPassword_shouldFailValidation() throws IOException {
-        byte[] xml = loadSample("/samples/9006-invalid-missing-password.xml");
+        byte[] xml = loadSample(SAMPLE_DIR + "9006-invalid-missing-password.xml");
         ValidationResult result = validator.validate(MessageType.MSG_9006, xml);
         assertThat(result.valid()).isFalse();
         assertThat(result.errors())
