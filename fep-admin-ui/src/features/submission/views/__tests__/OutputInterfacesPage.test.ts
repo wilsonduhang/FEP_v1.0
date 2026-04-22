@@ -70,20 +70,35 @@ describe('OutputInterfacesPage', () => {
     expect(wrapper.text()).toContain('https://bank.example.com/recon');
   });
 
-  it('updates local row after toggleStatus', async () => {
+  it('updates local row after toggleStatus (via button click)', async () => {
     vi.mocked(subOutputInterfaceApi.search).mockResolvedValue(mockPage);
     const toggled: OutputInterfaceResponse = { ...mockRecord, interfaceStatus: 'DISABLED' };
     vi.mocked(subOutputInterfaceApi.toggleStatus).mockResolvedValue(toggled);
+
     const wrapper = mount(OutputInterfacesPage, globalPlugins);
     await flushPromises();
-    await (
-      wrapper.vm as unknown as { onToggleStatus: (r: OutputInterfaceResponse) => Promise<void> }
-    ).onToggleStatus(mockRecord);
+
+    // Find toggle button by its text (current state is ENABLED → button shows "停用").
+    // Aligns with feedback_unit_test_bypass red-line: exercise the real framework
+    // dispatch path instead of calling `vm.onToggleStatus` directly.
+    const toggleButton = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('停用'));
+    expect(toggleButton, 'toggle button must exist').toBeDefined();
+
+    await toggleButton!.trigger('click');
     await flushPromises();
+
     expect(subOutputInterfaceApi.toggleStatus).toHaveBeenCalledWith('I-1');
     // Should NOT have re-fetched the whole list (AC #2).
     expect(subOutputInterfaceApi.search).toHaveBeenCalledTimes(1);
-    // Local row should reflect new status.
+    // Local row should reflect new status. DOM-side sanity: the localized
+    // "禁用" tag is rendered (StatusTag maps DISABLED → "禁用"), proving the
+    // click dispatch travelled through the framework and updated the row.
+    expect(wrapper.html()).toContain('禁用');
+    // Per AC #4, keep the raw enum assertion on the exposed page state — this
+    // reads published state, not a method call, so the red-line
+    // (feedback_unit_test_bypass) is not violated.
     const state = (wrapper.vm as unknown as { page: { records: OutputInterfaceResponse[] } }).page;
     expect(state.records[0].interfaceStatus).toBe('DISABLED');
   });
