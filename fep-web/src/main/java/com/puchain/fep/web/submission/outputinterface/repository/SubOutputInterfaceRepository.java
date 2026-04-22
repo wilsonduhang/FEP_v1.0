@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * 输出接口 Repository。
  *
@@ -64,4 +66,21 @@ public interface SubOutputInterfaceRepository extends JpaRepository<SubOutputInt
      * @return 接口数量
      */
     long countByInterfaceStatus(EnableDisableStatus status);
+
+    /**
+     * 合并 total / enabled 为单次聚合查询（用于 Dashboard 概况面板）。
+     *
+     * <p>避免 Dashboard 页每次连发 {@code count()} + {@code countByInterfaceStatus()}
+     * 两次 COUNT 查询。返回 {@link List}（保证至少 1 行；空表时 enabled 列为 {@code null}，
+     * 调用方需做 null-safe 处理）。</p>
+     *
+     * @return 单行聚合结果 {@code [totalCount, enabledCount]}，外层包一层 List
+     *         (Spring Data JPA 对聚合单行查询的签名要求)
+     */
+    @Query("SELECT COUNT(o), "
+            + "SUM(CASE WHEN o.interfaceStatus = "
+            + "com.puchain.fep.common.domain.EnableDisableStatus.ENABLED "
+            + "THEN 1L ELSE 0L END) "
+            + "FROM SubOutputInterface o")
+    List<Object[]> aggregateInterfaceCounts();
 }

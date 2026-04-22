@@ -1,13 +1,11 @@
 package com.puchain.fep.web.submission.dashboard.service;
 
-import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardDistributionItem;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardResponse;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardTrendResponse;
 import com.puchain.fep.web.submission.datasource.repository.SubDataSourceRepository;
 import com.puchain.fep.web.submission.outputinterface.repository.SubOutputInterfaceRepository;
-import com.puchain.fep.web.submission.record.domain.PushStatus;
 import com.puchain.fep.web.submission.record.repository.SubSubmissionRecordRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +67,16 @@ public class SubDashboardService {
     /**
      * Returns aggregated dashboard statistics.
      *
+     * <p>使用两个聚合查询 + 一个简单 count 合并原 6 次 COUNT 往返为 3 次：
+     * <ul>
+     *   <li>{@code SubOutputInterfaceRepository.aggregateInterfaceCounts} —
+     *       total + enabled</li>
+     *   <li>{@code SubDataSourceRepository.count} — 保留原 count</li>
+     *   <li>{@code SubSubmissionRecordRepository.aggregatePushStatusCounts} —
+     *       total + pushed + pending（pending 仅 {@code PushStatus.PENDING}，
+     *       不含 PUSHING/FAILED，与 getTrend 语义一致）</li>
+     * </ul>
+     *
      * @return dashboard response with interface, data source, and record counts
      */
     @Transactional(readOnly = true)
@@ -76,15 +84,34 @@ public class SubDashboardService {
         log.debug("Aggregating dashboard statistics");
 
         final DashboardResponse resp = new DashboardResponse();
-        resp.setTotalInterfaceCount(outputInterfaceRepository.count());
-        resp.setEnabledInterfaceCount(
-                outputInterfaceRepository.countByInterfaceStatus(EnableDisableStatus.ENABLED));
+
+        // 聚合 JPQL 单行查询的 Spring Data 签名要求 List<Object[]>，取首行
+        final Object[] ifaceCounts = outputInterfaceRepository.aggregateInterfaceCounts().get(0);
+        resp.setTotalInterfaceCount(toLong(ifaceCounts[0]));
+        resp.setEnabledInterfaceCount(toLong(ifaceCounts[1]));
+
         resp.setTotalDataSourceCount(dataSourceRepository.count());
-        resp.setTotalRecordCount(recordRepository.count());
-        resp.setPushedRecordCount(recordRepository.countByPushStatus(PushStatus.PUSHED));
+
+        final Object[] recordCounts = recordRepository.aggregatePushStatusCounts().get(0);
+        resp.setTotalRecordCount(toLong(recordCounts[0]));
+        resp.setPushedRecordCount(toLong(recordCounts[1]));
         // pendingRecordCount 仅统计 PushStatus.PENDING，不含 PUSHING/FAILED
-        resp.setPendingRecordCount(recordRepository.countByPushStatus(PushStatus.PENDING));
+        resp.setPendingRecordCount(toLong(recordCounts[2]));
+
         return resp;
+    }
+
+    /**
+     * 将聚合查询返回的 SUM 结果安全转 long（空表时 SUM 返回 null）。
+     *
+     * @param value 聚合结果单元（可能为 null）
+     * @return 非 null 的 long 值，null 转 0
+     */
+    private static long toLong(final Object value) {
+        if (value == null) {
+            return 0L;
+        }
+        return ((Number) value).longValue();
     }
 
     /**
@@ -154,9 +181,9 @@ public class SubDashboardService {
         log.debug("Aggregating dashboard distribution: dim={}", LogSanitizer.sanitize(dim));
         final List<Object[]> raw = switch (dim) {
             case "messageType" -> recordRepository.aggregateDistributionByMessageType(
-                    PageRequest.of(0, TOP_N));
+                    null, PageRequest.of(0, TOP_N));
             case "businessType" -> recordRepository.aggregateDistributionByBusinessType(
-                    PageRequest.of(0, TOP_N));
+                    null, PageRequest.of(0, TOP_N));
             default -> throw new IllegalArgumentException(
                     "dim must be messageType or businessType");
         };

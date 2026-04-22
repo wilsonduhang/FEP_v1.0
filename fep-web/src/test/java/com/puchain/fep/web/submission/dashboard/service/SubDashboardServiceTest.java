@@ -1,12 +1,10 @@
 package com.puchain.fep.web.submission.dashboard.service;
 
-import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardDistributionItem;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardResponse;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardTrendResponse;
 import com.puchain.fep.web.submission.datasource.repository.SubDataSourceRepository;
 import com.puchain.fep.web.submission.outputinterface.repository.SubOutputInterfaceRepository;
-import com.puchain.fep.web.submission.record.domain.PushStatus;
 import com.puchain.fep.web.submission.record.repository.SubSubmissionRecordRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
 /**
@@ -48,13 +47,13 @@ class SubDashboardServiceTest {
 
     @Test
     void getDashboard_shouldAggregateAllCounts() {
-        when(outputInterfaceRepository.count()).thenReturn(10L);
-        when(outputInterfaceRepository.countByInterfaceStatus(EnableDisableStatus.ENABLED))
-                .thenReturn(7L);
+        // ifaceCounts[0]=total, ifaceCounts[1]=enabled — 单行聚合包装 List 返回
+        when(outputInterfaceRepository.aggregateInterfaceCounts())
+                .thenReturn(List.<Object[]>of(new Object[] {10L, 7L}));
         when(dataSourceRepository.count()).thenReturn(3L);
-        when(recordRepository.count()).thenReturn(500L);
-        when(recordRepository.countByPushStatus(PushStatus.PUSHED)).thenReturn(350L);
-        when(recordRepository.countByPushStatus(PushStatus.PENDING)).thenReturn(150L);
+        // recordCounts[0]=total, [1]=pushed, [2]=pending
+        when(recordRepository.aggregatePushStatusCounts())
+                .thenReturn(List.<Object[]>of(new Object[] {500L, 350L, 150L}));
 
         final DashboardResponse resp = service.getDashboard();
 
@@ -156,7 +155,7 @@ class SubDashboardServiceTest {
                 new Object[] {"3101", 42L},
                 new Object[] {"1101", 17L}
         );
-        when(recordRepository.aggregateDistributionByMessageType(any(Pageable.class)))
+        when(recordRepository.aggregateDistributionByMessageType(isNull(), any(Pageable.class)))
                 .thenReturn(rows);
 
         final List<DashboardDistributionItem> items = service.getDistribution("messageType");
@@ -174,7 +173,7 @@ class SubDashboardServiceTest {
                 new Object[] {"BIZ_A", 30L},
                 new Object[] {"UNSPECIFIED", 10L}
         );
-        when(recordRepository.aggregateDistributionByBusinessType(any(Pageable.class)))
+        when(recordRepository.aggregateDistributionByBusinessType(isNull(), any(Pageable.class)))
                 .thenReturn(rows);
 
         final List<DashboardDistributionItem> items = service.getDistribution("businessType");

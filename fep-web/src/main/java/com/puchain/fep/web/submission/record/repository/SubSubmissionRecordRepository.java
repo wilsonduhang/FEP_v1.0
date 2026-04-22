@@ -129,6 +129,25 @@ public interface SubSubmissionRecordRepository
     long countByPushStatus(PushStatus pushStatus);
 
     /**
+     * 按推送状态聚合全量 record 的数量统计（用于 Dashboard 概况面板）。
+     *
+     * <p>合并 {@code count()} / {@code countByPushStatus(PUSHED)} / {@code countByPushStatus(PENDING)}
+     * 为单次查询，将 Dashboard 页三次 COUNT 往返压至一次。返回 {@link List}（保证至少 1 行；
+     * 空表时 pushed/pending 列为 {@code null}，调用方需做 null-safe 处理）。</p>
+     *
+     * @return 单行聚合结果 {@code [totalCount, pushedCount, pendingCount]}，外层包一层 List
+     */
+    @Query("SELECT COUNT(r), "
+            + "SUM(CASE WHEN r.pushStatus = "
+            + "com.puchain.fep.web.submission.record.domain.PushStatus.PUSHED "
+            + "THEN 1L ELSE 0L END), "
+            + "SUM(CASE WHEN r.pushStatus = "
+            + "com.puchain.fep.web.submission.record.domain.PushStatus.PENDING "
+            + "THEN 1L ELSE 0L END) "
+            + "FROM SubSubmissionRecord r")
+    List<Object[]> aggregatePushStatusCounts();
+
+    /**
      * 按报文类型统计趋势（按月聚合，H2 兼容 JPQL）。
      *
      * @param messageType 报文类型
@@ -170,24 +189,34 @@ public interface SubSubmissionRecordRepository
                                         @Param("endExclusive") LocalDateTime endExclusive);
 
     /**
-     * 按报文类型分布聚合 Top N（用 Pageable 做 LIMIT；JPQL 无 LIMIT 关键字）。
+     * 按报文类型分布聚合 Top N，支持可选时间下限过滤。
      *
-     * @param pageable 分页参数（通常 PageRequest.of(0, 10) 取 Top 10）
+     * <p>用 Pageable 做 LIMIT；JPQL 无 LIMIT 关键字。</p>
+     *
+     * @param startTime 非 null 时仅统计 {@code create_time >= startTime} 的记录；null 为全量
+     * @param pageable  分页参数（通常 PageRequest.of(0, 10) 取 Top 10）
      * @return 聚合结果列表（Object[] 数组：[messageType, count]，按 count 降序）
      */
     @Query("SELECT r.messageType, COUNT(r) FROM SubSubmissionRecord r "
+            + "WHERE (:startTime IS NULL OR r.createTime >= :startTime) "
             + "GROUP BY r.messageType ORDER BY COUNT(r) DESC")
-    List<Object[]> aggregateDistributionByMessageType(Pageable pageable);
+    List<Object[]> aggregateDistributionByMessageType(
+            @Param("startTime") LocalDateTime startTime,
+            Pageable pageable);
 
     /**
      * 按业务类型分布聚合 Top N；null businessTypeId 映射为 {@code 'UNSPECIFIED'}。
      *
-     * @param pageable 分页参数（通常 PageRequest.of(0, 10) 取 Top 10）
+     * @param startTime 非 null 时仅统计 {@code create_time >= startTime} 的记录；null 为全量
+     * @param pageable  分页参数（通常 PageRequest.of(0, 10) 取 Top 10）
      * @return 聚合结果列表（Object[] 数组：[businessTypeId, count]，按 count 降序）
      */
     @Query("SELECT COALESCE(r.businessTypeId, 'UNSPECIFIED'), COUNT(r) "
             + "FROM SubSubmissionRecord r "
+            + "WHERE (:startTime IS NULL OR r.createTime >= :startTime) "
             + "GROUP BY COALESCE(r.businessTypeId, 'UNSPECIFIED') "
             + "ORDER BY COUNT(r) DESC")
-    List<Object[]> aggregateDistributionByBusinessType(Pageable pageable);
+    List<Object[]> aggregateDistributionByBusinessType(
+            @Param("startTime") LocalDateTime startTime,
+            Pageable pageable);
 }
