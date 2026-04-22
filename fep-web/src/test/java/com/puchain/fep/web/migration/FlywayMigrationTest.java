@@ -75,4 +75,24 @@ class FlywayMigrationTest {
                 "SELECT COUNT(*) FROM t_sys_menu WHERE menu_level = 1", Integer.class);
         assertEquals(9, count);
     }
+
+    @Test
+    void v17PushStatusCreateTimeIndexShouldExist() {
+        Integer distinctCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(DISTINCT INDEX_NAME) FROM INFORMATION_SCHEMA.INDEXES "
+                        + "WHERE UPPER(INDEX_NAME) = 'IDX_SUB_RECORD_PUSH_STATUS_CREATE_TIME'",
+                Integer.class);
+        assertNotNull(distinctCount);
+        assertEquals(1, distinctCount);
+    }
+
+    @Test
+    void v17BizTypeCreateTimeIndexShouldExist() {
+        Integer distinctCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(DISTINCT INDEX_NAME) FROM INFORMATION_SCHEMA.INDEXES "
+                        + "WHERE UPPER(INDEX_NAME) = 'IDX_SUB_RECORD_BIZ_TYPE_CREATE_TIME'",
+                Integer.class);
+        assertNotNull(distinctCount);
+        assertEquals(1, distinctCount);
+    }
 }
