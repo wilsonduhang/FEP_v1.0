@@ -70,6 +70,13 @@ class SyncMessageProcessorServiceIntegrationTest {
         processor = new SyncMessageProcessorService(validator, machine, store);
     }
 
+    /**
+     * 从 test resources 加载报文样本文件为字节数组。
+     *
+     * @param name 样本文件名（自动加 {@code /samples/} 前缀，形如 {@code 1001-valid.xml}）
+     * @return 样本文件完整字节内容
+     * @throws IOException 当资源不存在或读取失败
+     */
     private byte[] loadSample(final String name) throws IOException {
         try (InputStream is = SyncMessageProcessorServiceIntegrationTest.class.getResourceAsStream("/samples/" + name)) {
             if (is == null) {

@@ -79,6 +79,13 @@ class CommonXsdValidationTest {
                 .anyMatch(e -> e.contains("Password"));
     }
 
+    /**
+     * 对给定报文类型加载 classpath XML 样本并断言 XSD 校验通过（errors 列表为空）。
+     *
+     * @param type 报文类型枚举（定位 XSD schema）
+     * @param path classpath 资源路径（相对 test/resources/samples/）
+     * @throws IOException 样本资源读取失败（文件不存在或流异常）
+     */
     private static void assertValid(final MessageType type, final String path) throws IOException {
         byte[] xml = loadSample(path);
         ValidationResult result = validator.validate(type, xml);
@@ -88,6 +95,13 @@ class CommonXsdValidationTest {
         assertThat(result.errors()).isEmpty();
     }
 
+    /**
+     * 从 test resources 加载报文样本文件为字节数组。
+     *
+     * @param path classpath 资源路径（相对 test/resources，形如 {@code /samples/common/9000-valid.xml}）
+     * @return 样本文件完整字节内容
+     * @throws IOException 当资源不存在或读取失败
+     */
     private static byte[] loadSample(final String path) throws IOException {
         try (InputStream is = CommonXsdValidationTest.class.getResourceAsStream(path)) {
             if (is == null) {

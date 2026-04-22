@@ -74,6 +74,13 @@ class XsdValidatorTest {
         assertThat(result.errors()).isNotEmpty();
     }
 
+    /**
+     * 从 test resources 加载报文样本文件为字节数组。
+     *
+     * @param path classpath 资源路径（相对 test/resources，形如 {@code /samples/1001-valid.xml}）
+     * @return 样本文件完整字节内容
+     * @throws IOException 当资源不存在或读取失败
+     */
     private byte[] loadSample(final String path) throws IOException {
         try (InputStream is = XsdValidatorTest.class.getResourceAsStream(path)) {
             if (is == null) {
