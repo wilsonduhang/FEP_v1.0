@@ -175,8 +175,8 @@ public final class MessageDirectionMap {
     public static List<MessageType> messagesFor(final AccessRole role, final boolean requiresFepOnly) {
         Objects.requireNonNull(role, "role");
         return TABLE.entrySet().stream()
-                .filter(e -> e.getKey().role() == role)
-                .filter(e -> !requiresFepOnly || e.getValue().requiresFep())
+                .filter(e -> e.getKey().role() == role
+                        && (!requiresFepOnly || e.getValue().requiresFep()))
                 .map(e -> e.getKey().msg())
                 .sorted(Comparator.comparing(MessageType::msgNo))
                 .collect(Collectors.toUnmodifiableList());
