@@ -3,6 +3,8 @@ package com.puchain.fep.processor.pipeline;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.model.CfxMessage;
+import com.puchain.fep.converter.model.CommonHead;
+import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.state.IllegalMessageStateException;
 import com.puchain.fep.processor.state.MessageProcessRecord;
@@ -11,7 +13,11 @@ import com.puchain.fep.processor.state.MessageProcessStore;
 import com.puchain.fep.processor.state.MessageStateMachine;
 import com.puchain.fep.processor.validation.ValidationResult;
 import com.puchain.fep.processor.validation.XsdValidator;
-import jakarta.xml.bind.JAXB;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
+import javax.xml.namespace.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -151,31 +157,121 @@ public class BatchMessageProcessorService {
     }
 
     /**
-     * 从 {@link CfxMessage} 提取批量记录（每条 body marshal 为独立 XML fragment）。
+     * 从 {@link CfxMessage} 提取批量记录（每条 body 包回完整 CFX 壳体 marshal 为 XML）。
      *
-     * <p>v1d 修正：用 {@link JAXB#marshal(Object, java.io.Writer)} 静态 API 将每个
-     * body POJO 序列化为 XML 字符串（非 {@code Object::toString} — 后者返回类名 +
-     * hashcode 非 XML，XSD 校验必挂）。JAXB static API 会为每个 body 自动构造
-     * context 并 marshal 根元素（POJO 上的 {@code @XmlRootElement} 决定根名）。</p>
+     * <p>T5 修正（T4 review 捕获）：各报文 XSD 的 root 固定为 {@code <CFX>}，
+     * 且 MSG 内要求 {@code <RealHead{msgNo}>} + {@code <body>} 两个子元素（参考
+     * {@code 3005.xsd:27-43}）。若单独 marshal body 得 fragment 根（如
+     * {@code <qyAccQuery3005>}），{@code XsdValidator.validate} 必报
+     * {@code cvc-elt.1.a: 找不到元素 'xxx' 的声明}，COMPLETED 路径永不可达。
+     * 本方法通过 {@link #wrapBodyInCfx} 把每条 body 包回
+     * {@code <CFX><HEAD/><MSG><RealHead{msgNo}/><body/></MSG></CFX>} 完整壳体再 marshal，
+     * 解决 fragment/root 不匹配且 MSG 缺 RealHead 的双重问题。</p>
      *
      * <p>约定：{@link CfxMessage#getBodies()} 返回的 {@code List<Object>} 中每个
      * 非 null 元素即为一条 batch record（P1b-DEFECT-001 修复后 MsgContainer 支持 List）。</p>
      *
      * @param msg 批量报文
-     * @return XML fragment 列表；{@code msg} 或 body list 为空返回空 list
+     * @return 完整 CFX XML 列表；{@code msg} 或 body list 为空返回空 list
      */
     private List<String> extractRecords(final CfxMessage msg) {
         if (msg == null || msg.getBodies() == null) {
             return List.of();
         }
+        final CommonHead head = msg.getHead();
+        final String msgNo = head != null ? head.getMsgNo() : null;
         return msg.getBodies().stream()
                 .filter(Objects::nonNull)
-                .map(body -> {
-                    StringWriter sw = new StringWriter();
-                    JAXB.marshal(body, sw);
-                    return sw.toString();
-                })
+                .map(body -> wrapBodyInCfx(head, msgNo, body))
                 .toList();
+    }
+
+    /**
+     * 将单条 body 包回完整 CFX 壳体
+     * （{@code <CFX><HEAD/><MSG><RealHead{msgNo}/><body/></MSG></CFX>}）。
+     *
+     * <p>XSD root 固定为 CFX，且 MSG 要求 {@code <RealHead{msgNo}>} + {@code <body>}
+     * 两子元素。本方法：
+     * <ol>
+     *   <li>构造 {@link CfxMessage} 复用 head；</li>
+     *   <li>派生默认 {@link RequestBusinessHead}（SendOrgCode=head.srcNode，
+     *       EntrustDate=head.workDate，TransitionNo=head.msgId 后 8 位数字），
+     *       包装为 {@link JAXBElement} 动态指定 QName 为 {@code "RealHead" + msgNo}；</li>
+     *   <li>把 RealHead JAXBElement 和 body 按序放入 {@code msgContainer.contents}；</li>
+     *   <li>用 {@link JAXBContext#newInstance(Class[])} 显式注册 {@code CfxMessage} +
+     *       {@code RequestBusinessHead} + {@code body.getClass()} 避免 lax 降级；</li>
+     *   <li>marshal 输出完整 CFX XML。</li>
+     * </ol>
+     *
+     * <p><b>默认 RealHead 取值策略</b>：service 层无法从 {@link CfxMessage} 模型
+     * 反推精确 RealHead 值（模型不含 RealHead 字段），故从 HEAD 衍生合理默认值以
+     * 满足 {@code RequestHead} XSD 结构。业务生产路径若需精确 RealHead，由上游
+     * ConverterPipeline 在 CfxMessage 构造时通过扩展模型预先注入。</p>
+     *
+     * @param head  共享 head（来自原 batch msg）
+     * @param msgNo 报文号（用于 RealHead 元素名拼接）
+     * @param body  单条 body POJO
+     * @return 完整 CFX XML 字符串
+     * @throws IllegalStateException JAXB 构建 context / marshal 失败
+     */
+    private String wrapBodyInCfx(final CommonHead head, final String msgNo, final Object body) {
+        final CfxMessage wrapper = new CfxMessage();
+        wrapper.setHead(head);
+        final CfxMessage.MsgContainer container = new CfxMessage.MsgContainer();
+
+        // 派生默认 RealHead（SendOrgCode 14 位 / EntrustDate 8 位 YYYYMMDD /
+        // TransitionNo 8 位数字）。若 head 字段缺失或不满足长度约束，service 不
+        // 强行补齐，RequestBusinessHead setter 的入参 null 允许通过。
+        final RequestBusinessHead realHead = deriveRealHead(head);
+        final String realHeadName = "RealHead" + (msgNo != null ? msgNo : "");
+        final JAXBElement<RequestBusinessHead> realHeadElement = new JAXBElement<>(
+                new QName(realHeadName), RequestBusinessHead.class, realHead);
+
+        container.getContents().add(realHeadElement);
+        container.getContents().add(body);
+        wrapper.setMsgContainer(container);
+
+        final StringWriter sw = new StringWriter();
+        try {
+            final JAXBContext ctx = JAXBContext.newInstance(
+                    CfxMessage.class, RequestBusinessHead.class, body.getClass());
+            final Marshaller marshaller = ctx.createMarshaller();
+            marshaller.marshal(wrapper, sw);
+        } catch (JAXBException e) {
+            throw new IllegalStateException(
+                    "Failed to marshal CFX wrapper for body " + body.getClass().getName(), e);
+        }
+        return sw.toString();
+    }
+
+    /**
+     * 从 HEAD 派生默认 {@link RequestBusinessHead}。
+     *
+     * <p>SendOrgCode 取 {@code head.srcNode}（14 位金融机构代码）；
+     * EntrustDate 取 {@code head.workDate}（YYYYMMDD）；
+     * TransitionNo 取 {@code head.msgId} 后 8 位数字（msgId 为 20 位 YYYYMMDDHHMMSSxxxxxx）。
+     * 任一字段若不满足 RequestBusinessHead setter 的校验（非 null 下长度/格式），
+     * setter 会抛 {@link IllegalArgumentException}，本方法不做兜底，让故障显式暴露。</p>
+     *
+     * @param head HEAD，{@code null} 返回空 RealHead
+     * @return 派生 RealHead
+     */
+    private RequestBusinessHead deriveRealHead(final CommonHead head) {
+        final RequestBusinessHead rh = new RequestBusinessHead();
+        if (head == null) {
+            return rh;
+        }
+        rh.setSendOrgCode(head.getSrcNode());
+        rh.setEntrustDate(head.getWorkDate());
+        final String msgId = head.getMsgId();
+        if (msgId != null && msgId.length() >= 8) {
+            final String candidate = msgId.substring(msgId.length() - 8);
+            // setter 仅接受 8 位数字；非数字 msgId 尾段回退到 null（setter 允许）。
+            if (candidate.chars().allMatch(Character::isDigit)) {
+                rh.setTransitionNo(candidate);
+            }
+        }
+        return rh;
     }
 
     /**
