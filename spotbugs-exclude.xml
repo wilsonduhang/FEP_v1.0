@@ -941,6 +941,15 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- BatchMessageProcessorService (P2d T3): 同 Sync/Async，recordId/transitionNo/
+         exception.message 均经 LogSanitizer.sanitize 剥离 CR/LF，type.msgNo() 来源
+         MessageType 枚举（4 位数字常量）。FindSecBugs 不识别自定义 sanitizer，
+         属确认的误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.processor.pipeline.BatchMessageProcessorService"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
     <!-- Supply chain Body POJOs (3001/3002): JAXB 绑定对象，getter/setter 必须直接返回
          可变 ExtInfo 引用才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
     <Match>
