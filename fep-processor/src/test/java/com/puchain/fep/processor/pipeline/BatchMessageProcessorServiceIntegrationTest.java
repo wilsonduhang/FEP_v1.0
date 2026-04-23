@@ -135,19 +135,14 @@ class BatchMessageProcessorServiceIntegrationTest {
     }
 
     @Test
-    void oversizedBatch_shouldTriggerSplitPath() {
-        // 构造 50 条 3005 body 副本 → service 内包回 CFX 壳体后逐条
-        // BatchPayloadAdapter.needsSplit 判定（实测 needsSplit 以 UTF-8 byte[] > 8KB 为阈值）。
-        // 单条 3005 ~300B，包壳后仍 < 8KB，本测试需填充超长 qyAccName 使单
-        // 壳体超 8KB 触发真实 split 路径。qyAccName XSD maxLength=256 → 设 256 字符
-        // (对应 CFX 壳体 ~9.5KB 触发 split)。注意：qyAccName 被 XSD 长度约束，
-        // 超过 maxLength 会 XSD 校验失败；本 case 目标是「split 路径触发 + 全部 COMPLETED」。
+    void largeBatch50Records_shouldAllComplete() {
+        // 本 case 聚焦 50 条 batch 的全量 COMPLETED 路径：service.process 深度批量 loop
+        // + 所有 body 通过 XSD → processedCount=50 + allSucceeded=true。
         //
-        // 取舍：qyAccName 256 字符 × 50 body 加 head 壳体 marshal 后单条 fragment
-        // 实测 ~800B，远不足 8KB。要同时满足 XSD valid + split 触发，需扩大到不
-        // 受 XSD 长度约束的字段，或接受不触发 split 只断言 processedCount=50 + 全成功。
-        // 本 case 采纳后者（聚焦 service.process 深度批量 loop + COMPLETED 路径），
-        // split 路径的单元测试覆盖在 BatchMessageProcessorServiceTest#splittable。
+        // 注意：本 case 不触发 BatchPayloadAdapter.split（needsSplit 以 UTF-8 byte[] > 8KB
+        // 为阈值；单条 3005 ~300B × 50 包壳后仍不到 8KB，qyAccName 受 XSD maxLength=256
+        // 约束无法进一步放大使壳体膨胀到 > 8KB 触发 split）。
+        // split 路径的单元测试覆盖在 BatchMessageProcessorServiceTest#process_oversizedPayload_shouldInvokeAdapterSplit。
         CommonHead head = head("3005");
         QyAccQuery3005[] bodies = new QyAccQuery3005[50];
         for (int i = 0; i < bodies.length; i++) {
