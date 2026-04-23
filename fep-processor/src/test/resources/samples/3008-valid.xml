@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>A1000143000104</SrcNode>
+        <DesNode>10000000000001</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>3008</MsgNo>
+        <MsgId>20260423103500000038</MsgId>
+        <CorrMsgId>20260423103000000037</CorrMsgId>
+        <WorkDate>20260423</WorkDate>
+    </HEAD>
+    <MSG>
+        <RealHead3008>
+            <SendOrgCode>A1000143000104</SendOrgCode>
+            <EntrustDate>20260423</EntrustDate>
+            <TransitionNo>00000038</TransitionNo>
+            <ReturnCode>0</ReturnCode>
+            <ReturnMemo>成功</ReturnMemo>
+        </RealHead3008>
+        <InvoCheckReturn3008>
+            <SerialNo>SN2026042310300000000000000038</SerialNo>
+            <SendNodeCode>A1000143000104</SendNodeCode>
+            <DesNodeCode>10000000000001</DesNodeCode>
+            <InvoCheckReturnCode>0</InvoCheckReturnCode>
+            <InvoCheckReturnMemo>核验通过</InvoCheckReturnMemo>
+            <kpName>湖南某某销售有限公司</kpName>
+            <kpCode>91430000123456789X</kpCode>
+            <spName>湖南某某采购有限公司</spName>
+            <spCode>91430000987654321Y</spCode>
+            <InvoCode>011001234567</InvoCode>
+            <InvoNum>044001234567890123</InvoNum>
+            <CheckCode>ABCDEF</CheckCode>
+            <InvoAmtTax>10000.00</InvoAmtTax>
+            <InvoAmt>9433.96</InvoAmt>
+            <InvoDate>20260423</InvoDate>
+            <InvoFilename>invoice-2026042300001.pdf</InvoFilename>
+        </InvoCheckReturn3008>
+    </MSG>
+</CFX>

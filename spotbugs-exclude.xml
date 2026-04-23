@@ -981,6 +981,19 @@
         </Or>
     </Match>
 
+    <!-- Supply chain Body POJOs (3007/3008, P2d): JAXB 绑定对象，getter/setter 必须直接返回
+         可变 ExtInfo 引用才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007"/>
+            <Class name="com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
     <!-- Common complexType POJO PzInfo (P2c): JAXB 绑定对象，pzFlowInfo 是
          List<PzFlowInfo>，getter/setter 必须直接返回可变引用才能让 JAXB marshaller
          正常读写。与上方 Supply chain Body POJOs 同类处理（防御性复制会破坏 JAXB 契约）。 -->

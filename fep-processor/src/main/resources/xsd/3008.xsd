@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[3008]发票核验回执</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="RealHead3008" type="ResponseHead">
+				<xsd:annotation>
+					<xsd:documentation>3008报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoCheckReturn3008" type="InvoCheckReturn3008" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票核验回执</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="InvoCheckReturn3008">
+		<xsd:annotation>
+			<xsd:documentation>发票核验回执</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNo" type="SerialNo">
+				<xsd:annotation>
+					<xsd:documentation>流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SendNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>发送方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>接收方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoCheckReturnCode" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>查询返回码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoCheckReturnMemo" type="String0to200" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>返回码备注</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="kpName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>开票人名称-销售方</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="kpCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>开票人社会信用代码-销售方</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="spName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>开票人名称-购买方</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="spCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>开票人社会信用代码-购买方</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoCode" type="fpCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoNum" type="String8to30" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票号码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CheckCode" type="String6" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票校验码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoAmtTax" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票金额含税</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoAmt" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票金额不含税</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票开票日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票对应文件</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtInfo" type="extInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>自定义扩展信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

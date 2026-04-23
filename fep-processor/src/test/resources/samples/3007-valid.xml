@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>10000000000001</SrcNode>
+        <DesNode>A1000143000104</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>3007</MsgNo>
+        <MsgId>20260423103000000037</MsgId>
+        <CorrMsgId>20260423103000000036</CorrMsgId>
+        <WorkDate>20260423</WorkDate>
+    </HEAD>
+    <MSG>
+        <RealHead3007>
+            <SendOrgCode>10000000000001</SendOrgCode>
+            <EntrustDate>20260423</EntrustDate>
+            <TransitionNo>00000037</TransitionNo>
+        </RealHead3007>
+        <InvoCheckQuery3007>
+            <SerialNo>SN2026042310300000000000000037</SerialNo>
+            <SendNodeCode>10000000000001</SendNodeCode>
+            <DesNodeCode>A1000143000104</DesNodeCode>
+            <InvoCode>011001234567</InvoCode>
+            <InvoNum>044001234567890123</InvoNum>
+            <CheckCode>ABCDEF</CheckCode>
+            <InvoAmtTax>10000.00</InvoAmtTax>
+            <InvoAmt>9433.96</InvoAmt>
+            <InvoDate>20260423</InvoDate>
+            <ywKeyValue>BIZKEY-2026042300001</ywKeyValue>
+        </InvoCheckQuery3007>
+    </MSG>
+</CFX>
