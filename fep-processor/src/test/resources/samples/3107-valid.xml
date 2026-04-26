@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>B1001010203</SrcNode>
+        <DesNode>A1000143000104</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>3107</MsgNo>
+        <MsgId>20260424103000000071</MsgId>
+        <CorrMsgId>20260424102500000070</CorrMsgId>
+        <WorkDate>20260424</WorkDate>
+    </HEAD>
+    <MSG>
+        <BatchHead3107>
+            <SendOrgCode>B1001010203</SendOrgCode>
+            <RcvOrgCode>A1000143000104</RcvOrgCode>
+            <EntrustDate>20260424</EntrustDate>
+            <BatchNo>BATCH3107-001</BatchNo>
+            <TotalCount>2</TotalCount>
+            <TotalAmt>0.00</TotalAmt>
+            <RetCode>00</RetCode>
+        </BatchHead3107>
+        <pzCheckQuery3107>
+            <SerialNo>SN2026042410300000000000000071</SerialNo>
+            <SendNodeCode>B1001010203</SendNodeCode>
+            <DesNodeCode>A1000143000104</DesNodeCode>
+            <CheckDate>20260424</CheckDate>
+            <hxqyNum>2</hxqyNum>
+            <hxqyInfo>
+                <hxqyName>湖南某某核心企业A</hxqyName>
+                <hxqyCode>91430100MA00000001</hxqyCode>
+            </hxqyInfo>
+            <hxqyInfo>
+                <hxqyName>湖南某某核心企业B</hxqyName>
+                <hxqyCode>91430100MA00000002</hxqyCode>
+            </hxqyInfo>
+            <ExtInfo>
+                <ExtData>3107附加数据</ExtData>
+            </ExtInfo>
+        </pzCheckQuery3107>
+    </MSG>
+</CFX>
