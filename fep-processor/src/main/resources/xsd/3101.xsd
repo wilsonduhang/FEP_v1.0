@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[3101] 合同信息</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BatchHead3101" type="ResponseHead">
+				<xsd:annotation>
+					<xsd:documentation>3101报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractInfo3101" type="ContractInfo3101">
+				<xsd:annotation>
+					<xsd:documentation>电子合同信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ContractInfo3101">
+		<xsd:annotation>
+			<xsd:documentation>合同信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNo">
+				<xsd:annotation>
+					<xsd:documentation>流水号</xsd:documentation>
+				</xsd:annotation>
+				<xsd:simpleType>
+					<xsd:restriction base="SerialNo"/>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="SendNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>发送方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>接收方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractNo" type="htSerialNo">
+				<xsd:annotation>
+					<xsd:documentation>合同编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractType" type="String0to30">
+				<xsd:annotation>
+					<xsd:documentation>合同类别说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DigitalSeal" type="Boolean" default="0">
+				<xsd:annotation>
+					<xsd:documentation>是否采用电子印章</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractFilename" type="FileName">
+				<xsd:annotation>
+					<xsd:documentation>附件合同文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CertFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>附件合同公钥证书文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="jfqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>甲方企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="jfqyCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>甲方企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="yfqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>乙方企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="yfqyCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>乙方企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyName3" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>第三方企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyCode3" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>第三方企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyName4" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>第四方企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyCode4" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>第四方企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="sxDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>生效日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qzDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>签字日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ywValue1" type="String0to300" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>业务关联字段1</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ywValue2" type="String0to300" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>业务关联字段2</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractReturnMemo" type="String0to300" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>合同返回附言说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtInfo" type="extInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>自定义扩展信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>
