@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[3115] 平台资金清算及回执</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BatchHead3115" type="RequestResponseHead">
+				<xsd:annotation>
+					<xsd:documentation>3115报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatPay3115" type="PlatPay3115">
+				<xsd:annotation>
+					<xsd:documentation>平台资金清算指令及回执</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="PlatPay3115">
+		<xsd:annotation>
+			<xsd:documentation>平台资金清算指令及回执</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNo" type="SerialNo">
+				<xsd:annotation>
+					<xsd:documentation>流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SendNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>发送方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>接收方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatPayNo" type="String10to30">
+				<xsd:annotation>
+					<xsd:documentation>清算指令平台编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyName" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsInfo" type="qsInfo" maxOccurs="200">
+				<xsd:annotation>
+					<xsd:documentation>清算指令信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SignElement" type="String0to200" default="fkrAccName|fkrAccNo|skrAccName|skrAccNo|Amt|WishDate" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>指令发起方清算指令签名要素</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsfqSign" type="PK7Sign" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>指令发起方清算指令签名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatSign" type="PK7Sign" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>平台方清算指令签名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtInfo" type="extInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>自定义扩展信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="qsInfo">
+		<xsd:annotation>
+			<xsd:documentation>清算指令信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="qsSerialNo" type="qsSerialNo">
+				<xsd:annotation>
+					<xsd:documentation>清算指令流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzNo" type="pzNo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>关联电子凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="fkfAccName" type="AccName">
+				<xsd:annotation>
+					<xsd:documentation>付款方账户名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="fkfAccNo" type="AccNumber">
+				<xsd:annotation>
+					<xsd:documentation>付款方账号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="skfAccName" type="AccName">
+				<xsd:annotation>
+					<xsd:documentation>收款方账户名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="skfAccNo" type="AccNumber">
+				<xsd:annotation>
+					<xsd:documentation>收款方账号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="skfBankCode" type="AccBankCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>收款方银行清算行号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Amt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>支付金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="WishDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>期望日</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsPostscript" type="String0to200" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>清算指令附言</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsMemo" type="String0to200" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>清算指令备注</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsReturnInfo" type="qsReturnInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>清算回执信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="qsReturnInfo">
+		<xsd:annotation>
+			<xsd:documentation>清算回执信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="qsReturnBankName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>清算银行名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsReturnCode" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>清算指令银行返回码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsReturnSerialNo" type="String0to100">
+				<xsd:annotation>
+					<xsd:documentation>银行对应业务流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsReturnDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>银行交易日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsReturnFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>银行对应业务回单文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qsReturnMemo" type="String0to200" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>清算指令银行返回说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>
