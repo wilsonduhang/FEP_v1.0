@@ -1036,4 +1036,17 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
+    <!-- ===== P2d-ext Supply chain Body POJOs 批量排除（T1-T7） =====
+         14 主 POJO + 21 支撑 complexType = 35 classes 全部属 JAXB 绑定对象，
+         getter/setter 必须直接暴露可变引用才能让 marshaller 正常读写。
+         防御性复制会破坏 JAXB 契约。与 3001-3008 精神一致（line 953-1004）。
+         OR 语义与既有逐类 Match 重叠无害，保留逐类 Match 供审计追溯。-->
+    <Match>
+        <Class name="~com\.puchain\.fep\.processor\.body\.supplychain\..*"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
 </FindBugsFilter>

@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[3009] 电子凭证融资结果登记</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="RealHead3009" type="RequestHead">
+				<xsd:annotation>
+					<xsd:documentation>3009报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzReturnInfo3009" type="rzReturnInfo3009" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>企业融资结果登记信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="rzReturnInfo3009">
+		<xsd:annotation>
+			<xsd:documentation>企业融资结果登记信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNo" type="SerialNo">
+				<xsd:annotation>
+					<xsd:documentation>流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SendNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>发送方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>接收方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatApplyNo" type="String0to100">
+				<xsd:annotation>
+					<xsd:documentation>平台融资申请业务编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>核心企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzpzNo" type="pzNo">
+				<xsd:annotation>
+					<xsd:documentation>融资对应凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzPhaseCode">
+				<xsd:annotation>
+					<xsd:documentation>凭证融资进度码</xsd:documentation>
+				</xsd:annotation>
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:int">
+						<xsd:pattern value="\d{2}"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="rzPhaseInfo" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>凭证融资进度说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzAmtInfo" type="rzAmtInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资结果信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="dbInfo" type="dbInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>担保信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtInfo" type="extInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>自定义扩展信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 融资结果信息段 -->
+	<xsd:complexType name="rzAmtInfo">
+		<xsd:annotation>
+			<xsd:documentation>融资结果信息段</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BillNo" type="String0to100">
+				<xsd:annotation>
+					<xsd:documentation>借据编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzAmt" type="Currency" default="0.00">
+				<xsd:annotation>
+					<xsd:documentation>融资金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzStartDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>实际放款日</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzEndDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>融资到期日</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="lxAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>利息总金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzRate" type="Rate">
+				<xsd:annotation>
+					<xsd:documentation>银行融资利率</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BankSCAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>银行手续费金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BankSCRate" type="Rate">
+				<xsd:annotation>
+					<xsd:documentation>银行手续费费率</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="TotalSCAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>银行代扣手续费总金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzNetAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>融资净额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RepayMode" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>还款模式说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="LoanAccInfo" type="qyAccInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>贷款账户信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 融资担保信息段 -->
+	<xsd:complexType name="dbInfo">
+		<xsd:annotation>
+			<xsd:documentation>融资担保信息段</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="dbAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>担保贷款总额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="dbFee" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>担保手续费金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="dbRate" type="Rate">
+				<xsd:annotation>
+					<xsd:documentation>担保手续费费率</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="dbqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>担保公司名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="dbNodeCode" type="NodeCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>担保公司节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="dbContractNo" type="String6to50" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>担保合同编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

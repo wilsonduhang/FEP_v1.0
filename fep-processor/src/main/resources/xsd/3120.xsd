@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[3120] 供应链非实时业务通用转发报文</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BatchHead3120" type="RequestHead">
+				<xsd:annotation>
+					<xsd:documentation>3120报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Forward3120" type="Forward3120">
+				<xsd:annotation>
+					<xsd:documentation>供应链非实时通用转发</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="Forward3120">
+		<xsd:annotation>
+			<xsd:documentation>供应链非实时通用转发</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNo" type="SerialNo">
+				<xsd:annotation>
+					<xsd:documentation>流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SrcNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>报文发起节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>报文接收节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BusinessNo" type="BusinessNo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>业务分类码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Parameters" type="Parameters" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>参数</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Content" type="Content">
+				<xsd:annotation>
+					<xsd:documentation>数据内容</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtInfo" type="extInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>自定义扩展信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>
