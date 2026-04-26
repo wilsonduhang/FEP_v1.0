@@ -950,58 +950,14 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
-    <!-- Supply chain Body POJOs (3001/3002): JAXB 绑定对象，getter/setter 必须直接返回
-         可变 ExtInfo 引用才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
-    <Match>
-        <Or>
-            <Class name="com.puchain.fep.processor.body.supplychain.ProgressQuery3001"/>
-            <Class name="com.puchain.fep.processor.body.supplychain.ProgressQueryReturn3002"/>
-        </Or>
-        <Or>
-            <Bug pattern="EI_EXPOSE_REP"/>
-            <Bug pattern="EI_EXPOSE_REP2"/>
-        </Or>
-    </Match>
+    <!-- Supply chain Body POJOs (P2a-P2d 3001-3008) consolidated under wildcard
+         match `~com\.puchain\.fep\.processor\.body\.supplychain\..*` (introduced
+         by P2d-ext T1 at the bottom of this file). 4 prior per-class Match blocks
+         (3001/3002, 3003/3004, 3005/3006, 3007/3008) removed by P2d-ext T9 Q1
+         simplify (no behavior change; wildcard fully supersedes them). Pattern
+         rationale unchanged: JAXB getter/setter must return mutable references for
+         marshal/unmarshal — defensive copies break JAXB contract. -->
 
-    <!-- Supply chain Body POJOs (3003/3004): JAXB 绑定对象，getter/setter 必须直接返回
-         可变引用（ExtInfo/PzrzStatusInfo/PzInfo/List<RiskRate>/List<ZpzAllInfo>）才能让
-         JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
-    <Match>
-        <Or>
-            <Class name="com.puchain.fep.processor.body.supplychain.PzInfoQuery3003"/>
-            <Class name="com.puchain.fep.processor.body.supplychain.PzInfoReturn3004"/>
-        </Or>
-        <Or>
-            <Bug pattern="EI_EXPOSE_REP"/>
-            <Bug pattern="EI_EXPOSE_REP2"/>
-        </Or>
-    </Match>
-
-    <!-- Supply chain Body POJOs (3005/3006): JAXB 绑定对象，getter/setter 必须直接返回
-         可变 ExtInfo 引用才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
-    <Match>
-        <Or>
-            <Class name="com.puchain.fep.processor.body.supplychain.QyAccQuery3005"/>
-            <Class name="com.puchain.fep.processor.body.supplychain.QyAccQueryReturn3006"/>
-        </Or>
-        <Or>
-            <Bug pattern="EI_EXPOSE_REP"/>
-            <Bug pattern="EI_EXPOSE_REP2"/>
-        </Or>
-    </Match>
-
-    <!-- Supply chain Body POJOs (3007/3008, P2d): JAXB 绑定对象，getter/setter 必须直接返回
-         可变 ExtInfo 引用才能让 JAXB marshaller 正常读写。防御性复制会破坏 JAXB 契约。 -->
-    <Match>
-        <Or>
-            <Class name="com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007"/>
-            <Class name="com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008"/>
-        </Or>
-        <Or>
-            <Bug pattern="EI_EXPOSE_REP"/>
-            <Bug pattern="EI_EXPOSE_REP2"/>
-        </Or>
-    </Match>
 
     <!-- Common complexType POJO PzInfo (P2c): JAXB 绑定对象，pzFlowInfo 是
          List<PzFlowInfo>，getter/setter 必须直接返回可变引用才能让 JAXB marshaller
