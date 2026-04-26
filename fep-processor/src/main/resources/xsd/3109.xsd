@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[3109] 企业登记信息</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BatchHead3109" type="RequestHead">
+				<xsd:annotation>
+					<xsd:documentation>3109报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyRegister3109" type="qyRegister3109">
+				<xsd:annotation>
+					<xsd:documentation>企业登记信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="qyRegister3109">
+		<xsd:annotation>
+			<xsd:documentation>企业登记信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNo" type="SerialNo">
+				<xsd:annotation>
+					<xsd:documentation>流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SendNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>发送方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>接收方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyFlag" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>企业分类码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyInfo" type="hxqyInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业登记信息列表</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyAccLockInfo" type="qyAccLockInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>回款锁定企业登记信息列表</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatInfo" type="PlatInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>平台企业登记信息列表</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtInfo" type="extInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>自定义扩展信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="hxqyInfo">
+		<xsd:annotation>
+			<xsd:documentation>核心企业登记信息段</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="hxqyNum" type="Integer">
+				<xsd:annotation>
+					<xsd:documentation>核心企业明细条数</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyInfoMx" type="hxqyInfoMx" maxOccurs="20">
+				<xsd:annotation>
+					<xsd:documentation>核心企业明细</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="hxqyInfoMx">
+		<xsd:annotation>
+			<xsd:documentation>核心企业登记信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="PlatNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>核心企业所在平台节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>核心企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>核心企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyState" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>核心企业登记状态代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyClass" type="Number1to2" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业登记业务代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyDateBegin" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业登记上线日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyDateEnd" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业截止日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyGroupName" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业所属集团名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyGroupCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业所属集团社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BankCodeList" type="String0to1000" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业关联银行代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyCAFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业公钥证书文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="qyAccLockInfo">
+		<xsd:annotation>
+			<xsd:documentation>回款锁定企业登记信息段</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="qyAccLockNum" type="Integer">
+				<xsd:annotation>
+					<xsd:documentation>回款锁定企业明细条数</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyAccLockInfoMx" type="qyAccLockInfoMx" maxOccurs="20">
+				<xsd:annotation>
+					<xsd:documentation>回款锁定企业明细</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="qyAccLockInfoMx">
+		<xsd:annotation>
+			<xsd:documentation>回款锁定企业明细信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="MonitorState" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>状态识别码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AccMonitorNo" type="String0to50">
+				<xsd:annotation>
+					<xsd:documentation>银行唯一标识申请号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>回款监控企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PayerName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>付款企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BeginDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>监控开始日</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EndDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>监控截止日</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AmtMin" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>最小金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AmtMax" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>最大金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Memo" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>监控或回款备注说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Filename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="PlatInfo">
+		<xsd:annotation>
+			<xsd:documentation>平台企业登记信息段</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="PlatNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>平台节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>平台企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>平台企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatState" type="Number1">
+				<xsd:annotation>
+					<xsd:documentation>平台登记状态代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatType" type="Number1" default="1">
+				<xsd:annotation>
+					<xsd:documentation>平台企业类型</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatSysName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>平台供应链系统名称全称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatSysShortName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>平台供应链系统名称简称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatServiceObject" type="Number1">
+				<xsd:annotation>
+					<xsd:documentation>供应链系统服务对象</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatDevelopmentMethod" type="Number1">
+				<xsd:annotation>
+					<xsd:documentation>平台研发方式</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SAASServiceName" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>SAAS服务提供者名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatSysSAAS" type="Boolean" default="0">
+				<xsd:annotation>
+					<xsd:documentation>机构自身是否提供SAAS服务</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="OtherService" type="Boolean" default="0">
+				<xsd:annotation>
+					<xsd:documentation>其他业务</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatSysURL" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>互联网访问地址</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatRegAddr" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>平台注册地</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatRegAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>注册资金（万）</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatPaidinAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>实缴资金（万）</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatParent" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>平台机构母公司名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatDateBegin" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>平台登记上线日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatDateEnd" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>平台截止日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatCAFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>平台公钥证书文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ShareholderInfo" type="ShareholderInfo" maxOccurs="10">
+				<xsd:annotation>
+					<xsd:documentation>主要股东信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContactPersonInfo" type="PersonInfo">
+				<xsd:annotation>
+					<xsd:documentation>联系人信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="ShareholderInfo">
+		<xsd:annotation>
+			<xsd:documentation>主要股东信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="ShareholderName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>股东名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ShareProportion" type="String0to10">
+				<xsd:annotation>
+					<xsd:documentation>持股比例</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>
