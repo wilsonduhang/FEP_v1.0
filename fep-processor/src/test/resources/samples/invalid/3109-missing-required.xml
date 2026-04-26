@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>B1001010203</SrcNode>
+        <DesNode>A1000143000104</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>3109</MsgNo>
+        <MsgId>20260424113000000091</MsgId>
+        <CorrMsgId>20260424112500000090</CorrMsgId>
+        <WorkDate>20260424</WorkDate>
+    </HEAD>
+    <MSG>
+        <BatchHead3109>
+            <SendOrgCode>B1001010203</SendOrgCode>
+            <RcvOrgCode>A1000143000104</RcvOrgCode>
+            <EntrustDate>20260424</EntrustDate>
+            <BatchNo>BATCH3109-001</BatchNo>
+            <TotalCount>1</TotalCount>
+            <TotalAmt>0.00</TotalAmt>
+            <RetCode>00</RetCode>
+        </BatchHead3109>
+        <qyRegister3109>
+            <SendNodeCode>B1001010203</SendNodeCode>
+            <DesNodeCode>A1000143000104</DesNodeCode>
+            <qyFlag>1</qyFlag>
+            <hxqyInfo>
+                <hxqyNum>1</hxqyNum>
+                <hxqyInfoMx>
+                    <PlatNodeCode>B1001010203</PlatNodeCode>
+                    <hxqyName>湖南某某核心企业A</hxqyName>
+                    <hxqyCode>91430100MA00000001</hxqyCode>
+                    <hxqyState>01</hxqyState>
+                </hxqyInfoMx>
+            </hxqyInfo>
+        </qyRegister3109>
+    </MSG>
+</CFX>
