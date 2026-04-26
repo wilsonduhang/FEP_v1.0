@@ -2,7 +2,7 @@
 <CFX>
     <HEAD>
         <Version>1.0</Version>
-        <SrcNode>B1001010203</SrcNode>
+        <SrcNode>B43010104B0001</SrcNode>
         <DesNode>A1000143000104</DesNode>
         <App>HNDEMP</App>
         <MsgNo>3107</MsgNo>
@@ -12,17 +12,13 @@
     </HEAD>
     <MSG>
         <BatchHead3107>
-            <SendOrgCode>B1001010203</SendOrgCode>
-            <RcvOrgCode>A1000143000104</RcvOrgCode>
+            <SendOrgCode>B43010104B0001</SendOrgCode>
             <EntrustDate>20260424</EntrustDate>
-            <BatchNo>BATCH3107-001</BatchNo>
-            <TotalCount>2</TotalCount>
-            <TotalAmt>0.00</TotalAmt>
-            <RetCode>00</RetCode>
+            <TransitionNo>00000071</TransitionNo>
         </BatchHead3107>
         <pzCheckQuery3107>
             <SerialNo>SN2026042410300000000000000071</SerialNo>
-            <SendNodeCode>B1001010203</SendNodeCode>
+            <SendNodeCode>B43010104B0001</SendNodeCode>
             <DesNodeCode>A1000143000104</DesNodeCode>
             <CheckDate>20260424</CheckDate>
             <hxqyNum>2</hxqyNum>

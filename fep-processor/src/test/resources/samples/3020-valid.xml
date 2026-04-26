@@ -2,7 +2,7 @@
 <CFX>
     <HEAD>
         <Version>1.0</Version>
-        <SrcNode>B1001010203</SrcNode>
+        <SrcNode>B43010104B0001</SrcNode>
         <DesNode>A1000143000104</DesNode>
         <App>HNDEMP</App>
         <MsgNo>3020</MsgNo>
@@ -12,13 +12,13 @@
     </HEAD>
     <MSG>
         <RealHead3020>
-            <SendOrgCode>B1001010203</SendOrgCode>
+            <SendOrgCode>B43010104B0001</SendOrgCode>
             <EntrustDate>20260424</EntrustDate>
             <TransitionNo>00000042</TransitionNo>
         </RealHead3020>
         <Forward3020>
             <SerialNo>SN2026042410350000000000000042</SerialNo>
-            <SrcNodeCode>B1001010203</SrcNodeCode>
+            <SrcNodeCode>B43010104B0001</SrcNodeCode>
             <DesNodeCode>A1000143000104</DesNodeCode>
             <BusinessNo>BIZ-3020-01</BusinessNo>
             <Parameters>param1=value1</Parameters>

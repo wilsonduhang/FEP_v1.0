@@ -2,7 +2,7 @@
 <CFX>
     <HEAD>
         <Version>1.0</Version>
-        <SrcNode>B1001010203</SrcNode>
+        <SrcNode>B43010104B0001</SrcNode>
         <DesNode>A1000143000104</DesNode>
         <App>HNDEMP</App>
         <MsgNo>3102</MsgNo>
@@ -12,16 +12,13 @@
     </HEAD>
     <MSG>
         <BatchHead3102>
-            <SendOrgCode>B1001010203</SendOrgCode>
-            <RcvOrgCode>A1000143000104</RcvOrgCode>
+            <SendOrgCode>B43010104B0001</SendOrgCode>
             <EntrustDate>20260424</EntrustDate>
-            <BatchNo>BATCH3102-001</BatchNo>
-            <TotalCount>1</TotalCount>
-            <TotalAmt>0.00</TotalAmt>
+            <TransitionNo>00000052</TransitionNo>
         </BatchHead3102>
         <ArchiveInfo3102>
             <SerialNo>SN2026042410300000000000000052</SerialNo>
-            <SendNodeCode>B1001010203</SendNodeCode>
+            <SendNodeCode>B43010104B0001</SendNodeCode>
             <DesNodeCode>A1000143000104</DesNodeCode>
             <ApplyMode>1</ApplyMode>
             <GroupName>某某集团</GroupName>
@@ -30,7 +27,7 @@
             <hxqyCode>91430000MA4L7DXY01</hxqyCode>
             <rzqyName>湖南某某融资企业</rzqyName>
             <rzqyCode>91430000MA4L7DXY10</rzqyCode>
-            <rzqyPlatNo>PLAT00001</rzqyPlatNo>
+            <rzqyPlatNo>PLAT0000001</rzqyPlatNo>
             <rzqyCAFilename>ca.cer</rzqyCAFilename>
             <rzqyBaseInfo>
                 <qyCreditCode>ZZ20260424001</qyCreditCode>
@@ -47,27 +44,27 @@
                 <AccName>湖南某某融资企业</AccName>
                 <AccNumber>6228480000000001234</AccNumber>
                 <AccBankName>中国工商银行长沙分行</AccBankName>
-                <AccBankCode>ICBKCNBJHNL</AccBankCode>
+                <AccBankCode>102100099991</AccBankCode>
             </rzqyAccInfo>
             <rzqyOperatorInfo>
                 <Name>张三</Name>
-                <CertType>01</CertType>
+                <CertType>1</CertType>
                 <CertNumber>430102198001011234</CertNumber>
                 <Phone>13800001111</Phone>
             </rzqyOperatorInfo>
             <rzqyLegalInfo>
                 <Name>李四</Name>
-                <CertType>01</CertType>
+                <CertType>1</CertType>
                 <CertNumber>430102197001011234</CertNumber>
                 <Phone>13800002222</Phone>
             </rzqyLegalInfo>
             <AttachFileInfo>
-                <FileType>01</FileType>
+                <FileType>1</FileType>
                 <Filename>营业执照.pdf</Filename>
                 <FileMemo>企业营业执照</FileMemo>
             </AttachFileInfo>
             <AttachFileInfo>
-                <FileType>02</FileType>
+                <FileType>2</FileType>
                 <Filename>法人身份证.pdf</Filename>
                 <FileMemo>法人身份证扫描件</FileMemo>
             </AttachFileInfo>

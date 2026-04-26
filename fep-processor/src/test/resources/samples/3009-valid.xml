@@ -2,7 +2,7 @@
 <CFX>
     <HEAD>
         <Version>1.0</Version>
-        <SrcNode>B1001010203</SrcNode>
+        <SrcNode>B43010104B0001</SrcNode>
         <DesNode>A1000143000104</DesNode>
         <App>HNDEMP</App>
         <MsgNo>3009</MsgNo>
@@ -12,13 +12,13 @@
     </HEAD>
     <MSG>
         <RealHead3009>
-            <SendOrgCode>B1001010203</SendOrgCode>
+            <SendOrgCode>B43010104B0001</SendOrgCode>
             <EntrustDate>20260424</EntrustDate>
             <TransitionNo>00000041</TransitionNo>
         </RealHead3009>
         <rzReturnInfo3009>
             <SerialNo>SN2026042410300000000000000041</SerialNo>
-            <SendNodeCode>B1001010203</SendNodeCode>
+            <SendNodeCode>B43010104B0001</SendNodeCode>
             <DesNodeCode>A1000143000104</DesNodeCode>
             <PlatApplyNo>PLAT-APPLY-2026042400001</PlatApplyNo>
             <hxqyName>湖南某某核心企业</hxqyName>
@@ -31,9 +31,9 @@
                 <rzStartDate>20260424</rzStartDate>
                 <rzEndDate>20270424</rzEndDate>
                 <lxAmt>45000.00</lxAmt>
-                <rzRate>0.045000</rzRate>
+                <rzRate>0.0450</rzRate>
                 <BankSCAmt>500.00</BankSCAmt>
-                <BankSCRate>0.000500</BankSCRate>
+                <BankSCRate>0.0005</BankSCRate>
                 <TotalSCAmt>1500.00</TotalSCAmt>
                 <rzNetAmt>998500.00</rzNetAmt>
                 <RepayMode>等额本息</RepayMode>
@@ -41,15 +41,15 @@
                     <AccName>湖南某某融资企业</AccName>
                     <AccNumber>6228480000000001234</AccNumber>
                     <AccBankName>中国工商银行长沙分行</AccBankName>
-                    <AccBankCode>ICBKCNBJHNL</AccBankCode>
+                    <AccBankCode>102100099991</AccBankCode>
                 </LoanAccInfo>
             </rzAmtInfo>
             <dbInfo>
                 <dbAmt>1000000.00</dbAmt>
                 <dbFee>2000.00</dbFee>
-                <dbRate>0.002000</dbRate>
+                <dbRate>0.0020</dbRate>
                 <dbqyName>湖南某某融资担保公司</dbqyName>
-                <dbNodeCode>B2002020304</dbNodeCode>
+                <dbNodeCode>B43010104B0002</dbNodeCode>
                 <dbContractNo>DB-CONTRACT-2026042400001</dbContractNo>
             </dbInfo>
             <ExtInfo>

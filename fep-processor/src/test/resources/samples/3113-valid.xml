@@ -3,7 +3,7 @@
     <HEAD>
         <Version>1.0</Version>
         <SrcNode>A1000143000104</SrcNode>
-        <DesNode>B1001010203</DesNode>
+        <DesNode>B43010104B0001</DesNode>
         <App>HNDEMP</App>
         <MsgNo>3113</MsgNo>
         <MsgId>20260424104500000101</MsgId>
@@ -13,33 +13,30 @@
     <MSG>
         <BatchHead3113>
             <SendOrgCode>A1000143000104</SendOrgCode>
-            <RcvOrgCode>B1001010203</RcvOrgCode>
             <EntrustDate>20260424</EntrustDate>
-            <BatchNo>BATCH3113-001</BatchNo>
-            <TotalCount>2</TotalCount>
-            <TotalAmt>0.00</TotalAmt>
-            <RetCode>00</RetCode>
+            <TransitionNo>00000101</TransitionNo>
+            <Result>00000</Result>
         </BatchHead3113>
         <hxqyCreditAmt3113>
             <SerialNo>SN2026042410450000000000000101</SerialNo>
             <SendNodeCode>A1000143000104</SendNodeCode>
-            <DesNodeCode>B1001010203</DesNodeCode>
+            <DesNodeCode>B43010104B0001</DesNodeCode>
             <QueryDate>20260424</QueryDate>
             <CreditInfoNum>2</CreditInfoNum>
             <CreditInfo>
                 <hxqyName>湖南某某核心企业A</hxqyName>
                 <hxqyCode>91430100MA00000001</hxqyCode>
-                <RetCode>00</RetCode>
+                <RetCode>00000</RetCode>
                 <RetMemo>查询成功</RetMemo>
                 <CreditInfoMx>
-                    <BankNodeCode>B1001010203</BankNodeCode>
+                    <BankNodeCode>B43010104B0001</BankNodeCode>
                     <BankName>某某银行湖南分行</BankName>
                     <sxAmt>50000000.00</sxAmt>
                     <sxBalance>18000000.00</sxBalance>
                     <QueryReturnTime>20260424103500</QueryReturnTime>
                 </CreditInfoMx>
                 <CreditInfoMx>
-                    <BankNodeCode>B1001020304</BankNodeCode>
+                    <BankNodeCode>B43010104B0003</BankNodeCode>
                     <BankName>另一家银行湖南分行</BankName>
                     <sxAmt>30000000.00</sxAmt>
                     <sxBalance>12500000.50</sxBalance>
@@ -49,7 +46,7 @@
             <CreditInfo>
                 <hxqyName>湖南某某核心企业B</hxqyName>
                 <hxqyCode>91430100MA00000002</hxqyCode>
-                <RetCode>01</RetCode>
+                <RetCode>00001</RetCode>
             </CreditInfo>
             <ExtInfo>
                 <ExtData>3113回执扩展</ExtData>

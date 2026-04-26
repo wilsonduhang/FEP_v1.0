@@ -2,7 +2,7 @@
 <CFX>
     <HEAD>
         <Version>1.0</Version>
-        <SrcNode>B1001010203</SrcNode>
+        <SrcNode>B43010104B0001</SrcNode>
         <DesNode>A1000143000104</DesNode>
         <App>HNDEMP</App>
         <MsgNo>3116</MsgNo>
@@ -12,13 +12,13 @@
     </HEAD>
     <MSG>
         <BatchHead3116>
-            <SendOrgCode>B1001010203</SendOrgCode>
+            <SendOrgCode>B43010104B0001</SendOrgCode>
             <EntrustDate>20260424</EntrustDate>
-            <TransitionNo>20260424000000121</TransitionNo>
+            <TransitionNo>00000121</TransitionNo>
         </BatchHead3116>
         <BankCheckDay3116>
             <SerialNo>SN2026042410550000000000000121</SerialNo>
-            <SendNodeCode>B1001010203</SendNodeCode>
+            <SendNodeCode>B43010104B0001</SendNodeCode>
             <DesNodeCode>A1000143000104</DesNodeCode>
             <hxqyName>湖南某某核心企业A</hxqyName>
             <hxqyCode>91430100MA00000001</hxqyCode>
@@ -56,8 +56,8 @@
                 <Amt>50000.00</Amt>
             </CheckDetailInfo>
             <ExtInfo>
+                <ExtJSONFilename>ext3116.json</ExtJSONFilename>
                 <ExtData>3116附加数据</ExtData>
-                <ExtJsonFilename>ext3116.json</ExtJsonFilename>
             </ExtInfo>
         </BankCheckDay3116>
     </MSG>

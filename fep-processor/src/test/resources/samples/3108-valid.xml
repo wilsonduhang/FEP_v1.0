@@ -3,7 +3,7 @@
     <HEAD>
         <Version>1.0</Version>
         <SrcNode>A1000143000104</SrcNode>
-        <DesNode>B1001010203</DesNode>
+        <DesNode>B43010104B0001</DesNode>
         <App>HNDEMP</App>
         <MsgNo>3108</MsgNo>
         <MsgId>20260424103500000081</MsgId>
@@ -13,23 +13,20 @@
     <MSG>
         <BatchHead3108>
             <SendOrgCode>A1000143000104</SendOrgCode>
-            <RcvOrgCode>B1001010203</RcvOrgCode>
             <EntrustDate>20260424</EntrustDate>
-            <BatchNo>BATCH3108-001</BatchNo>
-            <TotalCount>2</TotalCount>
-            <TotalAmt>10240000.00</TotalAmt>
-            <RetCode>00</RetCode>
+            <TransitionNo>00000081</TransitionNo>
+            <Result>00000</Result>
         </BatchHead3108>
         <pzCheckQueryReturn3108>
             <SerialNo>SN2026042410350000000000000081</SerialNo>
             <SendNodeCode>A1000143000104</SendNodeCode>
-            <DesNodeCode>B1001010203</DesNodeCode>
+            <DesNodeCode>B43010104B0001</DesNodeCode>
             <CheckDate>20260424</CheckDate>
             <hxqyNum>2</hxqyNum>
             <pzCheckReturn>
                 <hxqyName>湖南某某核心企业A</hxqyName>
                 <hxqyCode>91430100MA00000001</hxqyCode>
-                <RetCode>00</RetCode>
+                <RetCode>00000</RetCode>
                 <RetMemo>核对成功</RetMemo>
                 <pzCountAll>128</pzCountAll>
                 <pzAmtAll>10240000.00</pzAmtAll>
@@ -38,7 +35,7 @@
             <pzCheckReturn>
                 <hxqyName>湖南某某核心企业B</hxqyName>
                 <hxqyCode>91430100MA00000002</hxqyCode>
-                <RetCode>01</RetCode>
+                <RetCode>00001</RetCode>
                 <pzCountAll>0</pzCountAll>
                 <pzAmtAll>0.00</pzAmtAll>
             </pzCheckReturn>

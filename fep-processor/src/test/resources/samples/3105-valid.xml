@@ -2,7 +2,7 @@
 <CFX>
     <HEAD>
         <Version>1.0</Version>
-        <SrcNode>B1001010203</SrcNode>
+        <SrcNode>B43010104B0001</SrcNode>
         <DesNode>A1000143000104</DesNode>
         <App>HNDEMP</App>
         <MsgNo>3105</MsgNo>
@@ -12,14 +12,13 @@
     </HEAD>
     <MSG>
         <BatchHead3105>
-            <SendOrgCode>B1001010203</SendOrgCode>
+            <SendOrgCode>B43010104B0001</SendOrgCode>
             <EntrustDate>20260424</EntrustDate>
             <TransitionNo>00000050</TransitionNo>
-            <TotalNum>1</TotalNum>
         </BatchHead3105>
         <rzApplyInfo3105>
             <SerialNo>SN2026042410300000000000000050</SerialNo>
-            <SendNodeCode>B1001010203</SendNodeCode>
+            <SendNodeCode>B43010104B0001</SendNodeCode>
             <DesNodeCode>A1000143000104</DesNodeCode>
             <BranchBankCode>BR-CS-001</BranchBankCode>
             <ApplyMode>1</ApplyMode>
@@ -33,16 +32,16 @@
             <rzqyName>湖南某某融资企业</rzqyName>
             <rzqyCode>91430100MA00000002</rzqyCode>
             <rzqyAddr>长沙市岳麓区xx路1号</rzqyAddr>
-            <rzqyPlatNo>RZQY-PLAT-001</rzqyPlatNo>
+            <rzqyPlatNo>RZQYPLAT001</rzqyPlatNo>
             <rzqyAccInfo>
                 <AccName>湖南某某融资企业</AccName>
                 <AccNumber>6228480000000001234</AccNumber>
                 <AccBankName>中国工商银行长沙分行</AccBankName>
-                <AccBankCode>ICBKCNBJHNL</AccBankCode>
+                <AccBankCode>102100099991</AccBankCode>
             </rzqyAccInfo>
             <rzAmtInfo>
                 <rzAmt>1000000.00</rzAmt>
-                <rzRate>0.045000</rzRate>
+                <rzRate>0.0450</rzRate>
                 <lxAmt>45000.00</lxAmt>
                 <BankSCAmt>500.00</BankSCAmt>
                 <ApplyDate>20260424</ApplyDate>
@@ -61,8 +60,8 @@
                 <SCAccNo>6228480000000099999</SCAccNo>
                 <SCAccName>代收手续费户</SCAccName>
                 <SCAccBankName>中国建设银行长沙分行</SCAccBankName>
-                <SCAccBankCode>PCBCCNBJHNL</SCAccBankCode>
-                <SCRate>0.001000</SCRate>
+                <SCAccBankCode>105100099991</SCAccBankCode>
+                <SCRate>0.0010</SCRate>
                 <SCAmtMin>100.00</SCAmtMin>
                 <SCAmt>1000.00</SCAmt>
                 <SCMemo>代收手续费备注</SCMemo>
@@ -71,28 +70,28 @@
                 <AccName>湖南某某核心企业</AccName>
                 <AccNumber>6228480000000005678</AccNumber>
                 <AccBankName>中国工商银行长沙分行</AccBankName>
-                <AccBankCode>ICBKCNBJHNL</AccBankCode>
+                <AccBankCode>102100099991</AccBankCode>
             </hxqyInterestInfo>
             <RepayAccInfo>
                 <AccName>湖南某某融资企业</AccName>
                 <AccNumber>6228480000000009012</AccNumber>
                 <AccBankName>中国农业银行长沙分行</AccBankName>
-                <AccBankCode>ABOCCNBJHNL</AccBankCode>
+                <AccBankCode>103100099991</AccBankCode>
             </RepayAccInfo>
             <pzInfo>
                 <PlatShortName>某平台</PlatShortName>
-                <PlatCode>PLAT-001</PlatCode>
+                <PlatCode>91430100MA00000099</PlatCode>
                 <ExternalPlat>0</ExternalPlat>
                 <hxqyName>湖南某某核心企业</hxqyName>
                 <hxqyCode>91430100MA00000001</hxqyCode>
                 <pzNo>PZ-3105-2026042400001</pzNo>
                 <pzClass>01</pzClass>
-                <pzFunction>01</pzFunction>
+                <pzFunction>001</pzFunction>
                 <klzrfName>出票方</klzrfName>
                 <klzrfCode>91430100MA00000005</klzrfCode>
                 <jsqyName>接收企业</jsqyName>
                 <jsqyCode>91430100MA00000002</jsqyCode>
-                <jsqyPlatNo>RZQY-PLAT-001</jsqyPlatNo>
+                <jsqyPlatNo>RZQYPLAT001</jsqyPlatNo>
                 <pzAmt>1000000.00</pzAmt>
                 <pzStartDate>20260424</pzStartDate>
                 <pzEndDate>20270424</pzEndDate>
@@ -102,18 +101,18 @@
             </pzInfo>
             <zpzInfo>
                 <PlatShortName>某平台</PlatShortName>
-                <PlatCode>PLAT-001</PlatCode>
+                <PlatCode>91430100MA00000099</PlatCode>
                 <ExternalPlat>0</ExternalPlat>
                 <hxqyName>湖南某某核心企业</hxqyName>
                 <hxqyCode>91430100MA00000001</hxqyCode>
                 <pzNo>ZPZ-MASTER-001</pzNo>
                 <pzClass>01</pzClass>
-                <pzFunction>01</pzFunction>
+                <pzFunction>001</pzFunction>
                 <klzrfName>出票方</klzrfName>
                 <klzrfCode>91430100MA00000005</klzrfCode>
                 <jsqyName>接收企业</jsqyName>
                 <jsqyCode>91430100MA00000002</jsqyCode>
-                <jsqyPlatNo>RZQY-PLAT-001</jsqyPlatNo>
+                <jsqyPlatNo>RZQYPLAT001</jsqyPlatNo>
                 <pzAmt>2000000.00</pzAmt>
                 <pzStartDate>20260424</pzStartDate>
                 <pzEndDate>20270424</pzEndDate>
@@ -162,18 +161,18 @@
                 <sxDate>20260201</sxDate>
             </ContractInfo>
             <AttachFileInfo>
-                <FileType>contract</FileType>
+                <FileType>1</FileType>
                 <Filename>contract.pdf</Filename>
                 <FileMemo>合同附件</FileMemo>
             </AttachFileInfo>
             <AttachFileInfo>
-                <FileType>invoice</FileType>
+                <FileType>2</FileType>
                 <Filename>invoice.pdf</Filename>
                 <FileMemo>发票附件</FileMemo>
             </AttachFileInfo>
             <ExtInfo>
-                <ExtData>3105扩展数据</ExtData>
                 <ExtJSONFilename>ext3105.json</ExtJSONFilename>
+                <ExtData>3105扩展数据</ExtData>
             </ExtInfo>
         </rzApplyInfo3105>
     </MSG>
