@@ -1014,6 +1014,21 @@
         </Or>
     </Match>
 
+    <!-- ===== P2d-ext body.common DataType POJOs (T0.5) =====
+         QyAccInfo / PersonInfo / FileInfo 同 ExtInfo / PzInfo / RiskRate 等 P2a-P2c 既建 POJO，
+         JAXB 绑定对象 getter/setter 必须直接返回可变引用。-->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.processor.body.common.QyAccInfo"/>
+            <Class name="com.puchain.fep.processor.body.common.PersonInfo"/>
+            <Class name="com.puchain.fep.processor.body.common.FileInfo"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
     <!-- E2eSeedRunner: Spring DI 注入的 JdbcTemplate 是容器管理单例，
          通过构造器注入引用共享是标准 DI 模式，仅 dev-e2e profile 激活 -->
     <Match>
