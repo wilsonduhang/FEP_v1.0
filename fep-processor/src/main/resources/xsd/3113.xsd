@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[3113] 核心企业授信查询回执</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BatchHead3113" type="ResponseHead">
+				<xsd:annotation>
+					<xsd:documentation>3113报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyCreditAmt3113" type="hxqyCreditAmt3113" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业授信余额查询回执</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="hxqyCreditAmt3113">
+		<xsd:annotation>
+			<xsd:documentation>核心企业授信余额查询回执</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNo" type="SerialNo">
+				<xsd:annotation>
+					<xsd:documentation>流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SendNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>发送方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>接收方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="QueryDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>查询日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CreditInfoNum" type="Integer">
+				<xsd:annotation>
+					<xsd:documentation>核心企业数量</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CreditInfo" type="CreditInfo" maxOccurs="200">
+				<xsd:annotation>
+					<xsd:documentation>核心企业授信信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtInfo" type="extInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>自定义扩展信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="CreditInfo">
+		<xsd:annotation>
+			<xsd:documentation>核心企业银行授信查询回执</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="hxqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>核心企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>核心企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RetCode" type="Result">
+				<xsd:annotation>
+					<xsd:documentation>核心企业授信查询结果码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RetMemo" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业授信查询结果码备注</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CreditInfoMx" type="CreditInfoBank" minOccurs="0" maxOccurs="50">
+				<xsd:annotation>
+					<xsd:documentation>核心企业银行授信明细</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="CreditInfoBank">
+		<xsd:annotation>
+			<xsd:documentation>核心企业银行授信明细</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BankNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>银行代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BankName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>银行名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="sxAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>核心企业授信总额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="sxBalance" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>核心企业授信余额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="QueryReturnTime" type="DateTime">
+				<xsd:annotation>
+					<xsd:documentation>银行查询返回时间</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>
