@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[3105] 融资申请信息</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BatchHead3105" type="RequestHead">
+				<xsd:annotation>
+					<xsd:documentation>3105报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzApplyInfo3105" type="rzApplyInfo3105">
+				<xsd:annotation>
+					<xsd:documentation>融资申请信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="rzApplyInfo3105">
+		<xsd:annotation>
+			<xsd:documentation>融资申请信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SerialNo" type="SerialNo">
+				<xsd:annotation>
+					<xsd:documentation>流水号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SendNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>发送方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DesNodeCode" type="NodeCode">
+				<xsd:annotation>
+					<xsd:documentation>接收方节点代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BranchBankCode" type="String0to30" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>目的机构内部分支机构代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ApplyMode" type="Number1to2">
+				<xsd:annotation>
+					<xsd:documentation>申请模式</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatApplyNo" type="String0to100">
+				<xsd:annotation>
+					<xsd:documentation>平台方申请融资业务编码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="StdBizMode" type="Number1to2" default="11">
+				<xsd:annotation>
+					<xsd:documentation>电子凭证融资模式</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>核心企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>核心企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzpzNo" type="pzNo">
+				<xsd:annotation>
+					<xsd:documentation>融资凭证编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="dbqyName" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>担保公司名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="dbqyCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>担保公司统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>融资企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzqyCode" type="qyCode">
+				<xsd:annotation>
+					<xsd:documentation>融资企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzqyAddr" type="Text0to200" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资企业注册地址</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzqyPlatNo" type="rzqyPlatCode">
+				<xsd:annotation>
+					<xsd:documentation>平台端融资企业编码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzqyAccInfo" type="qyAccInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资企业账户信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzAmtInfo" type="rzAmtInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资资金相关信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SignInfo" type="SignInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业/融资企业/平台申请签名信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ServiceChargeInfo" type="ServiceChargeInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqyInterestInfo" type="qyAccInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业付息账户信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RepayAccInfo" type="qyAccInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资还款账户信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="pzInfo" type="pzInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>电子凭证信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="zpzInfo" type="pzInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>主凭证信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoInfo" type="InvoInfo" minOccurs="0" maxOccurs="10">
+				<xsd:annotation>
+					<xsd:documentation>发票信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractInfo" type="ContractInfo" minOccurs="0" maxOccurs="10">
+				<xsd:annotation>
+					<xsd:documentation>合同信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AttachFileInfo" type="FileInfo" minOccurs="0" maxOccurs="10">
+				<xsd:annotation>
+					<xsd:documentation>相关文件附件</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ExtInfo" type="extInfo" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>自定义扩展信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 融资资金信息段 -->
+	<xsd:complexType name="rzAmtInfo">
+		<xsd:annotation>
+			<xsd:documentation>融资资金信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="rzAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>融资总额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzRate" type="Rate" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资申请利率</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="lxAmt" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>银行融资利息金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="BankSCAmt" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>银行手续费金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ApplyDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>融资申请日</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="EndDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>融资到期日</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="fxMode" type="Number1to2" default="2" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资付息模式</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="fkcnNo" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>付款承诺函编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzPurpose" type="Text0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资用途说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 手续费信息段 -->
+	<xsd:complexType name="ServiceChargeInfo">
+		<xsd:annotation>
+			<xsd:documentation>手续费信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SCAccNo" type="AccNumber">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费账号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SCAccName" type="AccName">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费账号名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SCAccBankName" type="AccBankName">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费账号开户行名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SCAccBankCode" type="AccBankCode">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费账号联行号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SCRate" type="Rate">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费费率</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SCAmtMin" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费最低费用</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SCAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SCMemo" type="Text0to100">
+				<xsd:annotation>
+					<xsd:documentation>代收手续费备注说明</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 发票信息 -->
+	<xsd:complexType name="InvoInfo">
+		<xsd:annotation>
+			<xsd:documentation>发票信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="InvoSerial" type="Integer">
+				<xsd:annotation>
+					<xsd:documentation>序号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractNo" type="String6to50">
+				<xsd:annotation>
+					<xsd:documentation>合同编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoCode" type="String0to100" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoNo" type="String8to30">
+				<xsd:annotation>
+					<xsd:documentation>发票号码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CheckCode" type="String6" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票校验码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoAmtTax" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>发票金额（含税）</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>发票金额（不含税）</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>开票日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoAmtUsed" type="Currency" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票占用金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票对应文件信息</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="InvoCAFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>发票对应公钥证书文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="xsfName" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>销售方名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="kpfName" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>开票方名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ghfName" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>购货方名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="spfName" type="qyName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>收票方名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 合同信息 -->
+	<xsd:complexType name="ContractInfo">
+		<xsd:annotation>
+			<xsd:documentation>合同信息</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="ContractNo" type="String6to50">
+				<xsd:annotation>
+					<xsd:documentation>合同编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractAmt" type="Currency">
+				<xsd:annotation>
+					<xsd:documentation>合同金额</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="jfqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>甲方名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="jfqyCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>甲方企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="yfqyName" type="qyName">
+				<xsd:annotation>
+					<xsd:documentation>乙方名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="yfqyCode" type="qyCode" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>乙方企业统一社会信用代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="sxDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>生效日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="qzDate" type="Date" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>签字日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="ContractFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>合同对应文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CertFilename" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>合同对应公钥证书文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<!-- 企业签名信息段 -->
+	<xsd:complexType name="SignInfo">
+		<xsd:annotation>
+			<xsd:documentation>核心企业/融资企业/平台申请签名信息段</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="SignElement" type="String0to200" default="hxqyName|rzqyName|rzAmt|ApplyDate|EndDate">
+				<xsd:annotation>
+					<xsd:documentation>签名要素字段</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="hxqySign" type="PK7Sign" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>核心企业数字签名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="rzqySign" type="PK7Sign" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>融资企业数字签名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="PlatSign" type="PK7Sign" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>平台数字签名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>
