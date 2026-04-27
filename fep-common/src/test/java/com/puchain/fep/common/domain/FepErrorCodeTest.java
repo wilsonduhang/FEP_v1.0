@@ -33,11 +33,15 @@ class FepErrorCodeTest {
 
     @Test
     void reconciliationErrorCodes_shouldBeDefined() {
+        assertThat(FepErrorCode.RECON_ORPHAN_RETURN.getCode()).isEqualTo("RECON_8606");
+        assertThat(FepErrorCode.RECON_ORPHAN_RETURN.getDefaultMessage()).contains("回执");
         assertThat(FepErrorCode.RECON_DAILY_LIMIT_EXCEEDED.getCode()).isEqualTo("RECON_8607");
         assertThat(FepErrorCode.RECON_DAILY_LIMIT_EXCEEDED.getDefaultMessage()).contains("999");
         assertThat(FepErrorCode.RECON_DIR_MAP_MISS.getCode()).isEqualTo("RECON_8608");
         assertThat(FepErrorCode.RECON_DIR_MAP_MISS.getDefaultMessage())
                 .contains("MessageDirectionMap");
+        assertThat(FepErrorCode.RECON_DUPLICATE_RETURN.getCode()).isEqualTo("RECON_8609");
+        assertThat(FepErrorCode.RECON_DUPLICATE_RETURN.getDefaultMessage()).contains("重复");
     }
 
     @Test

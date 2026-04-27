@@ -75,8 +75,10 @@ public enum FepErrorCode {
     PROC_8506("PROC_8506", "处理记录存储不可用"),
 
     // 对账引擎错误 8600-8699（P2e 对账引擎）
+    RECON_ORPHAN_RETURN("RECON_8606", "对账回执未找到对应的发起记录"),
     RECON_DAILY_LIMIT_EXCEEDED("RECON_8607", "当日对账记录数超过上限 999"),
-    RECON_DIR_MAP_MISS("RECON_8608", "MessageDirectionMap 未注册该报文与角色组合");
+    RECON_DIR_MAP_MISS("RECON_8608", "MessageDirectionMap 未注册该报文与角色组合"),
+    RECON_DUPLICATE_RETURN("RECON_8609", "对账发起记录已配对回执，重复处理被拒绝");
 
     private final String code;
     private final String defaultMessage;
