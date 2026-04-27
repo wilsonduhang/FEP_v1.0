@@ -45,6 +45,14 @@ class FepErrorCodeTest {
     }
 
     @Test
+    void clearingInstructionErrorCodes_shouldBeDefined() {
+        assertThat(FepErrorCode.CLEAR_BUSINESS_RULE_VIOLATION.getCode()).isEqualTo("CLEAR_8605");
+        assertThat(FepErrorCode.CLEAR_BUSINESS_RULE_VIOLATION.getDefaultMessage()).contains("3115");
+        assertThat(FepErrorCode.CLEAR_DUPLICATE_INSTRUCTION.getCode()).isEqualTo("CLEAR_8610");
+        assertThat(FepErrorCode.CLEAR_DUPLICATE_INSTRUCTION.getDefaultMessage()).contains("重复");
+    }
+
+    @Test
     void converterErrorCodes_shouldBeDefined() {
         assertThat(FepErrorCode.CONV_8001.getCode()).isEqualTo("CONV_8001");
         assertThat(FepErrorCode.CONV_8006.getDefaultMessage()).contains("加密");
