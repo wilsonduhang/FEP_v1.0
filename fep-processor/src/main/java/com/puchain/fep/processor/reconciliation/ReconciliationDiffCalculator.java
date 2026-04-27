@@ -1,6 +1,7 @@
 package com.puchain.fep.processor.reconciliation;
 
 import com.puchain.fep.processor.body.supplychain.QsInfo;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,9 +20,13 @@ import java.util.List;
  *       检查 {@code amt} 字段是否为 null / 空白 / "0" / "0.00" / 非正数。</li>
  * </ol>
  *
+ * <p><b>@Component</b>: Spring 管理 bean，便于 Task 4/5/6 service 构造器注入；
+ * 与同包 {@code InMemoryReconciliationStore} 等风格一致（Task 3 quality review P2-1 修正）。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
+@Component
 public final class ReconciliationDiffCalculator {
 
     /**
