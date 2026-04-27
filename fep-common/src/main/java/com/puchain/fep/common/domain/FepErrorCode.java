@@ -75,6 +75,10 @@ public enum FepErrorCode {
     PROC_8506("PROC_8506", "处理记录存储不可用"),
 
     // 对账引擎错误 8600-8699（P2e 对账引擎）
+    RECON_NOT_FOUND("RECON_8601", "对账记录不存在"),
+    RECON_INVALID_DATE("RECON_8602", "对账日期格式非法（应为 yyyyMMdd）"),
+    RECON_NO_INBOUND("RECON_8603", "未找到指定日期的入站对账数据"),
+    CLEAR_INSTRUCTION_NOT_FOUND("CLEAR_8604", "清算指令记录不存在"),
     CLEAR_BUSINESS_RULE_VIOLATION("CLEAR_8605", "3115 清算指令业务规则校验失败"),
     RECON_ORPHAN_RETURN("RECON_8606", "对账回执未找到对应的发起记录"),
     RECON_DAILY_LIMIT_EXCEEDED("RECON_8607", "当日对账记录数超过上限 999"),

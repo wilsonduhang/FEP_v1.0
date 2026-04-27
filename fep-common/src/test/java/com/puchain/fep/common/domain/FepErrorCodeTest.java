@@ -53,6 +53,19 @@ class FepErrorCodeTest {
     }
 
     @Test
+    void p2eWebControllerErrorCodes_shouldBeDefined() {
+        // P2e Task 7: REST controller 引入的 4 个新错误码 (8601-8604)
+        assertThat(FepErrorCode.RECON_NOT_FOUND.getCode()).isEqualTo("RECON_8601");
+        assertThat(FepErrorCode.RECON_NOT_FOUND.getDefaultMessage()).contains("不存在");
+        assertThat(FepErrorCode.RECON_INVALID_DATE.getCode()).isEqualTo("RECON_8602");
+        assertThat(FepErrorCode.RECON_INVALID_DATE.getDefaultMessage()).contains("yyyyMMdd");
+        assertThat(FepErrorCode.RECON_NO_INBOUND.getCode()).isEqualTo("RECON_8603");
+        assertThat(FepErrorCode.RECON_NO_INBOUND.getDefaultMessage()).contains("入站");
+        assertThat(FepErrorCode.CLEAR_INSTRUCTION_NOT_FOUND.getCode()).isEqualTo("CLEAR_8604");
+        assertThat(FepErrorCode.CLEAR_INSTRUCTION_NOT_FOUND.getDefaultMessage()).contains("不存在");
+    }
+
+    @Test
     void converterErrorCodes_shouldBeDefined() {
         assertThat(FepErrorCode.CONV_8001.getCode()).isEqualTo("CONV_8001");
         assertThat(FepErrorCode.CONV_8006.getDefaultMessage()).contains("加密");

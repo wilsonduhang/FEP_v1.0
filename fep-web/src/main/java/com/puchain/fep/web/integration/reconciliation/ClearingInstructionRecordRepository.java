@@ -29,6 +29,17 @@ public interface ClearingInstructionRecordRepository
     Optional<ClearingInstructionRecordEntity> findByInstructionIdAndQsSerialNo(String instructionId, String qsSerialNo);
 
     /**
+     * Lists clearing instructions sharing a given platform settlement instruction
+     * number ({@code instructionId} = {@code platPayNo}). Used by the
+     * {@code GET /settlement/instruction/{id}} REST endpoint to return all
+     * {@code qsSerialNo} rows under the same instruction.
+     *
+     * @param instructionId clearing instruction id (= platPayNo)
+     * @return matching rows ordered by {@code qsSerialNo}, possibly empty
+     */
+    List<ClearingInstructionRecordEntity> findByInstructionIdOrderByQsSerialNoAsc(String instructionId);
+
+    /**
      * Lists clearing instructions linked to a given inbound message.
      *
      * @param messageId message process record id
