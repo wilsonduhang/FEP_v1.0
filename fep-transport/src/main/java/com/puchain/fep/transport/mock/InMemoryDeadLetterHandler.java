@@ -6,23 +6,28 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.puchain.fep.transport.api.DeadLetterHandler;
 import com.puchain.fep.transport.model.TlqMessage;
 
 /**
- * In-memory {@link DeadLetterHandler} implementation for dev profile.
+ * In-memory {@link DeadLetterHandler} implementation for the {@code mock} transport provider.
  *
  * <p>Stores dead-letter messages in a synchronized list for inspection
- * during testing. No persistence or alerting is performed.</p>
+ * during testing. No persistence or alerting is performed. Only active when
+ * {@code fep.transport.provider=mock} (the default if not set).</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @Component
-@Profile("dev")
+@ConditionalOnProperty(
+    name = "fep.transport.provider",
+    havingValue = "mock",
+    matchIfMissing = true
+)
 public class InMemoryDeadLetterHandler implements DeadLetterHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryDeadLetterHandler.class);

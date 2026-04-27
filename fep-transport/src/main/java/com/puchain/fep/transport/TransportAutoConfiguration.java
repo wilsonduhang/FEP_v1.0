@@ -5,18 +5,20 @@ import com.puchain.fep.transport.support.InMemoryMessageDeduplicator;
 import com.puchain.fep.transport.support.MessageDeduplicator;
 import com.puchain.fep.transport.support.QueueNameResolver;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
 /**
  * FEP Transport module auto-configuration.
  *
  * <p>Registers core transport beans: {@link QueueNameResolver},
- * {@link MessageDeduplicator}, and (in dev profile) {@link InMemoryMessageBroker}.
- * Mock TLQ implementations are discovered via {@link ComponentScan}.</p>
+ * {@link MessageDeduplicator}, and (when {@code fep.transport.provider=mock})
+ * {@link InMemoryMessageBroker}. Mock TLQ implementations are discovered via
+ * {@link ComponentScan} and gated individually by
+ * {@link ConditionalOnProperty @ConditionalOnProperty}.</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -49,14 +51,19 @@ public class TransportAutoConfiguration {
     }
 
     /**
-     * Create an {@link InMemoryMessageBroker} for dev/test environments.
+     * Create an {@link InMemoryMessageBroker} for the {@code mock} transport provider.
      *
-     * <p>Only active when the {@code dev} profile is enabled.</p>
+     * <p>Only active when {@code fep.transport.provider=mock} (the default when the property
+     * is not set, via {@code matchIfMissing=true}).</p>
      *
      * @return a new in-memory message broker
      */
     @Bean
-    @Profile("dev")
+    @ConditionalOnProperty(
+        name = "fep.transport.provider",
+        havingValue = "mock",
+        matchIfMissing = true
+    )
     public InMemoryMessageBroker inMemoryMessageBroker() {
         return new InMemoryMessageBroker();
     }

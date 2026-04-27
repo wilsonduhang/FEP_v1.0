@@ -5,7 +5,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.puchain.fep.transport.api.MessageListener;
@@ -14,16 +14,21 @@ import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
 
 /**
- * In-memory {@link TlqConsumer} implementation for dev profile.
+ * In-memory {@link TlqConsumer} implementation for the {@code mock} transport provider.
  *
  * <p>Supports both pull mode ({@link #receive}) and push mode
- * ({@link #subscribe}/{@link #unsubscribe}) via {@link InMemoryMessageBroker}.</p>
+ * ({@link #subscribe}/{@link #unsubscribe}) via {@link InMemoryMessageBroker}. Only active when
+ * {@code fep.transport.provider=mock} (the default if not set).</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @Component
-@Profile("dev")
+@ConditionalOnProperty(
+    name = "fep.transport.provider",
+    havingValue = "mock",
+    matchIfMissing = true
+)
 public class InMemoryTlqConsumer implements TlqConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryTlqConsumer.class);

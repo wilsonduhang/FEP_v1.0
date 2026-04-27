@@ -2,17 +2,18 @@ package com.puchain.fep.transport.mock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.puchain.fep.transport.api.NodeLifecycleManager;
 import com.puchain.fep.transport.model.NodeState;
 
 /**
- * In-memory {@link NodeLifecycleManager} implementation for dev profile.
+ * In-memory {@link NodeLifecycleManager} implementation for the {@code mock} transport provider.
  *
  * <p>Manages node state transitions in memory using the {@link NodeState}
- * state machine rules. No actual 9005/9006/9008 messages are sent.</p>
+ * state machine rules. No actual 9005/9006/9008 messages are sent. Only active when
+ * {@code fep.transport.provider=mock} (the default if not set).</p>
  *
  * <p>State transitions are {@code synchronized} to prevent TOCTOU races
  * between the guard check and the write, which would otherwise be possible
@@ -22,7 +23,11 @@ import com.puchain.fep.transport.model.NodeState;
  * @since 1.0.0
  */
 @Component
-@Profile("dev")
+@ConditionalOnProperty(
+    name = "fep.transport.provider",
+    havingValue = "mock",
+    matchIfMissing = true
+)
 public class InMemoryNodeLifecycleManager implements NodeLifecycleManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryNodeLifecycleManager.class);

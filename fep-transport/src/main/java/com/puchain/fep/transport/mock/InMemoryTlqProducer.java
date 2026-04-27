@@ -2,7 +2,7 @@ package com.puchain.fep.transport.mock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.puchain.fep.transport.api.SendResult;
@@ -10,15 +10,20 @@ import com.puchain.fep.transport.api.TlqProducer;
 import com.puchain.fep.transport.model.TlqMessage;
 
 /**
- * In-memory {@link TlqProducer} implementation for dev profile.
+ * In-memory {@link TlqProducer} implementation for the {@code mock} transport provider.
  *
- * <p>Delegates to {@link InMemoryMessageBroker} and always returns a successful result.</p>
+ * <p>Delegates to {@link InMemoryMessageBroker} and always returns a successful result.
+ * Only active when {@code fep.transport.provider=mock} (the default if not set).</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @Component
-@Profile("dev")
+@ConditionalOnProperty(
+    name = "fep.transport.provider",
+    havingValue = "mock",
+    matchIfMissing = true
+)
 public class InMemoryTlqProducer implements TlqProducer {
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryTlqProducer.class);
