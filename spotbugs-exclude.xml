@@ -1054,4 +1054,22 @@
         <Bug pattern="PREDICTABLE_RANDOM"/>
     </Match>
 
+    <!-- P3 Task 2 messageinbound 包：MessageInboundController 是合法 Spring REST 端点，
+         SPRING_ENDPOINT 是预期行为（与 AuthController/SysRoleController 等同模式）。
+         CRLF_INJECTION_LOGS 在 dispatcher/controller 内已通过 LogSanitizer.sanitize 清洗
+         字符串字段（messageType 受 @Pattern 校验仅含 4 位数字，length() 是 int 也无 CRLF
+         风险），SpotBugs 无法跨方法跟踪静态 sanitize call 因此误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.web.messageinbound.controller.MessageInboundController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.messageinbound.controller.MessageInboundController"/>
+            <Class name="com.puchain.fep.web.messageinbound.service.InboundMessageDispatcher"/>
+            <Class name="com.puchain.fep.web.messageinbound.dto.InboundMessageRequest"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
 </FindBugsFilter>

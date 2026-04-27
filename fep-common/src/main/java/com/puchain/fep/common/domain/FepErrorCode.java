@@ -84,7 +84,11 @@ public enum FepErrorCode {
     RECON_DAILY_LIMIT_EXCEEDED("RECON_8607", "当日对账记录数超过上限 999"),
     RECON_DIR_MAP_MISS("RECON_8608", "MessageDirectionMap 未注册该报文与角色组合"),
     RECON_DUPLICATE_RETURN("RECON_8609", "对账发起记录已配对回执，重复处理被拒绝"),
-    CLEAR_DUPLICATE_INSTRUCTION("CLEAR_8610", "3115 清算指令复合主键 (platPayNo + qsSerialNo) 重复");
+    CLEAR_DUPLICATE_INSTRUCTION("CLEAR_8610", "3115 清算指令复合主键 (platPayNo + qsSerialNo) 重复"),
+
+    // 报文入站错误 8700-8799（P3 messageinbound）
+    MSG_INBOUND_INVALID_TYPE("MSG_8701", "未注册的 messageType"),
+    MSG_INBOUND_DECODE_FAILURE("MSG_8702", "xmlBase64 解码失败");
 
     private final String code;
     private final String defaultMessage;
