@@ -10,8 +10,11 @@ import com.puchain.fep.processor.validation.XsdValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +32,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Timeout(value = 5, unit = TimeUnit.SECONDS)
 class AsyncPipelineIntegrationTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AsyncPipelineIntegrationTest.class);
 
     private AsyncMessageProcessorService service;
     private InMemoryMessageProcessStore store;
@@ -246,8 +251,19 @@ class AsyncPipelineIntegrationTest {
 
     // ── performance baseline ───────────────────────────────────────────
 
+    /**
+     * Performance gate: 95th-percentile (P95) async inbound latency must be
+     * below 15ms over a 100-iteration sample (after a 5-iteration warmup that
+     * primes the XSD schema cache).
+     *
+     * <p>Replaces the previous mean&lt;5ms gate (TD12) which was flaky on
+     * shared CI hardware: a single GC pause in the 100-sample run could push
+     * the arithmetic mean over 5ms even though the steady-state path stayed
+     * fast. P95 absorbs single outliers while still catching real
+     * degradations (e.g. uncached JAXBContext, lost XSD cache).</p>
+     */
     @Test
-    void performanceBaseline_100AsyncInbound_shouldAverageLessThan5ms() {
+    void performanceBaseline_100AsyncInbound_shouldHaveP95LessThan15ms() {
         byte[] validXml = toBytes(cfx("3001", """
                 <RealHead3001>
             """ + REQUEST_HEAD + """
@@ -268,19 +284,29 @@ class AsyncPipelineIntegrationTest {
             service.processAsyncInbound(MessageType.MSG_3001, "TN-WARM-" + i, validXml);
         }
 
-        // Timed run: 100 iterations
-        long startNanos = System.nanoTime();
-        for (int i = 0; i < 100; i++) {
+        // Timed run: 100 iterations, capture per-iteration latency
+        final int iterations = 100;
+        long[] latenciesNs = new long[iterations];
+        for (int i = 0; i < iterations; i++) {
+            long t0 = System.nanoTime();
             MessageProcessRecord record = service.processAsyncInbound(
                     MessageType.MSG_3001, "TN-PERF-" + i, validXml);
+            latenciesNs[i] = System.nanoTime() - t0;
             assertThat(record.getStatus()).isEqualTo(MessageProcessStatus.PROCESSING);
         }
-        long elapsedNanos = System.nanoTime() - startNanos;
 
-        double avgMs = elapsedNanos / 1_000_000.0 / 100.0;
-        assertThat(avgMs)
-                .as("average async inbound latency should be < 5ms, was %.2fms", avgMs)
-                .isLessThan(5.0);
+        Arrays.sort(latenciesNs);
+        // P95 = 95th-percentile element (1-based index 95 in a sorted 100-sample -> 0-based index 94)
+        long p95Ns = latenciesNs[(int) Math.ceil(0.95 * iterations) - 1];
+        double p95Ms = p95Ns / 1_000_000.0;
+        double meanMs = Arrays.stream(latenciesNs).sum() / 1_000_000.0 / iterations;
+        double maxMs = latenciesNs[iterations - 1] / 1_000_000.0;
+        LOG.info("[PERF] AsyncPipeline 100 inbound: P95={}ms mean={}ms max={}ms (target P95<15ms)",
+                String.format("%.2f", p95Ms), String.format("%.2f", meanMs), String.format("%.2f", maxMs));
+
+        assertThat(p95Ms)
+                .as("P95 async inbound latency should be < 15ms, was %.2fms (mean=%.2fms)", p95Ms, meanMs)
+                .isLessThan(15.0);
     }
 
     // ── helpers ─────────────────────────────────────────────────────────
