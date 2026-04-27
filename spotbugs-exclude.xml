@@ -1045,4 +1045,13 @@
         </Or>
     </Match>
 
+    <!-- IdGenerator.uuid20() (P1c T0): ThreadLocalRandom 用于 HNDEMP MsgId/TransitionNo
+         传输标识符，非安全令牌（不用于鉴权/会话/密钥）。13 字符毫秒时间戳 +
+         7 字符 base36 随机数仅作消息 dedup/路由追踪，碰撞概率 36^7 ≈ 78B/ms
+         远超 FEP 单节点吞吐。安全敏感 ID 由 fep-security-* 模块独立生成。 -->
+    <Match>
+        <Class name="com.puchain.fep.common.util.IdGenerator"/>
+        <Bug pattern="PREDICTABLE_RANDOM"/>
+    </Match>
+
 </FindBugsFilter>
