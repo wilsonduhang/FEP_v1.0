@@ -115,10 +115,12 @@ public class PlatformReconciliationService {
         final List<?> details = body.getHxqyInfo();
         final int actual = (details == null) ? 0 : details.size();
 
-        final LocalDate now = LocalDate.now();
         final LocalDateTime ts = LocalDateTime.now();
+        // ADR-P2e-1: ID seq counts records per BUSINESS date (body.checkDate),
+        // not processing date (LocalDate.now()). Aligns ID prefix YYYYMMDD with
+        // record.reconciliationDate so countByDate matches saved records.
         final ReconciliationRecord record = ReconciliationRecord.builder()
-                .reconciliationId(generateId(now))
+                .reconciliationId(generateId(checkDate))
                 .reconciliationDate(checkDate)
                 .messageType(MSG_TYPE_3107)
                 .serialNo(serialNo)
@@ -184,11 +186,10 @@ public class PlatformReconciliationService {
         final int actual = (returns == null) ? 0 : returns.size();
 
         final ReconciliationOutcome outcome = calculator.calculateCountDiff(declared, actual);
-        final LocalDate now = LocalDate.now();
         final LocalDateTime ts = LocalDateTime.now();
-
+        // ADR-P2e-1: see initiateOutbound — ID seq scoped per business date.
         final ReconciliationRecord record3108 = ReconciliationRecord.builder()
-                .reconciliationId(generateId(now))
+                .reconciliationId(generateId(checkDate))
                 .reconciliationDate(checkDate)
                 .messageType(MSG_TYPE_3108)
                 .serialNo(serialNo)

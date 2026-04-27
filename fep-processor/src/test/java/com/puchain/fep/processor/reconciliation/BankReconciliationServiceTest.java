@@ -172,11 +172,14 @@ class BankReconciliationServiceTest {
                 new BankReconciliationService(stubStore, calculator);
         final BankCheckDay3116 body = sampleBody("20260427", "0", 0);
 
-        final LocalDate today = LocalDate.now();
+        // ADR-P2e-1 fix (Task 6 closing): seq counts per BUSINESS date, so
+        // exception message contains the parsed checkDate (2026-04-27),
+        // not LocalDate.now().
+        final LocalDate businessDate = LocalDate.of(2026, 4, 27);
         assertThatThrownBy(() -> boundedService.processInbound(body, "SN-LIMIT-1"))
                 .isInstanceOf(FepBusinessException.class)
                 .hasMessageContaining("daily reconciliation limit exceeded")
-                .hasMessageContaining(today.toString())
+                .hasMessageContaining(businessDate.toString())
                 .extracting(t -> ((FepBusinessException) t).getErrorCode())
                 .isEqualTo(FepErrorCode.RECON_DAILY_LIMIT_EXCEEDED);
     }
