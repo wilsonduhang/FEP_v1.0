@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>A1000143000104</SrcNode>
+        <DesNode>B43010104B0001</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>3115</MsgNo>
+        <MsgId>20260424105000000113</MsgId>
+        <CorrMsgId>20260424104500000112</CorrMsgId>
+        <WorkDate>20260424</WorkDate>
+    </HEAD>
+    <MSG>
+        <BatchHead3115>
+            <SendOrgCode>A1000143000104</SendOrgCode>
+            <EntrustDate>20260424</EntrustDate>
+            <TransitionNo>00000113</TransitionNo>
+            <Result>00000</Result>
+        </BatchHead3115>
+        <PlatPay3115>
+            <SerialNo>SN2026042410500000000000000113</SerialNo>
+            <SendNodeCode>A1000143000104</SendNodeCode>
+            <DesNodeCode>B43010104B0001</DesNodeCode>
+            <PlatPayNo>PLATPAY3115PK7</PlatPayNo>
+            <hxqyName>湖南某某核心企业A</hxqyName>
+            <hxqyCode>91430100MA00000001</hxqyCode>
+            <qsInfo>
+                <qsSerialNo>QSSN3115PK7-001</qsSerialNo>
+                <fkfAccName>付款方公司A</fkfAccName>
+                <fkfAccNo>6225880100000001</fkfAccNo>
+                <skfAccName>收款方公司A</skfAccName>
+                <skfAccNo>6225880100000002</skfAccNo>
+                <Amt>1000000.00</Amt>
+                <WishDate>20260425</WishDate>
+            </qsInfo>
+            <SignElement>fkrAccName|fkrAccNo|skrAccName|skrAccNo|Amt|WishDate</SignElement>
+            <qsfqSign>BASE64ENCODEDPK7SIGN==</qsfqSign>
+            <PlatSign>BASE64ENCODEDPK7PLATSIGN==</PlatSign>
+        </PlatPay3115>
+    </MSG>
+</CFX>

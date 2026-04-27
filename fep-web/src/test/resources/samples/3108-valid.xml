@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CFX>
+    <HEAD>
+        <Version>1.0</Version>
+        <SrcNode>A1000143000104</SrcNode>
+        <DesNode>B43010104B0001</DesNode>
+        <App>HNDEMP</App>
+        <MsgNo>3108</MsgNo>
+        <MsgId>20260424103500000081</MsgId>
+        <CorrMsgId>20260424103000000071</CorrMsgId>
+        <WorkDate>20260424</WorkDate>
+    </HEAD>
+    <MSG>
+        <BatchHead3108>
+            <SendOrgCode>A1000143000104</SendOrgCode>
+            <EntrustDate>20260424</EntrustDate>
+            <TransitionNo>00000081</TransitionNo>
+            <Result>00000</Result>
+        </BatchHead3108>
+        <pzCheckQueryReturn3108>
+            <SerialNo>SN2026042410350000000000000081</SerialNo>
+            <SendNodeCode>A1000143000104</SendNodeCode>
+            <DesNodeCode>B43010104B0001</DesNodeCode>
+            <CheckDate>20260424</CheckDate>
+            <hxqyNum>2</hxqyNum>
+            <pzCheckReturn>
+                <hxqyName>湖南某某核心企业A</hxqyName>
+                <hxqyCode>91430100MA00000001</hxqyCode>
+                <RetCode>00000</RetCode>
+                <RetMemo>核对成功</RetMemo>
+                <pzCountAll>128</pzCountAll>
+                <pzAmtAll>10240000.00</pzAmtAll>
+                <pzFilename>pz-A-20260424.zip</pzFilename>
+            </pzCheckReturn>
+            <pzCheckReturn>
+                <hxqyName>湖南某某核心企业B</hxqyName>
+                <hxqyCode>91430100MA00000002</hxqyCode>
+                <RetCode>00001</RetCode>
+                <pzCountAll>0</pzCountAll>
+                <pzAmtAll>0.00</pzAmtAll>
+            </pzCheckReturn>
+            <ExtInfo>
+                <ExtData>3108回执扩展</ExtData>
+            </ExtInfo>
+        </pzCheckQueryReturn3108>
+    </MSG>
+</CFX>
