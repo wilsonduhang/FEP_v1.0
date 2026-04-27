@@ -1005,4 +1005,44 @@
         </Or>
     </Match>
 
+    <!-- ============================================================
+         P2e 对账引擎模块（Task 7 Controllers + DTOs + Query Services）
+         ============================================================ -->
+
+    <!-- 对账查询 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为
+         （pattern 同 SubReportController / DashboardStatsController） -->
+    <Match>
+        <Class name="com.puchain.fep.web.reconciliation.controller.ReconciliationController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 清算指令 Controller: 端点需认证（JWT），SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.reconciliation.controller.SettlementInstructionController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- SettlementInstructionRequest: 请求 DTO 由 Jackson 反序列化填充，
+         qsInfo 列表由 @Valid + @NotEmpty 校验，可变列表是预期行为
+         （pattern 同 RolePermissionAssignRequest / ConfigBatchUpdateRequest） -->
+    <Match>
+        <Class name="com.puchain.fep.web.reconciliation.dto.SettlementInstructionRequest"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- ReconciliationQueryService.PagedResult: Java record，content 是
+         不可变 List 防御性复制（紧凑构造器内 List.copyOf），与 ValidationResult
+         同模式。SpotBugs 无法识别 record 紧凑构造器语义，确认误报
+         （pattern 同 ValidationResult line 909-915） -->
+    <Match>
+        <Class name="com.puchain.fep.web.reconciliation.service.ReconciliationQueryService$PagedResult"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
 </FindBugsFilter>

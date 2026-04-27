@@ -152,5 +152,13 @@ public class ReconciliationQueryService {
      * @param totalPages total pages
      */
     public record PagedResult(List<ReconciliationRecord> content, long total, int totalPages) {
+        /**
+         * Compact constructor — defensive immutable copy of {@code content}
+         * so the record cannot leak a mutable reference to callers
+         * (closes EI_EXPOSE_REP/REP2 raised on the canonical accessor).
+         */
+        public PagedResult {
+            content = List.copyOf(content);
+        }
     }
 }

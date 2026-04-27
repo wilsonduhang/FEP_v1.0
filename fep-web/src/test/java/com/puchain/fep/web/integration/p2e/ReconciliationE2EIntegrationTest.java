@@ -19,10 +19,8 @@ import com.puchain.fep.processor.reconciliation.PlatformReconciliationService;
 import com.puchain.fep.processor.reconciliation.ReconciliationOutcome;
 import com.puchain.fep.processor.reconciliation.ReconciliationRecord;
 import com.puchain.fep.processor.reconciliation.ReconciliationStatus;
-import com.puchain.fep.processor.reconciliation.ReconciliationStore;
 import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
-import com.puchain.fep.processor.state.MessageProcessStore;
 import com.puchain.fep.processor.validation.ValidationResult;
 import com.puchain.fep.processor.validation.XsdValidator;
 import com.puchain.fep.web.FepApplication;
@@ -159,12 +157,6 @@ class ReconciliationE2EIntegrationTest {
 
     @Autowired
     private ClearingInstructionRecordRepository clearingRepository;
-
-    @Autowired
-    private ReconciliationStore reconciliationStore;
-
-    @Autowired
-    private MessageProcessStore messageProcessStore;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -410,10 +402,11 @@ class ReconciliationE2EIntegrationTest {
         assertThat(paired.status()).isEqualTo(ReconciliationStatus.COMPLETED);
         assertThat(paired.discrepancyCount()).isZero();
 
-        // Two rows: 3107 (status now still PENDING but pairedSerialNo set) + 3108 (COMPLETED)
+        // Two rows: 3107 (status PENDING, pairedSerialNo set after 3108 arrives) + 3108 (COMPLETED)
         assertThat(reconciliationRepository.count()).isEqualTo(2);
         final var row3107 = reconciliationRepository
                 .findBySerialNoAndMessageType(body3107.getSerialNo(), "3107").orElseThrow();
+        assertThat(row3107.getReconciliationStatus()).isEqualTo("PENDING");
         assertThat(row3107.getPairedSerialNo()).isEqualTo(body3107.getSerialNo());
 
         final var row3108 = reconciliationRepository
@@ -452,6 +445,10 @@ class ReconciliationE2EIntegrationTest {
         assertThat(paired.status()).isEqualTo(ReconciliationStatus.DISCREPANCY);
         // declared (hxqyNum=3) vs actual (pzCheckReturn list size=1) → diff=2
         assertThat(paired.discrepancyCount()).isEqualTo(2);
+
+        final var row3107 = reconciliationRepository
+                .findBySerialNoAndMessageType(body3107.getSerialNo(), "3107").orElseThrow();
+        assertThat(row3107.getReconciliationStatus()).isEqualTo("PENDING");
 
         final var row3108 = reconciliationRepository
                 .findBySerialNoAndMessageType(body3107.getSerialNo(), "3108").orElseThrow();
