@@ -57,3 +57,6 @@ dist/
 .nuxt/
 .output/
 *.local
+
+# === P1c T1 — TLQ SDK native libs (NOT in repo, staged at build time) ===
+docker/tlq-runtime/tlq-sdk-lib/

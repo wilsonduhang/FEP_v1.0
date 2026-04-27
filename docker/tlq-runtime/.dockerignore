@@ -1,0 +1,18 @@
+# --- VCS ---
+.git/
+.gitignore
+
+# --- Docs (keep README.md inside this dir; it documents the image build) ---
+*.md
+!README.md
+
+# --- Build artifacts ---
+target/
+node_modules/
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+.DS_Store
+
+# NOTE: tlq-sdk-lib/ is REQUIRED by COPY and must NOT be excluded.
