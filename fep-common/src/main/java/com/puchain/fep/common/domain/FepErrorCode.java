@@ -72,7 +72,11 @@ public enum FepErrorCode {
     PROC_8503("PROC_8503", "XSD 资源加载失败"),
     PROC_8504("PROC_8504", "不支持的报文类型"),
     PROC_8505("PROC_8505", "同步处理流水线执行失败"),
-    PROC_8506("PROC_8506", "处理记录存储不可用");
+    PROC_8506("PROC_8506", "处理记录存储不可用"),
+
+    // 对账引擎错误 8600-8699（P2e 对账引擎）
+    RECON_DAILY_LIMIT_EXCEEDED("RECON_8607", "当日对账记录数超过上限 999"),
+    RECON_DIR_MAP_MISS("RECON_8608", "MessageDirectionMap 未注册该报文与角色组合");
 
     private final String code;
     private final String defaultMessage;

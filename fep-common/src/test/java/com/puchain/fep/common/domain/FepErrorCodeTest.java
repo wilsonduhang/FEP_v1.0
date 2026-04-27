@@ -32,6 +32,15 @@ class FepErrorCodeTest {
     }
 
     @Test
+    void reconciliationErrorCodes_shouldBeDefined() {
+        assertThat(FepErrorCode.RECON_DAILY_LIMIT_EXCEEDED.getCode()).isEqualTo("RECON_8607");
+        assertThat(FepErrorCode.RECON_DAILY_LIMIT_EXCEEDED.getDefaultMessage()).contains("999");
+        assertThat(FepErrorCode.RECON_DIR_MAP_MISS.getCode()).isEqualTo("RECON_8608");
+        assertThat(FepErrorCode.RECON_DIR_MAP_MISS.getDefaultMessage())
+                .contains("MessageDirectionMap");
+    }
+
+    @Test
     void converterErrorCodes_shouldBeDefined() {
         assertThat(FepErrorCode.CONV_8001.getCode()).isEqualTo("CONV_8001");
         assertThat(FepErrorCode.CONV_8006.getDefaultMessage()).contains("加密");
