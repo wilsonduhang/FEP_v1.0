@@ -32,5 +32,28 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- TongLINK/Q SDK (installed via scripts/install-tlq-sdk.sh, see P1c §3.2). -->
+        <dependency>
+            <groupId>com.tongtech</groupId>
+            <artifactId>tlclient</artifactId>
+            <version>8.1.15.2-P3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tongtech</groupId>
+            <artifactId>tlq-remote-api</artifactId>
+            <version>8.1.15.2-P3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
