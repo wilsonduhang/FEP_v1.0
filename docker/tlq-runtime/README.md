@@ -2,8 +2,6 @@
 
 > P1c Task 1 产物 · TongLINK/Q 8.1.15.2-P3 Linux 运行时基础镜像
 > 维护者：FEP Team
-> 关联 Plan：`docs/plans/2026-04-26-p1c-tlq-real-sdk.md` §T1
-> 决策依据：`docs/plans/2026-04-26-p1c-sdk-validation-and-decisions.md` §3.3
 
 ## 1. 目的
 
@@ -162,7 +160,9 @@ FROM eclipse-temurin:17-jre-bullseye-slim
 
 ## 9. 相关文档
 
-- Plan：`docs/plans/2026-04-26-p1c-tlq-real-sdk.md`（§T1 镜像构建任务）
-- SDK 决策：`docs/plans/2026-04-26-p1c-sdk-validation-and-decisions.md`（§3.3 镜像选型）
-- 安装脚本：`scripts/install-tlq-sdk.sh`（mvn local repo 安装 TLQ SDK 3 个 JAR）
-- 架构定位：`CLAUDE.md` §3.1 TLQ 通信运行环境
+> 注：本仓库（FEP_v1.0）为代码仓；以下 `docs/plans/*` 与 `CLAUDE.md` 引用位于团队姊妹知识库 `~/FEP/`，仅限内部协作访问，未发布到本代码仓。
+
+- 安装脚本：`scripts/install-tlq-sdk.sh`（mvn local repo 安装 TLQ SDK 2 个 JAR）— ✅ 本仓内
+- Plan：`docs/plans/2026-04-26-p1c-tlq-real-sdk.md`（§T1 镜像构建任务）— 内部知识库
+- SDK 决策：`docs/plans/2026-04-26-p1c-sdk-validation-and-decisions.md`（§3.3 镜像选型）— 内部知识库
+- 架构定位：`CLAUDE.md` §3.1 TLQ 通信运行环境 — 内部知识库
