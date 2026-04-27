@@ -106,6 +106,13 @@ public class BankReconciliationService {
             throw new IllegalArgumentException(
                     "checkDetailNum not numeric: " + body.getCheckDetailNum(), e);
         }
+        final LocalDate checkDate;
+        try {
+            checkDate = LocalDate.parse(body.getCheckDate(), ID_DATE);
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new IllegalArgumentException(
+                    "checkDate not yyyyMMdd: " + body.getCheckDate(), e);
+        }
         final List<?> details = body.getCheckDetailInfo();
         final int actual = (details == null) ? 0 : details.size();
 
@@ -114,7 +121,7 @@ public class BankReconciliationService {
         final LocalDateTime ts = LocalDateTime.now();
         final ReconciliationRecord record = ReconciliationRecord.builder()
                 .reconciliationId(generateId(now))
-                .reconciliationDate(LocalDate.parse(body.getCheckDate(), ID_DATE))
+                .reconciliationDate(checkDate)
                 .messageType(MESSAGE_TYPE)
                 .serialNo(serialNo)
                 .totalTransactionCount(declared)
