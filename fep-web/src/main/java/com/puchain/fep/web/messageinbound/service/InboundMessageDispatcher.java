@@ -164,14 +164,22 @@ public class InboundMessageDispatcher {
             final Unmarshaller u = ctx.createUnmarshaller();
             u.setEventHandler(event -> false);
             final CfxMessage msg = (CfxMessage) u.unmarshal(new ByteArrayInputStream(xml));
-            final Object body = msg.getBody();
-            if (body != null && bodyClass.isInstance(body)) {
-                return body;
+            // P3 Task 5 finding: production CFX samples carry both BatchHeadXxxx
+            // (lax-mode DOM Element) and the registered body class as siblings
+            // under <MSG>. Walk the bodies list and pick the first registered-
+            // type instance instead of trusting position 0 — otherwise the
+            // BatchHead DOM element shadows the real body POJO and the listener
+            // receives event.body=null (P3 wiring inert). XSD-required sequence
+            // ordering (BatchHead → body) means getBody() is always wrong here.
+            for (Object candidate : msg.getBodies()) {
+                if (candidate != null && bodyClass.isInstance(candidate)) {
+                    return candidate;
+                }
             }
-            LOG.warn("inbound body type mismatch msg={} expected={} actual={}",
+            LOG.warn("inbound body type mismatch msg={} expected={} bodies={}",
                     type.msgNo(),
                     bodyClass.getSimpleName(),
-                    body == null ? "null" : body.getClass().getSimpleName());
+                    msg.getBodies().size());
             return null;
         } catch (JAXBException e) {
             throw new FepBusinessException(

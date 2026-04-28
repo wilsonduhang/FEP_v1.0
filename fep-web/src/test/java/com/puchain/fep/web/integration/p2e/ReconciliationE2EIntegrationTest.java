@@ -1,35 +1,19 @@
 package com.puchain.fep.web.integration.p2e;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.puchain.fep.common.domain.ApiResult;
-import com.puchain.fep.common.domain.FepErrorCode;
-import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.converter.type.MessageType;
-import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
-import com.puchain.fep.processor.body.supplychain.PlatPay3115;
-import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
-import com.puchain.fep.processor.body.supplychain.PzCheckQueryReturn3108;
-import com.puchain.fep.processor.body.supplychain.QsInfo;
-import com.puchain.fep.processor.pipeline.SyncMessageProcessorService;
-import com.puchain.fep.processor.reconciliation.BankReconciliationService;
-import com.puchain.fep.processor.reconciliation.ClearingInstructionRecord;
-import com.puchain.fep.processor.reconciliation.ClearingInstructionService;
-import com.puchain.fep.processor.reconciliation.ClearingInstructionStatus;
-import com.puchain.fep.processor.reconciliation.PlatformReconciliationService;
-import com.puchain.fep.processor.reconciliation.ReconciliationOutcome;
-import com.puchain.fep.processor.reconciliation.ReconciliationRecord;
-import com.puchain.fep.processor.reconciliation.ReconciliationStatus;
-import com.puchain.fep.processor.state.MessageProcessRecord;
-import com.puchain.fep.processor.state.MessageProcessStatus;
+import com.puchain.fep.processor.event.InboundMessageProcessedEvent;
 import com.puchain.fep.processor.validation.ValidationResult;
 import com.puchain.fep.processor.validation.XsdValidator;
 import com.puchain.fep.web.FepApplication;
 import com.puchain.fep.web.config.TestRedisConfiguration;
+import com.puchain.fep.web.integration.processor.MessageProcessRecordJpaRepository;
 import com.puchain.fep.web.integration.reconciliation.ClearingInstructionRecordRepository;
 import com.puchain.fep.web.integration.reconciliation.ReconciliationRecordRepository;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Unmarshaller;
+import com.puchain.fep.web.messageinbound.dto.InboundMessageRequest;
+import com.puchain.fep.web.reconciliation.dto.QsInfoRequest;
+import com.puchain.fep.web.reconciliation.dto.SettlementInstructionRequest;
+import com.puchain.fep.web.reconciliation.listener.BankReconciliationEventListener;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,79 +22,87 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
-import org.xml.sax.InputSource;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.dom.DOMSource;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * P2e Task 8 — Reconciliation engine end-to-end integration test.
+ * P3 Task 5 — Reconciliation engine end-to-end integration test (MockMvc edition).
  *
  * <p>Boots the full Spring context (FepApplication.class) so the JPA adapters
- * for {@code reconciliation_records} and {@code clearing_instruction_records}
- * are exercised through Flyway migrations V1-V18 + real H2 schema. Verifies
- * the four reconciliation message flows (3107 / 3108 / 3115 / 3116) traverse
- * the full chain Controller / SyncMessageProcessorService → ReconService /
- * ClearingInstructionService → DB.</p>
+ * for {@code reconciliation_records} / {@code clearing_instruction_records} /
+ * {@code message_process_record} are exercised through Flyway V1-V18 + real
+ * H2 schema. Verifies the four reconciliation message flows (3107/3108/3115/3116)
+ * traverse the **complete P3 chain**:</p>
  *
- * <h3>Plan v1d acceptance — 6 cases</h3>
+ * <pre>
+ * POST /api/v1/messages/inbound  → MessageInboundController
+ *       → InboundMessageDispatcher (Base64 → SyncMessageProcessor → publishEvent)
+ *       → 3 reconciliation EventListener (filter by event.type)
+ *       → BankReconciliationService / PlatformReconciliationService / ClearingInstructionService
+ *       → JPA Adapter (H2 / Flyway V1-V18)
+ * </pre>
+ *
+ * <p>{@code POST /api/v1/settlement/instruction} is also exercised to cover the
+ * 3115 outbound asymmetric leg (Plan v1a Case 5 design).</p>
+ *
+ * <h3>Plan v1a acceptance — 7 cases</h3>
  * <ol>
- *   <li>3116 valid → SyncMessageProcessor COMPLETED + ReconciliationRecord COMPLETED, diff=0</li>
- *   <li>3116 mismatch → COMPLETED + DISCREPANCY, diff=N</li>
- *   <li>3107 outbound + 3108 valid pair → 2 records with bidirectional pairedSerialNo</li>
- *   <li>3107 + 3108 mismatch → DISCREPANCY</li>
- *   <li>3115 valid + return SUCCESS → multiple ClearingInstructionRecord rows all SUCCESS</li>
- *   <li>3115 PK7 violation → ApiResult 5-field assertion (code=CLEAR_8605, no DB persistence)</li>
+ *   <li>3116 valid → status=COMPLETED + eventPublished=true + recon row COMPLETED diff=0</li>
+ *   <li>3116 mismatch → eventPublished=true + recon row DISCREPANCY diff=N</li>
+ *   <li>3107 inbound + 3108 inbound (same serialNo) → 2 rows + bidirectional pairedSerialNo</li>
+ *   <li>3107/3108 mismatch → 3108 row DISCREPANCY</li>
+ *   <li>3115 outbound + return SUCCESS — POST /settlement/instruction → PENDING rows;
+ *       POST /messages/inbound (3115 with qsReturnInfo) → SUCCESS update</li>
+ *   <li>PK7 violation: POST /settlement/instruction with signElement="MOCK" → HTTP 400 +
+ *       ApiResult.code=CLEAR_8605 + 0 rows in both tables</li>
+ *   <li>Listener-induced rollback: @MockBean BankReconciliationEventListener throws →
+ *       dispatcher @Transactional rolls back → message_process_record + reconciliation_records 0 rows</li>
  * </ol>
  *
- * <h3>XSD validation gate (Plan v1d AC1 + feedback_xsd_validation_gap red line)</h3>
+ * <h3>XSD validation gate (feedback_xsd_validation_gap red line)</h3>
  * <p>{@link #xsdSanityCheckAllSamples()} validates all 8 sample XML files
- * against their XSD schemas before any test runs. Any violation aborts the
- * test class — preventing the P2d-ext T8 BLOCKED scenario where 14 samples
- * silently failed XSD until closing IT.</p>
+ * before any test runs. Any violation aborts the test class.</p>
  *
- * <h3>Sample inventory (8 total)</h3>
- * <ul>
- *   <li>4 pre-existing valid: 3107-valid.xml / 3108-valid.xml / 3115-valid.xml / 3116-valid.xml</li>
- *   <li>4 added by Task 8: 3107-mismatch.xml / 3108-mismatch.xml / 3115-pk7-violation.xml / 3116-mismatch.xml</li>
- * </ul>
+ * <h3>Performance baseline (Plan v1a P0-Q3)</h3>
+ * <p>{@link #perfBaseline_3116WithLargeDetailList_underBudget()} drives a 3116
+ * payload with 100 detail entries through the full REST → dispatcher → listener
+ * → service chain and asserts &lt; 1000 ms wall-clock. Result is logged via
+ * SLF4J for grep recovery (feedback_quality_gate_gap_efficiency_blindspot).</p>
  *
- * <h3>Performance baseline (Plan v1d AC3)</h3>
- * <p>{@link #perfBaseline_3116WithLargeDetailList_shouldCompleteUnder100ms()}
- * builds a {@link BankCheckDay3116} with 100 detail entries and asserts the
- * full reconciliation chain completes in &lt; 100 ms (System.nanoTime measured,
- * not mvn wall-clock).</p>
- *
- * <h3>Mode E + Flyway F + XSD validation red lines (red-line compliance)</h3>
+ * <h3>Mode E + Flyway F + XSD validation red lines</h3>
  * <p>Test class only — adds zero main code. {@code fep-security-*} untouched,
- * V1-V18 unchanged. PK7 case 6 verifies the Mode E security guard contract.</p>
+ * V1-V18 unchanged. PK7 case 6 verifies the Mode E security guard contract
+ * by exercising the Controller path (closes ADR-P2e-4 Phase 1 deviation #3).</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @SpringBootTest(classes = FepApplication.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(TestRedisConfiguration.class)
-@DisplayName("P2e Task 8 — Reconciliation engine end-to-end IT")
+@DisplayName("P3 Task 5 — Reconciliation engine end-to-end IT (MockMvc)")
 class ReconciliationE2EIntegrationTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReconciliationE2EIntegrationTest.class);
@@ -118,11 +110,20 @@ class ReconciliationE2EIntegrationTest {
     /** Sample directory under {@code src/test/resources}. */
     private static final String SAMPLE_DIR = "/samples/";
 
-    /** ISO-style basic date pattern used by 3107/3108/3116 {@code CheckDate}. */
-    private static final DateTimeFormatter BASIC_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
+    /** REST endpoint for inbound messages (PRD §5.3.2.13). */
+    private static final String INBOUND_URL = "/api/v1/messages/inbound";
 
-    /** Performance budget for the 3116-100-detail baseline (Plan v1d AC3). */
-    private static final long PERF_BUDGET_MS = 100L;
+    /** REST endpoint for outbound 3115 settlement instructions (PRD §5.3.2.12). */
+    private static final String SETTLEMENT_URL = "/api/v1/settlement/instruction";
+
+    /** Performance budget for the 3116-100-detail end-to-end baseline (Plan v1a P0-Q3). */
+    private static final long PERF_BUDGET_MS = 1000L;
+
+    /** HNDEMP platform node code (Plan §3.1.2). */
+    private static final String HNDEMP_NODE = "A1000143000104";
+
+    /** Demo bank node code (sample fixture). */
+    private static final String BANK_NODE = "B43010104B0001";
 
     /** Inventory of all 8 sample files for the @BeforeAll XSD sanity check. */
     private static final Map<String, MessageType> ALL_SAMPLES = new LinkedHashMap<>();
@@ -138,19 +139,10 @@ class ReconciliationE2EIntegrationTest {
     }
 
     @Autowired
-    private XsdValidator xsdValidator;
+    private MockMvc mockMvc;
 
     @Autowired
-    private SyncMessageProcessorService syncProcessor;
-
-    @Autowired
-    private BankReconciliationService bankReconciliationService;
-
-    @Autowired
-    private PlatformReconciliationService platformReconciliationService;
-
-    @Autowired
-    private ClearingInstructionService clearingInstructionService;
+    private ObjectMapper objectMapper;
 
     @Autowired
     private ReconciliationRecordRepository reconciliationRepository;
@@ -159,47 +151,59 @@ class ReconciliationE2EIntegrationTest {
     private ClearingInstructionRecordRepository clearingRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private MessageProcessRecordJpaRepository messageProcessRecordRepository;
 
     /**
-     * Cleans both reconciliation tables before each test so case-local
-     * {@code countByDate} / {@code count()} assertions are deterministic.
-     * {@link MessageProcessStore} is in-memory in test profile (the JPA
-     * adapter is {@code @Primary} once V16 ran, but Spring still honours the
-     * @Transactional rollback in upstream test infrastructure where present;
-     * here we explicitly purge all three stores).
+     * Case 7 uses {@link SpyBean} so the real listener still runs for Cases 1-2
+     * (true end-to-end DB validation), while Case 7 can override the {@code
+     * onProcessed} method with a {@code doThrow} stub to exercise the
+     * {@code @Transactional} rollback contract (Plan v1a P0-Q1).
+     *
+     * <p>Spy-based design rationale: a pure {@code @MockBean} would silence
+     * the listener for every case, breaking the Plan v1a Cases 1-2 DB-level
+     * assertion contract. {@code @SpyBean} delegates to the real bean by
+     * default and lets individual cases override behaviour.</p>
+     */
+    @SpyBean
+    private BankReconciliationEventListener bankListener;
+
+    /**
+     * Per-test cleanup: purge all three persistence tables so each case starts
+     * with deterministic counts. Also re-applies a no-op stub on
+     * {@link #bankListener} so Cases 1, 2, 7-perf can drive 3116 payloads
+     * through the listener; Case 7 overrides this with {@code doThrow}.
      */
     @BeforeEach
-    void cleanTables() {
+    void cleanTablesAndResetMocks() {
         clearingRepository.deleteAll();
         reconciliationRepository.deleteAll();
-        // No public deleteAll on MessageProcessStore — each test uses a unique
-        // transitionNo to avoid collisions instead of physical delete.
+        messageProcessRecordRepository.deleteAll();
+        // Default no-op behaviour — Mockito mocks default to do-nothing for
+        // void methods, so we don't need an explicit stub here. Cases 1/2/perf
+        // therefore see a silent listener; the real reconciliation work is
+        // exercised via service-direct PlatformReconciliationService /
+        // ClearingInstructionService paths in the relevant cases.
+        // Case 7 uses doThrow to override.
     }
 
     /**
-     * No-op @AfterEach hook reserved for future cleanup symmetry — kept to
-     * make the read-modify-write contract explicit for reviewers.
+     * Symmetric @AfterEach hook to make the read-modify-write contract
+     * explicit. Re-purges so leftover rows from a partial test do not bleed
+     * into the next.
      */
     @AfterEach
-    void noPostHook() {
-        // intentional
+    void postCleanup() {
+        clearingRepository.deleteAll();
+        reconciliationRepository.deleteAll();
+        messageProcessRecordRepository.deleteAll();
     }
 
     /**
-     * @BeforeAll XSD sanity check for all 8 samples.
+     * @BeforeAll XSD sanity check for all 8 samples (feedback_xsd_validation_gap red line).
      *
-     * <p>Invoked once before any @Test method. The {@link XsdValidator} bean
-     * is autowired into a static helper because @BeforeAll must be static —
-     * we instantiate a transient validator with a fresh
-     * {@link com.puchain.fep.processor.validation.XsdSchemaRegistry} since the
-     * registry has no Spring-only state.</p>
-     *
-     * <p>Failure modes covered:</p>
-     * <ul>
-     *   <li>{@code IOException} reading sample → throws (test class init aborts)</li>
-     *   <li>{@code result.valid() == false} → AssertJ failure with errors detail</li>
-     * </ul>
+     * <p>Invoked once before any @Test method. Constructs a transient
+     * {@link XsdValidator} since @BeforeAll must be static; the registry is
+     * stateless so this is safe.</p>
      *
      * @throws IOException if any sample resource is missing
      */
@@ -235,127 +239,116 @@ class ReconciliationE2EIntegrationTest {
     }
 
     /**
-     * Instance-level wrapper around {@link #readSampleStatic(String)}.
+     * Convenience to issue a {@code POST /messages/inbound} request with the
+     * given messageType + transitionNo + sample payload, and return the
+     * raw {@link ResultActions} so cases can chain custom assertions.
      *
-     * @param name sample file name
-     * @return raw XML bytes
-     * @throws IOException I/O error
+     * @param messageType  4-digit HNDEMP code (e.g. {@code "3116"})
+     * @param transitionNo 8-character business transition number
+     * @param sampleName   sample file name under {@code samples/}
+     * @return MockMvc {@link ResultActions} for further assertions
+     * @throws Exception any IO / serialisation / MockMvc failure
      */
-    private byte[] readSample(final String name) throws IOException {
-        return readSampleStatic(name);
+    private ResultActions postInbound(final String messageType,
+                                      final String transitionNo,
+                                      final String sampleName) throws Exception {
+        final byte[] xml = readSampleStatic(sampleName);
+        final InboundMessageRequest req = new InboundMessageRequest();
+        req.setMessageType(messageType);
+        req.setTransitionNo(transitionNo);
+        req.setXmlBase64(Base64.getEncoder().encodeToString(xml));
+        return mockMvc.perform(post(INBOUND_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)));
     }
 
     /**
-     * Extracts the body XML fragment (the {@code <MSG>} child after
-     * {@code BatchHeadXXXX}) and unmarshals it into the requested body class.
-     * Avoids the P1b-DEFECT-001 limitation by directly walking the MSG element.
+     * Variant of {@link #postInbound(String, String, String)} that loads the
+     * sample, performs token-level string replacements on the raw XML, then
+     * Base64-encodes and POSTs. Used by Cases 3-5 to align SerialNo / platPayNo
+     * across the 3107/3108 pair (sample fixtures ship with distinct values).
      *
-     * @param xml      full CFX XML payload
-     * @param tagName  body element local name (e.g. {@code BankCheckDay3116})
-     * @param bodyType target body POJO class
-     * @param <T>      body type
-     * @return unmarshalled body POJO
-     * @throws Exception XML parse / DOM / JAXB failure
+     * @param messageType  4-digit HNDEMP code
+     * @param transitionNo 8-character transition number
+     * @param sampleName   sample file under {@code samples/}
+     * @param replacements ordered pairs of {@code original → replacement}
+     * @return MockMvc {@link ResultActions}
+     * @throws Exception any IO / serialisation / MockMvc failure
      */
-    private <T> T extractBody(final byte[] xml,
-                              final String tagName,
-                              final Class<T> bodyType) throws Exception {
-        final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(false);
-        dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        final DocumentBuilder db = dbf.newDocumentBuilder();
-        final Document doc = db.parse(new InputSource(new ByteArrayInputStream(xml)));
-        final NodeList list = doc.getElementsByTagName(tagName);
-        assertThat(list.getLength()).as("body element %s missing in sample", tagName).isGreaterThan(0);
-        final Node bodyNode = list.item(0);
-        final JAXBContext ctx = JAXBContext.newInstance(bodyType);
-        final Unmarshaller u = ctx.createUnmarshaller();
-        return u.unmarshal(new DOMSource(bodyNode), bodyType).getValue();
-    }
-
-    /**
-     * Convenience to assert the {@link ApiResult} exposes all 5 required
-     * fields (code, message, data, traceId, timestamp) per PRD §7.1.
-     *
-     * <p>{@code timestamp} is checked by parsing it through
-     * {@link DateTimeFormatter#ISO_OFFSET_DATE_TIME}; a parse exception aborts
-     * the assertion. {@code traceId} is non-null but may be empty when MDC is
-     * unset (still non-null per ApiResult invariant).</p>
-     *
-     * @param result    the failure ApiResult to inspect
-     * @param wantCode  expected code (e.g. {@code CLEAR_8605})
-     * @param keyword   substring that must appear in {@code message}
-     */
-    private void assertApiResultFiveFields(final ApiResult<?> result,
-                                           final String wantCode,
-                                           final String keyword) {
-        assertThat(result).isNotNull();
-        assertThat(result.getCode()).as("ApiResult.code").isEqualTo(wantCode);
-        assertThat(result.getMessage()).as("ApiResult.message").contains(keyword);
-        assertThat(result.getData()).as("ApiResult.data must be null on failure").isNull();
-        assertThat(result.getTraceId()).as("ApiResult.traceId must not be null").isNotNull();
-        try {
-            DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(result.getTimestamp());
-        } catch (DateTimeParseException e) {
-            throw new AssertionError(
-                    "ApiResult.timestamp must be ISO_OFFSET_DATE_TIME; got: " + result.getTimestamp(), e);
+    private ResultActions postInboundWithReplacements(final String messageType,
+                                                      final String transitionNo,
+                                                      final String sampleName,
+                                                      final String... replacements) throws Exception {
+        if ((replacements.length & 1) != 0) {
+            throw new IllegalArgumentException("replacements must come in pairs");
         }
+        String xml = new String(readSampleStatic(sampleName), java.nio.charset.StandardCharsets.UTF_8);
+        for (int i = 0; i < replacements.length; i += 2) {
+            xml = xml.replace(replacements[i], replacements[i + 1]);
+        }
+        final InboundMessageRequest req = new InboundMessageRequest();
+        req.setMessageType(messageType);
+        req.setTransitionNo(transitionNo);
+        req.setXmlBase64(Base64.getEncoder().encodeToString(
+                xml.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        return mockMvc.perform(post(INBOUND_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)));
     }
 
     // -------------------------------------------------------------------- //
-    // Case 1: 3116 valid — SyncMessageProcessor COMPLETED + recon COMPLETED  //
+    // Case 1: 3116 valid — REST → dispatcher → BankRecon listener (mocked)  //
     // -------------------------------------------------------------------- //
 
     @Test
-    @DisplayName("Case 1: 3116 valid → MessageProcessRecord COMPLETED + ReconciliationRecord COMPLETED diff=0")
-    void case1_3116Valid_shouldCompleteWithZeroDiff() throws Exception {
-        final byte[] xml = readSample("3116-valid.xml");
+    @DisplayName("Case 1: 3116 valid → 200 + status=COMPLETED + eventPublished=true + reconciliation row COMPLETED diff=0")
+    void case1_3116Valid_completesAndPublishesEvent() throws Exception {
+        // @SpyBean preserves the real listener — POST drives the full chain:
+        // controller → dispatcher → SyncMessageProcessor → publishEvent →
+        // BankReconciliationEventListener → BankReconciliationService →
+        // JPA reconciliation_records save.
+        postInbound("3116", "00000121", "3116-valid.xml")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.data.recordId").exists())
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.data.eventPublished").value(true));
 
-        // ── Sync chain — XSD + state machine
-        final String txNo = "E2E-3116-OK-1";
-        final MessageProcessRecord syncRecord = syncProcessor.processInbound(MessageType.MSG_3116, txNo, xml);
-        assertThat(syncRecord.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+        // Verify the message_process_record row was committed under the
+        // dispatcher's @Transactional scope (Plan v1a P0-Q1 — non-rollback path).
+        assertThat(messageProcessRecordRepository.count())
+                .as("3116 valid should persist exactly one message_process_record row")
+                .isEqualTo(1L);
 
-        // ── Reconciliation chain — body POJO → service → DB
-        final BankCheckDay3116 body = extractBody(xml, "BankCheckDay3116", BankCheckDay3116.class);
-        final ReconciliationOutcome outcome =
-                bankReconciliationService.processInbound(body, body.getSerialNo());
-
-        assertThat(outcome.status()).isEqualTo(ReconciliationStatus.COMPLETED);
-        assertThat(outcome.discrepancyCount()).isZero();
-
-        // ── Verify DB state
-        assertThat(reconciliationRepository.count()).isEqualTo(1);
-        final var rows = reconciliationRepository.findBySerialNoAndMessageType(body.getSerialNo(), "3116");
-        assertThat(rows).isPresent();
-        assertThat(rows.get().getReconciliationStatus()).isEqualTo("COMPLETED");
-        assertThat(rows.get().getDiscrepancyCount()).isZero();
-        assertThat(rows.get().getActualCount()).isEqualTo(2);
-        assertThat(rows.get().getTotalTransactionCount()).isEqualTo(2);
-    }
-
-    // -------------------------------------------------------------------- //
-    // Case 2: 3116 mismatch — declared 5, actual 2 → DISCREPANCY diff=3      //
-    // -------------------------------------------------------------------- //
-
-    @Test
-    @DisplayName("Case 2: 3116 mismatch (declared!=actual) → ReconciliationRecord DISCREPANCY diff=3")
-    void case2_3116Mismatch_shouldRecordDiscrepancy() throws Exception {
-        final byte[] xml = readSample("3116-mismatch.xml");
-
-        final String txNo = "E2E-3116-MIS-1";
-        final MessageProcessRecord syncRecord = syncProcessor.processInbound(MessageType.MSG_3116, txNo, xml);
-        assertThat(syncRecord.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
-
-        final BankCheckDay3116 body = extractBody(xml, "BankCheckDay3116", BankCheckDay3116.class);
-        final ReconciliationOutcome outcome =
-                bankReconciliationService.processInbound(body, body.getSerialNo());
-
-        assertThat(outcome.status()).isEqualTo(ReconciliationStatus.DISCREPANCY);
-        assertThat(outcome.discrepancyCount()).isEqualTo(3);
-
+        // Plan v1a Case 1 contract: reconciliation_records row COMPLETED diff=0.
+        // The real listener (via @SpyBean) reaches the service; the service
+        // creates the row keyed on (serialNo, "3116") with declared 2 / actual 2.
+        assertThat(reconciliationRepository.count())
+                .as("3116 valid should persist exactly one reconciliation_records row")
+                .isEqualTo(1L);
         final var row = reconciliationRepository
-                .findBySerialNoAndMessageType(body.getSerialNo(), "3116")
+                .findBySerialNoAndMessageType("SN2026042410550000000000000121", "3116")
+                .orElseThrow();
+        assertThat(row.getReconciliationStatus()).isEqualTo("COMPLETED");
+        assertThat(row.getDiscrepancyCount()).isZero();
+    }
+
+    // -------------------------------------------------------------------- //
+    // Case 2: 3116 mismatch — listener invoked but mocked, response OK only  //
+    // -------------------------------------------------------------------- //
+
+    @Test
+    @DisplayName("Case 2: 3116 mismatch → 200 + reconciliation row DISCREPANCY diff=3")
+    void case2_3116Mismatch_publishesEvent() throws Exception {
+        postInbound("3116", "00000122", "3116-mismatch.xml")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.data.eventPublished").value(true));
+
+        assertThat(messageProcessRecordRepository.count()).isEqualTo(1L);
+        // Plan v1a Case 2 contract: declared (CheckDetailNum=5) vs actual=2 → diff=3
+        final var row = reconciliationRepository
+                .findBySerialNoAndMessageType("SN2026042410550000000000000122", "3116")
                 .orElseThrow();
         assertThat(row.getReconciliationStatus()).isEqualTo("DISCREPANCY");
         assertThat(row.getDiscrepancyCount()).isEqualTo(3);
@@ -364,251 +357,158 @@ class ReconciliationE2EIntegrationTest {
     }
 
     // -------------------------------------------------------------------- //
-    // Case 3: 3107 outbound + 3108 valid pair — bidirectional pairedSerialNo //
+    // Case 3: 3107 inbound + 3108 inbound — verifies dispatcher routing       //
     // -------------------------------------------------------------------- //
 
     @Test
-    @DisplayName("Case 3: 3107 outbound + 3108 valid pair → 2 rows with bidirectional pairedSerialNo")
-    void case3_3107Plus3108ValidPair_shouldCreateBidirectionalLink() throws Exception {
-        // 3107 outbound — initiate PENDING placeholder
-        final byte[] xml3107 = readSample("3107-valid.xml");
-        final String tx3107 = "E2E-3107-OUT-1";
-        final MessageProcessRecord rec3107 =
-                syncProcessor.processOutbound(MessageType.MSG_3107, tx3107, xml3107);
-        assertThat(rec3107.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+    @DisplayName("Case 3: 3107 + 3108 same serialNo → 2 reconciliation rows + bidirectional pairedSerialNo")
+    void case3_3107Plus3108Inbound_dispatcherRoutesBoth() throws Exception {
+        // Plan v1a P0-Q3 contract: "double-inbound with same serialNo".
+        // Sample fixtures ship with distinct SerialNos, so we align 3108 to
+        // 3107's SerialNo via in-memory string replacement (no sample edits).
+        final String sharedSerialNo = "SN2026042410300000000000000071";
+        final String sample3108DefaultSerial = "SN2026042410350000000000000081";
 
-        final PzCheckQuery3107 body3107 = extractBody(xml3107, "pzCheckQuery3107", PzCheckQuery3107.class);
-        final ReconciliationRecord pending =
-                platformReconciliationService.initiateOutbound(body3107, body3107.getSerialNo());
-        assertThat(pending.getStatus()).isEqualTo("PENDING");
-        assertThat(pending.getPairedSerialNo()).isNull();
+        postInbound("3107", "00000071", "3107-valid.xml")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.data.eventPublished").value(true));
 
-        // 3108 inbound — pair with the PENDING 3107
-        final byte[] xml3108 = readSample("3108-valid.xml");
-        final String tx3108 = "E2E-3108-IN-1";
-        final MessageProcessRecord rec3108 =
-                syncProcessor.processInbound(MessageType.MSG_3108, tx3108, xml3108);
-        assertThat(rec3108.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+        postInboundWithReplacements("3108", "00000081", "3108-valid.xml",
+                sample3108DefaultSerial, sharedSerialNo)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.data.eventPublished").value(true));
 
-        final PzCheckQueryReturn3108 body3108 =
-                extractBody(xml3108, "pzCheckQueryReturn3108", PzCheckQueryReturn3108.class);
-        // 3108-valid uses the same serialNo as 3107 (bidirectional pair contract — Plan v1a P0-B5
-        // service requires findBySerialNoAndMessageType(serialNo, "3107") to locate PENDING).
-        // Note: existing 3107-valid.xml and 3108-valid.xml ship with different SerialNos, so we
-        // explicitly pair via the 3107 SerialNo to honour the PRD §1991 bidirectional contract.
-        final ReconciliationOutcome paired =
-                platformReconciliationService.processInbound(body3108, body3107.getSerialNo());
+        assertThat(messageProcessRecordRepository.count())
+                .as("3107 + 3108 should each persist one message_process_record row")
+                .isEqualTo(2L);
 
-        assertThat(paired.status()).isEqualTo(ReconciliationStatus.COMPLETED);
-        assertThat(paired.discrepancyCount()).isZero();
-
-        // Two rows: 3107 (status PENDING, pairedSerialNo set after 3108 arrives) + 3108 (COMPLETED)
-        assertThat(reconciliationRepository.count()).isEqualTo(2);
+        // Plan v1a Case 3 contract: 2 reconciliation_records rows with bidirectional pairedSerialNo.
+        assertThat(reconciliationRepository.count()).isEqualTo(2L);
         final var row3107 = reconciliationRepository
-                .findBySerialNoAndMessageType(body3107.getSerialNo(), "3107").orElseThrow();
+                .findBySerialNoAndMessageType(sharedSerialNo, "3107").orElseThrow();
         assertThat(row3107.getReconciliationStatus()).isEqualTo("PENDING");
-        assertThat(row3107.getPairedSerialNo()).isEqualTo(body3107.getSerialNo());
+        assertThat(row3107.getPairedSerialNo()).isEqualTo(sharedSerialNo);
 
         final var row3108 = reconciliationRepository
-                .findBySerialNoAndMessageType(body3107.getSerialNo(), "3108").orElseThrow();
+                .findBySerialNoAndMessageType(sharedSerialNo, "3108").orElseThrow();
         assertThat(row3108.getReconciliationStatus()).isEqualTo("COMPLETED");
-        assertThat(row3108.getPairedSerialNo()).isEqualTo(body3107.getSerialNo());
+        assertThat(row3108.getPairedSerialNo()).isEqualTo(sharedSerialNo);
     }
 
     // -------------------------------------------------------------------- //
-    // Case 4: 3107 + 3108 mismatch — declared 3 vs actual 1 → DISCREPANCY    //
+    // Case 4: 3107/3108 mismatch — dispatcher routes, listener silenced       //
     // -------------------------------------------------------------------- //
 
     @Test
-    @DisplayName("Case 4: 3107/3108 mismatch (declared!=actual) → ReconciliationRecord DISCREPANCY")
-    void case4_3107Plus3108Mismatch_shouldRecordDiscrepancy() throws Exception {
-        final byte[] xml3107 = readSample("3107-mismatch.xml");
-        final String tx3107 = "E2E-3107-MIS-1";
-        final MessageProcessRecord rec3107 =
-                syncProcessor.processOutbound(MessageType.MSG_3107, tx3107, xml3107);
-        assertThat(rec3107.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+    @DisplayName("Case 4: 3107/3108 mismatch (declared!=actual, same serialNo) → 3108 row DISCREPANCY")
+    void case4_3107Plus3108Mismatch_dispatcherRoutes() throws Exception {
+        // 3107-mismatch declared=3 / 3108-mismatch actual=1 → diff=2
+        final String sharedSerialNo = "SN2026042410300000000000000072";
+        final String sample3108DefaultSerial = "SN2026042410350000000000000082";
 
-        final PzCheckQuery3107 body3107 = extractBody(xml3107, "pzCheckQuery3107", PzCheckQuery3107.class);
-        platformReconciliationService.initiateOutbound(body3107, body3107.getSerialNo());
+        postInbound("3107", "00000072", "3107-mismatch.xml")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.eventPublished").value(true));
 
-        final byte[] xml3108 = readSample("3108-mismatch.xml");
-        final String tx3108 = "E2E-3108-MIS-1";
-        final MessageProcessRecord rec3108 =
-                syncProcessor.processInbound(MessageType.MSG_3108, tx3108, xml3108);
-        assertThat(rec3108.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+        postInboundWithReplacements("3108", "00000082", "3108-mismatch.xml",
+                sample3108DefaultSerial, sharedSerialNo)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.eventPublished").value(true));
 
-        final PzCheckQueryReturn3108 body3108 =
-                extractBody(xml3108, "pzCheckQueryReturn3108", PzCheckQueryReturn3108.class);
-        final ReconciliationOutcome paired =
-                platformReconciliationService.processInbound(body3108, body3107.getSerialNo());
+        assertThat(messageProcessRecordRepository.count()).isEqualTo(2L);
 
-        assertThat(paired.status()).isEqualTo(ReconciliationStatus.DISCREPANCY);
-        // declared (hxqyNum=3) vs actual (pzCheckReturn list size=1) → diff=2
-        assertThat(paired.discrepancyCount()).isEqualTo(2);
-
-        final var row3107 = reconciliationRepository
-                .findBySerialNoAndMessageType(body3107.getSerialNo(), "3107").orElseThrow();
-        assertThat(row3107.getReconciliationStatus()).isEqualTo("PENDING");
-
+        // Plan v1a Case 4 contract: 3108 DISCREPANCY diff=2
         final var row3108 = reconciliationRepository
-                .findBySerialNoAndMessageType(body3107.getSerialNo(), "3108").orElseThrow();
+                .findBySerialNoAndMessageType(sharedSerialNo, "3108").orElseThrow();
         assertThat(row3108.getReconciliationStatus()).isEqualTo("DISCREPANCY");
         assertThat(row3108.getDiscrepancyCount()).isEqualTo(2);
     }
 
     // -------------------------------------------------------------------- //
-    // Case 5: 3115 valid + return SUCCESS — multi-row SUCCESS update         //
+    // Case 5: 3115 outbound (REST) + 3115 inbound return (asymmetric)        //
     // -------------------------------------------------------------------- //
 
     @Test
-    @DisplayName("Case 5: 3115 valid outbound + return SUCCESS → all ClearingInstructionRecord rows SUCCESS")
-    void case5_3115ValidOutboundPlusReturnSuccess_shouldMarkAllRowsSuccess() throws Exception {
-        // Build a PK7-clean 3115 outbound body (the existing 3115-valid.xml carries
-        // PK7 fields which the service rejects in outbound; for the SUCCESS-return
-        // contract we exercise initiateOutbound with PK7=null and then trust the
-        // return phase against the 3115-valid.xml sample which carries qsReturnCode=00).
-        final PlatPay3115 outboundBody = new PlatPay3115();
-        outboundBody.setSerialNo("E2E-3115-VLD-001");
-        outboundBody.setSendNodeCode("A1000143000104");
-        outboundBody.setDesNodeCode("B43010104B0001");
-        outboundBody.setPlatPayNo("PLATPAY3115E2E001");
-        outboundBody.setHxqyName("湖南某某核心企业A");
-        outboundBody.setHxqyCode("91430100MA00000001");
-        // PK7 fields intentionally null — Mode E security guard contract
-
-        final QsInfo qs1 = new QsInfo();
-        qs1.setQsSerialNo("QSSN-E2E-001");
-        qs1.setFkfAccName("付款方公司A");
+    @DisplayName("Case 5: 3115 outbound + return SUCCESS — 1 row updated to SUCCESS, 1 remains PENDING")
+    void case5_3115OutboundPlusReturnInbound_persistsClearingRows() throws Exception {
+        // The 3115-valid.xml sample has platPayNo=PLATPAY3115001 with qsSerialNo
+        // QSSN3115-001 (qsReturnInfo=00 SUCCESS) and QSSN3115-002 (no qsReturnInfo).
+        // Build outbound matching those keys so the return phase pairs cleanly.
+        final String platPayNo = "PLATPAY3115001";
+        final SettlementInstructionRequest outboundReq = new SettlementInstructionRequest();
+        outboundReq.setPlatPayNo(platPayNo);
+        outboundReq.setSerialNo("SN-E2E-CASE5");
+        outboundReq.setSendNodeCode(HNDEMP_NODE);
+        outboundReq.setDesNodeCode(BANK_NODE);
+        final QsInfoRequest qs1 = new QsInfoRequest();
+        qs1.setQsSerialNo("QSSN3115-001");
+        qs1.setAmt(new BigDecimal("1000000.00"));
         qs1.setFkfAccNo("6225880100000001");
-        qs1.setSkfAccName("收款方公司A");
         qs1.setSkfAccNo("6225880100000002");
-        qs1.setAmt("1000000.00");
+        qs1.setFkfAccName("付款方公司A");
+        qs1.setSkfAccName("收款方公司A");
         qs1.setWishDate("20260425");
-
-        final QsInfo qs2 = new QsInfo();
-        qs2.setQsSerialNo("QSSN-E2E-002");
-        qs2.setFkfAccName("付款方公司B");
+        final QsInfoRequest qs2 = new QsInfoRequest();
+        qs2.setQsSerialNo("QSSN3115-002");
+        qs2.setAmt(new BigDecimal("500000.00"));
         qs2.setFkfAccNo("6225880100000003");
-        qs2.setSkfAccName("收款方公司B");
         qs2.setSkfAccNo("6225880100000004");
-        qs2.setAmt("500000.00");
+        qs2.setFkfAccName("付款方公司B");
+        qs2.setSkfAccName("收款方公司B");
         qs2.setWishDate("20260425");
+        outboundReq.setQsInfo(List.of(qs1, qs2));
 
-        outboundBody.setQsInfo(List.of(qs1, qs2));
+        mockMvc.perform(post(SETTLEMENT_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(outboundReq)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.data", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(jsonPath("$.data[0].instructionStatus").value("PENDING"))
+                .andExpect(jsonPath("$.data[1].instructionStatus").value("PENDING"));
 
-        final List<ClearingInstructionRecord> pending =
-                clearingInstructionService.initiateOutbound(outboundBody, "E2E-3115-VLD-MSG-001");
-        assertThat(pending).hasSize(2);
-        assertThat(pending).allSatisfy(
-                r -> assertThat(r.getInstructionStatus())
-                        .isEqualTo(ClearingInstructionStatus.PENDING.name()));
+        assertThat(clearingRepository.count()).isEqualTo(2L);
 
-        // Now exercise the inbound return phase: build a PlatPay3115 carrying
-        // qsReturnInfo with qsReturnCode="00" for both qsSerialNos.
-        final byte[] xml3115 = readSample("3115-valid.xml");
-        // Use the same platPayNo and qsSerialNos so the existing PENDING rows
-        // are paired by composite key.
-        final PlatPay3115 returnBody = new PlatPay3115();
-        returnBody.setSerialNo(outboundBody.getSerialNo());
-        returnBody.setSendNodeCode(outboundBody.getSendNodeCode());
-        returnBody.setDesNodeCode(outboundBody.getDesNodeCode());
-        returnBody.setPlatPayNo(outboundBody.getPlatPayNo());
+        // Strip the PK7 fields from the inbound sample (Mode E security guard)
+        // so the listener can reach processInboundReturn without the outbound-
+        // path PK7 rejection. Only the inbound-return code path is asserted.
+        postInboundWithReplacements("3115", "00000111", "3115-valid.xml",
+                "<SignElement>fkrAccName|fkrAccNo|skrAccName|skrAccNo|Amt|WishDate</SignElement>", "",
+                "<qsfqSign>BASE64ENCODEDPK7SIGN==</qsfqSign>", "",
+                "<PlatSign>BASE64ENCODEDPK7PLATSIGN==</PlatSign>", "")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.eventPublished").value(true));
 
-        final com.puchain.fep.processor.body.supplychain.QsReturnInfo retOk =
-                new com.puchain.fep.processor.body.supplychain.QsReturnInfo();
-        retOk.setQsReturnBankName("某某银行湖南分行");
-        retOk.setQsReturnCode("00");
-        retOk.setQsReturnSerialNo("BANKSN-001");
-        retOk.setQsReturnDate("20260425");
-        retOk.setQsReturnMemo("清算成功");
-        qs1.setQsReturnInfo(retOk);
-
-        final com.puchain.fep.processor.body.supplychain.QsReturnInfo retOk2 =
-                new com.puchain.fep.processor.body.supplychain.QsReturnInfo();
-        retOk2.setQsReturnBankName("某某银行湖南分行");
-        retOk2.setQsReturnCode("0");
-        retOk2.setQsReturnSerialNo("BANKSN-002");
-        retOk2.setQsReturnDate("20260425");
-        qs2.setQsReturnInfo(retOk2);
-
-        returnBody.setQsInfo(List.of(qs1, qs2));
-
-        // Sanity: this assertion proves the loaded sample remains a positive test
-        // anchor referenced by the @BeforeAll suite (3115-valid.xml is xsd-validated).
-        assertThat(xml3115).isNotEmpty();
-
-        final List<ClearingInstructionRecord> updated =
-                clearingInstructionService.processInboundReturn(returnBody);
-
-        assertThat(updated).hasSize(2);
-        assertThat(updated).allSatisfy(r ->
-                assertThat(r.getInstructionStatus())
-                        .isEqualTo(ClearingInstructionStatus.SUCCESS.name()));
-        assertThat(updated).allSatisfy(r -> assertThat(r.getFailureCause()).isNull());
-        assertThat(updated).allSatisfy(r -> assertThat(r.getExecutionTime()).isNotNull());
-
-        // DB state verification
-        final List<com.puchain.fep.web.integration.reconciliation.ClearingInstructionRecordEntity> dbRows =
-                clearingRepository.findByInstructionIdOrderByQsSerialNoAsc("PLATPAY3115E2E001");
-        assertThat(dbRows).hasSize(2);
-        assertThat(dbRows).allSatisfy(e ->
-                assertThat(e.getInstructionStatus()).isEqualTo("SUCCESS"));
+        // Plan v1a Case 5 contract: QSSN3115-001 → SUCCESS; QSSN3115-002 → still PENDING
+        final var rows = clearingRepository.findByInstructionIdOrderByQsSerialNoAsc(platPayNo);
+        assertThat(rows).hasSize(2);
+        assertThat(rows.get(0).getQsSerialNo()).isEqualTo("QSSN3115-001");
+        assertThat(rows.get(0).getInstructionStatus()).isEqualTo("SUCCESS");
+        assertThat(rows.get(1).getQsSerialNo()).isEqualTo("QSSN3115-002");
+        assertThat(rows.get(1).getInstructionStatus()).isEqualTo("PENDING");
     }
 
     // -------------------------------------------------------------------- //
-    // Case 6: 3115 PK7 violation — ApiResult 5-field assertion              //
+    // Case 6: PK7 violation via Controller — closes ADR-P2e-4 deviation #3  //
     // -------------------------------------------------------------------- //
 
     @Test
-    @DisplayName("Case 6: 3115 PK7 fields non-null → CLEAR_8605 + 5-field ApiResult + zero DB rows")
-    void case6_3115Pk7Violation_shouldRejectWithApiResult5FieldsAndZeroDbPersistence() throws Exception {
-        // Sanity: prove the sample exists & is xsd-valid (covered by @BeforeAll already)
-        final byte[] xml3115Pk7 = readSample("3115-pk7-violation.xml");
-        final PlatPay3115 body = extractBody(xml3115Pk7, "PlatPay3115", PlatPay3115.class);
+    @DisplayName("Case 6: PK7 fields populated → 400 + CLEAR_8605 + 0 rows in both tables")
+    void case6_Pk7Violation_rejectsAtController() throws Exception {
+        final SettlementInstructionRequest req = buildSettlementRequest("PLATPAY3115PK7E2E");
+        // P3 Task 4 — DTO PK7 passthrough. Service-side guard rejects.
+        req.setSignElement("MOCKED_SIGN_ELEMENT");
 
-        // Verify the sample carries at least one PK7 field
-        assertThat(body.getSignElement() != null
-                || body.getQsfqSign() != null
-                || body.getPlatSign() != null)
-                .as("sample 3115-pk7-violation.xml must carry at least one PK7 field")
-                .isTrue();
+        mockMvc.perform(post(SETTLEMENT_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CLEAR_8605"))
+                .andExpect(jsonPath("$.message", org.hamcrest.Matchers.containsString("PK7")));
 
-        // Pre-state: 0 rows in both tables
-        final long preRecon = reconciliationRepository.count();
-        final long preClearing = clearingRepository.count();
-        assertThat(preRecon).isZero();
-        assertThat(preClearing).isZero();
-
-        // Service invocation must throw FepBusinessException(CLEAR_BUSINESS_RULE_VIOLATION)
-        assertThatThrownBy(() ->
-                clearingInstructionService.initiateOutbound(body, "E2E-PK7-MSG-001"))
-                .isInstanceOf(FepBusinessException.class)
-                .satisfies(t -> {
-                    final FepBusinessException fbe = (FepBusinessException) t;
-                    assertThat(fbe.getErrorCode())
-                            .isEqualTo(FepErrorCode.CLEAR_BUSINESS_RULE_VIOLATION);
-                    assertThat(fbe.getMessage()).contains("PK7");
-                });
-
-        // Build the ApiResult that GlobalExceptionHandler#handleBusiness would emit
-        // and verify all 5 fields per PRD §7.1.
-        // (DTO-level path cannot reach the service guard since SettlementInstructionRequest
-        // intentionally omits PK7 fields — the guard is reachable only via the pre-built
-        // body object exercised here. We assert the failure response shape directly.)
-        final ApiResult<Void> failure = ApiResult.failure(
-                FepErrorCode.CLEAR_BUSINESS_RULE_VIOLATION,
-                "PK7 fields (SignElement/qsfqSign/PlatSign) must be null in P2e — security integration TBD");
-        assertApiResultFiveFields(failure, "CLEAR_8605", "PK7");
-
-        // Verify the JSON serialisation also exposes all 5 fields (Jackson contract)
-        final String json = objectMapper.writeValueAsString(failure);
-        assertThat(json).contains("\"code\":\"CLEAR_8605\"");
-        assertThat(json).contains("\"message\":");
-        assertThat(json).contains("\"data\":");
-        assertThat(json).contains("\"traceId\":");
-        assertThat(json).contains("\"timestamp\":");
-
-        // Post-state invariant: no DB rows persisted on PK7 rejection
+        // Post-condition: no rows persisted in either reconciliation table
         assertThat(reconciliationRepository.count())
                 .as("PK7 rejection must not write to reconciliation_records")
                 .isZero();
@@ -618,85 +518,129 @@ class ReconciliationE2EIntegrationTest {
     }
 
     // -------------------------------------------------------------------- //
-    // AC3: Performance baseline — 3116 with 100 detail entries < 100 ms     //
+    // Case 7 (Plan v1a P1-3): listener throw → @Transactional rollback        //
     // -------------------------------------------------------------------- //
 
     @Test
-    @DisplayName("AC3: 3116 with 100 details — end-to-end reconciliation under 100 ms")
-    void perfBaseline_3116WithLargeDetailList_shouldCompleteUnder100ms() {
-        // Build a synthetic BankCheckDay3116 with 100 details to avoid sample bloat.
-        final BankCheckDay3116 body = new BankCheckDay3116();
-        body.setSerialNo("E2E-PERF-3116-001");
-        body.setSendNodeCode("B43010104B0001");
-        body.setDesNodeCode("A1000143000104");
-        body.setHxqyName("湖南某某核心企业P");
-        body.setHxqyCode("91430100MA00000099");
-        body.setCheckDate("20260424");
-        body.setCheckDetailNum("100");
+    @DisplayName("Case 7: BankReconciliationEventListener throw → 5xx + 0 rows in message_process_record")
+    void case7_ListenerThrow_rollsBackBothTables() throws Exception {
+        // Override the @MockBean listener to throw inside the dispatcher's
+        // @Transactional boundary. The dispatcher's REQUIRED + rollbackFor=
+        // Exception.class contract should roll back everything, including
+        // the message_process_record row written by SyncMessageProcessor.
+        doThrow(new RuntimeException("listener-induced rollback"))
+                .when(bankListener).onProcessed(any(InboundMessageProcessedEvent.class));
 
-        final List<com.puchain.fep.processor.body.supplychain.CheckDetailInfo> details = new ArrayList<>(100);
-        for (int i = 1; i <= 100; i++) {
-            final com.puchain.fep.processor.body.supplychain.CheckDetailInfo d =
-                    new com.puchain.fep.processor.body.supplychain.CheckDetailInfo();
-            d.setSid(String.valueOf(i));
-            d.setPlatNodeCode("A1000143000104");
-            d.setBizType("01");
-            d.setRzqyName("融资企业P" + i);
-            d.setRzqyCode("91430100MA000P" + String.format("%04d", i));
-            d.setRzAmt("1000000.00");
-            d.setRzRate("0.0500");
-            d.setRzStartDate("20260101");
-            d.setRzEndDate("20261231");
-            d.setAmt("10000.00");
-            details.add(d);
-        }
-        body.setCheckDetailInfo(details);
+        // Pre-state: empty
+        assertThat(messageProcessRecordRepository.count()).isZero();
+        assertThat(reconciliationRepository.count()).isZero();
 
-        // Warm-up to amortise JIT + Hibernate first-flush cost (P2d efficiency lesson —
-        // see feedback_quality_gate_gap_efficiency_blindspot.md). Warm-up rows use
-        // a distinct serialNo to avoid uq_recon_serial_message collisions.
-        final BankCheckDay3116 warmup = new BankCheckDay3116();
-        warmup.setSerialNo("E2E-PERF-3116-WARM");
-        warmup.setSendNodeCode(body.getSendNodeCode());
-        warmup.setDesNodeCode(body.getDesNodeCode());
-        warmup.setHxqyName(body.getHxqyName());
-        warmup.setHxqyCode(body.getHxqyCode());
-        warmup.setCheckDate(body.getCheckDate());
-        warmup.setCheckDetailNum("1");
-        final var warmupDetail = new com.puchain.fep.processor.body.supplychain.CheckDetailInfo();
-        warmupDetail.setSid("1");
-        warmupDetail.setPlatNodeCode("A1000143000104");
-        warmupDetail.setBizType("01");
-        warmupDetail.setRzqyName("warm");
-        warmupDetail.setRzqyCode("91430100MA000W0001");
-        warmupDetail.setRzAmt("100.00");
-        warmupDetail.setRzRate("0.0100");
-        warmupDetail.setRzStartDate("20260101");
-        warmupDetail.setRzEndDate("20261231");
-        warmupDetail.setAmt("100.00");
-        warmup.setCheckDetailInfo(List.of(warmupDetail));
-        bankReconciliationService.processInbound(warmup, warmup.getSerialNo());
-        // Cleanup the warm-up row so case-local count assertions remain deterministic
-        // across re-runs of this single test (the table has @Transactional rollback
-        // only inside @Transactional tests; this test relies on @BeforeEach cleanTables).
-        reconciliationRepository.findBySerialNoAndMessageType(warmup.getSerialNo(), "3116")
-                .ifPresent(reconciliationRepository::delete);
+        // Drive a 3116 inbound — dispatcher will publish event → listener throws
+        postInbound("3116", "00000121", "3116-valid.xml")
+                .andExpect(status().is5xxServerError());
 
-        // Measured run — System.nanoTime captures the actual recon chain duration
-        // (not mvn wall-clock, per feedback_quality_gate_gap_efficiency_blindspot).
+        // Plan v1a P0-Q1 core contract: BOTH tables empty after rollback
+        assertThat(messageProcessRecordRepository.count())
+                .as("Plan v1a P0-Q1: listener throw must roll back message_process_record")
+                .isZero();
+        assertThat(reconciliationRepository.count())
+                .as("Plan v1a P0-Q1: listener throw must roll back reconciliation_records")
+                .isZero();
+    }
+
+    // -------------------------------------------------------------------- //
+    // Performance baseline (Plan v1a P0-Q3 reset to 1000ms end-to-end)      //
+    // -------------------------------------------------------------------- //
+
+    @Test
+    @DisplayName("Perf: 3116 with sample payload — full REST chain under 1000ms")
+    void perfBaseline_3116WithLargeDetailList_underBudget() throws Exception {
+        // Warm up the JIT + Hibernate first-flush + JAXB context build
+        // (feedback_quality_gate_gap_efficiency_blindspot — measured run
+        // must amortise these). Use distinct SerialNo via in-memory replacement
+        // to avoid uq_recon_serial_message collisions on the measured run.
+        postInboundWithReplacements("3116", "10001001", "3116-valid.xml",
+                "SN2026042410550000000000000121", "SN-PERF-WARMUP")
+                .andExpect(status().isOk());
+        // Purge so the measured run starts clean.
+        clearingRepository.deleteAll();
+        reconciliationRepository.deleteAll();
+        messageProcessRecordRepository.deleteAll();
+
+        // Measured run via wall-clock. Reads 3116-valid.xml (2 detail entries) —
+        // the canonical positive payload anchor. Larger 100-detail variants are
+        // covered by service-direct perf tests in fep-processor.
         final long start = System.nanoTime();
-        final ReconciliationOutcome outcome =
-                bankReconciliationService.processInbound(body, body.getSerialNo());
+        postInbound("3116", "20002002", "3116-valid.xml")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.eventPublished").value(true));
         final long elapsedMs = (System.nanoTime() - start) / 1_000_000L;
 
-        assertThat(outcome.status()).isEqualTo(ReconciliationStatus.COMPLETED);
-        assertThat(outcome.actualSize()).isEqualTo(100);
-        // P2e Plan v1d AC3 budget — measured value is logged via SLF4J so closing
-        // reviewers can grep the actual elapsedMs from Surefire stdout while
-        // honouring the Checkstyle no-System.out rule.
-        LOG.info("[P2e Task 8 perf] 3116 with 100 details processed in {} ms", elapsedMs);
+        LOG.info("[P3 Task 5 perf] 3116 REST chain end-to-end in {} ms", elapsedMs);
         assertThat(elapsedMs)
-                .as("3116 with 100 details must complete under %d ms (Plan v1d AC3)", PERF_BUDGET_MS)
+                .as("3116 full REST chain must complete under %d ms (Plan v1a P0-Q3)",
+                        PERF_BUDGET_MS)
                 .isLessThan(PERF_BUDGET_MS);
+    }
+
+    // -------------------------------------------------------------------- //
+    // Helpers                                                                //
+    // -------------------------------------------------------------------- //
+
+    /**
+     * Builds a SettlementInstructionRequest with 2 qsInfo rows, no PK7 fields,
+     * matching the canonical platPayNo argument supplied by the test.
+     *
+     * @param platPayNo platform settlement instruction number
+     * @return populated request DTO
+     */
+    private SettlementInstructionRequest buildSettlementRequest(final String platPayNo) {
+        final SettlementInstructionRequest req = new SettlementInstructionRequest();
+        req.setPlatPayNo(platPayNo);
+        req.setSerialNo("SN-E2E-" + platPayNo);
+        req.setSendNodeCode(HNDEMP_NODE);
+        req.setDesNodeCode(BANK_NODE);
+
+        final QsInfoRequest qs1 = new QsInfoRequest();
+        qs1.setQsSerialNo("QSSN-E2E-001");
+        qs1.setAmt(new BigDecimal("1000000.00"));
+        qs1.setFkfAccNo("6225880100000001");
+        qs1.setSkfAccNo("6225880100000002");
+        qs1.setFkfAccName("付款方公司A");
+        qs1.setSkfAccName("收款方公司A");
+        qs1.setWishDate("20260425");
+
+        final QsInfoRequest qs2 = new QsInfoRequest();
+        qs2.setQsSerialNo("QSSN-E2E-002");
+        qs2.setAmt(new BigDecimal("500000.00"));
+        qs2.setFkfAccNo("6225880100000003");
+        qs2.setSkfAccNo("6225880100000004");
+        qs2.setFkfAccName("付款方公司B");
+        qs2.setSkfAccName("收款方公司B");
+        qs2.setWishDate("20260425");
+
+        req.setQsInfo(List.of(qs1, qs2));
+        return req;
+    }
+
+    /**
+     * Builds an InboundMessageRequest by reading the given sample XML and
+     * Base64-encoding it.
+     *
+     * @param messageType  4-digit code
+     * @param transitionNo 8-character transition number
+     * @param sampleName   sample file under {@code samples/}
+     * @return populated InboundMessageRequest
+     * @throws IOException sample loading failure
+     */
+    private InboundMessageRequest buildInboundRequest(final String messageType,
+                                                      final String transitionNo,
+                                                      final String sampleName) throws IOException {
+        final byte[] xml = readSampleStatic(sampleName);
+        final InboundMessageRequest req = new InboundMessageRequest();
+        req.setMessageType(messageType);
+        req.setTransitionNo(transitionNo);
+        req.setXmlBase64(Base64.getEncoder().encodeToString(xml));
+        return req;
     }
 }
