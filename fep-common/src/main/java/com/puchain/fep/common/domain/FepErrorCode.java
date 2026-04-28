@@ -50,6 +50,10 @@ public enum FepErrorCode {
     TRANS_7002("TRANS_7002", "TLQ 连接失败"),
     TRANS_7003("TRANS_7003", "TLQ 消息发送失败"),
     TRANS_7004("TRANS_7004", "节点状态不允许此操作"),
+    TRANS_7005("TRANS_7005", "TLQ 消息接收失败"),
+    TRANS_7006("TRANS_7006", "TLQ 节点远程管理操作失败"),
+    TRANS_7007("TRANS_7007", "TLQ 消息确认失败"),
+    TRANS_7008("TRANS_7008", "TLQ 队列不存在或权限不足"),
 
     // 系统错误 0500
     SYS_0500("SYS_0500", "系统内部错误"),
