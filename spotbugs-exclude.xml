@@ -1042,6 +1042,28 @@
     </Match>
 
     <!-- ============================================================
+         P1c T5 fep-transport tongtech 生产者（real SDK）
+         ============================================================ -->
+
+    <!-- TongtechTlqProducer: msgId 来自 IdGenerator.uuid20()（系统生成无 CRLF），
+         queue 名来自 QueueNameResolver 静态常量（PRD §3.1.2 受控字典），
+         errorCause 来自 SDK TlqException.getErrorCause()（受控来源，与 TongtechErrorMapper 同模式），
+         均非用户直接输入；FindSecBugs 误报（与 TongtechTlqConnectionFactory 同模式）。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.adapter.TongtechTlqProducer"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- TongtechProducerConfig: tongtechFallbackDeadLetterHandler lambda 中
+         msgId 来自 TlqMessage.getMsgId()（系统生成 UUID20），reason 来自
+         RetryableProducer 的 lastError（自 SDK 派生），均为受控来源；
+         FindSecBugs 误报（同 TongtechTlqProducer 模式）。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.config.TongtechProducerConfig"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- ============================================================
          P2e 对账引擎模块（Task 7 Controllers + DTOs + Query Services）
          ============================================================ -->
 

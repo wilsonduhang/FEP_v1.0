@@ -2,8 +2,6 @@ package com.puchain.fep.transport.mock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
 import com.puchain.fep.transport.api.SendResult;
 import com.puchain.fep.transport.api.TlqProducer;
@@ -13,17 +11,18 @@ import com.puchain.fep.transport.model.TlqMessage;
  * In-memory {@link TlqProducer} implementation for the {@code mock} transport provider.
  *
  * <p>Delegates to {@link InMemoryMessageBroker} and always returns a successful result.
- * Only active when {@code fep.transport.provider=mock} (the default if not set).</p>
+ * Registered exclusively via {@link MockProducerConfig#inMemoryTlqProducer} (no
+ * {@code @Component} — v1d sync requirement that mirrors the Tongtech path so
+ * the {@link com.puchain.fep.transport.api.RetryableProducer} {@code @Primary}
+ * wrapper does not collide with a duplicate underlying registration).</p>
+ *
+ * <p>Active gating now lives on {@link MockProducerConfig}, which is itself
+ * conditional on {@code fep.transport.provider=mock} (the default when unset
+ * via {@code matchIfMissing=true}).</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
-@Component
-@ConditionalOnProperty(
-    name = "fep.transport.provider",
-    havingValue = "mock",
-    matchIfMissing = true
-)
 public class InMemoryTlqProducer implements TlqProducer {
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryTlqProducer.class);

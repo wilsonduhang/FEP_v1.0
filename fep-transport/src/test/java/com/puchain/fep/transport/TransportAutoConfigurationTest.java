@@ -2,6 +2,7 @@ package com.puchain.fep.transport;
 
 import com.puchain.fep.transport.api.DeadLetterHandler;
 import com.puchain.fep.transport.api.NodeLifecycleManager;
+import com.puchain.fep.transport.api.RetryableProducer;
 import com.puchain.fep.transport.api.TlqConnectionFactory;
 import com.puchain.fep.transport.api.TlqConsumer;
 import com.puchain.fep.transport.api.TlqProducer;
@@ -10,11 +11,13 @@ import com.puchain.fep.transport.mock.InMemoryNodeLifecycleManager;
 import com.puchain.fep.transport.mock.InMemoryTlqConnectionFactory;
 import com.puchain.fep.transport.mock.InMemoryTlqConsumer;
 import com.puchain.fep.transport.mock.InMemoryTlqProducer;
+import com.puchain.fep.transport.mock.MockProducerConfig;
 import com.puchain.fep.transport.support.MessageDeduplicator;
 import com.puchain.fep.transport.support.QueueNameResolver;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
@@ -29,14 +32,18 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 1.0.0
  */
 @SpringBootTest(classes = TransportAutoConfiguration.class)
-@Import({InMemoryTlqProducer.class, InMemoryTlqConsumer.class,
-        InMemoryTlqConnectionFactory.class, InMemoryNodeLifecycleManager.class,
-        InMemoryDeadLetterHandler.class})
+@Import({InMemoryTlqConsumer.class, InMemoryTlqConnectionFactory.class,
+        InMemoryNodeLifecycleManager.class, InMemoryDeadLetterHandler.class,
+        MockProducerConfig.class})
 @ActiveProfiles("dev")
 class TransportAutoConfigurationTest {
 
     @Autowired
     private TlqProducer producer;
+
+    @Autowired
+    @Qualifier("inMemoryTlqProducer")
+    private InMemoryTlqProducer rawInMemoryProducer;
 
     @Autowired
     private TlqConsumer consumer;
@@ -61,7 +68,10 @@ class TransportAutoConfigurationTest {
 
     @Test
     void allBeans_shouldBeCorrectTypesInDevProfile() {
-        assertThat(producer).isInstanceOf(InMemoryTlqProducer.class);
+        // v1d: @Primary TlqProducer is RetryableProducer (FR-COMM-TLQ-RETRY); raw mock
+        // is exposed as named bean inMemoryTlqProducer for low-level verification.
+        assertThat(producer).isInstanceOf(RetryableProducer.class);
+        assertThat(rawInMemoryProducer).isInstanceOf(InMemoryTlqProducer.class);
         assertThat(consumer).isInstanceOf(InMemoryTlqConsumer.class);
         assertThat(connectionFactory).isInstanceOf(InMemoryTlqConnectionFactory.class);
         assertThat(nodeLifecycleManager).isInstanceOf(InMemoryNodeLifecycleManager.class);
