@@ -2,11 +2,13 @@ package com.puchain.fep.web.tlq.connectivity.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.transport.api.RemoteAdmin;
 import com.puchain.fep.web.tlq.connectivity.domain.ConnectivityTestResult;
 import com.puchain.fep.web.tlq.connectivity.domain.TlqConnectivityRecord;
 import com.puchain.fep.web.tlq.connectivity.dto.ConnectivitySummaryResponse;
 import com.puchain.fep.web.tlq.connectivity.dto.ConnectivityTestResponse;
 import com.puchain.fep.web.tlq.connectivity.repository.TlqConnectivityRecordRepository;
+import com.puchain.fep.web.tlq.node.domain.TlqNode;
 import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,10 +21,12 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,14 +47,29 @@ class TlqConnectivityServiceTest {
     @Mock
     private TlqNodeRepository nodeRepository;
 
+    @Mock
+    private RemoteAdmin remoteAdmin;
+
     @InjectMocks
     private TlqConnectivityService connectivityService;
 
-    // ===== Test 1: triggerTest — valid node creates record with SUCCESS placeholder =====
+    private static TlqNode buildNode(final String id, final String host, final int port) {
+        TlqNode node = new TlqNode();
+        node.setNodeId(id);
+        node.setHostIp(host);
+        node.setPort(port);
+        return node;
+    }
+
+    // ===== Test 1: triggerTest — reachable probe creates SUCCESS record =====
 
     @Test
-    void triggerTest_validNode_createsRecordWithSuccessPlaceholder() {
+    void triggerTest_reachable_createsSuccessRecord() {
+        TlqNode node = buildNode("node1", "10.0.0.1", 20001);
         when(nodeRepository.existsById("node1")).thenReturn(true);
+        when(nodeRepository.findById("node1")).thenReturn(Optional.of(node));
+        when(remoteAdmin.checkConnectivity(anyString(), anyInt()))
+                .thenReturn(new RemoteAdmin.ConnectivityProbe(true, 12L, "OK"));
         when(recordRepository.save(any(TlqConnectivityRecord.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -59,18 +78,47 @@ class TlqConnectivityServiceTest {
         assertEquals(32, response.getRecordId().length(), "recordId 应为 32 位 UUID");
         assertEquals("node1", response.getNodeId());
         assertEquals(ConnectivityTestResult.SUCCESS, response.getResult(),
-                "占位符实现应返回 SUCCESS");
-        assertEquals(0, response.getRttMs(), "占位符 RTT 应为 0");
-        assertTrue(response.getMessage().toLowerCase().contains("placeholder"),
-                "message 应包含 'placeholder' 说明为占位符实现");
+                "reachable=true 应映射为 SUCCESS");
+        assertEquals(12, response.getRttMs(), "RTT 来自 probe.rttMs()");
+        assertEquals("OK", response.getMessage(),
+                "message 应直接来自 probe.detail()");
 
         ArgumentCaptor<TlqConnectivityRecord> captor =
                 ArgumentCaptor.forClass(TlqConnectivityRecord.class);
         verify(recordRepository).save(captor.capture());
         TlqConnectivityRecord saved = captor.getValue();
         assertEquals(ConnectivityTestResult.SUCCESS, saved.getTestResult());
-        assertEquals(0, saved.getRttMs());
+        assertEquals(12, saved.getRttMs());
         assertEquals("MANUAL", saved.getTriggeredBy());
+        assertNull(saved.getErrorMessage(), "成功路径 errorMessage 应为 null");
+    }
+
+    // ===== Test 1b: triggerTest — unreachable probe creates FAILURE record =====
+
+    @Test
+    void triggerTest_unreachable_createsFailureRecordWithDetail() {
+        TlqNode node = buildNode("node-down", "10.0.0.99", 20001);
+        when(nodeRepository.existsById("node-down")).thenReturn(true);
+        when(nodeRepository.findById("node-down")).thenReturn(Optional.of(node));
+        when(remoteAdmin.checkConnectivity(anyString(), anyInt()))
+                .thenReturn(new RemoteAdmin.ConnectivityProbe(false, 5L,
+                        "checkIP: IP 不可达: 10.0.0.99"));
+        when(recordRepository.save(any(TlqConnectivityRecord.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ConnectivityTestResponse response = connectivityService.triggerTest("node-down");
+
+        assertEquals(ConnectivityTestResult.FAILURE, response.getResult());
+        assertEquals(5, response.getRttMs());
+        assertEquals("checkIP: IP 不可达: 10.0.0.99", response.getMessage());
+
+        ArgumentCaptor<TlqConnectivityRecord> captor =
+                ArgumentCaptor.forClass(TlqConnectivityRecord.class);
+        verify(recordRepository).save(captor.capture());
+        TlqConnectivityRecord saved = captor.getValue();
+        assertEquals(ConnectivityTestResult.FAILURE, saved.getTestResult());
+        assertNotNull(saved.getErrorMessage(), "失败路径 errorMessage 应被填充");
+        assertEquals("checkIP: IP 不可达: 10.0.0.99", saved.getErrorMessage());
     }
 
     // ===== Test 2: triggerTest — non-existent node throws BIZ_5015 =====

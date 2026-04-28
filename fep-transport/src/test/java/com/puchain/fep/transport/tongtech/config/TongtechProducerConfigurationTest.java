@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Import;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit tests for {@link TongtechProducerConfig}.
+ * Unit tests for {@link TongtechProducerConfiguration}.
  *
  * <p>Verifies v1b acceptance criteria #7-9 (Plan §Task 5):</p>
  * <ul>
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>The named bean {@code tongtechTlqProducer} is independently injectable for
  *       low-level testing without retry semantics</li>
  *   <li>{@link TongtechTlqProducer} is registered exclusively via
- *       {@link TongtechProducerConfig#tongtechTlqProducer} (no {@code @Component})</li>
+ *       {@link TongtechProducerConfiguration#tongtechTlqProducer} (no {@code @Component})</li>
  * </ul>
  *
  * <p>Uses {@link ApplicationContextRunner} so {@link com.puchain.fep.transport.tongtech.adapter.TongtechTlqConnectionFactory}

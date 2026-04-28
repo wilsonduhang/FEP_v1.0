@@ -11,7 +11,7 @@ import com.puchain.fep.transport.mock.InMemoryNodeLifecycleManager;
 import com.puchain.fep.transport.mock.InMemoryTlqConnectionFactory;
 import com.puchain.fep.transport.mock.InMemoryTlqConsumer;
 import com.puchain.fep.transport.mock.InMemoryTlqProducer;
-import com.puchain.fep.transport.mock.MockProducerConfig;
+import com.puchain.fep.transport.mock.MockProducerConfiguration;
 import com.puchain.fep.transport.support.MessageDeduplicator;
 import com.puchain.fep.transport.support.QueueNameResolver;
 
@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(classes = TransportAutoConfiguration.class)
 @Import({InMemoryTlqConsumer.class, InMemoryTlqConnectionFactory.class,
         InMemoryNodeLifecycleManager.class, InMemoryDeadLetterHandler.class,
-        MockProducerConfig.class})
+        MockProducerConfiguration.class})
 @ActiveProfiles("dev")
 class TransportAutoConfigurationTest {
 

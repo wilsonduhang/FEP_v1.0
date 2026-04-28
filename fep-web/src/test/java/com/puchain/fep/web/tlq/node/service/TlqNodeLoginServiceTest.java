@@ -1,0 +1,215 @@
+package com.puchain.fep.web.tlq.node.service;
+
+import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.converter.model.CfxMessage;
+import com.puchain.fep.converter.pipeline.EncodeResult;
+import com.puchain.fep.converter.pipeline.MessageEncoder;
+import com.puchain.fep.converter.pipeline.MessagePipelineOptions;
+import com.puchain.fep.transport.api.NodeLifecycleManager;
+import com.puchain.fep.transport.api.SendResult;
+import com.puchain.fep.transport.api.TlqProducer;
+import com.puchain.fep.transport.model.TlqChannel;
+import com.puchain.fep.transport.model.TlqMessage;
+import com.puchain.fep.web.tlq.node.domain.TlqNode;
+import com.puchain.fep.web.tlq.node.domain.TlqNodeRole;
+import com.puchain.fep.web.tlq.node.domain.TlqNodeStatus;
+import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * Unit tests for {@link TlqNodeLoginService} — verifies the 9006 / 9008
+ * orchestration assembles the correct CFX message, calls the producer, and
+ * advances the lifecycle state machine on success.
+ *
+ * <p>Critical assertions: {@code captor.getValue().getPayload()} contains the
+ * required HEAD/MSG xml fragments — guards against silent field-binding bugs
+ * that mere {@code verify(encoder).encode(any())} would miss (P1c T7 v1c
+ * B-P0-4 hardening).</p>
+ *
+ * @author FEP Team
+ * @since 1.0.0
+ */
+class TlqNodeLoginServiceTest {
+
+    /** Empirical real broker password (mirrors test config). */
+    private static final String TEST_PASSWORD = "BrokerPwd-9006";
+    /** 14-char src node code (passes CommonHead.SrcNode length validation). */
+    private static final String TEST_SRC_NODE = "B1234567890123";
+    /** HNDEMP fixed dest. */
+    private static final String HNDEMP_NODE = "A1000143000104";
+    private static final String NODE_ID = "node-x-001";
+
+    private NodeLifecycleManager lifecycle;
+    private TlqProducer producer;
+    private MessageEncoder encoder;
+    private TlqNodeRepository nodeRepository;
+    private TlqNodeLoginService service;
+
+    /** Shared encoded payload returned by the encoder mock — kept simple so assertions can grep substrings. */
+    private static final String FAKE_ENCODED_PAYLOAD =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            + "<CFX>"
+            + "<HEAD>"
+            + "<MsgNo>9006</MsgNo>"
+            + "<DesNode>" + HNDEMP_NODE + "</DesNode>"
+            + "<SrcNode>" + TEST_SRC_NODE + "</SrcNode>"
+            + "</HEAD>"
+            + "<MSG>"
+            + "<RealHead9006>"
+            + "<SendOrgCode>" + TEST_SRC_NODE + "</SendOrgCode>"
+            + "</RealHead9006>"
+            + "<LoginRequest9006>"
+            + "<Password>" + TEST_PASSWORD + "</Password>"
+            + "</LoginRequest9006>"
+            + "</MSG>"
+            + "</CFX>";
+
+    @BeforeEach
+    void setUp() {
+        lifecycle = mock(NodeLifecycleManager.class);
+        producer = mock(TlqProducer.class);
+        encoder = mock(MessageEncoder.class);
+        nodeRepository = mock(TlqNodeRepository.class);
+        service = new TlqNodeLoginService(lifecycle, producer, encoder, nodeRepository,
+                TEST_SRC_NODE, TEST_PASSWORD);
+
+        when(encoder.encode(any(CfxMessage.class), any(MessagePipelineOptions.class)))
+                .thenReturn(new EncodeResult(FAKE_ENCODED_PAYLOAD, false, false));
+    }
+
+    private TlqNode existingNode() {
+        TlqNode node = new TlqNode();
+        node.setNodeId(NODE_ID);
+        node.setNodeName("primary");
+        node.setNodeRole(TlqNodeRole.MASTER_PRODUCER);
+        node.setHostIp("10.0.0.1");
+        node.setPort(20001);
+        node.setNodeStatus(TlqNodeStatus.UNKNOWN);
+        return node;
+    }
+
+    @Test
+    @DisplayName("login: 装配 9006 → encode → producer.send → lifecycle.login，TlqMessage 走 REALTIME_SEND 通道")
+    void login_send9006_thenLifecycleLogin() {
+        when(nodeRepository.findById(NODE_ID)).thenReturn(Optional.of(existingNode()));
+        when(producer.send(any(TlqMessage.class))).thenReturn(SendResult.ok("MSG-9006"));
+        when(lifecycle.login()).thenReturn(true);
+
+        boolean result = service.login(NODE_ID);
+
+        assertThat(result).isTrue();
+
+        // 1) encoder 被以 CfxMessage 调用
+        ArgumentCaptor<CfxMessage> cfxCaptor = ArgumentCaptor.forClass(CfxMessage.class);
+        verify(encoder).encode(cfxCaptor.capture(), any(MessagePipelineOptions.class));
+        CfxMessage cfx = cfxCaptor.getValue();
+        assertThat(cfx.getHead().getMsgNo()).isEqualTo("9006");
+        assertThat(cfx.getHead().getDesNode()).isEqualTo(HNDEMP_NODE);
+        assertThat(cfx.getHead().getSrcNode()).isEqualTo(TEST_SRC_NODE);
+        assertThat(cfx.getBodies()).hasSize(2)
+                .as("MSG 容器应含 RealHead9006 + LoginRequest9006 两个子元素");
+
+        // 2) producer 拿到了 encode 后的 payload + REALTIME_SEND 通道
+        ArgumentCaptor<TlqMessage> msgCaptor = ArgumentCaptor.forClass(TlqMessage.class);
+        verify(producer).send(msgCaptor.capture());
+        TlqMessage sent = msgCaptor.getValue();
+        assertThat(sent.getChannel()).isEqualTo(TlqChannel.REALTIME_SEND);
+        assertThat(sent.getPayload())
+                .contains("<MsgNo>9006</MsgNo>")
+                .contains("<DesNode>" + HNDEMP_NODE + "</DesNode>")
+                .contains("<RealHead9006>")
+                .contains("<SendOrgCode>" + TEST_SRC_NODE + "</SendOrgCode>")
+                .contains("<LoginRequest9006>")
+                .contains("<Password>" + TEST_PASSWORD + "</Password>");
+
+        // 3) lifecycle 被调
+        verify(lifecycle).login();
+    }
+
+    @Test
+    @DisplayName("login: producer.send 失败时不调 lifecycle.login")
+    void login_sendFails_shouldNotInvokeLifecycle() {
+        when(nodeRepository.findById(NODE_ID)).thenReturn(Optional.of(existingNode()));
+        when(producer.send(any(TlqMessage.class)))
+                .thenReturn(SendResult.fail("MSG-9006", "queue full"));
+
+        boolean result = service.login(NODE_ID);
+
+        assertThat(result).isFalse();
+        verify(lifecycle, never()).login();
+    }
+
+    @Test
+    @DisplayName("login: 节点不存在抛 BIZ_5015")
+    void login_nonExistentNode_throwsBiz5015() {
+        when(nodeRepository.findById("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.login("ghost"))
+                .isInstanceOf(FepBusinessException.class)
+                .extracting(e -> ((FepBusinessException) e).getErrorCode())
+                .isEqualTo(FepErrorCode.BIZ_5015);
+
+        verify(producer, never()).send(any());
+        verify(lifecycle, never()).login();
+    }
+
+    @Test
+    @DisplayName("logout: 装配 9008 → encode → producer.send → lifecycle.logout")
+    void logout_send9008_thenLifecycleLogout() {
+        when(nodeRepository.findById(NODE_ID)).thenReturn(Optional.of(existingNode()));
+        when(producer.send(any(TlqMessage.class))).thenReturn(SendResult.ok("MSG-9008"));
+        when(lifecycle.logout()).thenReturn(true);
+
+        boolean result = service.logout(NODE_ID);
+
+        assertThat(result).isTrue();
+
+        ArgumentCaptor<CfxMessage> cfxCaptor = ArgumentCaptor.forClass(CfxMessage.class);
+        verify(encoder).encode(cfxCaptor.capture(), any(MessagePipelineOptions.class));
+        CfxMessage cfx = cfxCaptor.getValue();
+        assertThat(cfx.getHead().getMsgNo()).isEqualTo("9008");
+        assertThat(cfx.getHead().getDesNode()).isEqualTo(HNDEMP_NODE);
+        assertThat(cfx.getBodies()).hasSize(2);
+
+        verify(lifecycle, times(1)).logout();
+    }
+
+    @Test
+    @DisplayName("logout: producer.send 失败时不调 lifecycle.logout")
+    void logout_sendFails_shouldNotInvokeLifecycle() {
+        when(nodeRepository.findById(NODE_ID)).thenReturn(Optional.of(existingNode()));
+        when(producer.send(any(TlqMessage.class)))
+                .thenReturn(SendResult.fail("MSG-9008", "broker offline"));
+
+        boolean result = service.logout(NODE_ID);
+
+        assertThat(result).isFalse();
+        verify(lifecycle, never()).logout();
+    }
+
+    @Test
+    @DisplayName("logout: 节点不存在抛 BIZ_5015")
+    void logout_nonExistentNode_throwsBiz5015() {
+        when(nodeRepository.findById("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.logout("ghost"))
+                .isInstanceOf(FepBusinessException.class)
+                .extracting(e -> ((FepBusinessException) e).getErrorCode())
+                .isEqualTo(FepErrorCode.BIZ_5015);
+    }
+}

@@ -1,6 +1,7 @@
 package com.puchain.fep.web.tlq.node.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
+import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
@@ -9,6 +10,7 @@ import com.puchain.fep.web.tlq.node.domain.TlqNodeStatus;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeCreateRequest;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeResponse;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeUpdateRequest;
+import com.puchain.fep.web.tlq.node.service.TlqNodeLoginService;
 import com.puchain.fep.web.tlq.node.service.TlqNodeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,14 +45,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class TlqNodeController {
 
     private final TlqNodeService tlqNodeService;
+    private final TlqNodeLoginService tlqNodeLoginService;
 
     /**
      * 构造 TlqNodeController。
      *
-     * @param tlqNodeService TLQ 节点管理服务
+     * @param tlqNodeService      TLQ 节点管理服务
+     * @param tlqNodeLoginService TLQ 节点登录/登出业务编排服务（P1c T7 v1a 引入）
      */
-    public TlqNodeController(final TlqNodeService tlqNodeService) {
+    public TlqNodeController(final TlqNodeService tlqNodeService,
+                             final TlqNodeLoginService tlqNodeLoginService) {
         this.tlqNodeService = tlqNodeService;
+        this.tlqNodeLoginService = tlqNodeLoginService;
     }
 
     /**
@@ -169,5 +175,67 @@ public class TlqNodeController {
             @Parameter(description = "节点 ID") @PathVariable final String nodeId,
             @Parameter(description = "目标状态") @RequestParam final TlqNodeStatus target) {
         return ApiResult.success(tlqNodeService.changeStatus(nodeId, target));
+    }
+
+    /**
+     * 触发节点登录：编排 9006 报文发送 → state 转 ONLINE。
+     *
+     * <p>fep-converter encode → producer.send → lifecycle.login（PRD §3.7）。</p>
+     *
+     * @param nodeId 节点 ID
+     * @return 登录后节点信息（含最新状态）
+     */
+    @PostMapping("/{nodeId}/login")
+    @OperationLog(module = "TLQ 节点管理", type = OperationType.UPDATE, description = "TLQ 节点登录（9006）")
+    @Operation(summary = "TLQ 节点登录",
+            description = "编排 9006 报文发送：CFX 装配 → fep-converter encode → producer.send → 状态机 ONLINE")
+    @ApiResponse(responseCode = "200", description = "登录成功")
+    @ApiResponse(responseCode = "404", description = "节点不存在")
+    @ApiResponse(responseCode = "500", description = "9006 报文发送失败或状态机拒绝")
+    public ApiResult<TlqNodeResponse> login(
+            @Parameter(description = "节点 ID") @PathVariable final String nodeId) {
+        final boolean ok = tlqNodeLoginService.login(nodeId);
+        if (!ok) {
+            return failureToTlqNode(FepErrorCode.TRANS_7003);
+        }
+        return ApiResult.success(tlqNodeService.getNode(nodeId));
+    }
+
+    /**
+     * 触发节点登出：编排 9008 报文发送 → state 转 OFFLINE。
+     *
+     * <p>fep-converter encode → producer.send → lifecycle.logout（PRD §3.7）。</p>
+     *
+     * @param nodeId 节点 ID
+     * @return 登出后节点信息（含最新状态）
+     */
+    @PostMapping("/{nodeId}/logout")
+    @OperationLog(module = "TLQ 节点管理", type = OperationType.UPDATE, description = "TLQ 节点登出（9008）")
+    @Operation(summary = "TLQ 节点登出",
+            description = "编排 9008 报文发送：CFX 装配 → fep-converter encode → producer.send → 状态机 OFFLINE")
+    @ApiResponse(responseCode = "200", description = "登出成功")
+    @ApiResponse(responseCode = "404", description = "节点不存在")
+    @ApiResponse(responseCode = "500", description = "9008 报文发送失败或状态机拒绝")
+    public ApiResult<TlqNodeResponse> logout(
+            @Parameter(description = "节点 ID") @PathVariable final String nodeId) {
+        final boolean ok = tlqNodeLoginService.logout(nodeId);
+        if (!ok) {
+            return failureToTlqNode(FepErrorCode.TRANS_7003);
+        }
+        return ApiResult.success(tlqNodeService.getNode(nodeId));
+    }
+
+    /**
+     * Helper: build a {@code ApiResult<TlqNodeResponse>} failure response.
+     *
+     * <p>{@code ApiResult.failure} returns {@code ApiResult<Void>}, so we shoehorn
+     * the type parameter without exposing data — callers expect a typed envelope.</p>
+     *
+     * @param code error code
+     * @return typed failure envelope (no data payload)
+     */
+    @SuppressWarnings("unchecked")
+    private static ApiResult<TlqNodeResponse> failureToTlqNode(final FepErrorCode code) {
+        return (ApiResult<TlqNodeResponse>) (ApiResult<?>) ApiResult.failure(code);
     }
 }

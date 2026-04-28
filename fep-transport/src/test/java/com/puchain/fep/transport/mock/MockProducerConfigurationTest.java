@@ -15,17 +15,17 @@ import org.springframework.context.annotation.Import;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Unit tests for {@link MockProducerConfig}.
+ * Unit tests for {@link MockProducerConfiguration}.
  *
  * <p>Verifies v1d acceptance (Plan §Task 5 Step 3.5):</p>
  * <ul>
  *   <li>The {@code @Primary TlqProducer} bean is a {@link RetryableProducer} instance
  *       wrapping the underlying {@link InMemoryTlqProducer} on the mock provider path
- *       (mirrors {@link com.puchain.fep.transport.tongtech.config.TongtechProducerConfig})</li>
+ *       (mirrors {@link com.puchain.fep.transport.tongtech.config.TongtechProducerConfiguration})</li>
  *   <li>The named bean {@code inMemoryTlqProducer} is independently injectable for
  *       direct mock-broker assertions in tests</li>
  *   <li>{@link InMemoryTlqProducer} is registered exclusively via
- *       {@link MockProducerConfig#inMemoryTlqProducer} (no {@code @Component})</li>
+ *       {@link MockProducerConfiguration#inMemoryTlqProducer} (no {@code @Component})</li>
  * </ul>
  *
  * @author FEP Team

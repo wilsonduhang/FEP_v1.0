@@ -11,12 +11,12 @@ import com.puchain.fep.transport.model.TlqMessage;
  * In-memory {@link TlqProducer} implementation for the {@code mock} transport provider.
  *
  * <p>Delegates to {@link InMemoryMessageBroker} and always returns a successful result.
- * Registered exclusively via {@link MockProducerConfig#inMemoryTlqProducer} (no
+ * Registered exclusively via {@link MockProducerConfiguration#inMemoryTlqProducer} (no
  * {@code @Component} — v1d sync requirement that mirrors the Tongtech path so
  * the {@link com.puchain.fep.transport.api.RetryableProducer} {@code @Primary}
  * wrapper does not collide with a duplicate underlying registration).</p>
  *
- * <p>Active gating now lives on {@link MockProducerConfig}, which is itself
+ * <p>Active gating now lives on {@link MockProducerConfiguration}, which is itself
  * conditional on {@code fep.transport.provider=mock} (the default when unset
  * via {@code matchIfMissing=true}).</p>
  *

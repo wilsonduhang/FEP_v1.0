@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  * <p><b>v1b key design</b> (Plan §Task 5):</p>
  * <ul>
  *   <li><b>No {@code @Component}</b> — this class is registered exclusively via
- *       {@link com.puchain.fep.transport.tongtech.config.TongtechProducerConfig#tongtechTlqProducer}
+ *       {@link com.puchain.fep.transport.tongtech.config.TongtechProducerConfiguration#tongtechTlqProducer}
  *       so the {@link com.puchain.fep.transport.api.RetryableProducer} wrapper bean does not
  *       collide with a duplicate underlying producer registration.</li>
  *   <li><b>{@code putMessage} failure returns {@link SendResult#fail}</b> — the

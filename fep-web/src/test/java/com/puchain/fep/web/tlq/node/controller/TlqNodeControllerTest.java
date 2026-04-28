@@ -7,6 +7,7 @@ import com.puchain.fep.web.tlq.node.domain.TlqNodeStatus;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeCreateRequest;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeResponse;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeUpdateRequest;
+import com.puchain.fep.web.tlq.node.service.TlqNodeLoginService;
 import com.puchain.fep.web.tlq.node.service.TlqNodeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,9 @@ class TlqNodeControllerTest {
 
     @MockBean
     private TlqNodeService tlqNodeService;
+
+    @MockBean
+    private TlqNodeLoginService tlqNodeLoginService;
 
     /**
      * POST /api/v1/tlq/nodes — 创建节点返回 201，$.code=200。
@@ -162,6 +166,52 @@ class TlqNodeControllerTest {
 
         mockMvc.perform(patch(BASE_URL + "/" + NODE_ID + "/status")
                         .param("target", "ONLINE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"));
+    }
+
+    /**
+     * POST /api/v1/tlq/nodes/{id}/login — 9006 编排成功返回 200，$.code=200。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void login_success_returns200() throws Exception {
+        when(tlqNodeLoginService.login(NODE_ID)).thenReturn(true);
+        TlqNodeResponse response = new TlqNodeResponse();
+        when(tlqNodeService.getNode(NODE_ID)).thenReturn(response);
+
+        mockMvc.perform(post(BASE_URL + "/" + NODE_ID + "/login"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"));
+    }
+
+    /**
+     * POST /api/v1/tlq/nodes/{id}/login — 9006 编排失败返回 200 但 $.code=TRANS_7003。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void login_failure_returnsErrorCode() throws Exception {
+        when(tlqNodeLoginService.login(NODE_ID)).thenReturn(false);
+
+        mockMvc.perform(post(BASE_URL + "/" + NODE_ID + "/login"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("TRANS_7003"));
+    }
+
+    /**
+     * POST /api/v1/tlq/nodes/{id}/logout — 9008 编排成功返回 200，$.code=200。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @Test
+    void logout_success_returns200() throws Exception {
+        when(tlqNodeLoginService.logout(NODE_ID)).thenReturn(true);
+        TlqNodeResponse response = new TlqNodeResponse();
+        when(tlqNodeService.getNode(NODE_ID)).thenReturn(response);
+
+        mockMvc.perform(post(BASE_URL + "/" + NODE_ID + "/logout"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"));
     }

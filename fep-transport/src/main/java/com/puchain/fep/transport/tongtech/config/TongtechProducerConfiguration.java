@@ -42,7 +42,7 @@ import org.springframework.context.annotation.Primary;
  */
 @Configuration
 @ConditionalOnProperty(name = "fep.transport.provider", havingValue = "tongtech")
-public class TongtechProducerConfig {
+public class TongtechProducerConfiguration {
 
     private static final Logger DLH_LOG = LoggerFactory.getLogger(
             "com.puchain.fep.transport.tongtech.dlh.fallback");

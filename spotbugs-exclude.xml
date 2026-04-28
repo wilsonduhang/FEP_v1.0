@@ -1054,12 +1054,13 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
-    <!-- TongtechProducerConfig: tongtechFallbackDeadLetterHandler lambda 中
+    <!-- TongtechProducerConfiguration: tongtechFallbackDeadLetterHandler lambda 中
          msgId 来自 TlqMessage.getMsgId()（系统生成 UUID20），reason 来自
          RetryableProducer 的 lastError（自 SDK 派生），均为受控来源；
-         FindSecBugs 误报（同 TongtechTlqProducer 模式）。 -->
+         FindSecBugs 误报（同 TongtechTlqProducer 模式）。
+         Renamed from TongtechProducerConfig in P1c T7 (NamingConventionTest fix). -->
     <Match>
-        <Class name="com.puchain.fep.transport.tongtech.config.TongtechProducerConfig"/>
+        <Class name="com.puchain.fep.transport.tongtech.config.TongtechProducerConfiguration"/>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
@@ -1166,6 +1167,69 @@
             <Class name="com.puchain.fep.web.reconciliation.listener.ClearingInstructionEventListener"/>
         </Or>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- ============================================================
+         P1c T7 fep-transport RemoteAdmin + NodeLifecycle (real SDK)
+         ============================================================ -->
+
+    <!-- TongtechRemoteAdmin: host/port 来自 fep-web TlqNode entity（管理员配置 t_tlq_node 表行），
+         非用户直接输入；rttMs/lineRc 是数值；errorCause 来自 SDK 异常字符串（受控来源，
+         同 TongtechErrorMapper / TongtechTlqProducer / TongtechTlqConsumer 模式）；
+         EI_EXPOSE_REP2: TongtechTlqProperties 由 Spring @ConfigurationProperties 绑定后通过
+         DI 注入（Spring 标准模式持有引用而非深拷贝，与 P1c T4/T5/T6 同抑制模式）。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.adapter.TongtechRemoteAdmin"/>
+        <Or>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- TongtechNodeLifecycleManager: 仅记录 NodeState 枚举值，受控来源；
+         RemoteAdmin 字段 final，DI 注入引用共享是 Spring 标准模式（同 P1c T4-T6 模式）。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.lifecycle.TongtechNodeLifecycleManager"/>
+        <Or>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="URF_UNREAD_FIELD"/>
+        </Or>
+    </Match>
+
+    <!-- ============================================================
+         P1c T7 fep-web TLQ login orchestration + connectivity wire-up
+         ============================================================ -->
+
+    <!-- TlqNodeLoginService: nodeId / msgId / result.error / result.msgId 已通过
+         LogSanitizer.sanitize 清洗；SrcNode/DesNode 来自配置常量；password 不打印。
+         SpotBugs 无法跨方法追踪 sanitize call → 沿用 P2d/P2e/P3 同模式误报排除。
+         EI_EXPOSE_REP2: NodeLifecycleManager / TlqProducer / MessageEncoder /
+         TlqNodeRepository 都是 Spring DI 注入的单例引用，标准模式。 -->
+    <Match>
+        <Class name="com.puchain.fep.web.tlq.node.service.TlqNodeLoginService"/>
+        <Or>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- TlqConnectivityService EI_EXPOSE_REP2 扩展（P1c T7 引入 RemoteAdmin DI 注入，
+         与既有 recordRepository / nodeRepository 同 Spring 标准模式，非安全风险）。
+         CRLF_INJECTION_LOGS 由 line 707-712 既有 Match 覆盖，无需重复。 -->
+    <Match>
+        <Class name="com.puchain.fep.web.tlq.connectivity.service.TlqConnectivityService"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- TransportProviderController: SPRING_ENDPOINT 是预期行为（同 AuthController / SysRoleController）；
+         provider 字段来自 @Value 配置（管理员维护），非用户输入，无 CRLF 风险。 -->
+    <Match>
+        <Class name="com.puchain.fep.web.system.controller.TransportProviderController"/>
+        <Or>
+            <Bug pattern="SPRING_ENDPOINT"/>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+        </Or>
     </Match>
 
 </FindBugsFilter>

@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Primary;
 
 /**
  * Producer wiring for the {@code mock} transport provider — mirror of
- * {@link com.puchain.fep.transport.tongtech.config.TongtechProducerConfig}.
+ * {@link com.puchain.fep.transport.tongtech.config.TongtechProducerConfiguration}.
  *
  * <p><b>v1d design</b> (Plan §Task 5 Step 3.5, B-P1-NEW-1 fix):</p>
  * <ul>
@@ -36,7 +36,7 @@ import org.springframework.context.annotation.Primary;
  */
 @Configuration
 @ConditionalOnProperty(name = "fep.transport.provider", havingValue = "mock", matchIfMissing = true)
-public class MockProducerConfig {
+public class MockProducerConfiguration {
 
     /**
      * Build the underlying in-memory mock producer (subsequently decorated by
