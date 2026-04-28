@@ -1006,6 +1006,42 @@
     </Match>
 
     <!-- ============================================================
+         P1c T4 fep-transport tongtech 适配器（real SDK）
+         ============================================================ -->
+
+    <!-- TongtechTlqConnectionFactory: Spring DI 注入 TongtechTlqProperties / TongtechErrorMapper
+         为容器管理单例，引用共享是标准 DI 模式（与 RetryableProducer/InMemoryTlqProducer
+         同 EI_EXPOSE_REP2 模式）；
+         CRLF_INJECTION_LOGS: brokerHost/brokerPort/qcuName 来自 application.yml 配置（管理员维护），
+         非用户输入；errorCause 来自 SDK 异常字符串（受控来源，且 caller 经 LogSanitizer 兜底）；
+         IS2_INCONSISTENT_SYNC: getQCU()/getConnection() 包内 hot-path 访问器使用 volatile 字段
+         保证可见性，同步主要在 connect()/disconnect() 生命周期方法。
+         同 TongtechTlqProperties getter 内部 logger 调用属同模式误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.adapter.TongtechTlqConnectionFactory"/>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+            <Bug pattern="CRLF_INJECTION_LOGS"/>
+            <Bug pattern="IS2_INCONSISTENT_SYNC"/>
+        </Or>
+    </Match>
+
+    <!-- TongtechTlqProperties: 配置 POJO（@ConfigurationProperties），getter 被 Spring 框架
+         反射调用，brokerHost/qcuName 等 String 字段来自 application.yml 配置（管理员维护），
+         非用户输入；FindSecBugs 误报（同 SubDataSourceService / SubBusinessSceneService 模式）。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.config.TongtechTlqProperties"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- TongtechErrorMapper: cause 字符串来自 SDK 异常 (TlqException.getErrorCause())，
+         非用户直接输入；errno/errorCode 来自 SDK，均为受控来源；FindSecBugs 误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.error.TongtechErrorMapper"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- ============================================================
          P2e 对账引擎模块（Task 7 Controllers + DTOs + Query Services）
          ============================================================ -->
 
