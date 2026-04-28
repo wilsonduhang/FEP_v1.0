@@ -181,4 +181,65 @@ class InboundMessageDispatcherTest {
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3116"))
                 .isEqualTo(BankCheckDay3116.class);
     }
+
+    /**
+     * P3 Task 5 regression guard for {@code feedback_dispatcher_payload_shape_blind_spot}.
+     *
+     * <p>Production CFX {@code <MSG>} envelope is XSD-mandated to carry
+     * BatchHeadXxxx (DOM Element via lax-mode JAXB) <em>before</em> the body
+     * POJO. The pre-fix {@code getBody()} call returned position-0 BatchHead
+     * Element, masking the real body POJO and silently producing
+     * {@code event.body=null}. This test ensures the {@code getBodies()::isInstance}
+     * filter still picks the registered body class even when BatchHead is in
+     * front, regardless of any future {@code getBody()} regression.</p>
+     */
+    @Test
+    @DisplayName("CFX MSG with BatchHead+body siblings → dispatcher picks body POJO via isInstance filter")
+    void dispatch_msgWithBatchHeadBeforeBody_picksBodyPojoNotBatchHead() {
+        // BatchHead3116 sibling appears BEFORE BankCheckDay3116 — XSD-required
+        // sequence. JAXB lax mode keeps unknown BatchHead3116 element as DOM
+        // Element while BankCheckDay3116 deserializes to the registered POJO.
+        final String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<CFX>"
+                + "<HEAD>"
+                + "<Version>1.0</Version>"
+                + "<SrcNode>A1000143000104</SrcNode>"
+                + "<DesNode>B2000456000204</DesNode>"
+                + "<App>HNDEMP</App>"
+                + "<MsgNo>3116</MsgNo>"
+                + "<MsgId>20260428000000000099</MsgId>"
+                + "<CorrMsgId></CorrMsgId>"
+                + "<WorkDate>20260428</WorkDate>"
+                + "</HEAD>"
+                + "<MSG>"
+                + "<BatchHead3116>"
+                + "<TotalNum>1</TotalNum>"
+                + "<TotalAmt>100.00</TotalAmt>"
+                + "</BatchHead3116>"
+                + "<BankCheckDay3116>"
+                + "<SerialNo>SN20260428BATCH</SerialNo>"
+                + "</BankCheckDay3116>"
+                + "</MSG>"
+                + "</CFX>";
+        final byte[] xmlBytes = xml.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-099abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3116, "20260428", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3116), eq("20260428"), eq(xmlBytes)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3116", "20260428", xmlBytes);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        // body MUST be the registered POJO, not the BatchHead DOM Element
+        assertThat(event.body())
+                .as("dispatcher must pick BankCheckDay3116 instance, not the leading BatchHead3116 sibling")
+                .isInstanceOf(BankCheckDay3116.class);
+        assertThat(event.serialNo()).isEqualTo("SN20260428BATCH");
+    }
 }

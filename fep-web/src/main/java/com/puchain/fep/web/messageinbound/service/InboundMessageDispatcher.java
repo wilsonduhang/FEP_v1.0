@@ -143,7 +143,19 @@ public class InboundMessageDispatcher {
 
     /**
      * 按 messageType 查 P3 Phase 2 注册表，使用 per-class 缓存的 JAXBContext
-     * 反序列化 CfxMessage 取第一个 body 子元素并强制 cast 到注册类型。
+     * 反序列化 CfxMessage 并按 isInstance 过滤取首个匹配的 body POJO。
+     *
+     * <p><b>Envelope shape contract</b>: 生产 CFX {@code <MSG>} 容器由 XSD 强制
+     * BatchHeadXxxx 在前 / Body POJO 在后两子元素并存（参见 PRD §3.2.4）。
+     * BatchHead 类型未在 dispatcher JAXBContext 注册，回退为 lax-mode
+     * {@code org.w3c.dom.Element}；用 {@code msg.getBody()} 取 position 0
+     * 永远拿到 BatchHead DOM Element 而非真 body POJO（P3 Task 5 IT 暴露的
+     * 关键 wiring bug — 旧实现 listener body=null silent skip）。</p>
+     *
+     * <p>修复后逻辑遍历 {@code msg.getBodies()} 并按 {@code bodyClass::isInstance}
+     * 过滤，对 (a) 单 body 报文 (b) BatchHead+body 双子元素 (c) 0 命中 (d) 多
+     * body 候选 四类 envelope 全部正确。0 命中时返回 null + LOG.warn，由
+     * dispatcher caller 处理；listener 端 null-check 兜底。</p>
      *
      * <p>未注册的 messageType 返回 {@code null}（listener 自行降级）；
      * unmarshal 失败抛 {@link FepBusinessException} 让 {@link Transactional}

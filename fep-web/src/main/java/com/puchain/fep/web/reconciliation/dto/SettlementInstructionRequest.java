@@ -50,13 +50,13 @@ public class SettlementInstructionRequest {
     @Valid
     private List<QsInfoRequest> qsInfo;
 
-    @Schema(description = "PK7 签名元素（Mode E 集成前必须为 null/空字符串）", nullable = true)
+    @Schema(description = "PK7 签名元素（Mode E 集成前必须为 null）", nullable = true)
     private String signElement;
 
-    @Schema(description = "PK7 签发签名（Mode E 集成前必须为 null/空字符串）", nullable = true)
+    @Schema(description = "PK7 签发签名（Mode E 集成前必须为 null）", nullable = true)
     private String qsfqSign;
 
-    @Schema(description = "PK7 平台签名（Mode E 集成前必须为 null/空字符串）", nullable = true)
+    @Schema(description = "PK7 平台签名（Mode E 集成前必须为 null）", nullable = true)
     private String platSign;
 
     /**

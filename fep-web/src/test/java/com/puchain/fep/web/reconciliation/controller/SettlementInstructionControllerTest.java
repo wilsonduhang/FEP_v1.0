@@ -25,6 +25,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.notNullValue;
@@ -313,10 +315,9 @@ class SettlementInstructionControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code", is("CLEAR_8605")))
-                .andExpect(jsonPath("$.message",
-                        org.hamcrest.Matchers.containsString("PK7")));
+                .andExpect(jsonPath("$.message", containsString("PK7")));
 
         final long afterCount = repository.count();
-        org.assertj.core.api.Assertions.assertThat(afterCount).isEqualTo(beforeCount);
+        assertThat(afterCount).isEqualTo(beforeCount);
     }
 }

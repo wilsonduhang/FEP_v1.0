@@ -40,7 +40,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -465,7 +466,7 @@ class ReconciliationE2EIntegrationTest {
                         .content(objectMapper.writeValueAsString(outboundReq)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
-                .andExpect(jsonPath("$.data", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(jsonPath("$.data", hasSize(2)))
                 .andExpect(jsonPath("$.data[0].instructionStatus").value("PENDING"))
                 .andExpect(jsonPath("$.data[1].instructionStatus").value("PENDING"));
 
@@ -506,7 +507,7 @@ class ReconciliationE2EIntegrationTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("CLEAR_8605"))
-                .andExpect(jsonPath("$.message", org.hamcrest.Matchers.containsString("PK7")));
+                .andExpect(jsonPath("$.message", containsString("PK7")));
 
         // Post-condition: no rows persisted in either reconciliation table
         assertThat(reconciliationRepository.count())
@@ -623,24 +624,4 @@ class ReconciliationE2EIntegrationTest {
         return req;
     }
 
-    /**
-     * Builds an InboundMessageRequest by reading the given sample XML and
-     * Base64-encoding it.
-     *
-     * @param messageType  4-digit code
-     * @param transitionNo 8-character transition number
-     * @param sampleName   sample file under {@code samples/}
-     * @return populated InboundMessageRequest
-     * @throws IOException sample loading failure
-     */
-    private InboundMessageRequest buildInboundRequest(final String messageType,
-                                                      final String transitionNo,
-                                                      final String sampleName) throws IOException {
-        final byte[] xml = readSampleStatic(sampleName);
-        final InboundMessageRequest req = new InboundMessageRequest();
-        req.setMessageType(messageType);
-        req.setTransitionNo(transitionNo);
-        req.setXmlBase64(Base64.getEncoder().encodeToString(xml));
-        return req;
-    }
 }
