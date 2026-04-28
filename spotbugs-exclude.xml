@@ -1064,6 +1064,28 @@
     </Match>
 
     <!-- ============================================================
+         P1c T6 fep-transport tongtech 消费者（real SDK）
+         ============================================================ -->
+
+    <!-- TongtechTlqConsumer: msgId 来自 SDK MsgId 经 fromSdkMessage 解码（受控），
+         channel 是 FEP 枚举（无 CRLF），queue 名来自 QueueNameResolver 静态常量
+         （PRD §3.1.2 受控字典），errorCause 来自 SDK TlqException.getErrorCause()
+         （与 TongtechErrorMapper / TongtechTlqProducer 同模式受控来源）；
+         FindSecBugs 误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.adapter.TongtechTlqConsumer"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- TongtechTlqConsumer: TongtechTlqProperties 由 Spring @ConfigurationProperties
+         绑定后通过 DI 注入，按 Spring 标准模式持有引用而非深拷贝（同 P1c T4
+         TongtechTlqConnectionFactory 抑制模式）；EI_EXPOSE_REP2 误报。 -->
+    <Match>
+        <Class name="com.puchain.fep.transport.tongtech.adapter.TongtechTlqConsumer"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- ============================================================
          P2e 对账引擎模块（Task 7 Controllers + DTOs + Query Services）
          ============================================================ -->
 
