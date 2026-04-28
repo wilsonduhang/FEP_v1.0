@@ -1072,4 +1072,20 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- P3 Task 3 listener wiring（messageinbound.listener + reconciliation.listener）：
+         所有 String 类型日志参数（serialNo / messageType / msgId / 异常 message）
+         均已通过 LogSanitizer.sanitize 清洗。SpotBugs 无法跨方法跟踪静态 sanitize call
+         因此沿用 P2d/P2e 同模式误报排除。同时 SPRING_ENDPOINT 误报扩展到 listener
+         classes（@Component 实现 MessageListener，非 REST 端点）。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.messageinbound.listener.TlqInboundListener"/>
+            <Class name="com.puchain.fep.web.messageinbound.config.TlqInboundConfiguration"/>
+            <Class name="com.puchain.fep.web.reconciliation.listener.BankReconciliationEventListener"/>
+            <Class name="com.puchain.fep.web.reconciliation.listener.PlatformReconciliationEventListener"/>
+            <Class name="com.puchain.fep.web.reconciliation.listener.ClearingInstructionEventListener"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
 </FindBugsFilter>
