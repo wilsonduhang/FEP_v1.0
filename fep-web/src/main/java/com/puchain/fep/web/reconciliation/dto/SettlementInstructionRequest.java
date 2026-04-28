@@ -15,8 +15,12 @@ import java.util.List;
  * {@link com.puchain.fep.processor.reconciliation.ClearingInstructionRecord#getInstructionId()}。
  * {@code qsInfo} 列表对齐 XSD 限定 1..200 条；超界由 {@link Size} 注解拦截。</p>
  *
- * <p>有意不暴露 PK7 签名字段：Mode E 安全集成尚未到位，service 层硬守护
- * 三个 PK7 字段必须为 null（{@link com.puchain.fep.common.domain.FepErrorCode#CLEAR_BUSINESS_RULE_VIOLATION}）。</p>
+ * <p>P3 Task 4 — 暴露 PK7 签名字段 ({@code signElement} / {@code qsfqSign} /
+ * {@code platSign})，使 service 层守护通过 Controller REST 路径可达（关闭
+ * ADR-P2e-4 Phase 1 偏离 #3）。Bean Validation 不加 {@code @AssertNull}：
+ * 设计选择保留 service 层 last-line-of-defense 守护，理由是恶意/误用 PK7
+ * 提交可被 service 层 audit 日志记录（DTO 校验仅返通用 400），Mode E 安全
+ * 集成到位前不优化此 fast path（{@link com.puchain.fep.common.domain.FepErrorCode#CLEAR_BUSINESS_RULE_VIOLATION}）。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -45,6 +49,15 @@ public class SettlementInstructionRequest {
     @Size(min = 1, max = 200, message = "qsInfo 必须为 1-200 条")
     @Valid
     private List<QsInfoRequest> qsInfo;
+
+    @Schema(description = "PK7 签名元素（Mode E 集成前必须为 null/空字符串）", nullable = true)
+    private String signElement;
+
+    @Schema(description = "PK7 签发签名（Mode E 集成前必须为 null/空字符串）", nullable = true)
+    private String qsfqSign;
+
+    @Schema(description = "PK7 平台签名（Mode E 集成前必须为 null/空字符串）", nullable = true)
+    private String platSign;
 
     /**
      * Default constructor for Jackson.
@@ -141,5 +154,59 @@ public class SettlementInstructionRequest {
      */
     public void setQsInfo(final List<QsInfoRequest> v) {
         this.qsInfo = v;
+    }
+
+    /**
+     * Returns the PK7 SignElement value (Mode E placeholder; service-only guard).
+     *
+     * @return signElement
+     */
+    public String getSignElement() {
+        return signElement;
+    }
+
+    /**
+     * Sets the PK7 SignElement value.
+     *
+     * @param v signElement
+     */
+    public void setSignElement(final String v) {
+        this.signElement = v;
+    }
+
+    /**
+     * Returns the PK7 issuer signature value (Mode E placeholder; service-only guard).
+     *
+     * @return qsfqSign
+     */
+    public String getQsfqSign() {
+        return qsfqSign;
+    }
+
+    /**
+     * Sets the PK7 issuer signature value.
+     *
+     * @param v qsfqSign
+     */
+    public void setQsfqSign(final String v) {
+        this.qsfqSign = v;
+    }
+
+    /**
+     * Returns the PK7 platform signature value (Mode E placeholder; service-only guard).
+     *
+     * @return platSign
+     */
+    public String getPlatSign() {
+        return platSign;
+    }
+
+    /**
+     * Sets the PK7 platform signature value.
+     *
+     * @param v platSign
+     */
+    public void setPlatSign(final String v) {
+        this.platSign = v;
     }
 }

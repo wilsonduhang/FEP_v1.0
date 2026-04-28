@@ -140,8 +140,12 @@ public class SettlementInstructionController {
         body.setSendNodeCode(req.getSendNodeCode());
         body.setDesNodeCode(req.getDesNodeCode());
         body.setPlatPayNo(req.getPlatPayNo());
-        // PK7 fields (SignElement / qsfqSign / PlatSign) intentionally left null
-        // — Mode E security integration TBD (see ClearingInstructionService guard).
+        // P3 Task 4: PK7 fields now passthrough so service-side guard
+        // (ClearingInstructionService.initiateOutbound) can reject non-null
+        // values via REST as well as TLQ. Mode E real signing pending.
+        body.setSignElement(req.getSignElement());
+        body.setQsfqSign(req.getQsfqSign());
+        body.setPlatSign(req.getPlatSign());
         final List<QsInfo> qsList = new ArrayList<>(req.getQsInfo().size());
         for (QsInfoRequest qi : req.getQsInfo()) {
             final QsInfo qs = new QsInfo();

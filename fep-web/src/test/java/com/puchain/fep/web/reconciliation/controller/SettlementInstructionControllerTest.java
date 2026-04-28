@@ -287,4 +287,36 @@ class SettlementInstructionControllerTest {
                 .andExpect(jsonPath("$.timestamp",
                         matchesPattern("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*")));
     }
+
+    /**
+     * P3 Task 4 acceptance: PK7 fields exposed in DTO must round-trip to
+     * service guard. Submitting a non-null {@code signElement} forces
+     * {@link com.puchain.fep.processor.reconciliation.ClearingInstructionService}
+     * to reject the request via {@code CLEAR_BUSINESS_RULE_VIOLATION}, closing
+     * ADR-P2e-4 Phase 1 deviation #3 (REST path can now reach the guard).
+     *
+     * <p>Asserts: HTTP 400 / {@code code=CLEAR_8605} / message contains "PK7" or
+     * "签名" / no clearing_instruction_records row landed.</p>
+     */
+    @Test
+    void initiate_pk7Populated_shouldReturnClearBusinessRuleAndPersistNothing()
+            throws Exception {
+        final SettlementInstructionRequest req = buildRequest(
+                "PP_PK7_BAD", "QS_PK7_BAD", new BigDecimal("1500.00"));
+        req.setSignElement("MOCK_SIGN_ELEMENT");
+
+        final long beforeCount = repository.count();
+
+        mockMvc.perform(post(BASE_URL)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("CLEAR_8605")))
+                .andExpect(jsonPath("$.message",
+                        org.hamcrest.Matchers.containsString("PK7")));
+
+        final long afterCount = repository.count();
+        org.assertj.core.api.Assertions.assertThat(afterCount).isEqualTo(beforeCount);
+    }
 }
