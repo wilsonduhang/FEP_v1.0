@@ -6,6 +6,7 @@ import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.type.MessageType;
+import com.puchain.fep.converter.xml.JaxbContextCache;
 import com.puchain.fep.processor.state.IllegalMessageStateException;
 import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
@@ -58,16 +59,6 @@ public class BatchMessageProcessorService {
     private final MessageStateMachine stateMachine;
     private final MessageProcessStore store;
     private final BatchPayloadAdapter adapter;
-
-    /**
-     * Per-body-class {@link JAXBContext} cache（P2d-ext E1 fix — BLOCKING for P3）。
-     *
-     * <p>JAXBContext 构建开销 50-300ms；T5 Simplify Efficiency 实测 `BatchMessageProcessorServiceTest`
-     * 9 cases 耗 11-15s（瓶颈为 per-body newInstance）。批量 500+ body 会放大 10-100×。
-     * 本 cache 按 body class lazy init + 线程安全复用 context。</p>
-     */
-    private final java.util.concurrent.ConcurrentMap<Class<?>, JAXBContext> jaxbContextCache =
-            new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * 构造器注入 4 项业务依赖。
@@ -243,7 +234,7 @@ public class BatchMessageProcessorService {
 
         final StringWriter sw = new StringWriter();
         try {
-            final JAXBContext ctx = jaxbContextFor(body.getClass());
+            final JAXBContext ctx = JaxbContextCache.getForBody(body.getClass());
             final Marshaller marshaller = ctx.createMarshaller();
             marshaller.marshal(wrapper, sw);
         } catch (JAXBException e) {
@@ -251,32 +242,6 @@ public class BatchMessageProcessorService {
                     "Failed to marshal CFX wrapper for body " + body.getClass().getName(), e);
         }
         return sw.toString();
-    }
-
-    /**
-     * 返回缓存的 {@link JAXBContext}，按 body Class 分键。
-     *
-     * <p>JAXBContext 构建成本高（~50-300ms 反射扫描 + accessor 生成），且 JAXBContext
-     * 是线程安全的，适合跨请求复用。本方法用 {@link ConcurrentHashMap#computeIfAbsent}
-     * 做 per-class lazy cache：首次访问某 body 类型会构建 context，后续共享。</p>
-     *
-     * <p>缓存边界：按 {@code body.getClass()} 为 key；因 {@code CfxMessage} +
-     * {@code RequestBusinessHead} 对所有 body 共享，key 只需 body class 即可区分
-     * context 的 marshallable 集合。</p>
-     *
-     * @param bodyClass 批量 body POJO 类型
-     * @return 共享 JAXBContext（首次构建 + 缓存）
-     * @throws JAXBException 首次 context 构建失败
-     */
-    private JAXBContext jaxbContextFor(final Class<?> bodyClass) throws JAXBException {
-        final JAXBContext cached = jaxbContextCache.get(bodyClass);
-        if (cached != null) {
-            return cached;
-        }
-        final JAXBContext created = JAXBContext.newInstance(
-                CfxMessage.class, RequestBusinessHead.class, bodyClass);
-        final JAXBContext existing = jaxbContextCache.putIfAbsent(bodyClass, created);
-        return existing != null ? existing : created;
     }
 
     /**
