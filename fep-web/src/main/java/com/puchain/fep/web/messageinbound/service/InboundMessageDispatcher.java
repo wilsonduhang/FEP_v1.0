@@ -4,8 +4,8 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.model.CfxMessage;
-import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.type.MessageType;
+import com.puchain.fep.converter.xml.JaxbContextCache;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.PlatPay3115;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
@@ -31,7 +31,6 @@ import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 入站报文分发器（PRD §5.3.2.13 + §1991 状态机）。
@@ -74,7 +73,6 @@ public class InboundMessageDispatcher {
 
     private final SyncMessageProcessorService syncProcessor;
     private final ApplicationEventPublisher eventPublisher;
-    private final Map<Class<?>, JAXBContext> jaxbContextCache;
 
     /**
      * Spring 构造注入。
@@ -86,7 +84,6 @@ public class InboundMessageDispatcher {
                                     final ApplicationEventPublisher eventPublisher) {
         this.syncProcessor = Objects.requireNonNull(syncProcessor, "syncProcessor");
         this.eventPublisher = Objects.requireNonNull(eventPublisher, "eventPublisher");
-        this.jaxbContextCache = new ConcurrentHashMap<>();
     }
 
     /**
@@ -172,7 +169,7 @@ public class InboundMessageDispatcher {
             return null;
         }
         try {
-            final JAXBContext ctx = jaxbContextCache.computeIfAbsent(bodyClass, this::buildContext);
+            final JAXBContext ctx = JaxbContextCache.getForBody(bodyClass);
             final Unmarshaller u = ctx.createUnmarshaller();
             u.setEventHandler(event -> false);
             final CfxMessage msg = (CfxMessage) u.unmarshal(new ByteArrayInputStream(xml));
@@ -197,23 +194,6 @@ public class InboundMessageDispatcher {
             throw new FepBusinessException(
                     FepErrorCode.MSG_INBOUND_DECODE_FAILURE,
                     "unmarshal body failed for msg=" + type.msgNo(), e);
-        }
-    }
-
-    /**
-     * 用 {@link JAXBContext#newInstance(Class[])} 显式注册 {@link CfxMessage} +
-     * {@link RequestBusinessHead} + 具体 body 类，避免 lax 模式回退到
-     * {@code org.w3c.dom.Element}。
-     *
-     * @param bodyClass body POJO 类
-     * @return 共享 JAXBContext
-     */
-    private JAXBContext buildContext(final Class<?> bodyClass) {
-        try {
-            return JAXBContext.newInstance(CfxMessage.class, RequestBusinessHead.class, bodyClass);
-        } catch (JAXBException e) {
-            throw new IllegalStateException(
-                    "failed to build JAXBContext for body=" + bodyClass.getSimpleName(), e);
         }
     }
 
