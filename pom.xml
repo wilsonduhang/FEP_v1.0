@@ -132,6 +132,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Tolerate transient ApplicationContext load failures
+                         (P1c T9 flaky investigation: quality reviewer observed
+                         one-shot 10-error context-load failure that did not
+                         reproduce in 5 follow-up clean runs). Surefire emits a
+                         <flakyFailure> node so persistent flakes remain visible. -->
+                    <rerunFailingTestsCount>1</rerunFailingTestsCount>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
