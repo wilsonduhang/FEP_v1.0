@@ -14,91 +14,97 @@ import com.puchain.fep.transport.mock.InMemoryTlqProducer;
 import com.puchain.fep.transport.mock.MockProducerConfiguration;
 import com.puchain.fep.transport.support.MessageDeduplicator;
 import com.puchain.fep.transport.support.QueueNameResolver;
+import com.puchain.fep.transport.tongtech.config.TongtechTransportConfiguration;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Integration test verifying that {@link TransportAutoConfiguration}
- * correctly wires all transport beans in the dev profile.
+ * Integration test verifying that {@link TransportAutoConfiguration} correctly
+ * wires all transport beans on the default (mock) provider path.
+ *
+ * <p>P1c T10 efficiency E3 closing fix: migrated from {@code @SpringBootTest}
+ * (~25 s full-context bootstrap) to {@link ApplicationContextRunner}
+ * (~1 s per case), mirroring {@link com.puchain.fep.transport.mock.MockProducerConfigurationTest}.
+ * The runner evaluates every {@code @Conditional}/{@code @Profile} the same
+ * way as a real boot context, so behavioural coverage is unchanged.</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
-@SpringBootTest(classes = TransportAutoConfiguration.class)
-@Import({InMemoryTlqConsumer.class, InMemoryTlqConnectionFactory.class,
-        InMemoryNodeLifecycleManager.class, InMemoryDeadLetterHandler.class,
-        MockProducerConfiguration.class})
-@ActiveProfiles("dev")
 class TransportAutoConfigurationTest {
 
-    @Autowired
-    private TlqProducer producer;
-
-    @Autowired
-    @Qualifier("inMemoryTlqProducer")
-    private InMemoryTlqProducer rawInMemoryProducer;
-
-    @Autowired
-    private TlqConsumer consumer;
-
-    @Autowired
-    private TlqConnectionFactory connectionFactory;
-
-    @Autowired
-    private NodeLifecycleManager nodeLifecycleManager;
-
-    @Autowired
-    private DeadLetterHandler deadLetterHandler;
-
-    @Autowired
-    private MessageDeduplicator messageDeduplicator;
-
-    @Autowired
-    private QueueNameResolver queueNameResolver;
-
-    @Autowired
-    private TransportProperties properties;
+    private final ApplicationContextRunner runner = new ApplicationContextRunner()
+            .withUserConfiguration(TestConfig.class);
 
     @Test
-    void allBeans_shouldBeCorrectTypesInDevProfile() {
-        // v1d: @Primary TlqProducer is RetryableProducer (FR-COMM-TLQ-RETRY); raw mock
-        // is exposed as named bean inMemoryTlqProducer for low-level verification.
-        assertThat(producer).isInstanceOf(RetryableProducer.class);
-        assertThat(rawInMemoryProducer).isInstanceOf(InMemoryTlqProducer.class);
-        assertThat(consumer).isInstanceOf(InMemoryTlqConsumer.class);
-        assertThat(connectionFactory).isInstanceOf(InMemoryTlqConnectionFactory.class);
-        assertThat(nodeLifecycleManager).isInstanceOf(InMemoryNodeLifecycleManager.class);
-        assertThat(deadLetterHandler).isInstanceOf(InMemoryDeadLetterHandler.class);
+    @DisplayName("default provider: all beans wired to in-memory mock implementations + Primary TlqProducer = RetryableProducer")
+    void allBeans_shouldBeCorrectTypesOnDefaultProvider() {
+        runner.run(ctx -> {
+            assertThat(ctx).hasNotFailed();
+            // v1d: @Primary TlqProducer is RetryableProducer (FR-COMM-TLQ-RETRY); raw mock
+            // is exposed as named bean inMemoryTlqProducer for low-level verification.
+            assertThat(ctx.getBean(TlqProducer.class)).isInstanceOf(RetryableProducer.class);
+            assertThat(ctx.getBean("inMemoryTlqProducer")).isInstanceOf(InMemoryTlqProducer.class);
+            assertThat(ctx.getBean(TlqConsumer.class)).isInstanceOf(InMemoryTlqConsumer.class);
+            assertThat(ctx.getBean(TlqConnectionFactory.class)).isInstanceOf(InMemoryTlqConnectionFactory.class);
+            assertThat(ctx.getBean(NodeLifecycleManager.class)).isInstanceOf(InMemoryNodeLifecycleManager.class);
+            assertThat(ctx.getBean(DeadLetterHandler.class)).isInstanceOf(InMemoryDeadLetterHandler.class);
+        });
     }
 
     @Test
+    @DisplayName("messageDeduplicator wired with default capacity (10000) from TransportProperties")
     void messageDeduplicator_shouldHaveConfiguredCapacity() {
-        assertThat(messageDeduplicator).isNotNull();
-        // dev profile uses default dedupCapacity=10000 — verifies binding wired correctly
-        assertThat(properties.getDedupCapacity()).isEqualTo(10000);
+        runner.run(ctx -> {
+            assertThat(ctx).hasNotFailed();
+            assertThat(ctx.getBean(MessageDeduplicator.class)).isNotNull();
+            assertThat(ctx.getBean(TransportProperties.class).getDedupCapacity()).isEqualTo(10000);
+        });
     }
 
     @Test
+    @DisplayName("queueNameResolver embeds non-blank institutionCode from TransportProperties")
     void queueNameResolver_shouldResolveWithConfiguredInstitutionCode() {
-        assertThat(queueNameResolver).isNotNull();
-        // resolver must use the institution code from properties, not an empty/null value
-        final String institutionCode = properties.getInstitutionCode();
-        assertThat(institutionCode).isNotBlank();
-        assertThat(queueNameResolver.resolveQcu()).contains(institutionCode);
+        runner.run(ctx -> {
+            assertThat(ctx).hasNotFailed();
+            final QueueNameResolver resolver = ctx.getBean(QueueNameResolver.class);
+            final String institutionCode = ctx.getBean(TransportProperties.class).getInstitutionCode();
+            assertThat(institutionCode).isNotBlank();
+            assertThat(resolver.resolveQcu()).contains(institutionCode);
+        });
     }
 
     @Test
+    @DisplayName("TransportProperties defaults: ports 20001/20002, maxRetries 3, dedupCapacity 10000")
     void transportProperties_shouldHaveDefaults() {
-        assertThat(properties.getRealtimePort()).isEqualTo(20001);
-        assertThat(properties.getBatchPort()).isEqualTo(20002);
-        assertThat(properties.getMaxRetries()).isEqualTo(3);
-        assertThat(properties.getDedupCapacity()).isEqualTo(10000);
+        runner.run(ctx -> {
+            assertThat(ctx).hasNotFailed();
+            final TransportProperties properties = ctx.getBean(TransportProperties.class);
+            assertThat(properties.getRealtimePort()).isEqualTo(20001);
+            assertThat(properties.getBatchPort()).isEqualTo(20002);
+            assertThat(properties.getMaxRetries()).isEqualTo(3);
+            assertThat(properties.getDedupCapacity()).isEqualTo(10000);
+        });
+    }
+
+    /**
+     * Test configuration that drives full {@code @ConditionalOnProperty}
+     * evaluation through {@link EnableAutoConfiguration} and the same
+     * component scan {@link TransportAutoConfiguration} declares —
+     * mirrors {@link com.puchain.fep.transport.mock.MockProducerConfigurationTest.TestConfig}.
+     */
+    @Configuration
+    @EnableAutoConfiguration
+    @Import({TransportAutoConfiguration.class, TongtechTransportConfiguration.class, MockProducerConfiguration.class})
+    @ComponentScan(basePackages = "com.puchain.fep.transport")
+    static class TestConfig {
     }
 }

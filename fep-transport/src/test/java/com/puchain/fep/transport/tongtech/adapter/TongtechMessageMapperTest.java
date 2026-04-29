@@ -5,6 +5,7 @@ import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessageAttributes;
 import com.tongtech.tlq.base.TlqMessage;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -32,6 +33,7 @@ class TongtechMessageMapperTest {
     private final TongtechMessageMapper mapper = new TongtechMessageMapper();
 
     @Test
+    @DisplayName("toSdk: small payload (< 8KB) → xmlstr only, xmlstr1/2 empty, Persistence=N")
     void toSdk_smallPayload_shouldFitInXmlstrOnly() {
         var fep = new com.puchain.fep.transport.model.TlqMessage(
                 "<CFX>...</CFX>",
@@ -50,6 +52,7 @@ class TongtechMessageMapperTest {
     }
 
     @Test
+    @DisplayName("toSdk: ~20KB payload → split across xmlstr/xmlstr1/xmlstr2, Persistence=Y")
     void toSdk_largePayload_shouldSplitIntoThreeXmlAttrs() {
         String payload = "X".repeat(20_000); // ~20KB → 3 segments
         var fep = new com.puchain.fep.transport.model.TlqMessage(
@@ -67,6 +70,7 @@ class TongtechMessageMapperTest {
     }
 
     @Test
+    @DisplayName("roundtrip: toSdk → fromSdk preserves payload + msgId + corrMsgId + flags")
     void roundtrip_shouldPreserveAll() {
         var attrs = TlqMessageAttributes.forBatch("MSG-RT");
         attrs.setCorrMsgId("CORR-001");
@@ -87,6 +91,7 @@ class TongtechMessageMapperTest {
     }
 
     @Test
+    @DisplayName("toSdk: payload > 24KB → FepBusinessException(TRANS_7001)")
     void payloadOver24KB_shouldThrowTrans7001() {
         String oversized = "X".repeat(25_000);
         var fep = new com.puchain.fep.transport.model.TlqMessage(
@@ -103,6 +108,7 @@ class TongtechMessageMapperTest {
     }
 
     @Test
+    @DisplayName("toSdk: null FEP message → NullPointerException (defensive guard)")
     void nullInput_shouldThrowNpe() {
         assertThatThrownBy(() -> mapper.toSdkMessage(null))
                 .isInstanceOf(NullPointerException.class);

@@ -7,6 +7,7 @@ import com.puchain.fep.transport.tongtech.error.TongtechErrorMapper;
 import com.tongtech.tlq.base.TlqConnection;
 import com.tongtech.tlq.base.TlqException;
 import com.tongtech.tlq.base.TlqQCU;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
@@ -47,6 +48,7 @@ class TongtechTlqConnectionFactoryTest {
     }
 
     @Test
+    @DisplayName("connect: success → TlqConnection constructed + QCU opened + isConnected=true")
     void connect_success_shouldOpenConnectionAndQCU() throws Exception {
         TlqQCU mockQcu = Mockito.mock(TlqQCU.class);
         TongtechErrorMapper mapper = new TongtechErrorMapper();
@@ -68,6 +70,7 @@ class TongtechTlqConnectionFactoryTest {
     }
 
     @Test
+    @DisplayName("connect: SDK TlqException → FepBusinessException(TRANS_7002), state remains disconnected")
     void connect_whenSdkThrows_shouldRaiseTrans7002() {
         TongtechErrorMapper mapper = new TongtechErrorMapper();
 
@@ -91,6 +94,7 @@ class TongtechTlqConnectionFactoryTest {
     }
 
     @Test
+    @DisplayName("disconnect: idempotent — second call no-op, qcu.close()/conn.close() invoked exactly once")
     void disconnect_isIdempotent() throws Exception {
         TlqQCU mockQcu = Mockito.mock(TlqQCU.class);
         TongtechErrorMapper mapper = new TongtechErrorMapper();

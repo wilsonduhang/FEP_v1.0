@@ -3,6 +3,7 @@ package com.puchain.fep.transport.tongtech.error;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.tongtech.tlq.base.TlqException;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -28,6 +29,7 @@ class TongtechErrorMapperTest {
     private final TongtechErrorMapper mapper = new TongtechErrorMapper();
 
     @Test
+    @DisplayName("connection cause keyword → TRANS_7002 with cause preserved")
     void connectionCause_shouldMapToTrans7002() {
         TlqException ex = Mockito.mock(TlqException.class);
         Mockito.when(ex.getErrorCause()).thenReturn("connect to broker refused");
@@ -41,6 +43,7 @@ class TongtechErrorMapperTest {
     }
 
     @Test
+    @DisplayName("receive-timeout cause keyword → TRANS_7005")
     void receiveTimeoutCause_shouldMapToTrans7005() {
         TlqException ex = Mockito.mock(TlqException.class);
         Mockito.when(ex.getErrorCause()).thenReturn("receive timeout while polling queue");
@@ -51,6 +54,7 @@ class TongtechErrorMapperTest {
     }
 
     @Test
+    @DisplayName("queue-not-found cause keyword → TRANS_7008")
     void queueNotFoundCause_shouldMapToTrans7008() {
         TlqException ex = Mockito.mock(TlqException.class);
         Mockito.when(ex.getErrorCause()).thenReturn("queue not found: FEP_REALTIME_REQ");
@@ -61,6 +65,7 @@ class TongtechErrorMapperTest {
     }
 
     @Test
+    @DisplayName("ack-failure cause keyword → TRANS_7007")
     void ackCause_shouldMapToTrans7007() {
         TlqException ex = Mockito.mock(TlqException.class);
         Mockito.when(ex.getErrorCause()).thenReturn("ack failure: message id not found");
@@ -71,6 +76,7 @@ class TongtechErrorMapperTest {
     }
 
     @Test
+    @DisplayName("admin-rejected cause keyword → TRANS_7006")
     void adminCause_shouldMapToTrans7006() {
         TlqException ex = Mockito.mock(TlqException.class);
         Mockito.when(ex.getErrorCause()).thenReturn("admin operation rejected by broker");
@@ -81,6 +87,7 @@ class TongtechErrorMapperTest {
     }
 
     @Test
+    @DisplayName("oversized-payload cause keyword → TRANS_7001")
     void oversizedCause_shouldMapToTrans7001() {
         TlqException ex = Mockito.mock(TlqException.class);
         Mockito.when(ex.getErrorCause()).thenReturn("message oversized: payload exceeds 24KB");
@@ -91,6 +98,7 @@ class TongtechErrorMapperTest {
     }
 
     @Test
+    @DisplayName("unknown cause keyword → TRANS_7003 fallback with cause preserved")
     void unknownCause_shouldFallbackToTrans7003() {
         TlqException ex = Mockito.mock(TlqException.class);
         // Cause string deliberately avoids any keyword from mapCause() to exercise fallback.
