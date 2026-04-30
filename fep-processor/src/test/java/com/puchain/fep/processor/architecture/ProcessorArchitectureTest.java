@@ -82,4 +82,25 @@ class ProcessorArchitectureTest {
                 .allowEmptyShould(true);
         rule.check(processorClasses);
     }
+
+    /**
+     * P3a v1f D7 决策守护：fep-processor {@code routing} 包整体不允许依赖
+     * {@code org.springframework.data.jpa} 或 {@code jakarta.persistence}。JPA Entity /
+     * Repository / Adapter 只能位于 fep-web {@code integration/dirmap/}（T2 owner），
+     * fep-processor 通过 {@link com.puchain.fep.processor.routing.DirMapConfigStore}
+     * Port 接口跨模块依赖。
+     *
+     * <p>违反此规则视为 D7 Hexagonal 重构倒退（v1d/v1e 失败教训）。</p>
+     */
+    @Test
+    void routingShouldNotDependOnSpringDataJpa() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.puchain.fep.processor.routing..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "org.springframework.data.jpa..",
+                        "jakarta.persistence..")
+                .because("v1f D7 — fep-processor routing keeps Hexagonal Port boundary; "
+                       + "JPA lives in fep-web/integration/dirmap/ only");
+        rule.check(processorClasses);
+    }
 }

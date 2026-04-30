@@ -278,12 +278,45 @@ public final class MessageDirectionMap {
     /**
      * 查询指定报文和角色的方向映射。
      *
+     * <p>P3a T4 三级回退：
+     * <ol>
+     *   <li>{@link MessageDirectionMapBridge} 注入的 {@link DynamicMessageDirectionMap}
+     *       cache + Port 二级查询；</li>
+     *   <li>未命中（含 DB 异常 / 启动期 cache 空）→ 走静态 {@link #TABLE} fallback。</li>
+     * </ol>
+     *
+     * <p>测试 / 无 Spring ctx 场景下 Bridge 静态字段为 null，直接走静态 fallback；
+     * 既有 3 个 reconciliation service 公共 API 行为不变。</p>
+     *
      * @param msg  报文类型（不为 null）
      * @param role 接入角色（不为 null）
      * @return 映射，未命中返回 {@link Optional#empty()}
      * @throws NullPointerException 参数为 null
      */
     public static Optional<DirectionMapping> lookup(final MessageType msg, final AccessRole role) {
+        Objects.requireNonNull(msg, "msg");
+        Objects.requireNonNull(role, "role");
+
+        DynamicMessageDirectionMap dynamic = MessageDirectionMapBridge.getDynamicOrNull();
+        if (dynamic != null) {
+            Optional<DirectionMapping> fromDynamic = dynamic.lookupRaw(msg, role);
+            if (fromDynamic.isPresent()) {
+                return fromDynamic;
+            }
+            // 落到静态 fallback（D5）
+        }
+        return staticLookup(msg, role);
+    }
+
+    /**
+     * Dynamic-bypass 静态查询入口。直接读 {@link #TABLE} 不经过 Bridge / dynamic，
+     * 供 fallback 路径与测试用。生产代码应优先调用 {@link #lookup}。
+     *
+     * @param msg  报文类型，非 null
+     * @param role 接入角色，非 null
+     * @return 88 条范围内必命中（含 NOT_APPLICABLE 情形）
+     */
+    public static Optional<DirectionMapping> staticLookup(final MessageType msg, final AccessRole role) {
         Objects.requireNonNull(msg, "msg");
         Objects.requireNonNull(role, "role");
         return Optional.ofNullable(TABLE.get(new Key(msg, role)));
