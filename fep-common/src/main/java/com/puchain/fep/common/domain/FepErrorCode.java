@@ -3,7 +3,12 @@ package com.puchain.fep.common.domain;
 /**
  * FEP 统一错误码枚举。
  *
- * <p>错误码格式: {前缀}_{四位数字}（前缀 PARAM/AUTH/BIZ/SYS/DEP）</p>
+ * <p>错误码格式: {前缀}_{四位数字}（前缀 PARAM/AUTH/BIZ/SYS/DEP/COLLECT 等）</p>
+ *
+ * <p>常用前缀范围：
+ * <ul>
+ *   <li>COLLECT_5xxx — 数据采集层错误（fep-collector）</li>
+ * </ul>
  *
  * <p>参见 PRD v1.3 §9.3 错误码体系。</p>
  *
@@ -92,7 +97,15 @@ public enum FepErrorCode {
 
     // 报文入站错误 8700-8799（P3 messageinbound）
     MSG_INBOUND_INVALID_TYPE("MSG_8701", "未注册的 messageType"),
-    MSG_INBOUND_DECODE_FAILURE("MSG_8702", "xmlBase64 解码失败");
+    MSG_INBOUND_DECODE_FAILURE("MSG_8702", "xmlBase64 解码失败"),
+
+    // 数据采集层错误 COLLECT_5xxx（P4 fep-collector）
+    COLLECT_ADAPTER_FAILURE("COLLECT_5001", "数据采集适配器调用失败"),
+    COLLECT_ASSEMBLE_FAILURE("COLLECT_5002", "报文组装失败"),
+    COLLECT_DUPLICATE_KEY("COLLECT_5003", "幂等键冲突，记录已存在"),
+    COLLECT_LOCK_TIMEOUT("COLLECT_5004", "调度互斥锁获取超时"),
+    COLLECT_PERSIST_FAILURE("COLLECT_5005", "采集运行记录持久化失败"),
+    COLLECT_TRIGGER_REJECTED("COLLECT_5006", "手动触发被拒绝（adapterId 不存在或已禁用）");
 
     private final String code;
     private final String defaultMessage;

@@ -6,6 +6,20 @@
         <Bug pattern="UUF_UNUSED_FIELD"/>
     </Match>
 
+    <!-- CollectorProperties (P4 T0): @ConfigurationProperties bean，Spring Binder 反射写入 +
+         调用方仅 read-only 消费，可变 List/Map/嵌套类是 Boot 标准 style；与 RolePermissionAssignRequest 同模式 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.collector.CollectorProperties"/>
+            <Class name="com.puchain.fep.collector.CollectorProperties$Adapter"/>
+            <Class name="com.puchain.fep.collector.CollectorProperties$Retry"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
     <!-- 排除测试类的某些检查 -->
     <Match>
         <Class name="~.*Test"/>

@@ -66,6 +66,34 @@ class FepErrorCodeTest {
     }
 
     @Test
+    void collectorErrorCodes_shouldBeDefined() {
+        // P4 T0: fep-collector 6 个错误码
+        assertThat(FepErrorCode.COLLECT_ADAPTER_FAILURE.getCode()).isEqualTo("COLLECT_5001");
+        assertThat(FepErrorCode.COLLECT_ADAPTER_FAILURE.getDefaultMessage()).contains("适配器");
+        assertThat(FepErrorCode.COLLECT_ASSEMBLE_FAILURE.getCode()).isEqualTo("COLLECT_5002");
+        assertThat(FepErrorCode.COLLECT_ASSEMBLE_FAILURE.getDefaultMessage()).contains("组装");
+        assertThat(FepErrorCode.COLLECT_DUPLICATE_KEY.getCode()).isEqualTo("COLLECT_5003");
+        assertThat(FepErrorCode.COLLECT_DUPLICATE_KEY.getDefaultMessage()).contains("幂等键");
+        assertThat(FepErrorCode.COLLECT_LOCK_TIMEOUT.getCode()).isEqualTo("COLLECT_5004");
+        assertThat(FepErrorCode.COLLECT_LOCK_TIMEOUT.getDefaultMessage()).contains("调度");
+        assertThat(FepErrorCode.COLLECT_PERSIST_FAILURE.getCode()).isEqualTo("COLLECT_5005");
+        assertThat(FepErrorCode.COLLECT_PERSIST_FAILURE.getDefaultMessage()).contains("持久化");
+        assertThat(FepErrorCode.COLLECT_TRIGGER_REJECTED.getCode()).isEqualTo("COLLECT_5006");
+        assertThat(FepErrorCode.COLLECT_TRIGGER_REJECTED.getDefaultMessage()).contains("手动触发");
+
+        // 覆盖 COLLECT_5001..COLLECT_5006 连续存在
+        String[] expected = {"COLLECT_5001", "COLLECT_5002", "COLLECT_5003",
+                "COLLECT_5004", "COLLECT_5005", "COLLECT_5006"};
+        Set<String> actual = new HashSet<>();
+        for (FepErrorCode ec : FepErrorCode.values()) {
+            if (ec.getCode().startsWith("COLLECT_")) {
+                actual.add(ec.getCode());
+            }
+        }
+        assertThat(actual).containsExactlyInAnyOrder(expected);
+    }
+
+    @Test
     void converterErrorCodes_shouldBeDefined() {
         assertThat(FepErrorCode.CONV_8001.getCode()).isEqualTo("CONV_8001");
         assertThat(FepErrorCode.CONV_8006.getDefaultMessage()).contains("加密");

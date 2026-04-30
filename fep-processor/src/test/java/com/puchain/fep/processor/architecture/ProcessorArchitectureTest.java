@@ -62,4 +62,24 @@ class ProcessorArchitectureTest {
                 .because("routing 是独立协议层，不应依赖 body 或 validation（反向依赖方向）");
         rule.check(processorClasses);
     }
+
+    /**
+     * R5（P4 T0 引入）：intake.port 必须保持极简，仅承载跨模块 collector→fep-web 契约的
+     * Port + DTO，不得依赖 processor 内任何业务实现包（pipeline / state / reconciliation）。
+     *
+     * <p>该规则在 intake.port 子包尚未引入时（T7a 前）以 trivial PASS 形式存在，作为
+     * 前置守护防止 T7a 实施时悄悄拉入 processor 业务依赖。</p>
+     */
+    @Test
+    void intakePortMustStayMinimal() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("com.puchain.fep.processor.intake.port..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.puchain.fep.processor.pipeline..",
+                        "com.puchain.fep.processor.state..",
+                        "com.puchain.fep.processor.reconciliation..")
+                .because("intake.port 仅承载跨模块契约，禁止下沉至 processor 业务实现包")
+                .allowEmptyShould(true);
+        rule.check(processorClasses);
+    }
 }
