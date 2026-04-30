@@ -19,19 +19,18 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
     show-sql: false
-
-# Redis (生产环境)
-fep:
-  cors:
-    allowed-origins: ${FEP_CORS_ALLOWED_ORIGINS}
-  redis:
-    enabled: true
-  jwt:
-    secret: ${FEP_JWT_SECRET}
-    access-token-ttl-seconds: 7200
-    refresh-token-ttl-seconds: 604800
-    issuer: fep
-spring:
+  flyway:
+    # P3a T1: MySQL-only appends db/migration-mysql for the V19_1
+    # row-count-guard trigger (DELIMITER // + SIGNAL SQLSTATE). The
+    # trigger lives in a SIBLING directory because Flyway 10.x recursively
+    # scans every classpath: location and a child path db/migration/mysql/
+    # would be picked up by H2 dev/test (which lists only
+    # classpath:db/migration) and fail on DELIMITER syntax. The {vendor}
+    # placeholder is NOT a substitute: Flyway identifies H2 as vendor
+    # "H2" regardless of MODE=MySQL, so it cannot route MySQL-only SQL
+    # away from the H2 classpath. Common path restated here so the
+    # additional location is appended in prod only.
+    locations: classpath:db/migration,classpath:db/migration-mysql
   data:
     redis:
       host: ${FEP_REDIS_HOST:localhost}
@@ -45,6 +44,18 @@ spring:
           max-idle: 8
           min-idle: 2
           max-wait: 3000ms
+
+# Redis (生产环境)
+fep:
+  cors:
+    allowed-origins: ${FEP_CORS_ALLOWED_ORIGINS}
+  redis:
+    enabled: true
+  jwt:
+    secret: ${FEP_JWT_SECRET}
+    access-token-ttl-seconds: 7200
+    refresh-token-ttl-seconds: 604800
+    issuer: fep
 
 logging:
   level:

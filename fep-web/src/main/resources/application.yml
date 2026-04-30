@@ -16,6 +16,18 @@ spring:
     show-sql: false
   flyway:
     enabled: true
+    # Common location (V1-V18 + V19/V20 dialect-agnostic). MySQL-only
+    # files (e.g. V19_1 trigger) live in the SIBLING directory
+    # db/migration-mysql and are wired in via application-prod.yml.
+    # H2 dev/test profiles deliberately exclude that location.
+    # Why a sibling instead of a child of db/migration? Flyway 10.x
+    # recursively scans every classpath: location, so db/migration/mysql/
+    # would be loaded here too and H2 would fail on DELIMITER syntax.
+    # The {vendor} placeholder is NOT an alternative: Flyway identifies
+    # H2 as vendor "H2" regardless of MODE=MySQL, so it cannot route
+    # MySQL-only SQL away from the H2 classpath.
+    # D8 row-count invariant on H2 is enforced at the Service layer
+    # via Assert.state(count == 88) — see T5.
     locations: classpath:db/migration
     baseline-on-migrate: true
 
