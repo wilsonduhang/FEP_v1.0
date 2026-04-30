@@ -155,13 +155,16 @@ public class InboundMessageDispatcher {
      * dispatcher caller 处理；listener 端 null-check 兜底。</p>
      *
      * <p>未注册的 messageType 返回 {@code null}（listener 自行降级）；
-     * unmarshal 失败抛 {@link FepBusinessException} 让 {@link Transactional}
-     * 整事务回滚（v1a P0-Q1 + santa 教训：unmarshal 失败 = 数据不一致风险）。</p>
+     * unmarshal 失败 ({@link JAXBException}) 或 JAXBContext 构建失败
+     * ({@link IllegalStateException} 由 {@link JaxbContextCache#getForBody}
+     * 包装首次 build 失败的 JAXBException) 都抛 {@link FepBusinessException}
+     * 让 {@link Transactional} 整事务回滚（v1a P0-Q1 + santa 教训：unmarshal
+     * 失败 = 数据不一致风险；R1 closing Q-2 fix：cache build 失败的 ISE 走同一封装路径）。</p>
      *
      * @param type 入站报文类型，非空
      * @param xml  原始 XML，非空
      * @return 解析后的 body POJO 或 {@code null}
-     * @throws FepBusinessException unmarshal 失败时让事务回滚
+     * @throws FepBusinessException unmarshal 或 cache 构建失败时让事务回滚
      */
     private Object tryUnmarshalBody(final MessageType type, final byte[] xml) {
         final Class<?> bodyClass = BODY_TYPE_REGISTRY.get(type.msgNo());
@@ -190,7 +193,12 @@ public class InboundMessageDispatcher {
                     bodyClass.getSimpleName(),
                     msg.getBodies().size());
             return null;
-        } catch (JAXBException e) {
+        } catch (JAXBException | IllegalStateException e) {
+            // R1 closing Q-2 fix: JaxbContextCache.getForBody wraps first-time
+            // JAXBContext build failures as IllegalStateException. Without
+            // catching it here, the unchecked exception escapes @Transactional
+            // and bypasses FepBusinessException envelope used by upstream
+            // rollback orchestration.
             throw new FepBusinessException(
                     FepErrorCode.MSG_INBOUND_DECODE_FAILURE,
                     "unmarshal body failed for msg=" + type.msgNo(), e);
