@@ -52,6 +52,13 @@
             <version>5.2.5</version>
         </dependency>
 
+        <!-- P4 T5: ESB 适配器 HTTP 调用 — Spring RestClient 在 spring-web 中
+             （非 starter-web；不引入 servlet 容器以保持 collector 模块轻量） -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
