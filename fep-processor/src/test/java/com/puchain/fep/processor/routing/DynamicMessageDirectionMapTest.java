@@ -122,4 +122,57 @@ class DynamicMessageDirectionMapTest {
         assertThat(captor.getValue().getMsgType()).isEqualTo(MessageType.MSG_3001);
         assertThat(captor.getValue().getNewDirection()).isEqualTo(RoleDirection.OUTBOUND_ACTIVE);
     }
+
+    /**
+     * v1i T3 quality reviewer P1 修复：覆盖 L2 cache-miss 路径（cache 不命中 →
+     * 调 {@code store.findOne} → 命中后填充 cache）。本类此前仅验证 cache-hit
+     * 与 reload 路径，遗漏 lookupRaw 的核心 L2 分支。
+     */
+    @Test
+    void lookupRaw_callsFindOne_andPopulatesCache_whenCacheMiss() {
+        DirMapConfigSnapshot snapshot3002Acc = new DirMapConfigSnapshot(
+                MessageType.MSG_3002, AccessRole.ACCEPTING_ORG,
+                RoleDirection.OUTBOUND_ACTIVE, true, ProcessingMode.MODE_1,
+                "system", Instant.parse("2026-04-29T00:00:00Z"));
+        // 3002/ACCEPTING_ORG 未在 setUp findAll 中加载 → cache miss → 走 findOne
+        when(store.findOne(MessageType.MSG_3002, AccessRole.ACCEPTING_ORG))
+                .thenReturn(Optional.of(snapshot3002Acc));
+
+        long sizeBefore = dynamicMap.cacheSize();
+
+        Optional<DirectionMapping> first = dynamicMap.lookupRaw(
+                MessageType.MSG_3002, AccessRole.ACCEPTING_ORG);
+        assertThat(first).isPresent();
+        assertThat(first.get().direction()).isEqualTo(RoleDirection.OUTBOUND_ACTIVE);
+        verify(store, times(1)).findOne(MessageType.MSG_3002, AccessRole.ACCEPTING_ORG);
+
+        // 二次调用必须从 cache 命中（findOne 不再被调用 → 仍只 1 次）
+        Optional<DirectionMapping> second = dynamicMap.lookupRaw(
+                MessageType.MSG_3002, AccessRole.ACCEPTING_ORG);
+        assertThat(second).isPresent();
+        verify(store, times(1)).findOne(MessageType.MSG_3002, AccessRole.ACCEPTING_ORG);
+
+        assertThat(dynamicMap.cacheSize())
+                .as("cache must grow by 1 after L2 hit fills it")
+                .isEqualTo(sizeBefore + 1);
+    }
+
+    /**
+     * v1i T3 quality reviewer P1 修复：L2 路径 DB 异常分支（{@code store.findOne}
+     * 抛 {@link QueryTimeoutException}）必须被 catch、log.warn 并返回
+     * {@link Optional#empty()}，而非传播异常。
+     */
+    @Test
+    void lookupRaw_returnsEmpty_whenStoreThrowsDataAccessException() {
+        when(store.findOne(MessageType.MSG_3002, AccessRole.ACCEPTING_ORG))
+                .thenThrow(new QueryTimeoutException("DB timeout on findOne"));
+
+        Optional<DirectionMapping> result = dynamicMap.lookupRaw(
+                MessageType.MSG_3002, AccessRole.ACCEPTING_ORG);
+
+        assertThat(result)
+                .as("DB findOne 异常必须被 catch + 返回 empty，不阻断调用方")
+                .isEmpty();
+        verify(store, times(1)).findOne(MessageType.MSG_3002, AccessRole.ACCEPTING_ORG);
+    }
 }

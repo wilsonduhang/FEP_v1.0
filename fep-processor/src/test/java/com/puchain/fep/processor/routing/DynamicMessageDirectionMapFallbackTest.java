@@ -24,11 +24,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  *       覆盖（Plan v1h P0-ζ 拆分后契约）</li>
  * </ul>
  *
- * <p>保留 {@code *IT} 类名以符合 Plan §4 line 2244 命名契约（虽 fep-processor surefire
- * 仍按 {@code *Test.java} pattern 收集，但 {@code *IT.java} 也被本模块默认 surefire
- * 配置 includes 覆盖 — 见 fep-parent pom）。</p>
+ * <p><b>v1i fix (T3 spec reviewer P1)</b>: 类名从 {@code *IT} 改为 {@code *Test}。
+ * Surefire 3.2.5 默认 includes 仅匹配 {@code Test*.java / *Test.java / *Tests.java
+ * / *TestCase.java}，不含 {@code *IT.java}；本项目 parent + fep-processor pom.xml
+ * 均无 surefire {@code <includes>} 覆盖（实测 parent line 132-143 仅
+ * {@code rerunFailingTestsCount=1}），旧 {@code *IT} 命名会让默认 {@code mvn test}
+ * 静默跳过本测试 — 同 CLAUDE.md P2b-DEFECT-002 已知缺陷模式。Plan §4 line 2244 的
+ * {@code *IT} 命名契约在此被纠正为 {@code *Test}（已与 sibling
+ * {@link DynamicMessageDirectionMapColdStartTest} v1i P0-C6 同款 rename 对齐）。</p>
  */
-class DynamicMessageDirectionMapFallbackIT {
+class DynamicMessageDirectionMapFallbackTest {
 
     @AfterEach
     void clearBridge() {
