@@ -41,6 +41,22 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-tx</artifactId>
         </dependency>
+        <!-- ============================================================
+             P3a T3 Hexagonal Port + Adapter 依赖（D7 muzhou 决策 2026-04-29）
+             - caffeine: DynamicMessageDirectionMap 内部 Cache 实现
+             - spring-context: @Component / @EventListener / ApplicationEventPublisher
+             - 不引入 spring-boot-starter-data-jpa：JPA Adapter 在 fep-web 模块，
+               Port 接口在 fep-processor 仅依赖 spring-context 标准注解
+             ============================================================ -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
         <dependency>
             <groupId>jakarta.xml.bind</groupId>
             <artifactId>jakarta.xml.bind-api</artifactId>

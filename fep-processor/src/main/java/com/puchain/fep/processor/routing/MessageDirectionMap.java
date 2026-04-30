@@ -358,6 +358,22 @@ public final class MessageDirectionMap {
     }
 
     /**
+     * 暴露 TABLE 全部条目（不可变 Map），key 类型转换为公共 {@link DirMapKey}。
+     *
+     * <p>P3a T3 由 {@link InMemoryDirMapConfigStore} 在构造期消费，把 88 条静态常量
+     * 灌入内存 Adapter，实现"无 DB 连接 / Adapter 缺席"场景下 fep-processor 仍可启动。
+     * 内部 {@code Key} record 是 private，外部模块需 {@link DirMapKey} 才能消费。</p>
+     *
+     * @return 不可变 {@link Map}，键为 {@link DirMapKey}（msg + role），值为 {@link DirectionMapping}
+     */
+    public static Map<DirMapKey, DirectionMapping> entries() {
+        return TABLE.entrySet().stream()
+                .collect(Collectors.toUnmodifiableMap(
+                        e -> new DirMapKey(e.getKey().msg(), e.getKey().role()),
+                        Map.Entry::getValue));
+    }
+
+    /**
      * 暴露 TABLE 条目数（测试用）。
      *
      * <p>P2d 扩展后期望 88 条（44 MessageType × 2 AccessRole）。</p>
