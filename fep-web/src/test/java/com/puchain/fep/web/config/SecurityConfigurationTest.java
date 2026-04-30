@@ -14,12 +14,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Spring Security 配置测试 — 验证公开路径和 401 拦截。
+ * Spring Security 配置测试 — 验证公开路径（{@code /actuator/health}、Swagger UI）
+ * 和受保护路径的 401 拦截。
  *
- * <p>使用全量上下文（无 Redis），通过 {@code spring.autoconfigure.exclude}
- * 排除 Redis 自动配置，使 Redis 依赖的 bean 不会注册。</p>
+ * <p>使用全量上下文（dev profile，与本仓其他 controller test 一致 — 不显式
+ * {@code @ActiveProfiles}）。Redis 自动配置保持加载（{@code CaptchaService}/
+ * {@code LoginAttemptService}/{@code SingleSignOnService} 强依赖
+ * {@code StringRedisTemplate}，无 {@code @Profile} 隔离），但 RedisHealthIndicator
+ * 在测试中关闭（{@code management.health.redis.enabled=false}），避免
+ * {@code /actuator/health} 因外部 Redis 不可达返回 503，把本测试退化为真正
+ * "端点是否公开"的契约校验。生产配置不变。</p>
+ *
+ * <p>R1-DEFER-5：闭合 R1 期间 fep-web pre-existing failure（Plan §F-5），
+ * 根因为测试对外部 Redis 的隐式依赖。修复点仅在测试 properties，主代码不动。</p>
  */
-@SpringBootTest
+@SpringBootTest(properties = "management.health.redis.enabled=false")
 @AutoConfigureMockMvc
 class SecurityConfigurationTest {
 
