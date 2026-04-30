@@ -67,6 +67,14 @@ class SettlementInstructionControllerTest {
     @Autowired
     private ClearingInstructionRecordRepository repository;
 
+    /** R1-DEFER-7: cleanup target — mirror E2E cleanTablesAndResetMocks (line 178-181). */
+    @Autowired
+    private com.puchain.fep.web.integration.reconciliation.ReconciliationRecordRepository reconciliationRepository;
+
+    /** R1-DEFER-7: cleanup target — mirror E2E cleanTablesAndResetMocks (line 178-181). */
+    @Autowired
+    private com.puchain.fep.web.integration.processor.MessageProcessRecordJpaRepository messageProcessRecordRepository;
+
     @Autowired
     private com.puchain.fep.web.sysmgmt.user.repository.SysUserRepository userRepository;
 
@@ -110,10 +118,20 @@ class SettlementInstructionControllerTest {
         JsonNode body = objectMapper.readTree(loginResult.getResponse().getContentAsString());
         accessToken = body.path("data").path("accessToken").asText();
         assertFalse(accessToken.isBlank(), "accessToken should not be blank");
+
+        // R1-DEFER-7: clean reconciliation tables to prevent multi-module flake
+        repository.deleteAll();
+        reconciliationRepository.deleteAll();
+        messageProcessRecordRepository.deleteAll();
     }
 
     @AfterEach
     void tearDown() {
+        // R1-DEFER-7: post-cleanup mirror @BeforeEach to prevent leakage to next test class
+        repository.deleteAll();
+        reconciliationRepository.deleteAll();
+        messageProcessRecordRepository.deleteAll();
+
         com.puchain.fep.web.sysmgmt.user.domain.SysUser admin =
                 userRepository.findById(ADMIN_USER_ID).orElseThrow();
         admin.setUserAccount(originalAccount);
