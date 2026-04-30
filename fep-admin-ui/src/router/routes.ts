@@ -112,6 +112,14 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/features/tlq/views/TlqConnectivityPage.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: 'system/config/dir-map',
+        name: 'SysDirMapConfig',
+        component: () => import('@/features/sys-config/views/DirMapConfigPage.vue'),
+        // NO meta.permission — feedback_permission_code_vs_menu_code 红线：
+        // menuTree 后端过滤是权限的唯一权威源；路由 meta 仅声明 requiresAuth。
+        meta: { requiresAuth: true },
+      },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/home' },
