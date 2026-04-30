@@ -1,6 +1,7 @@
 package com.puchain.fep.web.sysmgmt.config.dirmap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.puchain.fep.common.exception.GlobalExceptionHandler;
 import com.puchain.fep.web.sysmgmt.config.dirmap.controller.DirMapConfigController;
 import com.puchain.fep.web.sysmgmt.config.dirmap.dto.DirMapConfigResponse;
 import com.puchain.fep.web.sysmgmt.config.dirmap.dto.DirMapConfigUpdateRequest;
@@ -47,7 +48,12 @@ class DirMapConfigControllerTest {
     @BeforeEach
     void setUp() {
         service = mock(DirMapConfigAdminService.class);
-        mvc = MockMvcBuilders.standaloneSetup(new DirMapConfigController(service)).build();
+        // T5 quality reviewer P1-3: setControllerAdvice attaches GlobalExceptionHandler
+        // so 400/500 mapping behaviour matches production (otherwise IAEs bubble out as
+        // ServletException, hiding regressions in error-path JSON shape).
+        mvc = MockMvcBuilders.standaloneSetup(new DirMapConfigController(service))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -76,5 +82,24 @@ class DirMapConfigControllerTest {
                         .content(om.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.direction").value("INBOUND_PASSIVE"));
+    }
+
+    /**
+     * P1-3 后续：error-path 经 GlobalExceptionHandler 映射 400 + JSON envelope。
+     * Service 抛 IllegalArgumentException 时必须返回 4002 业务码而非 ServletException。
+     *
+     * @throws Exception MockMvc 调用异常
+     */
+    @Test
+    void shouldReturn400_whenServiceThrowsIllegalArgument() throws Exception {
+        DirMapConfigUpdateRequest req = new DirMapConfigUpdateRequest(
+                "INBOUND_PASSIVE", true, "MODE_1", "测试");
+        when(service.update(eq("9999"), eq("ACCEPTING_ORG"), any()))
+                .thenThrow(new IllegalArgumentException("Unknown messageType: 9999"));
+        mvc.perform(put("/api/v1/sys/config/dir-map/9999/ACCEPTING_ORG")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PARAM_4002"));
     }
 }

@@ -96,6 +96,12 @@ public class SecurityConfiguration {
             .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(PUBLIC_PATHS).permitAll()
+                    // P3a T5 quality reviewer P1-1: DIR-MAP 配置端点限 SYSTEM_ADMIN 角色，
+                    // 防止 JWT-only 兜底（anyRequest().authenticated()）下任意已登录用户
+                    // 直击 PUT /api/v1/sys/config/dir-map/**。V21 permission_code seed 是
+                    // UI menuTree 过滤依据（feedback_permission_code_vs_menu_code 红线）；
+                    // 本 hasRole 是 API 层第二道守护。
+                    .requestMatchers("/api/v1/sys/config/dir-map/**").hasRole("SYSTEM_ADMIN")
                     .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

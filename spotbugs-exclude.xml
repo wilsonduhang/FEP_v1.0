@@ -119,6 +119,13 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- FileCollectorAdapter (P4 T3): log 输入均通过 LogSanitizer.sanitize() 清理 CR/LF，
+         FSB 跨方法 taint 分析无法跟踪本项目自定义 sanitizer，故白名单豁免；同 AuthService 模式 -->
+    <Match>
+        <Class name="com.puchain.fep.collector.adapter.file.FileCollectorAdapter"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
     <!-- SysMenuService/SysUserService: 菜单编码/用户名/账号均为数据库值，无 CRLF 注入风险 -->
     <Match>
         <Or>
@@ -1244,6 +1251,45 @@
             <Bug pattern="SPRING_ENDPOINT"/>
             <Bug pattern="CRLF_INJECTION_LOGS"/>
         </Or>
+    </Match>
+
+    <!-- ===== P3a v1i T5 报文方向映射（DIR-MAP）动态配置 ===== -->
+
+    <!-- DirMapConfigController: 端点需认证（JWT）+ SecurityConfig.requestMatchers
+         hasRole("SYSTEM_ADMIN") 二层守护，SPRING_ENDPOINT 是预期行为 -->
+    <Match>
+        <Class name="com.puchain.fep.web.sysmgmt.config.dirmap.controller.DirMapConfigController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- DirMapConfigAdminService / DTO: 路径变量 messageType 经 MessageType.byMsgNo
+         enum 解析（HashMap 命中），accessRole 经 AccessRole.valueOf 强校验，
+         updatedBy 来自 SecurityContextHolder authenticated principal name（JWT 校验过）
+         — 三类输入皆受控；CRLF 注入 / EI_EXPOSE 非真实风险。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.sysmgmt.config.dirmap.service.DirMapConfigAdminService"/>
+            <Class name="com.puchain.fep.web.sysmgmt.config.dirmap.controller.DirMapConfigController"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
+    <!-- ===== P3a v1i T3 fep-processor 动态映射 cache 层 ===== -->
+
+    <!-- DirMapCacheInvalidator / DynamicMessageDirectionMap / DirMapConfigChangedEvent:
+         log 参数皆为内部受控值 — MessageType/AccessRole/RoleDirection 是 Java enum
+         （toString = enum 名），updatedBy 来自 fep-web 端 JWT principal（已校验），
+         exception.getMessage 来自 DataAccessException（DB 驱动错误信息，非用户输入）。
+         CRLF 注入非真实风险，与 sibling SyncMessageProcessorService / SysConfigService
+         同款豁免（v1i T5 quality reviewer P0-2 修复，feedback_spotbugs_baseline_rot 红线
+         合规：不继承 baseline，显式登记豁免理由）。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.processor.routing.DirMapCacheInvalidator"/>
+            <Class name="com.puchain.fep.processor.routing.DynamicMessageDirectionMap"/>
+            <Class name="com.puchain.fep.processor.event.DirMapConfigChangedEvent"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
 </FindBugsFilter>
