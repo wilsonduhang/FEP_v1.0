@@ -2,6 +2,7 @@ package com.puchain.fep.collector.adapter.jdbc;
 
 import com.puchain.fep.collector.support.CollectionRecord;
 import com.puchain.fep.collector.support.CollectionRunContext;
+import com.puchain.fep.collector.support.AdapterType;
 import com.puchain.fep.collector.support.IdempotencyKeyGenerator;
 import com.puchain.fep.collector.support.InMemoryWatermarkStore;
 import com.puchain.fep.collector.support.TriggerType;
@@ -82,8 +83,11 @@ class JdbcCollectorAdapterTest {
                         + ";DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
                 "sa", "");
         this.setupJdbc = new JdbcTemplate(dataSource);
+        // classpath 加载 — 让 IDE / 任意 cwd 都能正确定位 schema 资源
         final String ddl = Files.readString(
-                Path.of("src/test/resources/jdbc-adapter-test-schema.sql"));
+                Path.of(getClass().getClassLoader()
+                        .getResource("jdbc-adapter-test-schema.sql")
+                        .toURI()));
         // H2 不支持 multi-statement 用 execute(String) 时分号分隔 — 拆分逐句执行
         for (final String stmt : ddl.split(";")) {
             final String trimmed = stmt.trim();
@@ -240,6 +244,111 @@ class JdbcCollectorAdapterTest {
         assertThat(first.get(0).getIdempotencyKey())
                 .as("idempotencyKey 必须等于 generator 直接计算结果")
                 .isEqualTo(expected);
+    }
+
+    /**
+     * 混合批次 null cursor — 同一批含 null + 多个非 null cursor，watermark 必须推进到
+     * 非 null 中的最大值，且 "null" 不被误用（Plan §T2 #6 mandate / quality review HIGH）。
+     */
+    @Test
+    void mixedBatchWithNullCursorShouldAdvanceToMaxNonNull() {
+        final String nullableSql = "SELECT invoice_id, buyer_name, amount, created_at, cursor_key "
+                + "FROM biz_invoice WHERE invoice_id > CAST(:cursor AS BIGINT) "
+                + "ORDER BY invoice_id ASC LIMIT :batch_size";
+        final JdbcAdapterConfig nullableConfig = new JdbcAdapterConfig(
+                DS_BEAN_NAME, nullableSql, "buyer_name", "0",
+                ADAPTER_ID + "_MIX", PAYLOAD_DATA_TYPE);
+        final WatermarkStore mixStore = new InMemoryWatermarkStore();
+        final JdbcCollectorAdapter mixAdapter = new JdbcCollectorAdapter(
+                nullableConfig, Map.of(DS_BEAN_NAME, jdbcTemplate), mixStore);
+
+        // 插三行：cursor (buyer_name) = "buyer_A" / NULL / "buyer_Z"
+        // SQL filter 用 invoice_id 保证 null cursor 行也能被取到
+        setupJdbc.update("INSERT INTO biz_invoice (invoice_id, buyer_name, amount, created_at, cursor_key) "
+                        + "VALUES (?, ?, ?, ?, ?)",
+                1L, "buyer_A", new java.math.BigDecimal("1.00"),
+                Timestamp.from(Instant.parse("2026-04-30T00:00:00Z")),
+                "00000000000000000001");
+        setupJdbc.update("INSERT INTO biz_invoice (invoice_id, buyer_name, amount, created_at, cursor_key) "
+                        + "VALUES (?, ?, ?, ?, ?)",
+                2L, null, new java.math.BigDecimal("2.00"),
+                Timestamp.from(Instant.parse("2026-04-30T00:00:01Z")),
+                "00000000000000000002");
+        setupJdbc.update("INSERT INTO biz_invoice (invoice_id, buyer_name, amount, created_at, cursor_key) "
+                        + "VALUES (?, ?, ?, ?, ?)",
+                3L, "buyer_Z", new java.math.BigDecimal("3.00"),
+                Timestamp.from(Instant.parse("2026-04-30T00:00:02Z")),
+                "00000000000000000003");
+
+        final List<CollectionRecord> mixed = mixAdapter.collect(runContext(ADAPTER_ID + "_MIX"));
+        assertThat(mixed).hasSize(3);
+        mixAdapter.acknowledge(runContext(ADAPTER_ID + "_MIX"), mixed);
+
+        assertThat(mixStore.get(ADAPTER_ID + "_MIX"))
+                .as("混合批次 watermark 必须推进到非 null 中最大值（"
+                        + "排除 \"null\" 哨兵；Plan §T2 #6 + quality HIGH）")
+                .contains("buyer_Z");
+    }
+
+    /**
+     * acknowledge max-watermark 比较 — 输入顺序非升序（先大后小）时，watermark 必须取
+     * 最大值而非最后一条。覆盖 line 142 lower-cursor 分支（quality review MEDIUM）。
+     */
+    @Test
+    void acknowledgeShouldKeepMaxRegardlessOfOrder() {
+        // 手工构造非升序的 records 列表（绕过 SQL ORDER BY）
+        final CollectionRecord highFirst = CollectionRecord.builder()
+                .adapterId(ADAPTER_ID)
+                .sourceRef("00000000000000000999")
+                .payloadDataType(PAYLOAD_DATA_TYPE)
+                .rawData(Map.of("cursor_key", "00000000000000000999"))
+                .collectedAt(Instant.now())
+                .idempotencyKey(IdempotencyKeyGenerator.generate(ADAPTER_ID, "00000000000000000999"))
+                .build();
+        final CollectionRecord lowSecond = CollectionRecord.builder()
+                .adapterId(ADAPTER_ID)
+                .sourceRef("00000000000000000100")
+                .payloadDataType(PAYLOAD_DATA_TYPE)
+                .rawData(Map.of("cursor_key", "00000000000000000100"))
+                .collectedAt(Instant.now())
+                .idempotencyKey(IdempotencyKeyGenerator.generate(ADAPTER_ID, "00000000000000000100"))
+                .build();
+
+        // 先 high 后 low — 触发 line 142 maxCursor != null && compareTo <= 0 分支
+        adapter.acknowledge(ctx(), List.of(highFirst, lowSecond));
+
+        assertThat(watermarkStore.get(ADAPTER_ID))
+                .as("acknowledge 必须取最大值，不被后续 lower-cursor 行覆盖")
+                .contains("00000000000000000999");
+    }
+
+    /**
+     * Adapter type 暴露 — getType() 必须返回 JDBC（CollectorAdapter 接口契约）。
+     */
+    @Test
+    void getTypeShouldReturnJdbc() {
+        assertThat(adapter.getType())
+                .as("JdbcCollectorAdapter.getType() 必须返回 AdapterType.JDBC")
+                .isEqualTo(AdapterType.JDBC);
+        assertThat(adapter.getId())
+                .as("getId() 必须回显 config.adapterId()")
+                .isEqualTo(ADAPTER_ID);
+    }
+
+    /**
+     * Config 工厂方法 — withDefaults 必须填充 DEFAULT_INITIAL_WATERMARK。
+     */
+    @Test
+    void configWithDefaultsShouldUseEpoch1970Watermark() {
+        final JdbcAdapterConfig defaulted = JdbcAdapterConfig.withDefaults(
+                "ds_x", "SELECT 1", "id", "ADP_X", "TYPE_X");
+
+        assertThat(defaulted.initialWatermark())
+                .as("withDefaults 必须填充 DEFAULT_INITIAL_WATERMARK = 1970-01-01T00:00:00Z")
+                .isEqualTo(JdbcAdapterConfig.DEFAULT_INITIAL_WATERMARK)
+                .isEqualTo("1970-01-01T00:00:00Z");
+        assertThat(defaulted.dataSourceBeanName()).isEqualTo("ds_x");
+        assertThat(defaulted.adapterId()).isEqualTo("ADP_X");
     }
 
     /**

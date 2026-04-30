@@ -39,10 +39,11 @@ import java.util.Objects;
  * 不允许 SQL 异常逃逸到调度器（调度器无法识别 Spring DataAccessException 体系）。
  *
  * <p><b>null cursor 处理：</b>cursor 列值为 null 时 → {@code sourceRef = "null"} 字符串
- * （{@link String#valueOf(Object)} 行为），watermark 在 {@link #acknowledge} 中以
- * 最大值（按字符串字典序）比较，"null" 字面值不会替换合法 ISO-8601 水位（"null" 字典序大于
- * 任何 ASCII 数字开头的串，会替换 — 实际生产中 nullable cursor 不应作为水位列；
- * 单测仅作为退化保护语义）。
+ * （{@link String#valueOf(Object)} 行为）。{@link #acknowledge} 显式将 {@code "null"}
+ * 字面值排除在 max 计算外（{@link #NULL_LITERAL} 哨兵），保证 nullable cursor 列即使
+ * 出现 null 值也不会拔高水位 — "null" 的 ASCII（0x6E）字典序大于 ISO-8601 时间串与任意
+ * 数字开头串（'0'-'9' = 0x30-0x39），朴素 max 比较会错误推进 watermark；故必须显式跳过。
+ * 生产应避免 nullable 列作水位，本类仅作退化保护。
  *
  * <p><b>线程安全：</b>本类无可变字段（全 final），可单实例多线程并发调用。
  *
