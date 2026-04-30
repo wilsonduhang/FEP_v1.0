@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * {@link InProcessDistributedLock} 单元测试。
@@ -139,6 +140,78 @@ class DistributedLockTest {
         assertThat(lock.tryLock("never_locked", TTL_MS))
                 .as("从未上锁的 key release 后应仍可获取")
                 .isPresent();
+    }
+
+    @Test
+    void tryLockShouldRejectNullKey() {
+        InProcessDistributedLock lock = new InProcessDistributedLock();
+
+        assertThatThrownBy(() -> lock.tryLock(null, TTL_MS))
+                .as("null key 必须被拒（IllegalArgumentException）")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("key");
+    }
+
+    @Test
+    void tryLockShouldRejectEmptyKey() {
+        InProcessDistributedLock lock = new InProcessDistributedLock();
+
+        assertThatThrownBy(() -> lock.tryLock("", TTL_MS))
+                .as("空字符串 key 必须被拒（IllegalArgumentException）")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("key");
+    }
+
+    @Test
+    void tryLockShouldRejectNonPositiveTtl() {
+        InProcessDistributedLock lock = new InProcessDistributedLock();
+
+        assertThatThrownBy(() -> lock.tryLock("k1", 0L))
+                .as("ttlMillis=0 必须被拒")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ttlMillis");
+        assertThatThrownBy(() -> lock.tryLock("k1", -1L))
+                .as("ttlMillis<0 必须被拒")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ttlMillis");
+    }
+
+    @Test
+    void releaseNullTokenShouldThrowNpe() {
+        InProcessDistributedLock lock = new InProcessDistributedLock();
+
+        assertThatThrownBy(() -> lock.release(null))
+                .as("release(null) 必须抛 NullPointerException")
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("token");
+    }
+
+    @Test
+    void lockTokenShouldRejectNonPositiveTtl() {
+        String token = UUID.randomUUID().toString();
+
+        assertThatThrownBy(() -> new LockToken("k", token, 0L, 0L))
+                .as("LockToken ttlMillis=0 必须被拒")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ttlMillis");
+        assertThatThrownBy(() -> new LockToken("k", token, 0L, -1L))
+                .as("LockToken ttlMillis<0 必须被拒")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ttlMillis");
+    }
+
+    @Test
+    void lockTokenShouldRejectNullKeyAndToken() {
+        String token = UUID.randomUUID().toString();
+
+        assertThatThrownBy(() -> new LockToken(null, token, 0L, TTL_MS))
+                .as("LockToken null key 必须被拒")
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("key");
+        assertThatThrownBy(() -> new LockToken("k", null, 0L, TTL_MS))
+                .as("LockToken null token 必须被拒")
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("token");
     }
 
     @Test
