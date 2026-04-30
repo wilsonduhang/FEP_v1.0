@@ -29,7 +29,7 @@ import java.time.Instant;
 public class DirMapConfigEntity {
 
     @Id
-    @Column(name = "message_type", nullable = false, length = 16)
+    @Column(name = "message_type", nullable = false, length = 4)
     private String messageType;
 
     @Id
