@@ -126,6 +126,14 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- CollectorScheduler (P4 T6a): log 输入（adapterId / sourceRef / errorCode）均通过
+         LogSanitizer.sanitize() 清理 CR/LF，FSB 跨方法 taint 分析无法跟踪本项目自定义 sanitizer，
+         故白名单豁免；同 FileCollectorAdapter / AuthService 模式 -->
+    <Match>
+        <Class name="com.puchain.fep.collector.scheduler.CollectorScheduler"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
     <!-- SysMenuService/SysUserService: 菜单编码/用户名/账号均为数据库值，无 CRLF 注入风险 -->
     <Match>
         <Or>
