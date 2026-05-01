@@ -52,7 +52,7 @@ import java.util.Optional;
  * <p>本类为骨架实现（T6a），下游 Port 由后续 Task 实装：
  * <ul>
  *   <li>{@link PayloadAssembler} — T7b {@code DefaultPayloadAssembler}</li>
- *   <li>{@link OutboundMessageEnqueuePort} — T7a fep-web {@code JpaOutboundMessageEnqueueAdapter}</li>
+ *   <li>{@link OutboundMessageEnqueuePort} — T7a fep-web {@code JpaOutboundMessageEnqueueService}</li>
  *   <li>{@link CollectionRunRecorder} — T8 {@code JdbcCollectionRunRecorder} + V19 SQL</li>
  * </ul>
  *

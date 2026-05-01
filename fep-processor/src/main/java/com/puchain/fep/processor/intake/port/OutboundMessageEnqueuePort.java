@@ -5,7 +5,7 @@ package com.puchain.fep.processor.intake.port;
  *
  * <p>P4 fep-collector 调用方：组装完成后通过此 Port 把
  * {@link OutboundMessageEnvelope} 交付给 fep-web 持久化适配器
- * （{@code JpaOutboundMessageEnqueueAdapter}，由 T7a 实现）。
+ * （{@code JpaOutboundMessageEnqueueService}，由 T7a 实现）。
  *
  * <p><b>幂等语义：</b>实现必须基于 {@code envelope.idempotencyKey} 做唯一约束 —
  * 第二次提交同 key 应返回 {@link EnqueueResult.Status#DUPLICATE}（或抛
