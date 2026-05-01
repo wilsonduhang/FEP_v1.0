@@ -4,6 +4,9 @@ import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.routing.AccessRole;
 import com.puchain.fep.processor.routing.DirMapConfigSnapshot;
 import com.puchain.fep.processor.routing.DirMapConfigUpdate;
+import com.puchain.fep.processor.routing.DirMapKey;
+import com.puchain.fep.processor.routing.DirectionMapping;
+import com.puchain.fep.processor.routing.MessageDirectionMap;
 import com.puchain.fep.processor.routing.MessageDirectionMapBridge;
 import com.puchain.fep.processor.routing.ProcessingMode;
 import com.puchain.fep.processor.routing.RoleDirection;
@@ -61,11 +64,19 @@ class JpaDirMapConfigStoreIT {
         // 由 T5 IT (DirMapConfigAdminServiceIT) 验证。
         //
         // T7 quality reviewer P0-1 修复（2026-05-01）：try/finally 保证还原 MSG_3001
-        // 至 V20 静态基线（INBOUND_PASSIVE/MODE_1）。H2 dev profile 用
-        // DB_CLOSE_DELAY=-1（application-test.yml）跨 ctx 持久化，本测试此前未还原 →
-        // sibling DirMapConfigControllerIT.shouldMatchStaticBaseline_eachOf88Rows
-        // 在同次 mvn 运行中 FAIL（baseline 看到 OUTBOUND_ACTIVE/MODE_2 而非
-        // INBOUND_PASSIVE/MODE_1）。
+        // 至 V20 静态基线。H2 dev profile 用 DB_CLOSE_DELAY=-1（application-test.yml）
+        // 跨 ctx 持久化，本测试此前未还原 → sibling DirMapConfigControllerIT.
+        // shouldMatchStaticBaseline_eachOf88Rows 在同次 mvn 运行中 FAIL。
+        // T8 deferred fixup（2026-05-01）：从 MessageDirectionMap.entries() 读 baseline
+        // 替代硬编码 MODE_1（更 durable — V20 改 baseline 时本测试自动跟随，sibling
+        // ControllerIT.forceBaselineFor 同模式）。
+        DirectionMapping baseline = MessageDirectionMap.entries().get(
+                new DirMapKey(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG));
+        if (baseline == null) {
+            throw new IllegalStateException(
+                    "No static baseline for MSG_3001/ACCEPTING_ORG");
+        }
+
         long historyBefore = historyRepo.count();
         DirMapConfigUpdate update = new DirMapConfigUpdate(
                 MessageType.MSG_3001, AccessRole.ACCEPTING_ORG,
@@ -80,10 +91,10 @@ class JpaDirMapConfigStoreIT {
                     .as("Adapter 不应写 history（v1i P0-B6）")
                     .isEqualTo(historyBefore);
         } finally {
-            // 还原至 V20 baseline（INBOUND_PASSIVE/MODE_1, requiresFep=true, system）
+            // 还原至 V20 baseline（从 entries() 读真实值，requiresFep=true / changedBy=system）
             store.update(new DirMapConfigUpdate(
                     MessageType.MSG_3001, AccessRole.ACCEPTING_ORG,
-                    RoleDirection.INBOUND_PASSIVE, true, ProcessingMode.MODE_1,
+                    baseline.direction(), baseline.requiresFep(), baseline.mode(),
                     "system"));
         }
     }

@@ -53,9 +53,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *       {@code @TransactionalEventListener(AFTER_COMMIT)}).</li>
  *   <li>Real CFX-envelope 3115 sample (loaded from
  *       {@code samples/3115-valid.xml}) fired through
- *       {@link InboundMessageDispatcher}; asserts {@code response.status()} is
- *       not {@code FAILED} — covers the
- *       {@code feedback_dispatcher_payload_shape_blind_spot} red line.</li>
+ *       {@link InboundMessageDispatcher}; asserts the listener-thrown
+ *       {@code FepBusinessException("orphan 3115 return: ... PLATPAY3115001")}
+ *       via {@code assertThatThrownBy} (the precise exception type + message
+ *       proves the chain dispatcher → XSD → body POJO 解析 → publishEvent →
+ *       ClearingInstructionEventListener.onProcessed → cast → qsReturnInfo
+ *       judgement → ClearingInstructionService.processInboundReturn is fully
+ *       wired). Covers the {@code feedback_dispatcher_payload_shape_blind_spot}
+ *       red line by using a real CFX envelope, not a hand-rolled fictitious one.</li>
  * </ol>
  *
  * <p><b>Test isolation</b>（T7 quality reviewer P0-1 / P1-1 / P1-3 修复
