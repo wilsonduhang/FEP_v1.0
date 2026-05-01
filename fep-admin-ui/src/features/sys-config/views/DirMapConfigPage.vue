@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { StatusTag } from '@/shared/components';
+import {
+  DIR_MAP_ACCESS_ROLE_MAP,
+  DIR_MAP_PROCESSING_MODE_MAP,
+  DIR_MAP_ROLE_DIRECTION_MAP,
+} from '@/shared/types/enum-maps';
 import {
   listDirMap,
   updateDirMap,
@@ -112,13 +118,27 @@ onMounted(() => {
       <el-table-column
         prop="accessRole"
         label="角色"
-        width="160"
-      />
+        width="200"
+      >
+        <template #default="{ row }">
+          <StatusTag
+            :value="row.accessRole"
+            :mapping="DIR_MAP_ACCESS_ROLE_MAP"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
         prop="direction"
         label="方向"
         width="160"
-      />
+      >
+        <template #default="{ row }">
+          <StatusTag
+            :value="row.direction"
+            :mapping="DIR_MAP_ROLE_DIRECTION_MAP"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
         prop="requiresFep"
         label="需 FEP"
@@ -131,8 +151,15 @@ onMounted(() => {
       <el-table-column
         prop="processingMode"
         label="处理模式"
-        width="120"
-      />
+        width="140"
+      >
+        <template #default="{ row }">
+          <StatusTag
+            :value="row.processingMode"
+            :mapping="DIR_MAP_PROCESSING_MODE_MAP"
+          />
+        </template>
+      </el-table-column>
       <el-table-column
         prop="updatedBy"
         label="更新人"
@@ -264,12 +291,26 @@ onMounted(() => {
           prop="oldDirection"
           label="原方向"
           width="160"
-        />
+        >
+          <template #default="{ row }">
+            <StatusTag
+              :value="row.oldDirection"
+              :mapping="DIR_MAP_ROLE_DIRECTION_MAP"
+            />
+          </template>
+        </el-table-column>
         <el-table-column
           prop="newDirection"
           label="新方向"
           width="160"
-        />
+        >
+          <template #default="{ row }">
+            <StatusTag
+              :value="row.newDirection"
+              :mapping="DIR_MAP_ROLE_DIRECTION_MAP"
+            />
+          </template>
+        </el-table-column>
         <el-table-column
           prop="changeReason"
           label="原因"

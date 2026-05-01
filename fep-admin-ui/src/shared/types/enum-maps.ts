@@ -121,3 +121,26 @@ export const CONNECTIVITY_RESULT_MAP: Record<string, StatusMapping> = {
   FAILURE: { label: '失败', type: 'danger' },
   TIMEOUT: { label: '超时', type: 'warning' },
 };
+
+// P3a DIR-MAP §5.6 报文方向（与 backend RoleDirection 对齐：3 值含 NOT_APPLICABLE，
+// 区别于 MESSAGE_DIRECTION_MAP 的 OUTBOUND/INBOUND/BIDIRECTIONAL）
+export const DIR_MAP_ROLE_DIRECTION_MAP: Record<string, StatusMapping> = {
+  OUTBOUND_ACTIVE: { label: '主动发起', type: 'primary' },
+  INBOUND_PASSIVE: { label: '被动接收', type: 'success' },
+  NOT_APPLICABLE: { label: '不涉及', type: 'info' },
+};
+
+// P3a DIR-MAP §5.6 处理模式（与 backend ProcessingMode 对齐）
+export const DIR_MAP_PROCESSING_MODE_MAP: Record<string, StatusMapping> = {
+  MODE_1: { label: '模式 1', type: 'primary' },
+  MODE_2: { label: '模式 2', type: 'info' },
+  MODE_3: { label: '模式 3', type: 'warning' },
+  MODE_4: { label: '模式 4', type: 'success' },
+  MODE_5: { label: '模式 5', type: 'danger' },
+};
+
+// P3a DIR-MAP §5.6 接入角色（与 backend AccessRole 对齐）
+export const DIR_MAP_ACCESS_ROLE_MAP: Record<string, StatusMapping> = {
+  ACCEPTING_ORG: { label: '受理单位', type: 'primary' },
+  INFO_SERVICE_ORG: { label: '供应链信息服务机构', type: 'success' },
+};
