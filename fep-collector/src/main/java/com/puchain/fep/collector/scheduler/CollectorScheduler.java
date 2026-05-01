@@ -69,6 +69,12 @@ public class CollectorScheduler {
     /** 3112 manual-only 触发标识 token —— 出现在 payloadDataType 子串中即视为 3112 类型。 */
     private static final String PAYLOAD_3112_TOKEN = "3112";
 
+    /** errorMessage 最大长度（字符数）—— 与 V19 schema 列宽对齐，避免 DB 溢出。 */
+    private static final int ERROR_MESSAGE_MAX_LENGTH = 1024;
+
+    /** errorMessage 截断标记 {@code "..."} 长度（3 字符），用于 substring 末尾追加。 */
+    private static final int ERROR_MESSAGE_ELLIPSIS_LENGTH = 3;
+
     private final TaskScheduler taskScheduler;
     private final CollectorProperties props;
     private final List<CollectorAdapter> adapters;
@@ -187,6 +193,14 @@ public class CollectorScheduler {
      * 写 终态 → release lock。COLLECT_DUPLICATE_KEY 视为已成功（advance watermark）；
      * 其他异常计 error 并跳过该条，最终 errors=0/部分/全部 决定 SUCCESS/PARTIAL/FAILED。
      *
+     * <p><b>T6a-fix 防御加固</b>：
+     * <ul>
+     *   <li>HIGH#1：{@code recorder.start} 移入 try 块，失败时合成 FAILED 结果，锁仍释放</li>
+     *   <li>MEDIUM#1：collect/orchestration 异常时，in-flight per-record counts 累加进 metrics</li>
+     *   <li>MEDIUM#2：errorMessage 经 {@link #trimErrorMessage(String)} 截断至 1024 字符</li>
+     *   <li>MEDIUM#3：{@code recorder.complete} 异常被 {@link #safeRecorderComplete} 吞掉以保留原始结果</li>
+     * </ul>
+     *
      * @param adapter     目标适配器（非 null）
      * @param triggerType 触发方式（非 null）
      * @return 运行结果
@@ -204,13 +218,25 @@ public class CollectorScheduler {
             return CollectionRunResult.skipped(adapterId);
         }
 
-        String runId = IdGenerator.uuid32();
-        Instant startedAt = Instant.now();
-        recorder.start(runId, adapterId, triggerType, startedAt);
-
+        // Lock held — MUST release in finally regardless of how we exit.
+        String runId = null;
         Counts counts = new Counts();
         List<CollectionRecord> processed = new ArrayList<>();
         try {
+            runId = IdGenerator.uuid32();
+            Instant startedAt = Instant.now();
+            try {
+                recorder.start(runId, adapterId, triggerType, startedAt);
+            } catch (RuntimeException startEx) {
+                // HIGH#1: recorder.start failure cannot persist RUNNING row.
+                // Synthesize FAILED CollectionRunResult; lock will release in outer finally.
+                String startErrMsg = trimErrorMessage("collection run start failed: " + startEx.getMessage());
+                LOG.error("collection run start failed (recorder.start threw): adapterId={}",
+                        LogSanitizer.sanitize(adapterId), startEx);
+                metrics.incFailed(1L);
+                return new CollectionRunResult(runId, adapterId, CollectionRunResult.Status.FAILED,
+                        0, 0, 1, startErrMsg);
+            }
             CollectionRunContext ctx = new CollectionRunContext(
                     runId, adapterId, triggerType,
                     Optional.empty(),
@@ -227,16 +253,19 @@ public class CollectorScheduler {
             metrics.incFailed(counts.errors);
 
             CollectionRunResult.Status terminal = decideStatus(counts);
-            recorder.complete(runId, terminal, counts.assembled, counts.submitted,
-                    counts.errors, counts.firstError, Instant.now());
+            safeRecorderComplete(runId, terminal, counts.assembled, counts.submitted,
+                    counts.errors, counts.firstError);
             return new CollectionRunResult(runId, adapterId, terminal,
                     counts.assembled, counts.submitted, counts.errors, counts.firstError);
         } catch (RuntimeException e) {
-            metrics.incFailed(1L);
-            String msg = "collection run failed: " + e.getMessage();
+            // MEDIUM#1: include in-flight per-record counts in metrics; +1 for orchestration failure.
+            metrics.incAssembled(counts.assembled);
+            metrics.incSubmitted(counts.submitted);
+            metrics.incFailed((long) (counts.errors + 1));
+            String msg = trimErrorMessage("collection run failed: " + e.getMessage());
             int errorsTotal = counts.errors + 1;
-            recorder.complete(runId, CollectionRunResult.Status.FAILED,
-                    counts.assembled, counts.submitted, errorsTotal, msg, Instant.now());
+            safeRecorderComplete(runId, CollectionRunResult.Status.FAILED,
+                    counts.assembled, counts.submitted, errorsTotal, msg);
             LOG.error("collection run failed: adapterId={}", LogSanitizer.sanitize(adapterId), e);
             return new CollectionRunResult(runId, adapterId, CollectionRunResult.Status.FAILED,
                     counts.assembled, counts.submitted, errorsTotal, msg);
@@ -265,7 +294,7 @@ public class CollectorScheduler {
             } else {
                 counts.errors++;
                 if (counts.firstError == null) {
-                    counts.firstError = e.getMessage();
+                    counts.firstError = trimErrorMessage(e.getMessage());
                 }
                 LOG.warn("record processing failed (business): adapterId={} sourceRef={} code={}",
                         LogSanitizer.sanitize(adapterId),
@@ -275,12 +304,62 @@ public class CollectorScheduler {
         } catch (RuntimeException e) {
             counts.errors++;
             if (counts.firstError == null) {
-                counts.firstError = e.getMessage();
+                counts.firstError = trimErrorMessage(e.getMessage());
             }
             LOG.warn("record processing failed (unexpected): adapterId={} sourceRef={}",
                     LogSanitizer.sanitize(adapterId),
                     LogSanitizer.sanitize(rec.getSourceRef()), e);
         }
+    }
+
+    /**
+     * 包装 {@link CollectionRunRecorder#complete} 调用，吞掉 RuntimeException
+     * 以保留原始编排结果（MEDIUM#3）。
+     *
+     * <p>{@code runId == null} 表示 {@code recorder.start} 已失败、未持久化 RUNNING 行，
+     * 此时直接跳过 complete 调用。
+     *
+     * @param runId        运行 ID，可为 {@code null}（start 失败场景）
+     * @param status       终态
+     * @param assembled    组装成功条数
+     * @param submitted    入队成功条数
+     * @param errors       错误条数
+     * @param errorMessage 首个错误消息（已截断）
+     */
+    private void safeRecorderComplete(final String runId, final CollectionRunResult.Status status,
+                                      final int assembled, final int submitted,
+                                      final int errors, final String errorMessage) {
+        if (runId == null) {
+            // start path failed earlier — no RUNNING row to complete; nothing to do.
+            return;
+        }
+        try {
+            recorder.complete(runId, status, assembled, submitted, errors, errorMessage, Instant.now());
+        } catch (RuntimeException persistEx) {
+            // MEDIUM#3: recorder.complete failure must NOT mask the orchestration result.
+            // Log and suppress; CollectionRunResult is still returned to caller.
+            LOG.error("recorder.complete failed (suppressed to preserve original result): "
+                            + "runId={} status={}",
+                    LogSanitizer.sanitize(runId), status.name(), persistEx);
+        }
+    }
+
+    /**
+     * 截断错误消息至 {@value #ERROR_MESSAGE_MAX_LENGTH} 字符，避免 V19 schema 列宽溢出（MEDIUM#2）。
+     *
+     * <p>超出长度时尾部追加 {@code "..."} 作为截断标记。
+     *
+     * @param msg 原始错误消息（可为 {@code null}）
+     * @return 截断后消息，{@code null} 透传
+     */
+    private static String trimErrorMessage(final String msg) {
+        if (msg == null) {
+            return null;
+        }
+        if (msg.length() <= ERROR_MESSAGE_MAX_LENGTH) {
+            return msg;
+        }
+        return msg.substring(0, ERROR_MESSAGE_MAX_LENGTH - ERROR_MESSAGE_ELLIPSIS_LENGTH) + "...";
     }
 
     private static CollectionRunResult.Status decideStatus(final Counts c) {

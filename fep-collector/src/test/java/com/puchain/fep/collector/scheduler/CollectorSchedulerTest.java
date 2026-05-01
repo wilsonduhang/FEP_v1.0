@@ -33,9 +33,11 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -45,7 +47,7 @@ import static org.mockito.Mockito.when;
 /**
  * {@link CollectorScheduler} 单元测试（Mockito，无 Spring context）。
  *
- * <p>覆盖 Plan §T6 验收 #2/#3/#4/#5/#8（6 个测试）：
+ * <p>覆盖 Plan §T6 验收 #2/#3/#4/#5/#8（10 个测试，含 T6a-fix 4 个）：
  * <ul>
  *   <li>{@code success} — 干净路径，3 条记录全成功 → SUCCESS</li>
  *   <li>{@code skipped(lock)} — tryLock empty → SKIPPED 短路</li>
@@ -53,6 +55,10 @@ import static org.mockito.Mockito.when;
  *   <li>{@code duplicate} — 全 dup-key → SUCCESS（不算 error），submitted=N</li>
  *   <li>{@code trigger-rejected(disabled)} — adapter enabled=false → COLLECT_TRIGGER_REJECTED</li>
  *   <li>{@code shouldSkipCronRegistration_for_3112_payload} — 3112 跳 cron / 3101 注册</li>
+ *   <li>{@code recorderStartThrows_lockReleased_andFailedReturned} — HIGH#1 锁泄漏防御</li>
+ *   <li>{@code collectThrows_inFlightCountsReachMetrics} — MEDIUM#1 metrics 不丢</li>
+ *   <li>{@code recorderCompleteThrows_resultStillReturned} — MEDIUM#3 complete 异常不掩盖结果</li>
+ *   <li>{@code errorMessageTrimmedToMaxLength} — MEDIUM#2 errorMessage 1024 截断</li>
  * </ul>
  *
  * @author FEP Team
@@ -232,6 +238,100 @@ class CollectorSchedulerTest {
 
         // only 3101 registered with TaskScheduler
         verify(taskScheduler, times(1)).schedule(any(Runnable.class), any(CronTrigger.class));
+    }
+
+    @Test
+    void recorderStartThrows_lockReleased_andFailedReturned() {
+        // HIGH #1: recorder.start throws (DB outage) — lock must still release.
+        configureAdapter(ADAPTER_ID, CRON, true, PAYLOAD_DT);
+        CollectorAdapter adapter = stubAdapter(ADAPTER_ID, List.of());
+        whenLockAcquired();
+        doThrow(new IllegalStateException("DB outage"))
+                .when(recorder).start(anyString(), anyString(), any(TriggerType.class), any(Instant.class));
+
+        CollectorScheduler scheduler = newScheduler(adapter);
+
+        CollectionRunResult result = scheduler.triggerManually(ADAPTER_ID);
+
+        assertThat(result.status()).isEqualTo(CollectionRunResult.Status.FAILED);
+        assertThat(result.errors()).isEqualTo(1);
+        assertThat(result.assembled()).isZero();
+        assertThat(result.submitted()).isZero();
+        assertThat(result.errorMessage()).contains("DB outage");
+        // CRITICAL: lock MUST be released even though recorder.start failed
+        verify(lock, times(1)).release(any(LockToken.class));
+        // recorder.complete should NOT be called because no RUNNING row was persisted
+        verify(recorder, never()).complete(anyString(), any(CollectionRunResult.Status.class),
+                anyInt(), anyInt(), anyInt(), any(), any(Instant.class));
+    }
+
+    @Test
+    void collectThrows_inFlightCountsReachMetrics() {
+        // MEDIUM #1: when collect() throws, in-flight per-record counts must reach metrics.
+        configureAdapter(ADAPTER_ID, CRON, true, PAYLOAD_DT);
+        CollectorAdapter adapter = mock(CollectorAdapter.class);
+        when(adapter.getId()).thenReturn(ADAPTER_ID);
+        when(adapter.getType()).thenReturn(AdapterType.JDBC);
+        when(adapter.collect(any(CollectionRunContext.class)))
+                .thenThrow(new IllegalStateException("source unavailable"));
+        whenLockAcquired();
+
+        CollectorScheduler scheduler = newScheduler(adapter);
+
+        CollectionRunResult result = scheduler.triggerManually(ADAPTER_ID);
+
+        assertThat(result.status()).isEqualTo(CollectionRunResult.Status.FAILED);
+        assertThat(result.errors()).isEqualTo(1);
+        assertThat(result.errorMessage()).contains("source unavailable");
+        // Metrics: collect-failure increments incFailed(1)
+        CollectionMetricsSnapshot snap = metrics.snapshot();
+        assertThat(snap.failed()).isEqualTo(1L);
+        verify(lock, times(1)).release(any(LockToken.class));
+        verify(recorder, times(1)).complete(anyString(), eq(CollectionRunResult.Status.FAILED),
+                eq(0), eq(0), eq(1), anyString(), any(Instant.class));
+    }
+
+    @Test
+    void recorderCompleteThrows_resultStillReturned() {
+        // MEDIUM #3: recorder.complete throwing must NOT mask the orchestration result.
+        configureAdapter(ADAPTER_ID, CRON, true, PAYLOAD_DT);
+        CollectorAdapter adapter = stubAdapter(ADAPTER_ID, recordsOf(2));
+        whenLockAcquired();
+        whenAssembleReturnsEnvelope();
+        whenSubmitReturns(EnqueueResult.Status.ENQUEUED);
+        doThrow(new IllegalStateException("DB outage during complete"))
+                .when(recorder).complete(anyString(), any(CollectionRunResult.Status.class),
+                        anyInt(), anyInt(), anyInt(), any(), any(Instant.class));
+
+        CollectorScheduler scheduler = newScheduler(adapter);
+
+        // recorder.complete throws — but result must still be returned (suppressed)
+        CollectionRunResult result = scheduler.triggerManually(ADAPTER_ID);
+
+        assertThat(result.status()).isEqualTo(CollectionRunResult.Status.SUCCESS);
+        assertThat(result.assembled()).isEqualTo(2);
+        assertThat(result.submitted()).isEqualTo(2);
+        assertThat(result.errors()).isZero();
+        verify(lock, times(1)).release(any(LockToken.class));
+    }
+
+    @Test
+    void errorMessageTrimmedToMaxLength() {
+        // MEDIUM #2: errorMessage must be capped at 1024 chars to avoid V19 schema column overflow.
+        configureAdapter(ADAPTER_ID, CRON, true, PAYLOAD_DT);
+        List<CollectionRecord> records = recordsOf(1);
+        CollectorAdapter adapter = stubAdapter(ADAPTER_ID, records);
+        whenLockAcquired();
+        String hugeMessage = "X".repeat(2048);  // > 1024 cap
+        when(assembler.assemble(records.get(0)))
+                .thenThrow(new FepBusinessException(FepErrorCode.COLLECT_ASSEMBLE_FAILURE, hugeMessage));
+
+        CollectorScheduler scheduler = newScheduler(adapter);
+
+        CollectionRunResult result = scheduler.triggerManually(ADAPTER_ID);
+
+        assertThat(result.errorMessage()).hasSizeLessThanOrEqualTo(1024);
+        assertThat(result.errorMessage()).endsWith("...");  // truncation marker
     }
 
     // ---- helpers ----
