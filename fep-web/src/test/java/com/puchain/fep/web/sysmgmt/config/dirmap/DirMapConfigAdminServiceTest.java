@@ -44,10 +44,10 @@ import static org.mockito.Mockito.when;
  * <ol>
  *   <li>{@code listAll()} 返回排序后列表（messageType, accessRole 双键）</li>
  *   <li>{@code update()} 成功 → 写 history → 调 store.update → publishEvent</li>
- *   <li>{@code update()} pre-check count != 88 → IllegalStateException（store.update 不被调）</li>
- *   <li>{@code update()} unknown messageType → IllegalArgumentException</li>
- *   <li>{@code update()} unknown accessRole → IllegalArgumentException</li>
- *   <li>{@code update()} 行不存在 → IllegalArgumentException</li>
+ *   <li>{@code update()} pre-check count != 88 → FepBusinessException(DIR_MAP_INVARIANT_VIOLATED)</li>
+ *   <li>{@code update()} unknown messageType → IllegalArgumentException (path-variable resolve 兜底)</li>
+ *   <li>{@code update()} unknown accessRole → IllegalArgumentException (path-variable resolve 兜底)</li>
+ *   <li>{@code update()} 行不存在 → FepBusinessException(DIR_MAP_NOT_FOUND)</li>
  *   <li>{@code history()} 透传 repo 倒序结果</li>
  * </ol>
  *
@@ -162,11 +162,13 @@ class DirMapConfigAdminServiceTest {
         DirMapConfigUpdateRequest req = new DirMapConfigUpdateRequest(
                 "OUTBOUND_ACTIVE", false, "MODE_3", "x");
 
+        // T8 deferred drain #6（2026-05-01）：抛 FepBusinessException(DIR_MAP_INVARIANT_VIOLATED)
+        // 替代 IllegalStateException — Controller GlobalExceptionHandler 把该业务码
+        // 映射为 400 + 明确错误信息（之前 IllegalStateException 走 handleUnexpected 500）。
         assertThatThrownBy(() -> service.update("3001", "ACCEPTING_ORG", req))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("DIR-MAP invariant violated")
-                .hasMessageContaining("count=87")
-                .hasMessageContaining("expected=88");
+                .isInstanceOf(com.puchain.fep.common.exception.FepBusinessException.class)
+                .extracting(e -> ((com.puchain.fep.common.exception.FepBusinessException) e).getErrorCode())
+                .isEqualTo(com.puchain.fep.common.domain.FepErrorCode.DIR_MAP_INVARIANT_VIOLATED);
 
         // history / store.update / event 均不被调用 — pre-check 应在解析前抛
         verify(historyRepo, never()).save(any());
@@ -210,10 +212,12 @@ class DirMapConfigAdminServiceTest {
         DirMapConfigUpdateRequest req = new DirMapConfigUpdateRequest(
                 "OUTBOUND_ACTIVE", false, "MODE_3", "x");
 
+        // T8 deferred drain #6（2026-05-01）：抛 FepBusinessException(DIR_MAP_NOT_FOUND)
+        // 替代 IllegalArgumentException — 业务码更精确（之前误用 IAE 仅靠 message string 区分）
         assertThatThrownBy(() -> service.update("3001", "ACCEPTING_ORG", req))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("DIR-MAP config not found")
-                .hasMessageContaining("3001/ACCEPTING_ORG");
+                .isInstanceOf(com.puchain.fep.common.exception.FepBusinessException.class)
+                .extracting(e -> ((com.puchain.fep.common.exception.FepBusinessException) e).getErrorCode())
+                .isEqualTo(com.puchain.fep.common.domain.FepErrorCode.DIR_MAP_NOT_FOUND);
 
         verify(historyRepo, never()).save(any());
         verify(configStore, never()).update(any());

@@ -1,5 +1,7 @@
 package com.puchain.fep.web.sysmgmt.config.dirmap.service;
 
+import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.event.DirMapConfigChangedEvent;
@@ -83,9 +85,14 @@ public class DirMapConfigAdminService {
      * @param accessRole  {@link AccessRole} name
      * @param req         non-null request body (validated by Controller)
      * @return updated row snapshot
-     * @throws IllegalStateException    if the row-count invariant is violated
-     * @throws IllegalArgumentException if any enum value is unknown or the
-     *                                  target row does not exist
+     * @throws FepBusinessException     {@link FepErrorCode#DIR_MAP_INVARIANT_VIOLATED}
+     *                                  when the 88-row D8 invariant is broken,
+     *                                  or {@link FepErrorCode#DIR_MAP_NOT_FOUND}
+     *                                  when the target (msg, role) row is absent
+     * @throws IllegalArgumentException if path-variable {@code messageType} or
+     *                                  {@code accessRole} cannot resolve to an
+     *                                  enum value (DTO fields are pre-validated
+     *                                  by {@link com.puchain.fep.common.validation.ValueOfEnum})
      */
     @Transactional
     public DirMapConfigResponse update(
@@ -93,13 +100,14 @@ public class DirMapConfigAdminService {
         // D8 应用层兜底（schema-level trigger 是真不变性守护，本 Assert 提前提示用户错误）
         long preCount = configStore.count();
         if (preCount != EXPECTED_ROW_COUNT) {
-            throw new IllegalStateException(
-                    "DIR-MAP invariant violated: t_dir_map_config count=" + preCount
-                  + " expected=" + EXPECTED_ROW_COUNT
-                  + ". Refusing to update; investigate before proceeding.");
+            throw new FepBusinessException(FepErrorCode.DIR_MAP_INVARIANT_VIOLATED,
+                    "t_dir_map_config count=" + preCount + " expected=" + EXPECTED_ROW_COUNT
+                  + "; refusing to update");
         }
 
-        // enum 解析（valueOf 抛 IllegalArgumentException 触发 Controller 400）
+        // enum 解析 — direction/processingMode 已被 @ValueOfEnum 拦截在 Bean
+        // Validation 阶段；valueOf 残留是兜底（messageType/accessRole 来自 path
+        // variable，无 DTO 校验路径，仍可能抛 IllegalArgumentException → 400）
         MessageType msg = MessageType.byMsgNo(messageType)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown messageType: " + messageType));
         AccessRole role = AccessRole.valueOf(accessRole);
@@ -108,8 +116,8 @@ public class DirMapConfigAdminService {
 
         // 取 old snapshot via Port
         DirMapConfigSnapshot before = configStore.findOne(msg, role).orElseThrow(
-                () -> new IllegalArgumentException(
-                        "DIR-MAP config not found: " + messageType + "/" + accessRole));
+                () -> new FepBusinessException(FepErrorCode.DIR_MAP_NOT_FOUND,
+                        messageType + "/" + accessRole));
 
         // 写 history（fep-web Adapter 直接调，因 history 是 fep-web 应用层职责）
         DirMapConfigHistoryEntity history = new DirMapConfigHistoryEntity();
@@ -134,12 +142,12 @@ public class DirMapConfigAdminService {
         DirMapConfigSnapshot after = configStore.update(new DirMapConfigUpdate(
                 msg, role, newDir, req.requiresFep(), newMode, currentUsername()));
 
-        // D8 操作后再次实测 count（应仍为 EXPECTED_ROW_COUNT，trigger 兜底失败时此 Assert 抛错事务回滚）
+        // D8 操作后再次实测 count（应仍为 EXPECTED_ROW_COUNT，trigger 兜底失败时此抛错事务回滚）
         long postCount = configStore.count();
         if (postCount != EXPECTED_ROW_COUNT) {
-            throw new IllegalStateException(
-                    "DIR-MAP invariant violated post-update: count=" + postCount
-                  + ". Transaction will roll back (schema trigger should have caught earlier).");
+            throw new FepBusinessException(FepErrorCode.DIR_MAP_INVARIANT_VIOLATED,
+                    "post-update count=" + postCount
+                  + "; transaction will roll back (schema trigger should have caught earlier)");
         }
 
         // publish — DirMapCacheInvalidator 监听

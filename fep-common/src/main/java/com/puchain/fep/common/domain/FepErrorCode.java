@@ -99,6 +99,11 @@ public enum FepErrorCode {
     MSG_INBOUND_INVALID_TYPE("MSG_8701", "未注册的 messageType"),
     MSG_INBOUND_DECODE_FAILURE("MSG_8702", "xmlBase64 解码失败"),
 
+    // 系统配置错误 8800-8899（P3a DIR-MAP 动态配置）
+    DIR_MAP_INVARIANT_VIOLATED("DIR_MAP_8801",
+            "DIR-MAP 配置行数不变量违反 (期望 88 行)，请检查数据库与触发器"),
+    DIR_MAP_NOT_FOUND("DIR_MAP_8802", "DIR-MAP 配置目标行不存在"),
+
     // 数据采集层错误 COLLECT_5xxx（P4 fep-collector）
     COLLECT_ADAPTER_FAILURE("COLLECT_5001", "数据采集适配器调用失败"),
     COLLECT_ASSEMBLE_FAILURE("COLLECT_5002", "报文组装失败"),
