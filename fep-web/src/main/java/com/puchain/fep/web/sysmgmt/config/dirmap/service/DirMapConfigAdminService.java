@@ -9,20 +9,19 @@ import com.puchain.fep.processor.routing.DirMapConfigStore;
 import com.puchain.fep.processor.routing.DirMapConfigUpdate;
 import com.puchain.fep.processor.routing.ProcessingMode;
 import com.puchain.fep.processor.routing.RoleDirection;
+import com.puchain.fep.web.common.SecurityContextHelper;
 import com.puchain.fep.web.integration.dirmap.DirMapConfigHistoryEntity;
 import com.puchain.fep.web.integration.dirmap.DirMapConfigHistoryRepository;
 import com.puchain.fep.web.sysmgmt.config.dirmap.dto.DirMapConfigResponse;
 import com.puchain.fep.web.sysmgmt.config.dirmap.dto.DirMapConfigUpdateRequest;
 import com.puchain.fep.web.sysmgmt.config.dirmap.dto.DirMapHistoryResponse;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * v1f Hexagonal — Service inject {@link DirMapConfigStore} Port (fep-processor)
@@ -186,8 +185,18 @@ public class DirMapConfigAdminService {
                 h.getChangedBy(), h.getChangedAt(), h.getChangeReason());
     }
 
+    /**
+     * Audit-trail user identifier for DirMap history rows. Reuses
+     * {@link SecurityContextHelper#currentUserId()} for consistency with the
+     * rest of fep-web, but maps the helper's "anonymous" sentinel to "system"
+     * so audit rows show "system" (an automated/bypass-auth caller) rather
+     * than "anonymous" (an unauthenticated principal). The {@code SYSTEM_ADMIN}
+     * role gate ensures real production callers are always named users.
+     *
+     * @return audit-trail identifier, never null
+     */
     private String currentUsername() {
-        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
-                .map(a -> a.getName()).orElse("system");
+        String userId = SecurityContextHelper.currentUserId();
+        return "anonymous".equals(userId) ? "system" : userId;
     }
 }
