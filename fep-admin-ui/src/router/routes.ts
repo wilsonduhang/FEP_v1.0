@@ -117,8 +117,8 @@ export const routes: RouteRecordRaw[] = [
         name: 'SysDirMapConfig',
         component: () => import('@/features/sys-config/views/DirMapConfigPage.vue'),
         // NO meta.permission — feedback_permission_code_vs_menu_code 红线：
-        // menuTree 后端过滤是权限的唯一权威源；路由 meta 仅声明 requiresAuth。
-        meta: { requiresAuth: true },
+        // menuTree 后端过滤是权限的唯一权威源；路由 meta 仅声明 requiresAuth + title。
+        meta: { requiresAuth: true, title: '报文方向映射' },
       },
     ],
   },

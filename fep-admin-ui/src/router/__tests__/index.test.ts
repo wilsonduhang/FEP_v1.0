@@ -215,4 +215,18 @@ describe('router guards', () => {
     expect(route!.meta.requiresAuth).toBe(true);
     expect(route!.meta.permission).toBeUndefined();
   });
+
+  // T6 quality reviewer P2 修复（2026-04-30）：补 SysDirMapConfig 路由 regression
+  // 测试，防止 feedback_permission_code_vs_menu_code 红线漂移（误加 meta.permission
+  // 会让前端 router.beforeEach 走 hasPermission 判断，与后端 menuTree + hasRole
+  // 双重权威源冲突）。
+  it('registers /system/config/dir-map route with requiresAuth and no permission gate', () => {
+    const router = createRouter({ history: createMemoryHistory(), routes });
+    const route = router.getRoutes().find((r) => r.name === 'SysDirMapConfig');
+    expect(route).toBeDefined();
+    expect(route!.path).toBe('/system/config/dir-map');
+    expect(route!.meta.requiresAuth).toBe(true);
+    expect(route!.meta.permission).toBeUndefined();
+    expect(route!.meta.title).toBe('报文方向映射');
+  });
 });

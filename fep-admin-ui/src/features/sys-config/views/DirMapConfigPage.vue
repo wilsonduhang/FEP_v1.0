@@ -14,7 +14,12 @@ const rows = ref<DirMapConfig[]>([]);
 const loading = ref(false);
 const editDrawer = ref(false);
 const historyDrawer = ref(false);
+// T6 quality reviewer P1 修复（2026-04-30）：editRow 与 historyRow 拆分独立 ref。
+// 此前 openHistory 复写 editRow，导致用户先在行 A 打开编辑、再点行 B 历史时，
+// editRow 被覆盖为行 B；若 edit drawer 仍开着点击 Save，会把行 A 的 form
+// 写到行 B 的路径变量上 → 静默写错行（数据正确性 P1）。
 const editRow = ref<DirMapConfig | null>(null);
+const historyRow = ref<DirMapConfig | null>(null);
 const histories = ref<DirMapHistory[]>([]);
 const editForm = ref<DirMapUpdateRequest>({
   direction: '',
@@ -28,6 +33,10 @@ async function load() {
   try {
     const result = await listDirMap(1, 100);
     rows.value = result.records;
+  } catch {
+    // T6 quality P2 修复：load 失败时清空，避免渲染陈旧 88 行。
+    // 错误 toast 由 httpClient 拦截器统一弹出（client.ts:37/51），不重复弹。
+    rows.value = [];
   } finally {
     loading.value = false;
   }
@@ -55,16 +64,24 @@ async function saveEdit() {
     ElMessage.success('保存成功，已立即生效');
     editDrawer.value = false;
     await load();
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : '未知错误';
-    ElMessage.error(`保存失败: ${msg}`);
+  } catch {
+    // T6 quality P2 修复：错误 toast 由 httpClient 拦截器统一弹出（client.ts:37/51
+    // 已 ElMessage.error(body.message)），页面层只 catch 防止 unhandled rejection。
+    // 此前 `${e.message}` 在 ApiResult plain object reject 路径下永远走 '未知错误'
+    // 分支，且会出现双 toast。
   }
 }
 
 async function openHistory(row: DirMapConfig) {
-  editRow.value = row;
-  histories.value = await listDirMapHistory(row.messageType, row.accessRole);
-  historyDrawer.value = true;
+  // 先清空再 await，避免 API 失败时残留上次行的历史给用户看。
+  historyRow.value = row;
+  histories.value = [];
+  try {
+    histories.value = await listDirMapHistory(row.messageType, row.accessRole);
+    historyDrawer.value = true;
+  } catch {
+    // 错误 toast 由 httpClient 拦截器统一弹出；drawer 不打开，避免误导。
+  }
 }
 
 onMounted(() => {

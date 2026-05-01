@@ -1,4 +1,5 @@
 import { httpClient } from '@/shared/http/client';
+import type { PageResult } from '@/shared/types/page-result';
 
 /** 报文方向映射配置（对应 com.puchain.fep.web.sysconfig.domain.DirMapConfig） */
 export interface DirMapConfig {
@@ -34,22 +35,8 @@ export interface DirMapUpdateRequest {
   changeReason?: string;
 }
 
-/**
- * 后端分页结果（对应 com.puchain.fep.common.domain.PageResult）。
- * 字段名为 `records`（与 fep-common PageResult 序列化形状一致），不是 `list`。
- */
-export interface PageResult<T> {
-  records: T[];
-  total: number;
-  pageNum: number;
-  pageSize: number;
-}
-
 /** 拉取方向映射列表（默认一次拉满 88 行） */
-export async function listDirMap(
-  pageNum = 1,
-  pageSize = 100,
-): Promise<PageResult<DirMapConfig>> {
+export async function listDirMap(pageNum = 1, pageSize = 100): Promise<PageResult<DirMapConfig>> {
   return httpClient.get('/api/v1/sys/config/dir-map', {
     params: { pageNum, pageSize },
   });
@@ -61,10 +48,7 @@ export async function updateDirMap(
   accessRole: string,
   req: DirMapUpdateRequest,
 ): Promise<DirMapConfig> {
-  return httpClient.put(
-    `/api/v1/sys/config/dir-map/${messageType}/${accessRole}`,
-    req,
-  );
+  return httpClient.put(`/api/v1/sys/config/dir-map/${messageType}/${accessRole}`, req);
 }
 
 /** 拉取指定 (messageType, accessRole) 的变更历史（倒序） */
@@ -72,7 +56,5 @@ export async function listDirMapHistory(
   messageType: string,
   accessRole: string,
 ): Promise<DirMapHistory[]> {
-  return httpClient.get(
-    `/api/v1/sys/config/dir-map/${messageType}/${accessRole}/history`,
-  );
+  return httpClient.get(`/api/v1/sys/config/dir-map/${messageType}/${accessRole}/history`);
 }
