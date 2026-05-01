@@ -35,8 +35,9 @@ public class RouteRegistry {
     /**
      * 构造路由注册表。
      *
-     * @param contributors 所有 {@link RouteContributor} bean（非 null；可空）
-     * @throws IllegalStateException 检测到 payloadDataType 或 messageType 重复
+     * @param contributors 所有 {@link RouteContributor} bean（非 null；不得贡献零路由）
+     * @throws IllegalStateException 检测到 payloadDataType 或 messageType 重复，
+     *                               或合并后路由数为 0（未注册任何 RouteContributor / 全部 contribute 返回空）
      */
     public RouteRegistry(final List<RouteContributor> contributors) {
         Objects.requireNonNull(contributors, "contributors");
@@ -57,6 +58,12 @@ public class RouteRegistry {
                 }
                 merged.put(key, route);
             }
+        }
+        if (merged.isEmpty()) {
+            // Fail-fast at startup vs runtime COLLECT_ASSEMBLE_FAILURE per request.
+            // Catches misconfig (no RouteContributor bean / all contribute() returned empty).
+            throw new IllegalStateException(
+                    "no AssemblerRoute registered — at least one RouteContributor bean must contribute");
         }
         this.routes = Collections.unmodifiableMap(merged);
         LOG.info("RouteRegistry initialized: {} routes", merged.size());

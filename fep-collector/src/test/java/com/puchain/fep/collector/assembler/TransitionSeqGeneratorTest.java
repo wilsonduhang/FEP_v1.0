@@ -2,11 +2,14 @@ package com.puchain.fep.collector.assembler;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * {@link TransitionSeqGenerator} 单元测试（Plan §T7b §7）。
@@ -43,5 +46,29 @@ class TransitionSeqGeneratorTest {
         final String third = gen.generate();
         assertThat(Integer.parseInt(second)).isEqualTo(Integer.parseInt(first) + 1);
         assertThat(Integer.parseInt(third)).isEqualTo(Integer.parseInt(second) + 1);
+    }
+
+    /**
+     * M3: 8-digit numeric contract boundary — last legal value emits "99999999",
+     * next call must throw IllegalStateException (fail-fast vs silent 9-digit truncation).
+     *
+     * <p>Counter is set reflectively to 99_999_998 to avoid bloating the production
+     * API with a test-only setter.
+     */
+    @Test
+    void generate_atOverflowBoundary_throwsIllegalStateException() throws Exception {
+        final TransitionSeqGenerator gen = new TransitionSeqGenerator();
+        final Field counterField = TransitionSeqGenerator.class.getDeclaredField("counter");
+        counterField.setAccessible(true);
+        ((AtomicInteger) counterField.get(gen)).set(TransitionSeqGenerator.MAX_DAILY_SEQUENCE - 1);
+
+        // Last legal value: incrementAndGet -> 99_999_999, format -> "99999999".
+        assertThat(gen.generate()).isEqualTo("99999999");
+
+        // Next call: incrementAndGet -> 100_000_000, exceeds MAX_DAILY_SEQUENCE -> throw.
+        assertThatThrownBy(gen::generate)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("transition sequence overflow")
+                .hasMessageContaining("restart required");
     }
 }

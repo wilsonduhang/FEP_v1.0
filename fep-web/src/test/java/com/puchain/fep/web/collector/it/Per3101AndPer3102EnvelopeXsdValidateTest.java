@@ -177,18 +177,4 @@ class Per3101AndPer3102EnvelopeXsdValidateTest {
                 + HEAD_TEMPLATE.replace("{{MSG_NO}}", msgNo) + "\n"
                 + "    <MSG>\n" + msgContent + "\n    </MSG>\n</CFX>";
     }
-
-    /**
-     * Per §6c wire-shape matrix — head element prefix derivation.
-     *
-     * <p>Only kept here for documentation / future use when 3009 stub gets implemented
-     * (D8 ticket pool). Currently unused since both 3101 and 3102 use BatchHead prefix.
-     *
-     * @param msgNo 4-digit message number
-     * @return {@code "RealHead"} for 3009 only; {@code "BatchHead"} for the other 7
-     */
-    @SuppressWarnings("unused")
-    private static String headPrefix(final String msgNo) {
-        return "3009".equals(msgNo) ? "RealHead" : "BatchHead";
-    }
 }

@@ -19,9 +19,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p><b>线程安全：</b>{@link AtomicInteger#incrementAndGet()} + {@link AtomicReference#compareAndSet}
  * 保证并发 generate 不重复 / 跨日 reset 仅一次。
  *
- * <p><b>溢出语义：</b>计数器达到 {@link #MAX_DAILY_SEQUENCE}（99,999,999）后继续递增
- * 会突破 8 位（{@code String.format("%08d", n)} 输出 9 位），WARN 日志告警；
- * Plan §T7b §2 仅要求 V1 dev 可接受此中间状态。
+ * <p><b>溢出语义：</b>计数器突破 {@link #MAX_DAILY_SEQUENCE}（99,999,999）后立即
+ * 抛出 {@link IllegalStateException}（fail-fast）。{@code String.format("%08d", n)}
+ * 在 n &gt; 99,999,999 时会输出 9 位，违反下游 8 位 numeric 契约（PRD §3.2.3）；
+ * 选 throw 而非静默截断，由调度侧观测到异常并 alert + 重启进程恢复。
  *
  * @author FEP Team
  * @since 1.0.0
@@ -56,7 +57,9 @@ public class TransitionSeqGenerator {
      * <p>跨日检测：每次调用比对 today vs lastResetDate；不同则 CAS 抢占 reset，
      * 抢占成功的线程重置计数器为 0，其他线程沿用既有计数器。</p>
      *
-     * @return 8 位 numeric（如 {@code "00000001"}）。溢出后输出 &gt;8 位 + WARN 日志
+     * @return 8 位 numeric（如 {@code "00000001"}）
+     * @throws IllegalStateException 计数器突破 {@link #MAX_DAILY_SEQUENCE}（fail-fast；
+     *                               需运维介入：调度暂停 + 进程重启 / 切换 DB 序列）
      */
     public String generate() {
         final LocalDate today = LocalDate.now(BEIJING_ZONE);
@@ -70,7 +73,12 @@ public class TransitionSeqGenerator {
         }
         final int n = counter.incrementAndGet();
         if (n > MAX_DAILY_SEQUENCE) {
-            LOG.warn("TransitionSeqGenerator counter exceeded daily 8-digit cap: {}", n);
+            // Fail-fast: 9-digit output would violate 8-digit numeric contract (PRD §3.2.3).
+            // Caller (CollectorScheduler / assembler) surfaces via FepBusinessException;
+            // operator must restart process or migrate to DB sequence (Plan §T7b D9).
+            throw new IllegalStateException(
+                    "transition sequence overflow at " + n
+                            + ", restart required (max " + MAX_DAILY_SEQUENCE + ")");
         }
         return String.format("%08d", n);
     }

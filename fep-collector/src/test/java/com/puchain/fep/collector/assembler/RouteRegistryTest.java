@@ -110,4 +110,22 @@ class RouteRegistryTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("duplicate messageType: 3109");
     }
+
+    /** M4: empty contributors should fail-fast at startup vs runtime per request. */
+    @Test
+    void constructor_withEmptyContributors_throwsIllegalStateException() {
+        assertThatThrownBy(() -> new RouteRegistry(List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no AssemblerRoute registered");
+    }
+
+    /** M4: contributors all returning empty maps should also fail-fast. */
+    @Test
+    void constructor_withContributorsAllReturningEmpty_throwsIllegalStateException() {
+        final RouteContributor empty = Map::of;
+
+        assertThatThrownBy(() -> new RouteRegistry(List.of(empty, empty)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no AssemblerRoute registered");
+    }
 }
