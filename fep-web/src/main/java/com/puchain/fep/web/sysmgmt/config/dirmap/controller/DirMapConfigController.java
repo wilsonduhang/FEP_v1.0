@@ -82,10 +82,10 @@ public class DirMapConfigController {
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "100") int pageSize) {
         // 1-based → 0-based slice (feedback_pagination_adapter 红线显式 adapter)
         List<DirMapConfigResponse> all = service.listAll();
-        int from = Math.max(0, (pageNum - 1) * pageSize);
+        int from = Math.min(all.size(), Math.max(0, (pageNum - 1) * pageSize));
         int to = Math.min(all.size(), from + pageSize);
-        List<DirMapConfigResponse> slice = from >= all.size() ? List.of() : all.subList(from, to);
-        return ApiResult.success(new PageResult<>(slice, all.size(), pageNum, pageSize));
+        return ApiResult.success(
+                new PageResult<>(all.subList(from, to), all.size(), pageNum, pageSize));
     }
 
     /**

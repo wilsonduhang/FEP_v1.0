@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,10 +67,8 @@ public class DirMapConfigAdminService {
         // Total rows fixed by EXPECTED_ROW_COUNT — controller handles 0/1-based slicing
         return configStore.findAll().stream()
                 .map(this::toResponse)
-                .sorted((a, b) -> {
-                    int c = a.messageType().compareTo(b.messageType());
-                    return c != 0 ? c : a.accessRole().compareTo(b.accessRole());
-                })
+                .sorted(Comparator.comparing(DirMapConfigResponse::messageType)
+                        .thenComparing(DirMapConfigResponse::accessRole))
                 .toList();
     }
 
