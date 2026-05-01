@@ -91,8 +91,9 @@ public class DynamicMessageDirectionMap {
     }
 
     /**
-     * 整体替换 cache（atomic putAll）。供 {@link DirMapCacheInvalidator} 事件
-     * 触发使用；DB 异常时保持 cache 上次状态（不清空已有 cache）。
+     * 整体替换 cache（atomic putAll）。供启动期 {@link #load()} 失败重试 + IT
+     * cold-start / cross-test cache restore 使用。生产事件路径走 {@link #reload(DirMapKey)}
+     * 单键失效，避免每次单条 PUT 触发 88 行全表扫描。DB 异常时保持 cache 上次状态。
      */
     public void reload() {
         Cache<DirMapKey, DirMapConfigSnapshot> next = Caffeine.newBuilder()
@@ -106,6 +107,40 @@ public class DynamicMessageDirectionMap {
         } else {
             log.warn("DIR-MAP reload skipped: store unavailable, keeping previous cache "
                     + "({} entries)", this.cache.estimatedSize());
+        }
+    }
+
+    /**
+     * 单键 cache 失效 + 重新加载。供 {@link DirMapCacheInvalidator} 在
+     * {@link DirMapConfigChangedEvent} AFTER_COMMIT 阶段调用 — 替代旧版整体
+     * {@link #reload()}，避免 88 行全表扫描 N×{@code findOne}（行为等价但单键
+     * I/O 减少 87 倍）。
+     *
+     * <p>D5 fallback 与一致性策略：
+     * <ul>
+     *   <li>{@link DirMapConfigStore#findOne} 返回 present → cache.put(key, fresh)</li>
+     *   <li>findOne 返回 empty（行被删，理论上 D8 trigger 已防止但兜底） → cache.invalidate(key)
+     *       让下次 {@link #lookupRaw} 走 Port 回查 + 静态 fallback</li>
+     *   <li>{@link DataAccessException} → 保持 cache 上次状态（不清空，不抛）</li>
+     * </ul>
+     *
+     * @param key 失效目标键，非 null
+     */
+    public void reload(final DirMapKey key) {
+        Objects.requireNonNull(key, "key");
+        try {
+            Optional<DirMapConfigSnapshot> queried = this.store.findOne(key.msg(), key.role());
+            if (queried.isPresent()) {
+                this.cache.put(key, queried.get());
+                log.info("DIR-MAP cache key reloaded: {} direction={}",
+                        key, queried.get().direction());
+            } else {
+                this.cache.invalidate(key);
+                log.warn("DIR-MAP cache key not found post-reload, invalidated: {}", key);
+            }
+        } catch (DataAccessException ex) {
+            log.warn("DIR-MAP per-key reload failed for {}: {}; cache unchanged",
+                    key, ex.getMessage());
         }
     }
 

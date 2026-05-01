@@ -175,4 +175,68 @@ class DynamicMessageDirectionMapTest {
                 .isEmpty();
         verify(store, times(1)).findOne(MessageType.MSG_3002, AccessRole.ACCEPTING_ORG);
     }
+
+    /**
+     * T8 deferred drain #9（2026-05-01）：per-key reload 路径（事件驱动单条 PUT 失效）。
+     * findOne 返回 present → cache 该键被覆盖为 fresh 值；不触发整表 findAll。
+     */
+    @Test
+    void reloadKey_replacesSingleEntry_andLeavesOthersUntouched() {
+        DirMapKey key3001 = new DirMapKey(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
+        DirMapConfigSnapshot fresh = new DirMapConfigSnapshot(
+                MessageType.MSG_3001, AccessRole.ACCEPTING_ORG,
+                RoleDirection.OUTBOUND_ACTIVE, false, ProcessingMode.MODE_3,
+                "admin1", Instant.now());
+        when(store.findOne(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG))
+                .thenReturn(Optional.of(fresh));
+
+        dynamicMap.reload(key3001);
+
+        Optional<DirectionMapping> result = dynamicMap.lookupRaw(
+                MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
+        assertThat(result).isPresent();
+        assertThat(result.get().direction()).isEqualTo(RoleDirection.OUTBOUND_ACTIVE);
+        assertThat(result.get().mode()).isEqualTo(ProcessingMode.MODE_3);
+        assertThat(result.get().requiresFep()).isFalse();
+        // 整表 findAll 仅在 setUp 调一次（load），reload(key) 必须不再触发
+        verify(store, times(1)).findAll();
+        verify(store, times(1)).findOne(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
+    }
+
+    /**
+     * findOne 返回 empty（行被删，理论上 D8 trigger 阻止但兜底） →
+     * cache.invalidate(key) → 下次 lookupRaw 走 Port 二级查询。
+     */
+    @Test
+    void reloadKey_invalidatesCache_whenStoreReturnsEmpty() {
+        DirMapKey key3001 = new DirMapKey(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
+        when(store.findOne(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG))
+                .thenReturn(Optional.empty());
+
+        long sizeBefore = dynamicMap.cacheSize();
+        dynamicMap.reload(key3001);
+
+        assertThat(dynamicMap.cacheSize())
+                .as("invalidate 后 cache 计数减 1")
+                .isEqualTo(sizeBefore - 1);
+    }
+
+    /**
+     * findOne 抛 DataAccessException → cache 该键保持原值（不清不替换）。
+     */
+    @Test
+    void reloadKey_keepsCacheUnchanged_whenStoreThrowsDataAccessException() {
+        DirMapKey key3001 = new DirMapKey(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
+        when(store.findOne(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG))
+                .thenThrow(new QueryTimeoutException("DB timeout on per-key reload"));
+
+        dynamicMap.reload(key3001);
+
+        Optional<DirectionMapping> result = dynamicMap.lookupRaw(
+                MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
+        assertThat(result)
+                .as("DB 异常时 cache 保持启动期 INBOUND_PASSIVE，不被覆盖也不被清空")
+                .isPresent();
+        assertThat(result.get().direction()).isEqualTo(RoleDirection.INBOUND_PASSIVE);
+    }
 }
