@@ -202,6 +202,7 @@ class EsbCollectorAdapterTest {
         final List<CollectionRecord> rows = adapter.collect(ctx());
         adapter.acknowledge(ctx(), rows);
 
+        server.verify();
         assertThat(store.get(ADAPTER_ID))
                 .as("watermark 必须推进到本批 cursorParam 最大值 C3")
                 .contains("C3");
@@ -275,6 +276,127 @@ class EsbCollectorAdapterTest {
                 .hasMessageContaining("ESB GET")
                 .extracting("errorCode")
                 .isEqualTo(FepErrorCode.COLLECT_ADAPTER_FAILURE);
+
+        server.verify();
+    }
+
+    /**
+     * Quality MINOR — HTTP 4xx 同样必须包装为 COLLECT_ADAPTER_FAILURE（与 5xx 同分支处理）。
+     */
+    @Test
+    void shouldWrap4xxAsCollectAdapterFailure() {
+        final RestClient.Builder builder = RestClient.builder();
+        final MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        final RestClient restClient = builder.build();
+        server.expect(method(org.springframework.http.HttpMethod.GET))
+                .andRespond(withStatus(org.springframework.http.HttpStatus.NOT_FOUND));
+
+        final EsbCollectorAdapter adapter = newAdapter(noAuthConfig(), restClient);
+
+        assertThatThrownBy(() -> adapter.collect(ctx()))
+                .as("HTTP 404 必须包装为 COLLECT_ADAPTER_FAILURE")
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("ESB GET failed")
+                .extracting("errorCode")
+                .isEqualTo(FepErrorCode.COLLECT_ADAPTER_FAILURE);
+
+        server.verify();
+    }
+
+    /**
+     * Quality HIGH — JSON row 含 null 字段不能 NPE（Map.copyOf 拒绝 null value）；
+     * 与 JdbcCollectorAdapter 同款处理 — null 列从 rawData 中过滤。
+     */
+    @Test
+    void shouldHandleNullValueFieldsInRow() {
+        final RestClient.Builder builder = RestClient.builder();
+        final MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        final RestClient restClient = builder.build();
+        // row 含 null amount 字段（{"invoiceId":"INV9","amount":null,"lastSeen":"C9"}）
+        final String jsonWithNull = "[{\"invoiceId\":\"INV9\",\"amount\":null,\""
+                + CURSOR_PARAM + "\":\"C9\"}]";
+        server.expect(method(org.springframework.http.HttpMethod.GET))
+                .andRespond(withSuccess(jsonWithNull, MediaType.APPLICATION_JSON));
+
+        final EsbCollectorAdapter adapter = newAdapter(noAuthConfig(), restClient);
+
+        final List<CollectionRecord> rows = adapter.collect(ctx());
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getRawData())
+                .as("null 字段必须从 rawData 中过滤（与 JdbcCollectorAdapter 同款）")
+                .doesNotContainKey("amount")
+                .containsEntry("invoiceId", "INV9")
+                .containsEntry(CURSOR_PARAM, "C9");
+        server.verify();
+    }
+
+    /**
+     * Quality HIGH — JSON row 缺 cursor 字段 → sourceRef = "null" 字面值；acknowledge 必须排除哨兵。
+     * 否则 "null" (ASCII 0x6E) 字典序大于 ISO-8601 / 数字开头串，会拔高水位永久阻塞采集。
+     */
+    @Test
+    void acknowledgeShouldSkipNullLiteralSentinel() {
+        // 手工构造含 "null" sourceRef 的 record（绕过 collect 直接喂 acknowledge）
+        final WatermarkStore store = new InMemoryWatermarkStore();
+        final EsbCollectorAdapter adapter = new EsbCollectorAdapter(
+                noAuthConfig(), RestClient.builder().build(), store);
+
+        final CollectionRecord nullCursorRecord = CollectionRecord.builder()
+                .adapterId(ADAPTER_ID)
+                .sourceRef("null")
+                .payloadDataType(PAYLOAD_DATA_TYPE)
+                .rawData(java.util.Map.of("invoiceId", "INVX"))
+                .collectedAt(Instant.now())
+                .idempotencyKey(com.puchain.fep.collector.support.IdempotencyKeyGenerator
+                        .generate(ADAPTER_ID, "null"))
+                .build();
+        final CollectionRecord realCursorRecord = CollectionRecord.builder()
+                .adapterId(ADAPTER_ID)
+                .sourceRef("C5")
+                .payloadDataType(PAYLOAD_DATA_TYPE)
+                .rawData(java.util.Map.of("invoiceId", "INV5"))
+                .collectedAt(Instant.now())
+                .idempotencyKey(com.puchain.fep.collector.support.IdempotencyKeyGenerator
+                        .generate(ADAPTER_ID, "C5"))
+                .build();
+
+        // 只含 null 哨兵 — watermark 不动
+        adapter.acknowledge(ctx(), List.of(nullCursorRecord));
+        assertThat(store.get(ADAPTER_ID))
+                .as("仅 null 哨兵 record → watermark 不应推进")
+                .isEmpty();
+
+        // 混合批次（null + 真值） — watermark 应推到真值
+        adapter.acknowledge(ctx(), List.of(nullCursorRecord, realCursorRecord));
+        assertThat(store.get(ADAPTER_ID))
+                .as("混合批次 watermark 应推到非 null 中最大值（排除哨兵）")
+                .contains("C5");
+    }
+
+    /**
+     * Quality MINOR — 鉴权字段对称约束：authHeaderName 与 authHeaderValueRef 必须同 null 或同非 null。
+     */
+    @Test
+    void configShouldRejectAsymmetricAuthFields() {
+        // authHeaderName 设了但 authHeaderValueRef 漏 → 拒绝
+        assertThatThrownBy(() -> new EsbAdapterConfig(
+                ADAPTER_ID, PAYLOAD_DATA_TYPE, ENDPOINT,
+                "Authorization", null,
+                1000L, CURSOR_PARAM, INITIAL_CURSOR, Duration.ofSeconds(10)))
+                .as("authHeaderName 设但 authHeaderValueRef null → IllegalArgumentException")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("authHeaderName")
+                .hasMessageContaining("authHeaderValueRef");
+
+        // authHeaderValueRef 设了但 authHeaderName 漏 → 拒绝
+        assertThatThrownBy(() -> new EsbAdapterConfig(
+                ADAPTER_ID, PAYLOAD_DATA_TYPE, ENDPOINT,
+                null, "FEP_ESB_KEY",
+                1000L, CURSOR_PARAM, INITIAL_CURSOR, Duration.ofSeconds(10)))
+                .as("authHeaderValueRef 设但 authHeaderName null → IllegalArgumentException")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("authHeaderName");
     }
 
     /**

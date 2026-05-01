@@ -72,6 +72,11 @@ public record EsbAdapterConfig(
             throw new IllegalArgumentException(
                     "timeout must be > 0, got " + timeout);
         }
+        // 鉴权字段对称约束 — 防误配置（authHeaderName 写了 authHeaderValueRef 漏了 → 静默无鉴权）
+        if ((authHeaderName == null) != (authHeaderValueRef == null)) {
+            throw new IllegalArgumentException(
+                    "authHeaderName and authHeaderValueRef must be both null or both non-null");
+        }
     }
 
     /**

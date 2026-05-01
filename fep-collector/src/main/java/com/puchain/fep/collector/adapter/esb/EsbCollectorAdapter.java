@@ -18,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -76,6 +77,13 @@ public final class EsbCollectorAdapter implements CollectorAdapter {
      */
     private static final ParameterizedTypeReference<List<Map<String, Object>>> ROW_LIST_TYPE =
             new ParameterizedTypeReference<>() { };
+
+    /**
+     * "null" 字面值哨兵 — JSON row 缺 cursor 字段时 {@code String.valueOf(null) = "null"}，
+     * acknowledge 必须显式跳过，避免拔高水位（与 {@link com.puchain.fep.collector.adapter.jdbc.JdbcCollectorAdapter}
+     * NULL_LITERAL 同款）。
+     */
+    private static final String NULL_LITERAL = "null";
 
     private final EsbAdapterConfig config;
     private final RestClient restClient;
@@ -182,11 +190,18 @@ public final class EsbCollectorAdapter implements CollectorAdapter {
         for (final Map<String, Object> row : rows) {
             // sourceRef = cursorParam 字段值（与 acknowledge 推水位的字段一致）
             final String sourceRef = String.valueOf(row.get(config.cursorParam()));
+            // 过滤 null 值列 — Map.copyOf 不接受 null value（与 JdbcCollectorAdapter L178 同款）
+            final Map<String, Object> sanitizedRow = new LinkedHashMap<>();
+            for (final Map.Entry<String, Object> entry : row.entrySet()) {
+                if (entry.getValue() != null) {
+                    sanitizedRow.put(entry.getKey(), entry.getValue());
+                }
+            }
             records.add(CollectionRecord.builder()
                     .adapterId(getId())
                     .sourceRef(sourceRef)
                     .payloadDataType(config.payloadDataType())
-                    .rawData(row)
+                    .rawData(sanitizedRow)
                     .collectedAt(collectedAt)
                     .idempotencyKey(IdempotencyKeyGenerator.generate(getId(), sourceRef))
                     .build());
@@ -203,10 +218,16 @@ public final class EsbCollectorAdapter implements CollectorAdapter {
         if (records.isEmpty()) {
             return;
         }
-        // 取本批 sourceRef（即 row[cursorParam]）字典序最大值推进 watermark
+        // 取本批 sourceRef（即 row[cursorParam]）字典序最大值推进 watermark；
+        // 与 JdbcCollectorAdapter 同款，"null" 字面值哨兵排除（避免 nullable cursor 字段拔高水位）。
+        // "null" 的 ASCII（0x6E）字典序大于 ISO-8601 / 数字开头串（'0'-'9' = 0x30-0x39），
+        // 朴素 max 比较会错误推进 watermark；故必须显式跳过。
         String maxCursor = null;
         for (final CollectionRecord record : records) {
             final String cursor = record.getSourceRef();
+            if (NULL_LITERAL.equals(cursor)) {
+                continue;
+            }
             if (maxCursor == null || cursor.compareTo(maxCursor) > 0) {
                 maxCursor = cursor;
             }
