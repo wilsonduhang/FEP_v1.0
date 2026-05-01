@@ -43,8 +43,16 @@ class DirMapConfigFallbackIT {
     @Autowired
     private DynamicMessageDirectionMap dynamicMap;
 
+    /**
+     * T7 quality reviewer P1-2 修复（2026-05-01）：方法名澄清 — 原名
+     * {@code shouldStartUpSuccessfully_whenDbIsUnavailable} 误导（@MockBean 在
+     * @PostConstruct.load() 跑完后才被 thenThrow 配置，故实际验证的是 reload-with-DB-down，
+     * 不是 startup-with-DB-down）。Spring ctx 启动期间 mock 默认返回空 List，
+     * dynamicMap 已成功初始化（empty cache）；本测试触发的是 reload() 路径上 Port
+     * 抛异常时 cache 不被覆盖、lookup 走 fallback。语义不变，命名贴合行为。
+     */
     @Test
-    void shouldStartUpSuccessfully_whenDbIsUnavailable() {
+    void shouldKeepEmptyCache_andServeStaticFallback_whenReloadFails() {
         // Mock Port throws on findAll; reload triggers re-load via Port → exception → cache stays empty
         when(store.findAll()).thenThrow(new QueryTimeoutException("DB unreachable"));
         dynamicMap.reload();

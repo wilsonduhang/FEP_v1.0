@@ -59,18 +59,33 @@ class JpaDirMapConfigStoreIT {
         // DirMapConfigAdminService.update 单一来源负责）。本 IT 直调 store.update()
         // 跳过 Service 链路，因此 history 表行数不应变化。Service 链路的 history 写入
         // 由 T5 IT (DirMapConfigAdminServiceIT) 验证。
+        //
+        // T7 quality reviewer P0-1 修复（2026-05-01）：try/finally 保证还原 MSG_3001
+        // 至 V20 静态基线（INBOUND_PASSIVE/MODE_1）。H2 dev profile 用
+        // DB_CLOSE_DELAY=-1（application-test.yml）跨 ctx 持久化，本测试此前未还原 →
+        // sibling DirMapConfigControllerIT.shouldMatchStaticBaseline_eachOf88Rows
+        // 在同次 mvn 运行中 FAIL（baseline 看到 OUTBOUND_ACTIVE/MODE_2 而非
+        // INBOUND_PASSIVE/MODE_1）。
         long historyBefore = historyRepo.count();
         DirMapConfigUpdate update = new DirMapConfigUpdate(
                 MessageType.MSG_3001, AccessRole.ACCEPTING_ORG,
                 RoleDirection.OUTBOUND_ACTIVE, true, ProcessingMode.MODE_2,
                 "admin1");
-        DirMapConfigSnapshot after = store.update(update);
+        try {
+            DirMapConfigSnapshot after = store.update(update);
 
-        assertThat(after.direction()).isEqualTo(RoleDirection.OUTBOUND_ACTIVE);
-        assertThat(after.mode()).isEqualTo(ProcessingMode.MODE_2);
-        assertThat(historyRepo.count())
-                .as("Adapter 不应写 history（v1i P0-B6）")
-                .isEqualTo(historyBefore);
+            assertThat(after.direction()).isEqualTo(RoleDirection.OUTBOUND_ACTIVE);
+            assertThat(after.mode()).isEqualTo(ProcessingMode.MODE_2);
+            assertThat(historyRepo.count())
+                    .as("Adapter 不应写 history（v1i P0-B6）")
+                    .isEqualTo(historyBefore);
+        } finally {
+            // 还原至 V20 baseline（INBOUND_PASSIVE/MODE_1, requiresFep=true, system）
+            store.update(new DirMapConfigUpdate(
+                    MessageType.MSG_3001, AccessRole.ACCEPTING_ORG,
+                    RoleDirection.INBOUND_PASSIVE, true, ProcessingMode.MODE_1,
+                    "system"));
+        }
     }
 
     @Test

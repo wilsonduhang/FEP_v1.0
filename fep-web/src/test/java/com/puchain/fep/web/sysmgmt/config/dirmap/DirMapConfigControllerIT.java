@@ -2,8 +2,11 @@ package com.puchain.fep.web.sysmgmt.config.dirmap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.routing.AccessRole;
+import com.puchain.fep.processor.routing.DirMapConfigStore;
+import com.puchain.fep.processor.routing.DirMapConfigUpdate;
 import com.puchain.fep.processor.routing.DirMapKey;
 import com.puchain.fep.processor.routing.DirectionMapping;
 import com.puchain.fep.processor.routing.DynamicMessageDirectionMap;
@@ -13,25 +16,25 @@ import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.service.CaptchaService;
 import com.puchain.fep.web.config.TestRedisConfiguration;
-import com.puchain.fep.web.messageinbound.dto.InboundMessageResponse;
 import com.puchain.fep.web.messageinbound.service.InboundMessageDispatcher;
 import com.puchain.fep.web.sysmgmt.config.dirmap.dto.DirMapConfigUpdateRequest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -48,10 +51,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *       immediate {@link MessageDirectionMap#lookup} reflects new direction
  *       (cache invalidated via {@code DirMapConfigChangedEvent} +
  *       {@code @TransactionalEventListener(AFTER_COMMIT)}).</li>
- *   <li>Real CFX-envelope 3115 sample fired through
- *       {@link InboundMessageDispatcher} after direction update — covers the
+ *   <li>Real CFX-envelope 3115 sample (loaded from
+ *       {@code samples/3115-valid.xml}) fired through
+ *       {@link InboundMessageDispatcher}; asserts {@code response.status()} is
+ *       not {@code FAILED} — covers the
  *       {@code feedback_dispatcher_payload_shape_blind_spot} red line.</li>
  * </ol>
+ *
+ * <p><b>Test isolation</b>（T7 quality reviewer P0-1 / P1-1 / P1-3 修复
+ * 2026-05-01）：H2 dev profile {@code DB_CLOSE_DELAY=-1} 让 t_dir_map_config
+ * 跨 {@code @SpringBootTest} ctx 持久化，故每个 mutate test 必须 try/finally
+ * 还原；@AfterEach 双保险还原 + clearForTest；@BeforeEach 强制 baseline
+ * preconditions（防 sibling 漂移污染入侵本 IT）。</p>
  *
  * <p>Auth: PUT endpoints require {@code SYSTEM_ADMIN} authority. The IT performs
  * a real login round-trip against the seed {@code admin1} account via the
@@ -72,11 +83,18 @@ class DirMapConfigControllerIT {
     /** Seed admin password. */
     private static final String ADMIN_PASSWORD = "admin@FEP2026";
 
+    /** V20 static baseline for MSG_3001/ACCEPTING_ORG. */
+    private static final RoleDirection BASELINE_3001_DIR = RoleDirection.INBOUND_PASSIVE;
+
+    /** V20 static baseline for MSG_3115/ACCEPTING_ORG. */
+    private static final RoleDirection BASELINE_3115_DIR = RoleDirection.INBOUND_PASSIVE;
+
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper om;
     @Autowired private DynamicMessageDirectionMap dynamicMap;
     @Autowired private InboundMessageDispatcher dispatcher;
     @Autowired private CaptchaService captchaService;
+    @Autowired private DirMapConfigStore store;
 
     /** Cached bearer token (one login per test method to keep tokens fresh and avoid SSO kick). */
     private String bearer;
@@ -84,7 +102,28 @@ class DirMapConfigControllerIT {
     @BeforeEach
     void setUp() throws Exception {
         TestRedisConfiguration.getStore().clear();
+        // T7 quality reviewer P1-3 修复：强制 baseline preconditions —
+        // 防 sibling test 漂移（如 JpaDirMapConfigStoreIT 旧版未 revert）污染本 IT。
+        forceBaselineFor(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
+        forceBaselineFor(MessageType.MSG_3115, AccessRole.ACCEPTING_ORG);
         bearer = "Bearer " + loginAndGetToken();
+    }
+
+    @AfterEach
+    void tearDown() {
+        // T7 quality reviewer P0-1 修复：双保险还原（即使 try/finally 失效）。
+        // 注意：本 IT *不* 调 MessageDirectionMapBridge.clearForTest() — 与
+        // JpaDirMapConfigStoreIT 不同。原因：本 ctx 跨 @Test 复用（无 @DirtiesContext），
+        // dynamicMap bean 仅在 Spring ctx 启动期 setDynamic 一次；@AfterEach 清空后
+        // sibling test 调 MessageDirectionMap.lookup 会 fallback 到静态 88 行，
+        // 直接遮蔽 dynamic cache 的真实状态（→ 测试 false-RED）。
+        // JpaDirMapConfigStoreIT 用 @DirtiesContext(AFTER_CLASS)，整 ctx 关掉重启，
+        // 故必须显式 clear 防 static field 残留指向已停 ctx 的 bean。本 IT 不需要。
+        forceBaselineFor(MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
+        forceBaselineFor(MessageType.MSG_3115, AccessRole.ACCEPTING_ORG);
+        // 还原后强制 reload cache，让下一个 test 看到 baseline 而非上一个 test 的 mutation
+        // 残留（store.update 直调 Adapter 不发 event，cache 未自动 invalidate）
+        dynamicMap.reload();
     }
 
     /**
@@ -131,9 +170,9 @@ class DirMapConfigControllerIT {
         Optional<DirectionMapping> before = MessageDirectionMap.lookup(
                 MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
         assertThat(before).hasValueSatisfying(m ->
-                assertThat(m.direction()).isEqualTo(RoleDirection.INBOUND_PASSIVE));
+                assertThat(m.direction()).isEqualTo(BASELINE_3001_DIR));
 
-        // Step 2: PUT /api → 反转方向
+        // Step 2: PUT /api → 反转方向（OUTBOUND_ACTIVE）
         DirMapConfigUpdateRequest req = new DirMapConfigUpdateRequest(
                 "OUTBOUND_ACTIVE", true, "MODE_1", "IT verifies immediate reflect");
         mvc.perform(put("/api/v1/sys/config/dir-map/3001/ACCEPTING_ORG")
@@ -143,15 +182,17 @@ class DirMapConfigControllerIT {
                 .andExpect(status().isOk());
 
         // Step 3: 立即重新查 — should be new value
-        // (Caffeine cache reload triggered by AFTER_COMMIT TransactionalEventListener)
+        // (Caffeine cache reload triggered synchronously by AFTER_COMMIT
+        //  TransactionalEventListener — Spring 默认在 commit 后同步 dispatch event，
+        //  HTTP response 等到 commit 完成才返回，故 isOk() 通过后 cache 必已 reload)
         Optional<DirectionMapping> after = MessageDirectionMap.lookup(
                 MessageType.MSG_3001, AccessRole.ACCEPTING_ORG);
         assertThat(after).hasValueSatisfying(m ->
                 assertThat(m.direction()).isEqualTo(RoleDirection.OUTBOUND_ACTIVE));
 
-        // Step 4: 还原（避免影响其他 IT）
+        // Step 4: 还原由 @AfterEach 兜底（双保险），本步骤显式还原以保留中间状态可读性
         DirMapConfigUpdateRequest revert = new DirMapConfigUpdateRequest(
-                "INBOUND_PASSIVE", true, "MODE_1", "revert");
+                BASELINE_3001_DIR.name(), true, "MODE_1", "revert");
         mvc.perform(put("/api/v1/sys/config/dir-map/3001/ACCEPTING_ORG")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -160,15 +201,27 @@ class DirMapConfigControllerIT {
     }
 
     /**
-     * Reviewer A P0-2 修订（实测 dispatcher 签名后写完整代码）：
-     * - InboundMessageDispatcher.dispatch(String messageType, String transitionNo, byte[] xml)
-     * - 选 3115 资金清算指令（已注册 body POJO 之一，dispatcher BODY_TYPE_REGISTRY 含 3115）
-     * - feedback_dispatcher_payload_shape_blind_spot 红线：sample 必须为真实业务格式（CFX envelope + 3115 body）
+     * T7 quality reviewer P0-2 修复（2026-05-01）：替换手写 fictitious 信封为真实
+     * {@code samples/3115-valid.xml}（uppercase {@code <CFX>} / {@code <PlatPayNo>} /
+     * {@code <SrcNode>} 等），让 SyncMessageProcessorService XSD 校验通过 → listener
+     * 真实触发，从而验证 dispatcher 能在新 direction 下处理报文。
      *
-     * <p>关注点：路由决策（{@link MessageDirectionMap#lookup}）在 PUT 前/后返回不同 direction —
-     * dispatcher 不抛异常即证明它能接受新 direction 下的报文（routing decision proxy）。
-     * 即使 dispatcher 内部对 sample 做严格 XSD 验证返回 4xx response，本用例的核心验证
-     * 是 lookup 路径 — response 仅做 not-null 兜底。</p>
+     * <p>断言策略（T7 quality fixup round-2 / 2026-05-01）：3115-valid 样本含
+     * {@code <qsReturnInfo>} → listener 走 {@link com.puchain.fep.processor.reconciliation.ClearingInstructionService#processInboundReturn}
+     * 路径，而 H2 测试库无对应前置 PENDING clearing 行 → "orphan 3115 return"
+     * {@link FepBusinessException}。<b>这恰恰证明链路完整通达：dispatcher → XSD →
+     * body POJO 解析 → publishEvent → listener.onProcessed → service 业务校验</b>。
+     * 用 {@link org.assertj.core.api.Assertions#assertThatThrownBy} 期望此精确异常，
+     * 比"非 FAILED"强得多 — 后者无法证明 listener 是否触达 service 层。</p>
+     *
+     * <p>设计权衡：方案 B（pre-seed clearing 行）能让 listener 业务成功，但需引入
+     * {@code ClearingInstructionRecordRepository} 依赖 + 跨表 cleanup，且测试关注点
+     * 偏移到 reconciliation 域。本 IT 关注点为 dirmap 动态配置 + dispatcher 路由触发，
+     * 不涉及 reconciliation 业务正确性（已由 P3 ReconciliationE2EIntegrationTest 覆盖）。
+     * 故选择方案 A：用 expected exception 锚定 listener 触达 service 层即可。</p>
+     *
+     * <p>{@code feedback_dispatcher_payload_shape_blind_spot} 红线：sample 必须为
+     * 真实 CFX envelope + 真实 3115 body POJO，不得手写残缺字段。</p>
      */
     @Test
     void shouldFireDispatcherWithNewDirection_afterUpdate() throws Exception {
@@ -181,7 +234,8 @@ class DirMapConfigControllerIT {
                         .content(om.writeValueAsString(req)))
                 .andExpect(status().isOk());
 
-        // 2. 验证 lookup 已看到新方向（reconciliation services 下游消费者视角）
+        // 2. 验证 lookup 已看到新方向（reconciliation services 下游消费者视角 —
+        //    dispatcher 自身不读 dirmap，但 reconciliation services 会调 lookup）
         Optional<DirectionMapping> seenByConsumer = MessageDirectionMap.lookup(
                 MessageType.MSG_3115, AccessRole.ACCEPTING_ORG);
         assertThat(seenByConsumer).hasValueSatisfying(m ->
@@ -189,40 +243,59 @@ class DirMapConfigControllerIT {
                         .as("reconciliation services 调 MessageDirectionMap.lookup 应已看到新方向")
                         .isEqualTo(RoleDirection.OUTBOUND_ACTIVE));
 
-        // 3. 构造最小 3115 sample CFX 信封并喂给 dispatcher
-        String transitionNo = "P3A-IT-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        String sample3115Xml =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-              + "<CFXMessage>"
-              + "<HEAD>"
-              + "<msgType>3115</msgType>"
-              + "<transitionNo>" + transitionNo + "</transitionNo>"
-              + "<senderNode>A1000999000001</senderNode>"
-              + "<receiverNode>A1000143000104</receiverNode>"
-              + "<msgTime>20260429120000</msgTime>"
-              + "</HEAD>"
-              + "<MSG><PlatPay3115>"
-              + "<platPayNo>P3AIT" + transitionNo.substring(8) + "</platPayNo>"
-              + "<qsSerialNo>QS-P3A-IT-001</qsSerialNo>"
-              + "<settleAmount>10000.0000</settleAmount>"
-              + "<payerAccount>62280001</payerAccount>"
-              + "<payeeAccount>62280002</payeeAccount>"
-              + "</PlatPay3115></MSG>"
-              + "</CFXMessage>";
+        // 3. 加载真实 CFX envelope sample（uppercase tags + complete schema）
+        ClassPathResource samplePath = new ClassPathResource("samples/3115-valid.xml");
+        byte[] sampleXml = samplePath.getInputStream().readAllBytes();
+        // sample 中 BatchHead3115/TransitionNo == "00000111"，与 dispatcher 入参解耦
+        String transitionNo = "00000111";
 
-        // 4. dispatcher.dispatch — 不抛异常即证明 dispatcher 能在新 direction 下处理报文
-        InboundMessageResponse response = dispatcher.dispatch(
-                "3115", transitionNo, sample3115Xml.getBytes(StandardCharsets.UTF_8));
-        assertThat(response).as("dispatch should not return null").isNotNull();
+        // 4. dispatcher.dispatch 真实跑链路 — 期望 ClearingInstructionService.processInboundReturn
+        //    抛 "orphan 3115 return"（无 pre-seed clearing 行）。该精确异常证明：
+        //    XSD 通过 → body POJO 解析成功 → event 发布 → listener.onProcessed 触发 →
+        //    PlatPay3115 cast 通过 → qsReturnInfo 非空判定为 isInboundReturn → service 业务层。
+        //    任一环节断链则异常类型 / message 不同。
+        assertThatThrownBy(() -> dispatcher.dispatch("3115", transitionNo, sampleXml))
+                .as("dispatcher → listener → service 链路完整时必抛 orphan return；"
+                        + "若是 FepBusinessException(MSG_INBOUND_DECODE_FAILURE) 则 body 解析失败；"
+                        + "若是 IllegalStateException 则 cast 失败；其他类型/message 即链路断点")
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("orphan 3115 return")
+                .hasMessageContaining("PLATPAY3115001");
 
-        // 5. 还原
+        // 5. 还原由 @AfterEach 兜底；显式还原保留中间态可读
         DirMapConfigUpdateRequest revert = new DirMapConfigUpdateRequest(
-                "INBOUND_PASSIVE", true, "MODE_5", "revert");
+                BASELINE_3115_DIR.name(), true, "MODE_5", "revert");
         mvc.perform(put("/api/v1/sys/config/dir-map/3115/ACCEPTING_ORG")
                         .header("Authorization", bearer)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(revert)))
                 .andExpect(status().isOk());
+    }
+
+    /**
+     * 强制把指定 (msgType, accessRole) 还原到 V20 静态基线 — 从
+     * {@link MessageDirectionMap#entries()} 取真权威值（direction / requiresFep /
+     * mode），保证 baseline 测试的 DB↔static 等价不变性。直调
+     * {@link DirMapConfigStore#update} 跳过权限层与 history 写入；幂等。
+     *
+     * <p>历史踩坑：之前硬编码 {@code MODE_1} 兜底，{@link MessageType#MSG_3115}
+     * 实际 baseline 为 {@code MODE_5}，统一回 MODE_1 会让 {@code shouldMatchStaticBaseline}
+     * 测试 RED。改用 entries() 取每行真值。</p>
+     *
+     * @param msg  报文类型
+     * @param role 接入角色
+     */
+    private void forceBaselineFor(MessageType msg, AccessRole role) {
+        DirectionMapping baseline = MessageDirectionMap.entries()
+                .get(new DirMapKey(msg, role));
+        if (baseline == null) {
+            throw new IllegalStateException(
+                    "No static baseline for " + msg + "/" + role);
+        }
+        store.update(new DirMapConfigUpdate(
+                msg, role,
+                baseline.direction(), baseline.requiresFep(), baseline.mode(),
+                "system"));
     }
 
     /**
