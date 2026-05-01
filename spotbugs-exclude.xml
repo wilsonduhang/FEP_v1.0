@@ -177,6 +177,21 @@
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
 
+    <!-- RouteRegistry: P4 T7b — duplicate payloadDataType / messageType 在启动时快速失败
+         是期望行为（Spring 单例，与 JwtTokenProvider 同款 fail-fast 模式） -->
+    <Match>
+        <Class name="com.puchain.fep.collector.assembler.RouteRegistry"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+
+    <!-- TransitionSeqGenerator: P4 T7b — LocalDate.toString() 输出 ISO yyyy-MM-dd
+         无 CRLF 可能；已通过 LogSanitizer.sanitize 包装，但 FindSecBugs 无法
+         tracing through，仍报告。已确认日志输入安全。 -->
+    <Match>
+        <Class name="com.puchain.fep.collector.assembler.TransitionSeqGenerator"/>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
     <!-- CaptchaService: 验证码仅使用 ASCII 字母数字，equalsIgnoreCase 无 Unicode 风险 -->
     <Match>
         <Class name="com.puchain.fep.web.auth.service.CaptchaService"/>
