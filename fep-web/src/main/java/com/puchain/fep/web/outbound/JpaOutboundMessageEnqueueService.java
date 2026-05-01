@@ -49,6 +49,13 @@ import java.util.Objects;
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class JpaOutboundMessageEnqueueService implements OutboundMessageEnqueuePort {
 
+    /**
+     * Initial queue status assigned at enqueue time. The downstream P5+ TLQ
+     * dispatcher transitions PENDING → SENT/FAILED/RETRY (T7a-fix M4: extracted
+     * from inline literal to centralize the wire value).
+     */
+    private static final String STATUS_PENDING = "PENDING";
+
     private final OutboundMessageQueueRepository repository;
 
     /**
@@ -141,7 +148,7 @@ public class JpaOutboundMessageEnqueueService implements OutboundMessageEnqueueP
         entity.setMessageBodyXml(bodyXml);
         entity.setPayloadDataType(envelope.payloadDataType());
         entity.setSourceRef(envelope.sourceRef());
-        entity.setStatus("PENDING");
+        entity.setStatus(STATUS_PENDING);
         entity.setRetryCount(0);
         entity.setNextRetryAt(null);
         entity.setErrorMessage(null);
