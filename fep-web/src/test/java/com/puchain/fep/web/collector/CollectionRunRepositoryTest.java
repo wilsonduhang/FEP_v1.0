@@ -58,6 +58,14 @@ class CollectionRunRepositoryTest {
         repository.deleteAll();
     }
 
+    /**
+     * Asserts H2's rendering of V23 indexes (this query targets H2's
+     * {@code INFORMATION_SCHEMA.INDEXES} view, not standard SQL). Production
+     * MySQL 8 index creation is verified via Flyway-to-MySQL CI in nightly
+     * runs (when available); the V23 SQL syntax for the {@code CREATE INDEX}
+     * statements is portable across H2 + MySQL, so a green H2 assertion is
+     * an acceptable proxy until the MySQL CI lane lands (T8-fix MEDIUM #4).
+     */
     @Test
     void v23SchemaIndexesShouldExistOnCollectionRun() {
         // H2 INFORMATION_SCHEMA.INDEXES query: lower-case because DATABASE_TO_LOWER=TRUE.

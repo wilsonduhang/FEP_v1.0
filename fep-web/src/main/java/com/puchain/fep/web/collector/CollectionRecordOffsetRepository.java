@@ -6,9 +6,10 @@ import org.springframework.stereotype.Repository;
 /**
  * Spring Data JPA repository for {@link CollectionRecordOffsetEntity} (P4 T8).
  *
- * <p>Surface kept minimal — production writes go through
- * {@link JdbcWatermarkStore} via {@code JdbcTemplate}; this repository is here
- * for management-UI reads and {@code @DataJpaTest} schema validation.</p>
+ * <p>Production reads/writes go through {@link JpaWatermarkStore} (T8-fix —
+ * replaces the prior {@code JdbcTemplate}-based MERGE which did not parse on
+ * MySQL 8). The future T6b admin UI may surface an "active watermarks" panel
+ * via a Spring Data finder on the same repository.</p>
  *
  * @author FEP Team
  * @since 1.0.0

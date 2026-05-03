@@ -125,7 +125,9 @@ public class JdbcCollectionRunRecorderService implements CollectionRunRecorder {
                     FepErrorCode.COLLECT_PERSIST_FAILURE,
                     "collection_run row not found for runId=" + LogSanitizer.sanitize(runId));
         }
-        final CollectionRunEntity entity = found.orElseThrow();
+        // .get() is safe here — the isEmpty() guard above already throws on absent;
+        // .orElseThrow() reads as a redundant double-throw (T8-fix MEDIUM #1).
+        final CollectionRunEntity entity = found.get();
         entity.setStatus(status.name());
         entity.setAssembledCount(assembled);
         entity.setSubmittedCount(submitted);

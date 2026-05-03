@@ -16,7 +16,8 @@ import java.util.Optional;
  *   <li>未知 adapterId 调用 {@link #get} 必须返回 {@link Optional#empty}（首次运行语义）</li>
  * </ul>
  *
- * <p>生产实现：{@code JdbcWatermarkStore}（T8 引入）。单测实现：
+ * <p>生产实现：{@code com.puchain.fep.web.collector.JpaWatermarkStore}（T8 引入；
+ * T8-fix 由 JDBC MERGE 迁移到 JPA Repository 以支持 MySQL 8 dialect）。单测实现：
  * {@link InMemoryWatermarkStore}。
  *
  * @author FEP Team

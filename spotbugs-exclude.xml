@@ -134,10 +134,12 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
-    <!-- JdbcWatermarkStore (P4 T8): adapterId 经 LogSanitizer.sanitize() 清理 CR/LF；
-         FSB 跨方法 taint 分析无法跟踪本项目自定义 sanitizer，故白名单豁免；同 CollectorScheduler 模式 -->
+    <!-- JpaWatermarkStore (P4 T8-fix; renamed from JdbcWatermarkStore + moved to fep-web
+         to use Hibernate-emitted UPSERT instead of H2-only MERGE INTO ... KEY(col)):
+         adapterId 经 LogSanitizer.sanitize() 清理 CR/LF；FSB 跨方法 taint 分析无法跟踪
+         本项目自定义 sanitizer，故白名单豁免；同 CollectorScheduler 模式 -->
     <Match>
-        <Class name="com.puchain.fep.collector.support.JdbcWatermarkStore"/>
+        <Class name="com.puchain.fep.web.collector.JpaWatermarkStore"/>
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 

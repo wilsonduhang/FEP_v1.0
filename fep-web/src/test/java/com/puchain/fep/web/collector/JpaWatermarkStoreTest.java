@@ -1,6 +1,5 @@
 package com.puchain.fep.web.collector;
 
-import com.puchain.fep.collector.support.JdbcWatermarkStore;
 import com.puchain.fep.collector.support.WatermarkStore;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
@@ -11,25 +10,24 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
- * {@link JdbcWatermarkStore} behaviour test (P4 T8).
+ * {@link JpaWatermarkStore} behaviour test (P4 T8-fix).
  *
- * <p>Wires the production class against the H2 schema applied by Flyway V23.
- * The class is annotated {@code @Profile("!test")} but {@code @SpringBootTest}
- * does not activate {@code test} unless explicitly set, so the bean IS available
- * for autowiring here (matching the dev/prod activation profile).</p>
+ * <p>Wires the production class against the H2 schema applied by Flyway V23,
+ * mirroring the T7a precedent
+ * ({@link com.puchain.fep.web.outbound.JpaOutboundMessageEnqueueServiceTest}).
+ * Exercises {@code @Profile("!test")} activation by relying on
+ * {@code @SpringBootTest}'s default profile (no {@code test} activation), so
+ * the JPA-backed bean is the wired {@link WatermarkStore} implementation.</p>
  *
  * <p>Coverage:
  * <ul>
@@ -37,30 +35,31 @@ import static org.mockito.Mockito.mock;
  *   <li>{@code put} then {@code get} round-trips the same value</li>
  *   <li>{@code put} overwrites a previous watermark (UPSERT semantics)</li>
  *   <li>{@code put} on different adapterIds keeps independent rows</li>
- *   <li>Mocked JdbcTemplate failure rewraps to {@code COLLECT_PERSIST_FAILURE}</li>
+ *   <li>128-character VARCHAR boundary value round-trips intact</li>
+ *   <li>Mocked repository failure rewraps to {@code COLLECT_PERSIST_FAILURE}</li>
  * </ul>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @SpringBootTest
-@DisplayName("JdbcWatermarkStore: get + UPSERT put + per-adapter isolation + DAE rewrap")
-class JdbcWatermarkStoreTest {
+@DisplayName("JpaWatermarkStore: get + UPSERT put + per-adapter isolation + DAE rewrap")
+class JpaWatermarkStoreTest {
 
     @Autowired
     private WatermarkStore store;
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    private CollectionRecordOffsetRepository repository;
 
     @BeforeEach
     void purgeBefore() {
-        jdbcTemplate.update("DELETE FROM collection_record_offset");
+        repository.deleteAll();
     }
 
     @AfterEach
     void purgeAfter() {
-        jdbcTemplate.update("DELETE FROM collection_record_offset");
+        repository.deleteAll();
     }
 
     @Test
@@ -86,10 +85,9 @@ class JdbcWatermarkStoreTest {
                 .as("UPSERT must replace the prior value (watermark advances)")
                 .contains("2026-04-30T00:00:00Z");
         // Exactly one row for the adapterId — UPSERT, not INSERT
-        final Integer rowCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM collection_record_offset WHERE adapter_id = ?",
-                Integer.class, "ADP_T8_W2");
-        assertThat(rowCount).isEqualTo(1);
+        assertThat(repository.findAll())
+                .filteredOn(e -> "ADP_T8_W2".equals(e.getAdapterId()))
+                .hasSize(1);
     }
 
     @Test
@@ -110,15 +108,15 @@ class JdbcWatermarkStoreTest {
     }
 
     @Test
-    void putWhenJdbcTemplateThrowsShouldRewrapToCollectPersistFailure() {
-        // Use doThrow on the vararg overload to avoid Mockito matcher ambiguity
-        // for varargs (when(...).thenThrow does not always bind the varargs overload
-        // correctly; doThrow is unambiguous).
-        final JdbcTemplate mockTpl = mock(JdbcTemplate.class);
-        doThrow(new DataAccessResourceFailureException("simulated outage"))
-                .when(mockTpl).update(anyString(), any(Object.class), any(Object.class), any(Object.class));
+    void putWhenRepositoryThrowsShouldRewrapToCollectPersistFailure() {
+        // Mock-driven path: prove the catch block surfaces the canonical
+        // FepErrorCode.COLLECT_PERSIST_FAILURE without leaking the JPA exception.
+        // No vararg matcher ambiguity here — repository.save takes a single argument.
+        final CollectionRecordOffsetRepository mockRepo = mock(CollectionRecordOffsetRepository.class);
+        when(mockRepo.save(any(CollectionRecordOffsetEntity.class)))
+                .thenThrow(new DataAccessResourceFailureException("simulated outage"));
 
-        final JdbcWatermarkStore mockStore = new JdbcWatermarkStore(mockTpl);
+        final JpaWatermarkStore mockStore = new JpaWatermarkStore(mockRepo);
         assertThatThrownBy(() -> mockStore.put("ADP_BAD", "wm"))
                 .isInstanceOf(FepBusinessException.class)
                 .extracting(ex -> ((FepBusinessException) ex).getErrorCode())
@@ -126,14 +124,12 @@ class JdbcWatermarkStoreTest {
     }
 
     @Test
-    void getWhenJdbcTemplateThrowsShouldRewrapToCollectPersistFailure() {
-        final JdbcTemplate mockTpl = mock(JdbcTemplate.class);
-        // queryForObject(sql, Class<T>, Object...) overload — pin args by anyString to
-        // bind to the (String, Class, Object...) signature unambiguously.
-        doThrow(new DataAccessResourceFailureException("simulated outage"))
-                .when(mockTpl).queryForObject(anyString(), eq(String.class), any(Object.class));
+    void getWhenRepositoryThrowsShouldRewrapToCollectPersistFailure() {
+        final CollectionRecordOffsetRepository mockRepo = mock(CollectionRecordOffsetRepository.class);
+        when(mockRepo.findById(any(String.class)))
+                .thenThrow(new DataAccessResourceFailureException("simulated outage"));
 
-        final JdbcWatermarkStore mockStore = new JdbcWatermarkStore(mockTpl);
+        final JpaWatermarkStore mockStore = new JpaWatermarkStore(mockRepo);
         assertThatThrownBy(() -> mockStore.get("ADP_BAD"))
                 .isInstanceOf(FepBusinessException.class)
                 .extracting(ex -> ((FepBusinessException) ex).getErrorCode())
