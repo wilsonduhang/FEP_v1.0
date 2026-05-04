@@ -1324,4 +1324,18 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- 数据采集触发 Controller (P4 T6b): 端点需认证（JWT），SPRING_ENDPOINT 是预期行为
+         （pattern 同 ReconciliationController / DirMapConfigController） -->
+    <Match>
+        <Class name="com.puchain.fep.web.collector.controller.CollectorTriggerController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
+    <!-- 数据采集运行历史 Controller (P4 T6b): 端点需认证（JWT），SPRING_ENDPOINT 是预期行为
+         （pattern 同 ReconciliationController / DirMapConfigController） -->
+    <Match>
+        <Class name="com.puchain.fep.web.collector.controller.CollectionRunController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
 </FindBugsFilter>
