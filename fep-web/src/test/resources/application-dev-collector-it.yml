@@ -1,0 +1,57 @@
+# P4 T9 IT profile — additive 配置叠加在 application-test.yml 之上。
+#
+# 为何不复用 dev profile：
+#   - dev profile 内 JpaWatermarkStore @Profile("!test") 激活已自然成立（IT
+#     用 dev,dev-collector-it 不含 "test"）
+#   - dev profile 不声明 fep.collector.* — IT 必须自配
+#
+# 关键：Adapter 配置走 CollectorProperties 平铺结构 — id/type/payload-data-type/
+# enabled/cron/source-config（Map<String,String>，非 jdbc-config 嵌套）。
+# JdbcAdapterConfig 是 record（手工 new），由 CollectorItTestConfiguration 解析。
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:fep_dev_collector_it;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+fep:
+  cors:
+    allowed-origins: http://localhost:*
+  jwt:
+    secret: ZGV2LWRldi1kZXYtZGV2LWRldi1kZXYtZGV2LWRldi1kZXYtZGV2LWRldi0xMg==
+    access-token-ttl-seconds: 7200
+    refresh-token-ttl-seconds: 604800
+    issuer: fep-it
+  collector:
+    institution-code: B43010104B0001
+    batch-size: 100
+    # lockTtlMillis 取默认 5min 即可；并发用例靠 token 持有期短窗口跑
+    adapters:
+      - id: JDBC_CONTRACT_3101
+        type: JDBC
+        payload-data-type: CONTRACT_3101
+        enabled: true
+        # cron 留空 — IT 仅手动触发，避免后台调度污染断言
+        source-config:
+          dataSourceBeanName: dataSource
+          sql: "SELECT serial_no, send_node_code, des_node_code, contract_no, contract_type, digital_seal, contract_filename, jfqy_name, yfqy_name FROM contract_register_inbox WHERE serial_no > :cursor ORDER BY serial_no LIMIT :batch_size"
+          cursorColumn: serial_no
+          # initialWatermark 留空时由 JdbcAdapterConfig.withDefaults 用 1970 ISO
+
+logging:
+  level:
+    com.puchain.fep: INFO
