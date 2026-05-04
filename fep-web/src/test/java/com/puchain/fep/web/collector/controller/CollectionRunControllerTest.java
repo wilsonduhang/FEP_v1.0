@@ -1,6 +1,5 @@
 package com.puchain.fep.web.collector.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.exception.GlobalExceptionHandler;
 import com.puchain.fep.web.collector.dto.CollectionRunResponse;
@@ -49,7 +48,6 @@ class CollectionRunControllerTest {
 
     private static final String BASE_URL = "/api/v1/collector/runs";
 
-    private final ObjectMapper om = new ObjectMapper();
     private CollectionRunQueryService service;
     private MockMvc mvc;
 
@@ -133,6 +131,26 @@ class CollectionRunControllerTest {
         mvc.perform(get(BASE_URL)
                         .param("pageNum", "1")
                         .param("pageSize", "200"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("PARAM_4002")));
+    }
+
+    @Test
+    void search_fromAfterTo_returns400() throws Exception {
+        // T6b-fix MINOR #3: defense against inverted date range.
+        // Service layer rejects with PARAM_4002 instead of silently returning
+        // zero rows from cb.between. No service mock needed — request never
+        // reaches repository.
+        when(service.search(any())).thenThrow(
+                new com.puchain.fep.common.exception.FepBusinessException(
+                        com.puchain.fep.common.domain.FepErrorCode.PARAM_4002,
+                        "from must be <= to (inverted range)"));
+
+        mvc.perform(get(BASE_URL)
+                        .param("pageNum", "1")
+                        .param("pageSize", "20")
+                        .param("from", "2026-04-30T23:59:59Z")
+                        .param("to", "2026-04-30T00:00:00Z"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code", is("PARAM_4002")));
     }

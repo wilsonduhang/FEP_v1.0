@@ -215,6 +215,44 @@ class CollectionRunQueryServiceTest {
         verify(repo).findAll(any(Specification.class), any(Pageable.class));
     }
 
+    @Test
+    void search_pageSize1_translatesTo_zeroBasedPageNumber0_lowerBound() {
+        // T6b-fix MINOR #3: lower-bound coverage — pageSize=1 (the smallest
+        // value PageQuery's @Min(1) accepts). Defends against off-by-one in
+        // the inline req.getPageNum() - 1 adapter.
+        CollectionRunQueryRequest req = new CollectionRunQueryRequest();
+        req.setPageNum(1);
+        req.setPageSize(1);
+
+        when(repo.findAll(any(Specification.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 1), 0L));
+
+        svc.search(req);
+
+        ArgumentCaptor<Pageable> pageCap = ArgumentCaptor.forClass(Pageable.class);
+        verify(repo).findAll(any(Specification.class), pageCap.capture());
+        assertThat(pageCap.getValue().getPageNumber()).isEqualTo(0);
+        assertThat(pageCap.getValue().getPageSize()).isEqualTo(1);
+    }
+
+    @Test
+    void search_fromAfterTo_throwsParam4002() {
+        // T6b-fix MINOR #3: inverted date range rejected by service before
+        // hitting repository. Otherwise cb.between would silently return
+        // zero rows, masking caller mistakes.
+        CollectionRunQueryRequest req = new CollectionRunQueryRequest();
+        req.setPageNum(1);
+        req.setPageSize(20);
+        req.setFrom(Instant.parse("2026-04-30T23:59:59Z"));
+        req.setTo(Instant.parse("2026-04-30T00:00:00Z"));
+
+        org.assertj.core.api.Assertions
+                .assertThatThrownBy(() -> svc.search(req))
+                .isInstanceOf(com.puchain.fep.common.exception.FepBusinessException.class)
+                .hasMessageContaining("inverted range");
+        org.mockito.Mockito.verifyNoInteractions(repo);
+    }
+
     private static CollectionRunEntity sampleEntity(final String runId,
                                                     final String adapterId,
                                                     final String status,

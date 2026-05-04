@@ -10,8 +10,15 @@ import java.util.Objects;
  *
  * <p>P4 T6b — {@code POST /api/v1/collector/triggers} 返回体。本 DTO 是
  * {@link com.puchain.fep.collector.support.CollectionRunResult} 的 Web 投影：
- * 暴露 {@code runId / adapterId / status / counts / errorMessage} 给管理 UI，
- * 与 {@link CollectionRunResponse}（GET 列表 DTO）字段一致以便前端复用渲染。</p>
+ * 暴露 {@code runId / adapterId / status / assembled / submitted / errors /
+ * errorMessage}（counts + status + 首个错误消息）给管理 UI。</p>
+ *
+ * <p><b>与 {@link CollectionRunResponse} 的字段差异</b>：本 DTO 是 trigger
+ * 同步链路的 subset projection；{@code collectedCount / startedAt /
+ * completedAt} 仅在 {@code GET /api/v1/collector/runs} 列表 DTO 中暴露。原因：
+ * trigger 同步返回的 {@link com.puchain.fep.collector.support.CollectionRunResult}
+ * record 不携带这 3 个字段（scheduler 设计决策；持久化由 V23 列承担）。前端
+ * 需要 timestamps 时调列表接口按 {@code runId} 反查。</p>
  *
  * <p><b>SKIPPED 语义</b>：当分布式锁忙时 {@code status="SKIPPED"} + {@code runId=null}。
  * 这是正常业务结果（HTTP 200），不是错误。</p>

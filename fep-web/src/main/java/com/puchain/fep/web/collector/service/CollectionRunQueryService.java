@@ -1,6 +1,8 @@
 package com.puchain.fep.web.collector.service;
 
+import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.collector.CollectionRunEntity;
 import com.puchain.fep.web.collector.CollectionRunRepository;
 import com.puchain.fep.web.collector.dto.CollectionRunQueryRequest;
@@ -80,6 +82,15 @@ public class CollectionRunQueryService {
     @Transactional(readOnly = true)
     public PageResult<CollectionRunResponse> search(final CollectionRunQueryRequest req) {
         Objects.requireNonNull(req, "req");
+        // T6b-fix MINOR #3: reject inverted date range up-front (4002 ParameterError);
+        // Specification's cb.between would silently return zero rows otherwise,
+        // hiding caller mistakes (e.g., from/to swapped in admin UI form).
+        if (req.getFrom() != null && req.getTo() != null
+                && req.getFrom().isAfter(req.getTo())) {
+            throw new FepBusinessException(
+                    FepErrorCode.PARAM_4002,
+                    "from must be <= to (inverted range)");
+        }
         final Pageable pageable = PageRequest.of(
                 req.getPageNum() - 1,
                 req.getPageSize(),

@@ -1,5 +1,6 @@
 package com.puchain.fep.web.collector.dto;
 
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.collector.CollectionRunEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -12,6 +13,13 @@ import java.util.Objects;
  * <p>P4 T6b — {@code GET /api/v1/collector/runs} 列表项投影。从
  * {@link CollectionRunEntity} 直接映射；{@code errorMessage} 在列表中保留以便
  * UI 显示运行状态摘要（V19 列已截断至 1024 字符，不存在大字段问题）。</p>
+ *
+ * <p><b>errorMessage CRLF 防御（T6b-fix MINOR #4）</b>：列表 DTO 暴露给管理 UI
+ * 是设计选择（admin 调试需要看 SQLException stack trace 片段）。但 errorMessage
+ * 源自 adapter / assembler 异常 message，不可信内容。{@link #from} 工厂调
+ * {@link LogSanitizer#sanitize} 清理 CR/LF（防 UI 渲染时的换行注入 / log forging via UI），
+ * 长度由 scheduler 端 {@code ERROR_MESSAGE_MAX_LENGTH=1024} 已截断不需重复处理。
+ * Vue 前端的 HTML escape 防 XSS 是另一层防御（在前端层）。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -99,6 +107,10 @@ public final class CollectionRunResponse {
      */
     public static CollectionRunResponse from(final CollectionRunEntity e) {
         Objects.requireNonNull(e, "entity");
+        // T6b-fix MINOR #4: CRLF defense on errorMessage before exposing to
+        // management UI. LogSanitizer.sanitize returns null for null input,
+        // preserving the "no error" semantics; otherwise replaces CR/LF with
+        // spaces to neutralize newline injection in UI rendering.
         return new CollectionRunResponse(
                 e.getRunId(),
                 e.getAdapterId(),
@@ -110,7 +122,7 @@ public final class CollectionRunResponse {
                 e.getAssembledCount(),
                 e.getSubmittedCount(),
                 e.getErrorCount(),
-                e.getErrorMessage());
+                e.getErrorMessage() == null ? null : LogSanitizer.sanitize(e.getErrorMessage()));
     }
 
     public String getRunId() {
