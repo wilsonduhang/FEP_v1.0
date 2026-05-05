@@ -104,19 +104,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <h3>Acceptance points covered (Plan §T9 — points #3-#9 + #11 + #12)</h3>
  * <ol>
  *   <li>{@link #t01_firstTrigger_collects5Rows_persistsQueueAndRunAndWatermark()}
- *       — Plan §T9 §3-§6 (single happy-path run with full DB assertions)</li>
+ *       — Plan §T9 §3 + §4 + §5 + §6 (POST trigger SUCCESS / queue 5 rows shape /
+ *       collection_run SUCCESS / collection_record_offset advanced)</li>
  *   <li>{@link #t02_secondTrigger_noNewData_collectsZero()}
- *       — Plan §T9 §4 (idempotent re-trigger)</li>
+ *       — Plan §T9 §7 (idempotent re-trigger no new data → collected=0)</li>
  *   <li>{@link #t03_thirdTrigger_after2NewRows_collects2_queueGrowsTo7()}
- *       — Plan §T9 §5 (incremental delta after seeding 2 more rows)</li>
+ *       — Plan §T9 §8 (incremental delta: +2 rows → 3rd trigger collected=2 / queue=7)</li>
  *   <li>{@link #t04_realSampleAndJaxbRoundtrip_preserves9RequiredFields()}
- *       — Plan §T9 §7 + §11 (real ContractInfo3101 sample + roundtrip + transitionNo regex)</li>
+ *       — Plan §T9 §11 (real ContractInfo3101 sample + JAXB marshal-unmarshal
+ *       roundtrip + transitionNo regex \d{8})</li>
  *   <li>{@link #t05_xsdEnvelope_validatesAgainstMSG_3101_schema()}
- *       — Plan §T9 §8 + §12 (Option B full CFX assembly + XSD validate)</li>
+ *       — Plan §T9 §12 (Option B full CFX assembly + XSD validate against
+ *       MSG_3101.xsd; see hand-rolled XML exception note in Plan §12 amendment)</li>
  * </ol>
  *
- * <p>The concurrent-trigger case (Plan §T9 §6) and the pagination case
- * (Plan §T9 §9) are deferred to T9.2 per the implementer brief.</p>
+ * <p>The concurrent-trigger case (Plan §T9 §10) and the pagination case
+ * (Plan §T9 §13) are deferred to T9.2 per the implementer brief.</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -515,9 +518,9 @@ class P4DataCollectorEndToEndIntegrationTest {
      * path is documented as a known wire-shape drift that this test does
      * NOT call into).
      *
-     * <p><b>BatchHead3101 element strategy:</b> {@link ResponseBusinessHead}'s
+     * <p><b>BatchHead3101 element strategy:</b> {@link com.puchain.fep.converter.model.ResponseBusinessHead}'s
      * {@code @XmlType(propOrder = {"sendOrgCode","entrustDate","transitionNo","result","addWord"})}
-     * lists 3 inherited properties from {@link RequestBusinessHead}, which
+     * lists 3 inherited properties from {@link com.puchain.fep.converter.model.RequestBusinessHead}, which
      * the runtime JAXB rejects when the child is registered standalone (the
      * parent's annotated getters are not visible as direct properties on the
      * child class, so propOrder cannot resolve them). Rather than depend on
