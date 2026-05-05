@@ -10,10 +10,8 @@ package com.puchain.fep.web.outbound.consumer;
  *
  * <p>实现类生命周期：</p>
  * <ul>
- *   <li>T2 阶段：{@link OutboundQueueRunnerStubConfiguration} 占位
- *       （{@code @ConditionalOnMissingBean} + 内嵌 {@code @Bean} 工厂方法），
- *       仅打 WARN 日志，避免 production 启动 NPE</li>
- *   <li>T9 阶段：实际生产实现 {@code OutboundQueueRunnerImpl} 接管，stub 自动让位</li>
+ *   <li>T2 阶段：{@code OutboundQueueRunnerStubConfiguration} 占位（已在 T9 删除）</li>
+ *   <li>T9 阶段：生产实现 {@link OutboundQueueRunnerImpl} 通过 {@code @Component} 注册</li>
  * </ul>
  *
  * @author FEP Team
