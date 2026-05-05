@@ -1,0 +1,43 @@
+package com.puchain.fep.processor.body.batch;
+
+import com.puchain.fep.converter.model.CfxBody;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
+
+import java.util.List;
+
+/**
+ * 1103 企业信息批量查询请求报文业务体。
+ *
+ * <p>外层 wrapper，包含 1..N 个 {@link CompanyInfoBatchItem1103} 查询项。
+ * 字段顺序对应 {@code 1103.xsd} 中 {@code CompanyInfoBatchRequest1103} complexType
+ * 的 sequence — 仅 1 个 sequence 元素：{@code CompanyInfoRequest} (maxOccurs=unbounded)。</p>
+ *
+ * <p>本类仅承载"业务请求体"，不含 {@code BatchHead1103}（由 P1b
+ * {@link com.puchain.fep.converter.model.RequestBusinessHead} 承担）。</p>
+ *
+ * @author FEP Team
+ * @since 1.0.0
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement(name = "CompanyInfoBatchRequest1103")
+@XmlType(propOrder = {"items"})
+public class CompanyInfoBatchRequest1103 extends CfxBody {
+
+    /**
+     * 查询项列表，对应 XSD {@code <CompanyInfoRequest>} 重复元素（maxOccurs=unbounded）。
+     */
+    @XmlElement(name = "CompanyInfoRequest", required = true)
+    private List<CompanyInfoBatchItem1103> items;
+
+    public List<CompanyInfoBatchItem1103> getItems() {
+        return items;
+    }
+
+    public void setItems(final List<CompanyInfoBatchItem1103> v) {
+        this.items = v;
+    }
+}

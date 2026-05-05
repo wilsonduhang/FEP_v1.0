@@ -38,7 +38,7 @@ public class XsdSchemaRegistry {
     private static final Logger log = LoggerFactory.getLogger(XsdSchemaRegistry.class);
 
     private static final Set<String> SUPPORTED_CODES = Set.of(
-            "1001", "1004", "2001", "2004",
+            "1001", "1004", "1103", "2001", "2004",
             "3001", "3002", "3003", "3004", "3005", "3006", "3007", "3008", "3009",
             "3020", "3101", "3102", "3103", "3105", "3107", "3108", "3109",
             "3112", "3113", "3115", "3116", "3120",
@@ -51,7 +51,7 @@ public class XsdSchemaRegistry {
     private final Map<String, Schema> cache;
 
     /**
-     * Creates the registry, eagerly loading all 35 supported XSDs into an
+     * Creates the registry, eagerly loading all 36 supported XSDs into an
      * unmodifiable cache. The {@link SchemaFactory} is used only during
      * construction (single-threaded), avoiding its documented thread-safety
      * limitations.

@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class XsdSchemaRegistryTest {
 
     private static final List<MessageType> SUPPORTED = List.of(
-            MessageType.MSG_1001, MessageType.MSG_1004,
+            MessageType.MSG_1001, MessageType.MSG_1004, MessageType.MSG_1103,
             MessageType.MSG_2001, MessageType.MSG_2004,
             MessageType.MSG_3001, MessageType.MSG_3002,
             MessageType.MSG_3003, MessageType.MSG_3004,
