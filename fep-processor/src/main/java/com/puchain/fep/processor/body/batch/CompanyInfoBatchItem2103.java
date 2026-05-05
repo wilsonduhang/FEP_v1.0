@@ -7,24 +7,27 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 /**
- * 1103 报文中 {@code CompanyInfoRequest} 单查询项。
+ * 2103 报文中 {@code CompanyInfo} 单查询结果项。
  *
- * <p>字段顺序严格对应 {@code 1103.xsd} 中 {@code CompanyInfoRequest} complexType 的 sequence：
+ * <p>字段顺序严格对应 {@code 2103.xsd} 中 {@code CompanyInfo} complexType 的 sequence：
  * ItemId, CompanyName, CompanyCode, MainClass, SecondClass, BeginDate?, EndDate?,
- * AuthNo, AuthOrgCode, Parameters?。</p>
+ * AuthOrgCode, FileName?, QueryResult, QueryAddWord?。</p>
  *
  * <p>所有字段 Java 类型统一为 {@link String}；XSD 长度/格式约束由
  * {@link com.puchain.fep.processor.validation.XsdValidator} 强制。</p>
+ *
+ * <p>vs 1103 item 差异：无 {@code AuthNo} / {@code Parameters}，多
+ * {@code FileName} / {@code QueryResult} / {@code QueryAddWord}。</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "CompanyInfoRequest", propOrder = {
+@XmlType(name = "CompanyInfo", propOrder = {
         "itemId", "companyName", "companyCode", "mainClass", "secondClass",
-        "beginDate", "endDate", "authNo", "authOrgCode", "parameters"
+        "beginDate", "endDate", "authOrgCode", "fileName", "queryResult", "queryAddWord"
 })
-public class CompanyInfoBatchItem1103 extends CfxBody {
+public class CompanyInfoBatchItem2103 extends CfxBody {
 
     @XmlElement(name = "ItemId", required = true)
     private String itemId;
@@ -47,14 +50,17 @@ public class CompanyInfoBatchItem1103 extends CfxBody {
     @XmlElement(name = "EndDate")
     private String endDate;
 
-    @XmlElement(name = "AuthNo", required = true)
-    private String authNo;
-
     @XmlElement(name = "AuthOrgCode", required = true)
     private String authOrgCode;
 
-    @XmlElement(name = "Parameters")
-    private String parameters;
+    @XmlElement(name = "FileName")
+    private String fileName;
+
+    @XmlElement(name = "QueryResult", required = true)
+    private String queryResult;
+
+    @XmlElement(name = "QueryAddWord")
+    private String queryAddWord;
 
     public String getItemId() {
         return itemId;
@@ -112,14 +118,6 @@ public class CompanyInfoBatchItem1103 extends CfxBody {
         this.endDate = v;
     }
 
-    public String getAuthNo() {
-        return authNo;
-    }
-
-    public void setAuthNo(final String v) {
-        this.authNo = v;
-    }
-
     public String getAuthOrgCode() {
         return authOrgCode;
     }
@@ -128,11 +126,27 @@ public class CompanyInfoBatchItem1103 extends CfxBody {
         this.authOrgCode = v;
     }
 
-    public String getParameters() {
-        return parameters;
+    public String getFileName() {
+        return fileName;
     }
 
-    public void setParameters(final String v) {
-        this.parameters = v;
+    public void setFileName(final String v) {
+        this.fileName = v;
+    }
+
+    public String getQueryResult() {
+        return queryResult;
+    }
+
+    public void setQueryResult(final String v) {
+        this.queryResult = v;
+    }
+
+    public String getQueryAddWord() {
+        return queryAddWord;
+    }
+
+    public void setQueryAddWord(final String v) {
+        this.queryAddWord = v;
     }
 }

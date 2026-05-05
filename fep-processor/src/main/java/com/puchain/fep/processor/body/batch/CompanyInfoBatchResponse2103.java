@@ -1,0 +1,46 @@
+package com.puchain.fep.processor.body.batch;
+
+import com.puchain.fep.converter.model.CfxBody;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
+
+import java.util.List;
+
+/**
+ * 2103 企业信息批量查询回执报文业务体。
+ *
+ * <p>外层 wrapper，包含 1..N 个 {@link CompanyInfoBatchItem2103} 结果项。
+ * 字段顺序对应 {@code 2103.xsd} 中 {@code CompanyInfoBatchResponse2103} complexType
+ * 的 sequence — 仅 1 个 sequence 元素：{@code CompanyInfo} (maxOccurs=unbounded)。</p>
+ *
+ * <p>本类仅承载"业务回执体"，不含 {@code BatchHead2103}（由 P1b
+ * {@link com.puchain.fep.converter.model.ResponseBusinessHead} 承担）。</p>
+ *
+ * <p><b>注：</b>XSD MSG sequence 中本 outer wrapper minOccurs=0（无结果时整个缺失），
+ * 该场景由 dispatcher 层处理；本 POJO 仅在 outer 在场时使用。</p>
+ *
+ * @author FEP Team
+ * @since 1.0.0
+ */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlRootElement(name = "CompanyInfoBatchResponse2103")
+@XmlType(propOrder = {"items"})
+public class CompanyInfoBatchResponse2103 extends CfxBody {
+
+    /**
+     * 结果项列表，对应 XSD {@code <CompanyInfo>} 重复元素（maxOccurs=unbounded）。
+     */
+    @XmlElement(name = "CompanyInfo", required = true)
+    private List<CompanyInfoBatchItem2103> items;
+
+    public List<CompanyInfoBatchItem2103> getItems() {
+        return items;
+    }
+
+    public void setItems(final List<CompanyInfoBatchItem2103> v) {
+        this.items = v;
+    }
+}
