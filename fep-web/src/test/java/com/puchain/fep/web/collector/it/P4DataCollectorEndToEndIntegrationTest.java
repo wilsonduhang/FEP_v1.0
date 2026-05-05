@@ -53,13 +53,21 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -101,7 +109,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * ({@code @Profile("!test")}) IS active and persists watermarks into
  * {@code collection_record_offset}.</p>
  *
- * <h3>Acceptance points covered (Plan §T9 — points #3-#9 + #11 + #12)</h3>
+ * <h3>Acceptance points covered (Plan §T9 — points #3-#13 minus §1+§2 config)</h3>
  * <ol>
  *   <li>{@link #t01_firstTrigger_collects5Rows_persistsQueueAndRunAndWatermark()}
  *       — Plan §T9 §3 + §4 + §5 + §6 (POST trigger SUCCESS / queue 5 rows shape /
@@ -116,10 +124,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *   <li>{@link #t05_xsdEnvelope_validatesAgainstMSG_3101_schema()}
  *       — Plan §T9 §12 (Option B full CFX assembly + XSD validate against
  *       MSG_3101.xsd; see hand-rolled XML exception note in Plan §12 amendment)</li>
+ *   <li>{@link #t06_concurrentTrigger_exactlyOneSucceedsOneSkipped()}
+ *       — Plan §T9 §10 (CyclicBarrier(2) + 2-thread pool; exactly 1 SUCCESS +
+ *       1 SKIPPED via {@code InProcessDistributedLock}; queue stays at 5)</li>
+ *   <li>{@link #t07_paginationDistinctPageNum_returnsExpectedSubsets()}
+ *       — Plan §T9 §13 (pagination distinct pageNum: pageNum=2 → rows 3-4,
+ *       pageNum=3 → row 5; avoids 1-1=0 collision per
+ *       {@code feedback_pagination_adapter} red line)</li>
  * </ol>
- *
- * <p>The concurrent-trigger case (Plan §T9 §10) and the pagination case
- * (Plan §T9 §13) are deferred to T9.2 per the implementer brief.</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -135,14 +147,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@DisplayName("P4 T9.1 — Data collector end-to-end IT (REST → assemble → enqueue → persist)")
+@DisplayName("P4 T9.1 + T9.2 — Data collector end-to-end IT (REST → assemble → enqueue → persist; concurrency + pagination)")
 class P4DataCollectorEndToEndIntegrationTest {
 
     /** Trigger endpoint (PRD §2.2.3 / §5.5). */
     private static final String TRIGGER_URL = "/api/v1/collector/triggers";
 
+    /** Run-history pagination endpoint (PRD §5.5). */
+    private static final String RUNS_URL = "/api/v1/collector/runs";
+
     /** Adapter id wired both in {@code application-dev-collector-it.yml} and the @TestConfiguration. */
     private static final String ADAPTER_ID = "JDBC_CONTRACT_3101";
+
+    /** Distinct adapter id used only by the §13 pagination seed (no real adapter wiring needed). */
+    private static final String PAGINATION_ADAPTER_ID = "JDBC_PAGINATION_TEST";
+
+    /** §10 concurrency: 2 threads racing the {@code InProcessDistributedLock}. */
+    private static final int CONCURRENT_THREADS = 2;
+
+    /** §10 cleanup: max wait for executor shutdown after the race resolves. */
+    private static final int POOL_SHUTDOWN_TIMEOUT_SECONDS = 5;
 
     /** Expected message type for ContractInfo3101 (PRD §4.4). */
     private static final String MESSAGE_TYPE_3101 = "3101";
@@ -436,6 +460,129 @@ class P4DataCollectorEndToEndIntegrationTest {
     }
 
     // ----------------------------------------------------------------------
+    // Acceptance #10 (Plan §T9 — T9.2): concurrent triggers must serialize.
+    // ----------------------------------------------------------------------
+
+    /**
+     * Plan §T9 §10: two threads released simultaneously by a {@link CyclicBarrier}
+     * race the {@link com.puchain.fep.collector.support.InProcessDistributedLock} —
+     * exactly one wins (status {@code SUCCESS}) and the other gets rejected
+     * (status {@code SKIPPED}, {@code runId=null}). The outbound queue must hold
+     * exactly the 5 seed rows once (no double-collection); {@code collection_run}
+     * must hold exactly 1 row (SUCCESS), since the SKIPPED branch returns from
+     * {@code CollectorScheduler#runAdapter} BEFORE {@code recorder.start} fires
+     * (see {@code CollectorScheduler.java:213-218}).
+     *
+     * <p><b>Timing assumption:</b> the in-process lock is held by the winning
+     * thread for the entire run duration ({@code recorder.start} +
+     * 5×{@code assemble} + {@code adapter.acknowledge} + {@code recorder.complete},
+     * tens of ms). The losing thread's {@code tryLock} call is issued within
+     * ~1 ms after barrier release, comfortably inside the lock-held window — so
+     * the {@code SKIPPED} outcome is deterministic in practice.</p>
+     *
+     * @throws Exception MockMvc / executor failure
+     */
+    @Test
+    @Order(6)
+    @DisplayName("§10: concurrent triggers — exactly 1 SUCCESS + 1 SKIPPED, queue stays at 5")
+    void t06_concurrentTrigger_exactlyOneSucceedsOneSkipped() throws Exception {
+        final CyclicBarrier barrier = new CyclicBarrier(CONCURRENT_THREADS);
+        final ExecutorService pool = Executors.newFixedThreadPool(CONCURRENT_THREADS);
+        final List<Future<JsonNode>> futures = new ArrayList<>(CONCURRENT_THREADS);
+        try {
+            for (int i = 0; i < CONCURRENT_THREADS; i++) {
+                futures.add(pool.submit(() -> {
+                    barrier.await();
+                    return postTrigger(ADAPTER_ID);
+                }));
+            }
+
+            final List<String> statuses = new ArrayList<>(CONCURRENT_THREADS);
+            for (Future<JsonNode> f : futures) {
+                statuses.add(f.get().get("status").asText());
+            }
+
+            // Exactly one of each — order-independent.
+            assertThat(statuses)
+                    .as("status outcomes from %d concurrent triggers", CONCURRENT_THREADS)
+                    .containsExactlyInAnyOrder("SUCCESS", "SKIPPED");
+
+            // No double-collection: only the SUCCESS path enqueues, exactly once.
+            assertThat(outboundRepository.count())
+                    .as("outbound queue must hold exactly the 5 seed rows once")
+                    .isEqualTo(5L);
+
+            // SKIPPED returns BEFORE recorder.start, so only the SUCCESS run persists.
+            final List<CollectionRunEntity> runs = runRepository.findAll();
+            assertThat(runs).hasSize(1);
+            assertThat(runs.get(0).getStatus()).isEqualTo("SUCCESS");
+            assertThat(runs.get(0).getAdapterId()).isEqualTo(ADAPTER_ID);
+        } finally {
+            pool.shutdown();
+            if (!pool.awaitTermination(POOL_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                pool.shutdownNow();
+            }
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // Acceptance #13 (Plan §T9 — T9.2): pagination distinct pageNum.
+    // ----------------------------------------------------------------------
+
+    /**
+     * Plan §T9 §13: seed 5 {@code collection_run} rows with strictly descending
+     * {@code startedAt} and assert the {@code GET /api/v1/collector/runs}
+     * endpoint correctly maps 1-based {@code pageNum} → 0-based
+     * {@code Pageable} for {@code pageNum=2} and {@code pageNum=3} (avoiding
+     * the {@code pageNum=1 → offset 0} collision that would mask off-by-one
+     * adapter bugs — red line {@code feedback_pagination_adapter}).
+     *
+     * <p>Sort: {@code DEFAULT_SORT = startedAt DESC} (see
+     * {@code CollectionRunQueryService.DEFAULT_SORT}), so seeds are inserted
+     * with descending startedAt and queried by index.</p>
+     *
+     * @throws Exception MockMvc failure
+     */
+    @Test
+    @Order(7)
+    @DisplayName("§13: pagination distinct pageNum — pageNum=2 → rows 3-4, pageNum=3 → row 5")
+    void t07_paginationDistinctPageNum_returnsExpectedSubsets() throws Exception {
+        // Seed 5 rows in deterministic DESC startedAt order.
+        insertCollectionRun("p4paginationrun00000000000000001", "2026-04-30T10:00:01Z");
+        insertCollectionRun("p4paginationrun00000000000000002", "2026-04-30T10:00:00Z");
+        insertCollectionRun("p4paginationrun00000000000000003", "2026-04-29T10:00:00Z");
+        insertCollectionRun("p4paginationrun00000000000000004", "2026-04-28T10:00:00Z");
+        insertCollectionRun("p4paginationrun00000000000000005", "2026-04-27T10:00:00Z");
+
+        // pageNum=2 / pageSize=2 → 0-based page 1 → records 3 + 4 (DESC by startedAt).
+        // Picking pageNum=2 (NOT pageNum=1) so 1-1=0 collision cannot mask an
+        // off-by-one adapter bug (feedback_pagination_adapter red line).
+        final JsonNode page2 = getRunsPage(2, 2);
+        assertThat(page2.get("total").asLong()).isEqualTo(5L);
+        assertThat(page2.get("pageNum").asInt()).isEqualTo(2);
+        assertThat(page2.get("pageSize").asInt()).isEqualTo(2);
+        assertThat(page2.get("totalPages").asInt()).isEqualTo(3);
+        final JsonNode page2Records = page2.get("records");
+        assertThat(page2Records.size()).isEqualTo(2);
+        assertThat(page2Records.get(0).get("runId").asText())
+                .isEqualTo("p4paginationrun00000000000000003");
+        assertThat(page2Records.get(1).get("runId").asText())
+                .isEqualTo("p4paginationrun00000000000000004");
+
+        // pageNum=3 / pageSize=2 → 0-based page 2 → record 5 (final 1-row page).
+        // Distinct from pageNum=2 — proves the adapter computes (pageNum-1)*pageSize
+        // not (pageNum-1)+offset / hard-coded zero.
+        final JsonNode page3 = getRunsPage(3, 2);
+        assertThat(page3.get("total").asLong()).isEqualTo(5L);
+        assertThat(page3.get("pageNum").asInt()).isEqualTo(3);
+        assertThat(page3.get("pageSize").asInt()).isEqualTo(2);
+        final JsonNode page3Records = page3.get("records");
+        assertThat(page3Records.size()).isEqualTo(1);
+        assertThat(page3Records.get(0).get("runId").asText())
+                .isEqualTo("p4paginationrun00000000000000005");
+    }
+
+    // ----------------------------------------------------------------------
     // Helpers.
     // ----------------------------------------------------------------------
 
@@ -477,6 +624,52 @@ class P4DataCollectorEndToEndIntegrationTest {
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 serialNo, props.getInstitutionCode(), HNDEMP_NODE,
                 contractNo, contractType, digitalSeal, contractFilename, jfqyName, yfqyName);
+    }
+
+    /**
+     * Seed one {@link CollectionRunEntity} row directly via the JPA repository
+     * for the §13 pagination test. Bypasses the scheduler so the test controls
+     * the {@code startedAt} ordering precisely (DESC sort assertion).
+     *
+     * @param runId        primary key (32-char per V23 schema)
+     * @param startedAtIso ISO-8601 instant for {@code startedAt} (and reused
+     *                     for {@code completedAt} + {@code createdAt})
+     */
+    private void insertCollectionRun(final String runId, final String startedAtIso) {
+        final Instant ts = Instant.parse(startedAtIso);
+        final CollectionRunEntity e = new CollectionRunEntity();
+        e.setRunId(runId);
+        e.setAdapterId(PAGINATION_ADAPTER_ID);
+        e.setStatus("SUCCESS");
+        e.setStartedAt(ts);
+        e.setCompletedAt(ts);
+        e.setCollectedCount(0);
+        e.setAssembledCount(0);
+        e.setSubmittedCount(0);
+        e.setErrorCount(0);
+        e.setTriggerSource("MANUAL");
+        e.setCreatedAt(ts);
+        runRepository.save(e);
+    }
+
+    /**
+     * GET {@value #RUNS_URL} with the given pagination params and return the
+     * {@code data} sub-tree of the {@code ApiResult} JSON.
+     *
+     * @param pageNum  1-based page number
+     * @param pageSize page size
+     * @return the {@code data} JsonNode (a {@code PageResult} payload)
+     * @throws Exception MockMvc serialisation failure
+     */
+    private JsonNode getRunsPage(final int pageNum, final int pageSize) throws Exception {
+        final MvcResult mv = mockMvc.perform(get(RUNS_URL)
+                        .param("pageNum", String.valueOf(pageNum))
+                        .param("pageSize", String.valueOf(pageSize)))
+                .andExpect(status().isOk())
+                .andReturn();
+        final JsonNode root = objectMapper.readTree(mv.getResponse().getContentAsString());
+        assertThat(root.get("code").asText()).isEqualTo("200");
+        return root.get("data");
     }
 
     /**
