@@ -39,4 +39,10 @@ class MockKeyServiceTest {
         String decrypted = keyService.decryptLoginPassword(encrypted, "mock-key-v1");
         assertThat(decrypted).isEqualTo(clearPassword);
     }
+
+    @Test
+    void getSignPrivateKey_shouldReturn32MockBytes() {
+        // P5 T5: pin mock contract — outbound 加签器消费 32 字节 mock 私钥（dev/CI only）
+        assertThat(keyService.getSignPrivateKey()).hasSize(32);
+    }
 }

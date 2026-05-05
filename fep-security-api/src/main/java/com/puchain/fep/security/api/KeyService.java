@@ -38,4 +38,19 @@ public interface KeyService {
      * @throws IllegalArgumentException if decryption fails
      */
     String decryptLoginPassword(String encryptedBase64, String keyId);
+
+    /**
+     * Returns the SM2 private key used for outbound message signing (PKCS#8 encoded).
+     *
+     * <p>Consumed by {@code OutboundSignAdapter} (P5 T5) to compute the SM3withSM2
+     * signature that is embedded as an XML comment immediately before {@code </CFX>}.</p>
+     *
+     * <p><strong>⛔ Mode E:</strong> The real implementation must be written by the
+     * security specialist in {@code fep-security-impl}. AI agents must NOT generate
+     * the implementation. Key material must come from a HSM or sealed key store;
+     * never from plaintext on disk.</p>
+     *
+     * @return PKCS#8-encoded SM2 private key bytes (never {@code null})
+     */
+    byte[] getSignPrivateKey();
 }

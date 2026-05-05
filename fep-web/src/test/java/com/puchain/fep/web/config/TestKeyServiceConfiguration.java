@@ -50,6 +50,12 @@ public class TestKeyServiceConfiguration {
             public String decryptLoginPassword(final String encryptedBase64, final String keyId) {
                 return new String(Base64.getDecoder().decode(encryptedBase64), UTF_8);
             }
+
+            @Override
+            public byte[] getSignPrivateKey() {
+                // ⚠️ 仅 test 用 mock 私钥（非真实国密 SM2 私钥）；真实实现 ⛔ Mode E
+                return new byte[32];
+            }
         };
     }
 }
