@@ -82,8 +82,10 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
     /**
      * 执行单条 queue 行的发送流水。
      *
-     * <p>外层 try/catch 兜底任意异常（envelope build / sign / send）→ 转 retry 处理；
-     * RetryHandler 自身已 swallow 异常（仅打 WARN 日志），不会再向上抛。</p>
+     * <p>外层 try/catch 兜底任意异常（envelope build / sign / send）→ 转 retry 处理。
+     * quality reviewer M1 修订：catch Exception（不仅 RuntimeException），覆盖 SignService /
+     * KeyService 等 security 接口未来如声明 checked exception 的迁移路径，避免逃逸到
+     * {@link OutboundQueueConsumer#poll()} 外层。</p>
      *
      * @param queueId 已被 claimBatch 持锁的 queue_id
      */
@@ -116,7 +118,7 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
                         FepErrorCode.OUTBOUND_5104_SEND_FAILURE,
                         "TLQ send returned failure: " + outcome.tlqSendResult()));
             }
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             handleSendFailure(queueId, e);
         }
     }
@@ -125,9 +127,12 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
      * 失败兜底：委派 {@link OutboundRetryHandler#handleFailure}，然后 re-read entity
      * 决定 metrics 分支（RETRY / DEAD_LETTER）。
      *
-     * <p>RetryHandler swallow 异常（不抛 RuntimeException），所以这里不需再 try/catch。
-     * Re-read 用 repository.findById 而非缓存 entity，因为 RetryHandler 内部已 mutate
-     * 了 status / retry_count 并 save，read-back 拿到新 status。</p>
+     * <p>quality reviewer M2 修订：原 Javadoc 称 "RetryHandler swallow 异常" 不准确 —
+     * {@link OutboundRetryHandler#handleFailure} 在 queue_id 不存在时会抛
+     * {@link IllegalStateException}（{@link OutboundQueueConsumer#poll()} 外层 try/catch 兜底）。
+     * 实际生产路径中 entity 已先 findById 验证存在，所以 RetryHandler 触发 ISE 的窗口为空。
+     * 但 Javadoc 必须如实描述契约，避免下游误判。Re-read 用 repository.findById 而非缓存 entity，
+     * 因为 RetryHandler 内部已 mutate status/retry_count 并 save，read-back 拿到新 status。</p>
      *
      * @param queueId queue id
      * @param error   触发失败的 throwable（透传给 RetryHandler 写 error_message）
