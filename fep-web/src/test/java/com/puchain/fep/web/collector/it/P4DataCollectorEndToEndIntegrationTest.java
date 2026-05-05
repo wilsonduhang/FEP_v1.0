@@ -168,6 +168,15 @@ class P4DataCollectorEndToEndIntegrationTest {
     /** §10 cleanup: max wait for executor shutdown after the race resolves. */
     private static final int POOL_SHUTDOWN_TIMEOUT_SECONDS = 5;
 
+    /**
+     * §10 race: per-task wait cap on each {@code Future.get} call so a hung
+     * MockMvc dispatch surfaces as {@link java.util.concurrent.TimeoutException}
+     * instead of stalling CI indefinitely. 30s is comfortably larger than a
+     * single full Spring-context JDBC trigger run (tens to hundreds of ms in
+     * H2 in-process) but tight enough to fail fast on real deadlocks.
+     */
+    private static final int FUTURE_GET_TIMEOUT_SECONDS = 30;
+
     /** Expected message type for ContractInfo3101 (PRD §4.4). */
     private static final String MESSAGE_TYPE_3101 = "3101";
 
@@ -469,9 +478,9 @@ class P4DataCollectorEndToEndIntegrationTest {
      * exactly one wins (status {@code SUCCESS}) and the other gets rejected
      * (status {@code SKIPPED}, {@code runId=null}). The outbound queue must hold
      * exactly the 5 seed rows once (no double-collection); {@code collection_run}
-     * must hold exactly 1 row (SUCCESS), since the SKIPPED branch returns from
-     * {@code CollectorScheduler#runAdapter} BEFORE {@code recorder.start} fires
-     * (see {@code CollectorScheduler.java:213-218}).
+     * must hold exactly 1 row (SUCCESS), since the SKIPPED branch in
+     * {@code CollectorScheduler#runAdapter} returns BEFORE {@code recorder.start}
+     * fires (no {@code RUNNING} row is ever inserted on lock-busy).
      *
      * <p><b>Timing assumption:</b> the in-process lock is held by the winning
      * thread for the entire run duration ({@code recorder.start} +
@@ -499,7 +508,10 @@ class P4DataCollectorEndToEndIntegrationTest {
 
             final List<String> statuses = new ArrayList<>(CONCURRENT_THREADS);
             for (Future<JsonNode> f : futures) {
-                statuses.add(f.get().get("status").asText());
+                // Bounded wait — surfaces a hung MockMvc dispatch as TimeoutException
+                // instead of stalling the build forever (T9.2-fix MINOR-1).
+                statuses.add(f.get(FUTURE_GET_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                        .get("status").asText());
             }
 
             // Exactly one of each — order-independent.
