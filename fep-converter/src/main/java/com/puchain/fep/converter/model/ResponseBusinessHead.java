@@ -18,7 +18,14 @@ import java.util.regex.Pattern;
  * @since 1.0.0
  */
 @XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlType(propOrder = {"sendOrgCode", "entrustDate", "transitionNo", "result", "addWord"})
+// JAXB propOrder rule: subclass propOrder lists ONLY subclass-own properties; parent properties
+// are emitted via the parent's own propOrder. Including parent's sendOrgCode/entrustDate/transitionNo
+// here triggers IllegalAnnotationsException ("属性 sendOrgCode... 不存在") when this class is
+// registered in a JAXBContext. Pre-existing defect surfaced by P5 T4 OutboundCfxEnvelopeBuilder
+// which marshals the full CFX envelope including ResponseBusinessHead; previously only the
+// string-template assembly in Per3101AndPer3102EnvelopeXsdValidateTest skirted the issue
+// (see that file's Javadoc lines 41-44 documenting the workaround).
+@XmlType(propOrder = {"result", "addWord"})
 public class ResponseBusinessHead extends RequestBusinessHead {
 
     private static final int RESULT_LENGTH = 5;
