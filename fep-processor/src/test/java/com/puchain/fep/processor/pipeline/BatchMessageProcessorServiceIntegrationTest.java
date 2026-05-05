@@ -2,6 +2,7 @@ package com.puchain.fep.processor.pipeline;
 
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
+import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
 import com.puchain.fep.processor.body.common.Forward9000;
 import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
 import com.puchain.fep.processor.body.supplychain.QyAccQuery3005;
@@ -54,7 +55,8 @@ class BatchMessageProcessorServiceIntegrationTest {
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
         BatchPayloadAdapter adapter = new BatchPayloadAdapter();
-        service = new BatchMessageProcessorService(validator, machine, store, adapter);
+        OutboundWireShapeDispatcher dispatcher = new OutboundWireShapeDispatcher();
+        service = new BatchMessageProcessorService(validator, machine, store, adapter, dispatcher);
     }
 
     @Test

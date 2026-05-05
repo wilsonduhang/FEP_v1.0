@@ -6,6 +6,7 @@ import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.type.MessageType;
+import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
 import com.puchain.fep.converter.xml.JaxbContextCache;
 import com.puchain.fep.processor.state.IllegalMessageStateException;
 import com.puchain.fep.processor.state.MessageProcessRecord;
@@ -59,25 +60,33 @@ public class BatchMessageProcessorService {
     private final MessageStateMachine stateMachine;
     private final MessageProcessStore store;
     private final BatchPayloadAdapter adapter;
+    private final OutboundWireShapeDispatcher wireShapeDispatcher;
 
     /**
-     * 构造器注入 4 项业务依赖。
+     * 构造器注入 5 项业务依赖。
      *
-     * @param xsdValidator XSD 校验器
-     * @param stateMachine 状态机（5 态）
-     * @param store        持久化端口
-     * @param adapter      8KB 分拆适配
+     * <p>P5 T3：新增 {@link OutboundWireShapeDispatcher} 用于 {@link #wrapBodyInCfx}
+     * 按 wire-shape 派发 head 元素名（修正 hardcoded {@code "RealHead" + msgNo}
+     * 仅 1/8 报文正确的缺陷）。</p>
+     *
+     * @param xsdValidator         XSD 校验器
+     * @param stateMachine         状态机（5 态）
+     * @param store                持久化端口
+     * @param adapter              8KB 分拆适配
+     * @param wireShapeDispatcher  wire-shape 路由（决定 head 元素名按 8 上行报文 dispatch）
      * @throws NullPointerException 任一参数为 {@code null}
      */
     public BatchMessageProcessorService(
             final XsdValidator xsdValidator,
             final MessageStateMachine stateMachine,
             final MessageProcessStore store,
-            final BatchPayloadAdapter adapter) {
+            final BatchPayloadAdapter adapter,
+            final OutboundWireShapeDispatcher wireShapeDispatcher) {
         this.xsdValidator = Objects.requireNonNull(xsdValidator, "xsdValidator");
         this.stateMachine = Objects.requireNonNull(stateMachine, "stateMachine");
         this.store = Objects.requireNonNull(store, "store");
         this.adapter = Objects.requireNonNull(adapter, "adapter");
+        this.wireShapeDispatcher = Objects.requireNonNull(wireShapeDispatcher, "wireShapeDispatcher");
     }
 
     /**
@@ -161,13 +170,16 @@ public class BatchMessageProcessorService {
      * 从 {@link CfxMessage} 提取批量记录（每条 body 包回完整 CFX 壳体 marshal 为 XML）。
      *
      * <p>T5 修正（T4 review 捕获）：各报文 XSD 的 root 固定为 {@code <CFX>}，
-     * 且 MSG 内要求 {@code <RealHead{msgNo}>} + {@code <body>} 两个子元素（参考
+     * 且 MSG 内要求 wire-shape head 元素 ({@code <RealHead{msgNo}>} 或
+     * {@code <BatchHead{msgNo}>}) + {@code <body>} 两个子元素（参考
      * {@code 3005.xsd:27-43}）。若单独 marshal body 得 fragment 根（如
      * {@code <qyAccQuery3005>}），{@code XsdValidator.validate} 必报
      * {@code cvc-elt.1.a: 找不到元素 'xxx' 的声明}，COMPLETED 路径永不可达。
      * 本方法通过 {@link #wrapBodyInCfx} 把每条 body 包回
-     * {@code <CFX><HEAD/><MSG><RealHead{msgNo}/><body/></MSG></CFX>} 完整壳体再 marshal，
-     * 解决 fragment/root 不匹配且 MSG 缺 RealHead 的双重问题。</p>
+     * {@code <CFX><HEAD/><MSG><{wireHead}/><body/></MSG></CFX>} 完整壳体再 marshal，
+     * 解决 fragment/root 不匹配且 MSG 缺 head 的双重问题。
+     * P5 T3：head 元素名由 {@link OutboundWireShapeDispatcher} 按 8 上行报文派发，
+     * inbound-only msgNo 走 legacy 路径。</p>
      *
      * <p>约定：{@link CfxMessage#getBodies()} 返回的 {@code List<Object>} 中每个
      * 非 null 元素即为一条 batch record（P1b-DEFECT-001 修复后 MsgContainer 支持 List）。</p>
@@ -189,46 +201,63 @@ public class BatchMessageProcessorService {
 
     /**
      * 将单条 body 包回完整 CFX 壳体
-     * （{@code <CFX><HEAD/><MSG><RealHead{msgNo}/><body/></MSG></CFX>}）。
+     * （{@code <CFX><HEAD/><MSG><{wireHead}/><body/></MSG></CFX>}）。
      *
-     * <p>XSD root 固定为 CFX，且 MSG 要求 {@code <RealHead{msgNo}>} + {@code <body>}
-     * 两子元素。本方法：
+     * <p>XSD root 固定为 CFX，且 MSG 要求 {@code <RealHead{msgNo}>} 或 {@code <BatchHead{msgNo}>}
+     * + {@code <body>} 两子元素。本方法：
      * <ol>
      *   <li>构造 {@link CfxMessage} 复用 head；</li>
      *   <li>派生默认 {@link RequestBusinessHead}（SendOrgCode=head.srcNode，
      *       EntrustDate=head.workDate，TransitionNo=head.msgId 后 8 位数字），
-     *       包装为 {@link JAXBElement} 动态指定 QName 为 {@code "RealHead" + msgNo}；</li>
-     *   <li>把 RealHead JAXBElement 和 body 按序放入 {@code msgContainer.contents}；</li>
-     *   <li>用 {@link JAXBContext#newInstance(Class[])} 显式注册 {@code CfxMessage} +
-     *       {@code RequestBusinessHead} + {@code body.getClass()} 避免 lax 降级；</li>
+     *       包装为 {@link JAXBElement} 动态指定 QName 为按 {@link OutboundWireShapeDispatcher}
+     *       决定的 wire-shape head 元素名（8 上行报文：{@code RealHead3009} 或
+     *       {@code BatchHead{msgNo}}），其余 inbound-only msgNo 走 legacy
+     *       {@code "RealHead" + msgNo} 路径；</li>
+     *   <li>把 head JAXBElement 和 body 按序放入 {@code msgContainer.contents}；</li>
+     *   <li>用 {@link JaxbContextCache#getForBody(Class)} 拿缓存的 {@link JAXBContext}
+     *       （注册 {@code CfxMessage} + {@code RequestBusinessHead} + {@code body.getClass()}
+     *       避免 lax 降级）；</li>
      *   <li>marshal 输出完整 CFX XML。</li>
      * </ol>
      *
-     * <p><b>默认 RealHead 取值策略</b>：service 层无法从 {@link CfxMessage} 模型
-     * 反推精确 RealHead 值（模型不含 RealHead 字段），故从 HEAD 衍生合理默认值以
-     * 满足 {@code RequestHead} XSD 结构。业务生产路径若需精确 RealHead，由上游
+     * <p><b>P5 T3 修复</b>：历史实现 hardcoded {@code "RealHead" + msgNo} 仅 3009 正确
+     * （8 上行报文中其余 7 个为 {@code BatchHead{msgNo}}）。改用
+     * {@link OutboundWireShapeDispatcher#describeFor} 决定 head 元素名。
+     * 对未登记 outbound msgNo（如 inbound-only 的 3003/3005/9000），保留 legacy
+     * 行为避免 inbound 链路回归。</p>
+     *
+     * <p><b>默认 head 取值策略</b>：service 层无法从 {@link CfxMessage} 模型
+     * 反推精确 head 值（模型不含 RealHead/BatchHead 字段），故从 HEAD 衍生合理默认值以
+     * 满足 RequestHead / ResponseHead XSD 结构。业务生产路径若需精确 head，由上游
      * ConverterPipeline 在 CfxMessage 构造时通过扩展模型预先注入。</p>
      *
+     * <p><b>访问性</b>：package-private 以便 {@code WrapBodyInCfxFixTest} 直接断言
+     * wire-shape head 元素名 — 内部方法，无外部调用方。</p>
+     *
      * @param head  共享 head（来自原 batch msg）
-     * @param msgNo 报文号（用于 RealHead 元素名拼接）
+     * @param msgNo 报文号（决定 wire-shape head 元素名）
      * @param body  单条 body POJO
      * @return 完整 CFX XML 字符串
      * @throws IllegalStateException JAXB 构建 context / marshal 失败
      */
-    private String wrapBodyInCfx(final CommonHead head, final String msgNo, final Object body) {
+    String wrapBodyInCfx(final CommonHead head, final String msgNo, final Object body) {
         final CfxMessage wrapper = new CfxMessage();
         wrapper.setHead(head);
         final CfxMessage.MsgContainer container = new CfxMessage.MsgContainer();
 
-        // 派生默认 RealHead（SendOrgCode 14 位 / EntrustDate 8 位 YYYYMMDD /
+        // 派生默认 head（SendOrgCode 14 位 / EntrustDate 8 位 YYYYMMDD /
         // TransitionNo 8 位数字）。若 head 字段缺失或不满足长度约束，service 不
         // 强行补齐，RequestBusinessHead setter 的入参 null 允许通过。
         final RequestBusinessHead realHead = deriveRealHead(head);
-        final String realHeadName = "RealHead" + (msgNo != null ? msgNo : "");
-        final JAXBElement<RequestBusinessHead> realHeadElement = new JAXBElement<>(
-                new QName(realHeadName), RequestBusinessHead.class, realHead);
 
-        container.getContents().add(realHeadElement);
+        // P5 T3 fix: wire-shape head 元素名按 dispatcher 决定。8 上行报文使用
+        // dispatcher.describeFor 派发（3009→RealHead3009，其余 7→BatchHead{msgNo}）；
+        // 未登记 msgNo（inbound-only 如 3003/3005/9000）走 legacy 路径不变以避免回归。
+        final String headElementName = resolveHeadElementName(msgNo);
+        final JAXBElement<RequestBusinessHead> headElement = new JAXBElement<>(
+                new QName(headElementName), RequestBusinessHead.class, realHead);
+
+        container.getContents().add(headElement);
         container.getContents().add(body);
         wrapper.setMsgContainer(container);
 
@@ -242,6 +271,25 @@ public class BatchMessageProcessorService {
                     "Failed to marshal CFX wrapper for body " + body.getClass().getName(), e);
         }
         return sw.toString();
+    }
+
+    /**
+     * 解析 wire-shape head 元素名：8 上行报文走 dispatcher，其余走 legacy。
+     *
+     * <p>P5 T3 — dispatcher 仅登记 8 上行报文。inbound-only msgNo（如 3003/3005/9000）
+     * 直接调用 {@code dispatcher.describeFor} 会抛 OUTBOUND_5108 误伤已有 inbound IT。
+     * 用 {@link OutboundWireShapeDispatcher#isRegisteredOutboundMsgNo} 先判断，未登记
+     * 走 legacy {@code "RealHead" + msgNo} 路径保持向后兼容。</p>
+     *
+     * @param msgNo 4 位数字报文号；{@code null} 退化为 {@code "RealHead"}（与 legacy 行为一致）
+     * @return wire-shape head 元素名
+     */
+    private String resolveHeadElementName(final String msgNo) {
+        if (wireShapeDispatcher.isRegisteredOutboundMsgNo(msgNo)) {
+            return wireShapeDispatcher.describeFor(msgNo).headElementName();
+        }
+        // Legacy fallback for inbound-only msgNo (e.g. 3003 / 3005 / 9000).
+        return "RealHead" + (msgNo != null ? msgNo : "");
     }
 
     /**

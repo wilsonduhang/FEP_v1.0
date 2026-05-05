@@ -2,6 +2,7 @@ package com.puchain.fep.processor.pipeline;
 
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
+import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
 import com.puchain.fep.processor.state.IllegalMessageStateException;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageProcessStore;
@@ -55,6 +56,7 @@ class BatchMessageProcessorServiceTest {
     @Mock private MessageStateMachine stateMachine;
     @Mock private MessageProcessStore store;
     @Mock private BatchPayloadAdapter adapter;
+    @Mock private OutboundWireShapeDispatcher wireShapeDispatcher;
 
     @InjectMocks private BatchMessageProcessorService service;
 
@@ -143,7 +145,7 @@ class BatchMessageProcessorServiceTest {
 
     @Test
     void constructor_shouldRejectNullDependency() {
-        assertThatThrownBy(() -> new BatchMessageProcessorService(null, null, null, null))
+        assertThatThrownBy(() -> new BatchMessageProcessorService(null, null, null, null, null))
                 .isInstanceOf(NullPointerException.class);
     }
 
