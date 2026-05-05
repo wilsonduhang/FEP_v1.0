@@ -40,10 +40,20 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        # P5 T8: 添加 prometheus 端点暴露用于 outbound 发送指标
+        # (FR-MSG-OUTBOUND-METRICS, PRD v1.3 §8.6)
+        include: health,info,prometheus
   endpoint:
     health:
       show-details: when-authorized
+  metrics:
+    distribution:
+      # P5 T8 AC2: 让 Micrometer 客户端为 fep_outbound_send_latency_seconds
+      # 计算 p50/p95/p99 quantile 并以
+      # fep_outbound_send_latency_seconds{quantile="0.5|0.95|0.99"} 行暴露给 Prometheus。
+      # 客户端 percentile 不支持跨实例聚合，单机 FEP 部署足以覆盖。
+      percentiles:
+        fep_outbound_send_latency_seconds: 0.5,0.95,0.99
 
 logging:
   level:

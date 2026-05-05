@@ -54,6 +54,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- P5 T8: Micrometer Prometheus registry — 暴露 /actuator/prometheus
+             用于 fep_outbound_send_total Counter + fep_outbound_send_latency_seconds Timer
+             (FR-MSG-OUTBOUND-METRICS, PRD v1.3 §8.6)。版本由 spring-boot-dependencies BOM 管理。 -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
 
         <!-- JPA + Flyway + H2 + MySQL -->
         <dependency>

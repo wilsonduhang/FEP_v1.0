@@ -52,7 +52,11 @@ public class SecurityConfiguration {
             "/v3/api-docs/**",
             "/h2-console/**",
             "/actuator/health",
-            "/actuator/info"
+            "/actuator/info",
+            // P5 T8: Prometheus scrape 端点暴露给监控系统抓取（FR-MSG-OUTBOUND-METRICS）。
+            // Plan §AC3 reality-check 修订：原 P0.5 PUBLIC_PATHS 不含 prometheus，本 Task 显式补全。
+            // 内网部署：Prometheus server 走 service-mesh / VPC ACL 限制源 IP；不依赖 JWT。
+            "/actuator/prometheus"
     };
 
     private final JwtAuthFilter jwtAuthFilter;
