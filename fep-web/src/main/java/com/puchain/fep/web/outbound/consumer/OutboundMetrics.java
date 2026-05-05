@@ -67,11 +67,18 @@ public class OutboundMetrics {
     /**
      * 记录一次成功发送：SENT counter+1 + latency timer 记录耗时。
      *
+     * <p>Timer 与 Counter 共享 {@code status="SENT"} tag，便于 Grafana / PromQL 跨 metric
+     * 联查（quality reviewer #1 修订：原版 Timer 无 tag，Counter 有 tag，无法 join；
+     * Timer 加 status tag 后未来 T9 引入按状态分级延迟分析时无需破坏性接口变更）。
+     * Micrometer 的 percentile 配置按 meter 名匹配，与 tag 无关，
+     * {@code application.yml} 行 56 的 percentile 配置仍生效。</p>
+     *
      * @param latencyNanos 发送耗时（纳秒，通常来自 {@code System.nanoTime()} 差值，必须 ≥ 0）
      */
     public void recordSent(final long latencyNanos) {
         registry.counter(COUNTER_SEND_TOTAL, TAG_STATUS, STATUS_SENT).increment();
-        registry.timer(TIMER_SEND_LATENCY).record(latencyNanos, TimeUnit.NANOSECONDS);
+        registry.timer(TIMER_SEND_LATENCY, TAG_STATUS, STATUS_SENT)
+                .record(latencyNanos, TimeUnit.NANOSECONDS);
     }
 
     /**

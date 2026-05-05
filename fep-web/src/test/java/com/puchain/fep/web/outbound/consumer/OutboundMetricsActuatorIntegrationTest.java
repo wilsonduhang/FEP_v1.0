@@ -1,11 +1,13 @@
 package com.puchain.fep.web.outbound.consumer;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -59,16 +61,28 @@ class OutboundMetricsActuatorIntegrationTest {
     @Autowired
     private OutboundMetrics metrics;
 
+    @Autowired
+    private MeterRegistry registry;
+
     /**
-     * 验证 SENT counter + latency timer 注册并通过 {@code /actuator/prometheus} 暴露。
-     *
-     * <p>同时校验 RETRY counter 行存在（覆盖 status tag 第二个值）。</p>
+     * 验证 SENT counter + latency timer 注册并通过 {@code /actuator/prometheus} 暴露，
+     * 同时直接查询 {@link MeterRegistry} 校验业务计数值（quality reviewer #2 修订：
+     * 仅 {@code containsString} 不能区分 0 / 1 / 100，业务断言强度不足）。
      */
     @Test
     void prometheus_endpoint_should_expose_outbound_send_total_and_latency() throws Exception {
         metrics.recordSent(123L);
         metrics.recordRetry();
 
+        // Direct registry assertions — verify counter values, not just metric names.
+        assertThat(registry.counter("fep_outbound_send_total", "status", "SENT").count())
+                .isEqualTo(1.0);
+        assertThat(registry.counter("fep_outbound_send_total", "status", "RETRY").count())
+                .isEqualTo(1.0);
+        assertThat(registry.timer("fep_outbound_send_latency_seconds", "status", "SENT").count())
+                .isEqualTo(1L);
+
+        // Endpoint smoke — verify scrape exposes the metric series with correct tags.
         mvc.perform(get("/actuator/prometheus"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("fep_outbound_send_total")))
@@ -78,13 +92,15 @@ class OutboundMetricsActuatorIntegrationTest {
     }
 
     /**
-     * 验证 DEAD_LETTER counter 在 {@code /actuator/prometheus} 中以独立 status tag 行暴露。
-     *
-     * <p>覆盖 AC1 status tag 第三个值，确保 status 维度完整。</p>
+     * 验证 DEAD_LETTER counter 在 {@code /actuator/prometheus} 中以独立 status tag 行暴露，
+     * 直接查询 {@link MeterRegistry} 校验计数值（quality reviewer #2 修订）。
      */
     @Test
     void prometheus_endpoint_should_expose_dead_letter_counter() throws Exception {
         metrics.recordDeadLetter();
+
+        assertThat(registry.counter("fep_outbound_send_total", "status", "DEAD_LETTER").count())
+                .isEqualTo(1.0);
 
         mvc.perform(get("/actuator/prometheus"))
                 .andExpect(status().isOk())

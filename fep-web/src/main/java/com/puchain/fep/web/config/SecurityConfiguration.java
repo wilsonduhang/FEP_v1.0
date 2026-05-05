@@ -25,8 +25,9 @@ import java.util.List;
  * <p>CSRF 禁用（前后端分离 + 无状态 JWT），
  * CORS 通过 {@code fep.cors.allowed-origins} 配置白名单（禁止通配符）。</p>
  *
- * <p>公开路径：认证接口 + Swagger UI + H2 Console (dev) + Actuator health/info。
- * 其余路径必须携带有效 JWT。</p>
+ * <p>公开路径：认证接口 + Swagger UI + H2 Console (dev) + Actuator health/info/prometheus
+ * （prometheus 端点 P5 T8 增加，FR-MSG-OUTBOUND-METRICS；内网部署依赖 service-mesh /
+ * VPC ACL 限制源 IP，不依赖 JWT）。其余路径必须携带有效 JWT。</p>
  *
  * @author FEP Team
  * @since 1.0.0
