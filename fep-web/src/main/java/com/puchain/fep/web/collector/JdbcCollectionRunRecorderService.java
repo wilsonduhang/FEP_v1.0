@@ -107,6 +107,7 @@ public class JdbcCollectionRunRecorderService implements CollectionRunRecorder {
     @Override
     public void complete(final String runId,
                          final CollectionRunResult.Status status,
+                         final int collected,
                          final int assembled,
                          final int submitted,
                          final int errors,
@@ -129,6 +130,9 @@ public class JdbcCollectionRunRecorderService implements CollectionRunRecorder {
         // .orElseThrow() reads as a redundant double-throw (T8-fix MEDIUM #1).
         final CollectionRunEntity entity = found.get();
         entity.setStatus(status.name());
+        // T10 Simplify Q-2 fix: persist the raw adapter.collect() count so the
+        // management UI can distinguish total-collected from assembled/submitted.
+        entity.setCollectedCount(collected);
         entity.setAssembledCount(assembled);
         entity.setSubmittedCount(submitted);
         entity.setErrorCount(errors);

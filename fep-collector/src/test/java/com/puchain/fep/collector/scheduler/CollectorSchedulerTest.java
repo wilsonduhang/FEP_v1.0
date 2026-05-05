@@ -116,8 +116,10 @@ class CollectorSchedulerTest {
         assertThat(result.errorMessage()).isNull();
         verify(recorder, times(1)).start(eq(result.runId()), eq(ADAPTER_ID),
                 eq(TriggerType.MANUAL), any(Instant.class));
+        // T10 Simplify Q-2 fix: complete() takes (collected, assembled, submitted, errors).
+        // 3 records collected, all succeed: collected=assembled=submitted=3, errors=0.
         verify(recorder, times(1)).complete(eq(result.runId()),
-                eq(CollectionRunResult.Status.SUCCESS), eq(3), eq(3), eq(0),
+                eq(CollectionRunResult.Status.SUCCESS), eq(3), eq(3), eq(3), eq(0),
                 eq(null), any(Instant.class));
         verify(lock, times(1)).release(any(LockToken.class));
     }
@@ -142,8 +144,10 @@ class CollectorSchedulerTest {
         assertThat(snap.skipped()).isEqualTo(1L);
 
         verify(recorder, never()).start(anyString(), anyString(), any(TriggerType.class), any(Instant.class));
+        // T10 Simplify Q-2 fix: complete() now has 4 int params (collected, assembled, submitted, errors).
         verify(recorder, never()).complete(anyString(), any(CollectionRunResult.Status.class),
-                any(Integer.class), any(Integer.class), any(Integer.class), any(), any(Instant.class));
+                any(Integer.class), any(Integer.class), any(Integer.class), any(Integer.class),
+                any(), any(Instant.class));
         verify(lock, never()).release(any(LockToken.class));
     }
 
@@ -175,8 +179,9 @@ class CollectorSchedulerTest {
         assertThat(result.submitted()).isEqualTo(2);   // dup counts as submitted
         assertThat(result.errors()).isEqualTo(1);
         assertThat(result.errorMessage()).contains("missing required field for 3101: contractNo");
+        // T10 Simplify Q-2 fix: 3 records collected (assembled=2 + 1 failure), assembled=2, submitted=2, errors=1.
         verify(recorder, times(1)).complete(eq(result.runId()),
-                eq(CollectionRunResult.Status.PARTIAL), eq(2), eq(2), eq(1),
+                eq(CollectionRunResult.Status.PARTIAL), eq(3), eq(2), eq(2), eq(1),
                 anyString(), any(Instant.class));
         verify(lock, times(1)).release(any(LockToken.class));
     }
@@ -200,8 +205,9 @@ class CollectorSchedulerTest {
         assertThat(result.submitted()).isEqualTo(3);
         assertThat(result.errors()).isZero();
         assertThat(result.errorMessage()).isNull();
+        // T10 Simplify Q-2 fix: 3 records collected, all dedupped → assembled=3, submitted=3, errors=0.
         verify(recorder, times(1)).complete(eq(result.runId()),
-                eq(CollectionRunResult.Status.SUCCESS), eq(3), eq(3), eq(0),
+                eq(CollectionRunResult.Status.SUCCESS), eq(3), eq(3), eq(3), eq(0),
                 eq(null), any(Instant.class));
     }
 
@@ -261,8 +267,9 @@ class CollectorSchedulerTest {
         // CRITICAL: lock MUST be released even though recorder.start failed
         verify(lock, times(1)).release(any(LockToken.class));
         // recorder.complete should NOT be called because no RUNNING row was persisted
+        // T10 Simplify Q-2 fix: 4 int args now (collected, assembled, submitted, errors).
         verify(recorder, never()).complete(anyString(), any(CollectionRunResult.Status.class),
-                anyInt(), anyInt(), anyInt(), any(), any(Instant.class));
+                anyInt(), anyInt(), anyInt(), anyInt(), any(), any(Instant.class));
     }
 
     @Test
@@ -287,8 +294,9 @@ class CollectorSchedulerTest {
         CollectionMetricsSnapshot snap = metrics.snapshot();
         assertThat(snap.failed()).isEqualTo(1L);
         verify(lock, times(1)).release(any(LockToken.class));
+        // T10 Simplify Q-2 fix: collect() threw before assignment → collected=0, assembled=0, submitted=0, errors=1.
         verify(recorder, times(1)).complete(anyString(), eq(CollectionRunResult.Status.FAILED),
-                eq(0), eq(0), eq(1), anyString(), any(Instant.class));
+                eq(0), eq(0), eq(0), eq(1), anyString(), any(Instant.class));
     }
 
     @Test
@@ -301,7 +309,8 @@ class CollectorSchedulerTest {
         whenSubmitReturns(EnqueueResult.Status.ENQUEUED);
         doThrow(new IllegalStateException("DB outage during complete"))
                 .when(recorder).complete(anyString(), any(CollectionRunResult.Status.class),
-                        anyInt(), anyInt(), anyInt(), any(), any(Instant.class));
+                        // T10 Simplify Q-2 fix: 4 int args now (collected, assembled, submitted, errors).
+                        anyInt(), anyInt(), anyInt(), anyInt(), any(), any(Instant.class));
 
         CollectorScheduler scheduler = newScheduler(adapter);
 

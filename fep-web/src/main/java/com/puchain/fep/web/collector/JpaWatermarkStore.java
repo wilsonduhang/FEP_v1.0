@@ -90,6 +90,15 @@ public class JpaWatermarkStore implements WatermarkStore {
     public void put(final String adapterId, final String watermark) {
         Objects.requireNonNull(adapterId, "adapterId");
         Objects.requireNonNull(watermark, "watermark");
+        // T10 Simplify Q-3 fix: blank watermark would cause silent data replay on next
+        // collect (WHERE cursor_col > '' matches every row). Reject at the persistence
+        // boundary to protect ALL adapters (not just JDBC), fail-fast over corrupting
+        // collection_record_offset.
+        if (watermark.isBlank()) {
+            throw new IllegalArgumentException(
+                    "watermark must not be blank (would cause cursor regression to start);"
+                            + " adapterId=" + adapterId);
+        }
         try {
             final CollectionRecordOffsetEntity entity = new CollectionRecordOffsetEntity();
             entity.setAdapterId(adapterId);

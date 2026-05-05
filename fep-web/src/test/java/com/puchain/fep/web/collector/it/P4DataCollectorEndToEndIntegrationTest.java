@@ -290,6 +290,8 @@ class P4DataCollectorEndToEndIntegrationTest {
         final List<CollectionRunEntity> runs = runRepository.findAll();
         assertThat(runs).hasSize(1);
         assertThat(runs.get(0).getStatus()).isEqualTo("SUCCESS");
+        // T10 Simplify Q-2 fix: collected_count is now populated from records.size().
+        assertThat(runs.get(0).getCollectedCount()).isEqualTo(5);
         assertThat(runs.get(0).getAssembledCount()).isEqualTo(5);
         assertThat(runs.get(0).getSubmittedCount()).isEqualTo(5);
         assertThat(runs.get(0).getErrorCount()).isZero();

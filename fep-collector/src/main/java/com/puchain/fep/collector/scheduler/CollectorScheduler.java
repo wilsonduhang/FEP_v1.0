@@ -222,6 +222,10 @@ public class CollectorScheduler {
         String runId = null;
         Counts counts = new Counts();
         List<CollectionRecord> processed = new ArrayList<>();
+        // T10 Simplify Q-2 fix: track raw adapter.collect() count outside try so the
+        // catch block can pass it to recorder.complete (collected stays 0 if collect()
+        // itself threw — the FAILED status is the correct semantic in that case).
+        int collected = 0;
         try {
             runId = IdGenerator.uuid32();
             Instant startedAt = Instant.now();
@@ -243,6 +247,7 @@ public class CollectorScheduler {
                     startedAt,
                     props.getBatchSize());
             List<CollectionRecord> records = adapter.collect(ctx);
+            collected = records.size();
             for (CollectionRecord rec : records) {
                 processOneRecord(adapterId, rec, counts, processed);
             }
@@ -253,7 +258,7 @@ public class CollectorScheduler {
             metrics.incFailed(counts.errors);
 
             CollectionRunResult.Status terminal = decideStatus(counts);
-            safeRecorderComplete(runId, terminal, counts.assembled, counts.submitted,
+            safeRecorderComplete(runId, terminal, collected, counts.assembled, counts.submitted,
                     counts.errors, counts.firstError);
             return new CollectionRunResult(runId, adapterId, terminal,
                     counts.assembled, counts.submitted, counts.errors, counts.firstError);
@@ -265,7 +270,7 @@ public class CollectorScheduler {
             String msg = trimErrorMessage("collection run failed: " + e.getMessage());
             int errorsTotal = counts.errors + 1;
             safeRecorderComplete(runId, CollectionRunResult.Status.FAILED,
-                    counts.assembled, counts.submitted, errorsTotal, msg);
+                    collected, counts.assembled, counts.submitted, errorsTotal, msg);
             LOG.error("collection run failed: adapterId={}", LogSanitizer.sanitize(adapterId), e);
             return new CollectionRunResult(runId, adapterId, CollectionRunResult.Status.FAILED,
                     counts.assembled, counts.submitted, errorsTotal, msg);
@@ -321,20 +326,21 @@ public class CollectorScheduler {
      *
      * @param runId        运行 ID，可为 {@code null}（start 失败场景）
      * @param status       终态
+     * @param collected    {@code adapter.collect} 返回的原始记录条数（T10 Simplify Q-2 fix）
      * @param assembled    组装成功条数
      * @param submitted    入队成功条数
      * @param errors       错误条数
      * @param errorMessage 首个错误消息（已截断）
      */
     private void safeRecorderComplete(final String runId, final CollectionRunResult.Status status,
-                                      final int assembled, final int submitted,
+                                      final int collected, final int assembled, final int submitted,
                                       final int errors, final String errorMessage) {
         if (runId == null) {
             // start path failed earlier — no RUNNING row to complete; nothing to do.
             return;
         }
         try {
-            recorder.complete(runId, status, assembled, submitted, errors, errorMessage, Instant.now());
+            recorder.complete(runId, status, collected, assembled, submitted, errors, errorMessage, Instant.now());
         } catch (RuntimeException persistEx) {
             // MEDIUM#3: recorder.complete failure must NOT mask the orchestration result.
             // Log and suppress; CollectionRunResult is still returned to caller.

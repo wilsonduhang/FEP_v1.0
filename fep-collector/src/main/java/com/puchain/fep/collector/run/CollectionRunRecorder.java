@@ -41,6 +41,9 @@ public interface CollectionRunRecorder {
      *
      * @param runId        运行 ID（与 {@link #start} 同一次）
      * @param status       终态（{@link CollectionRunResult.Status}，非 null）
+     * @param collected    {@code adapter.collect} 返回的原始记录条数（含被跳过的脏数据）；
+     *                     T10 Simplify Q-2 fix — 用于填充 V23 {@code collected_count} 列，
+     *                     使管理 UI 能区分"采集到的总量"与"已组装/入队成功量"
      * @param assembled    已组装数
      * @param submitted    已提交数
      * @param errors       失败数
@@ -49,6 +52,7 @@ public interface CollectionRunRecorder {
      */
     void complete(String runId,
                   CollectionRunResult.Status status,
+                  int collected,
                   int assembled,
                   int submitted,
                   int errors,

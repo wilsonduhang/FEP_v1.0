@@ -134,10 +134,15 @@ public final class JdbcCollectorAdapter implements CollectorAdapter {
         // 取本批 cursor 列最大值（字典序）— 推进 watermark
         // null cursor 行（sourceRef = "null"）排除在 max 计算外（Plan §T2 #6 "watermark 不退"）—
         // 避免字面值 "null"（ASCII 'n' = 0x6E）拔高合法 ISO-8601 / 数字水位
+        // T10 Simplify Q-3 fix: 空白 cursor 同样跳过 — 落到 watermarkStore.put 会触发
+        // IllegalArgumentException（JpaWatermarkStore 已加 isBlank 守护），但在 adapter
+        // 层先过滤可保留批量内其它有效行的水位推进语义。
         String maxCursor = null;
         for (final CollectionRecord record : records) {
             final String cursorAsString = record.getSourceRef();
-            if (NULL_LITERAL.equals(cursorAsString)) {
+            if (cursorAsString == null
+                    || cursorAsString.isBlank()
+                    || NULL_LITERAL.equals(cursorAsString)) {
                 continue;
             }
             if (maxCursor == null || cursorAsString.compareTo(maxCursor) > 0) {

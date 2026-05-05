@@ -108,6 +108,22 @@ class JpaWatermarkStoreTest {
     }
 
     @Test
+    void putWithBlankWatermarkShouldThrow_T10SimplifyQ3() {
+        // T10 Simplify Q-3 fix: blank watermark would degrade to "WHERE cursor > ''"
+        // on the next collect → silent re-fetch of all source rows. Reject at
+        // the persistence boundary; nothing must be written.
+        assertThatThrownBy(() -> store.put("ADP_T10_Q3", ""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must not be blank");
+        assertThatThrownBy(() -> store.put("ADP_T10_Q3", "   "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must not be blank");
+        assertThat(store.get("ADP_T10_Q3"))
+                .as("blank watermark must NOT be persisted")
+                .isEmpty();
+    }
+
+    @Test
     void putWhenRepositoryThrowsShouldRewrapToCollectPersistFailure() {
         // Mock-driven path: prove the catch block surfaces the canonical
         // FepErrorCode.COLLECT_PERSIST_FAILURE without leaking the JPA exception.

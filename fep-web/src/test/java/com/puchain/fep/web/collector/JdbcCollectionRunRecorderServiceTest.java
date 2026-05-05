@@ -83,10 +83,13 @@ class JdbcCollectionRunRecorderServiceTest {
         assertThat(afterStart.getErrorMessage()).isNull();
         assertThat(afterStart.getCreatedAt()).isEqualTo(startedAt);
 
-        recorder.complete(RUN_ID, CollectionRunResult.Status.PARTIAL, 5, 4, 1,
+        // T10 Simplify Q-2 fix: complete() now takes (collected, assembled, submitted, errors).
+        // Scenario: 6 records collected from source, 5 assembled (1 dropped), 4 submitted (1 dup), 1 error.
+        recorder.complete(RUN_ID, CollectionRunResult.Status.PARTIAL, 6, 5, 4, 1,
                 "first failure: missing field", completedAt);
         final CollectionRunEntity afterComplete = repository.findById(RUN_ID).orElseThrow();
         assertThat(afterComplete.getStatus()).isEqualTo("PARTIAL");
+        assertThat(afterComplete.getCollectedCount()).isEqualTo(6);
         assertThat(afterComplete.getAssembledCount()).isEqualTo(5);
         assertThat(afterComplete.getSubmittedCount()).isEqualTo(4);
         assertThat(afterComplete.getErrorCount()).isEqualTo(1);
@@ -99,8 +102,9 @@ class JdbcCollectionRunRecorderServiceTest {
     @Test
     void complete_withMissingRunId_shouldThrowCollectPersistFailure() {
         // No prior start() call → row absent.
+        // T10 Simplify Q-2 fix: 4 int args (collected, assembled, submitted, errors).
         assertThatThrownBy(() -> recorder.complete("RUN_MISSING_____________________",
-                CollectionRunResult.Status.SUCCESS, 0, 0, 0, null,
+                CollectionRunResult.Status.SUCCESS, 0, 0, 0, 0, null,
                 Instant.parse("2026-04-30T10:00:00Z")))
                 .isInstanceOf(FepBusinessException.class)
                 .extracting(ex -> ((FepBusinessException) ex).getErrorCode())
@@ -141,7 +145,8 @@ class JdbcCollectionRunRecorderServiceTest {
             final String runId = ("R000000000000000000000000000" + terminal.name()).substring(0, 32);
             final Instant t = Instant.parse("2026-04-30T12:00:00Z");
             recorder.start(runId, ADAPTER_ID, TriggerType.SCHEDULED, t);
-            recorder.complete(runId, terminal, 1, 1, 0, null, t.plusSeconds(1));
+            // T10 Simplify Q-2 fix: 4 int args (collected, assembled, submitted, errors).
+            recorder.complete(runId, terminal, 1, 1, 1, 0, null, t.plusSeconds(1));
             assertThat(repository.findById(runId).orElseThrow().getStatus())
                     .isEqualTo(terminal.name());
         }
