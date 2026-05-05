@@ -4,6 +4,8 @@ import com.puchain.fep.converter.type.MessageType;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -105,5 +107,74 @@ class InboundMessageProcessedEventTest {
                 .contains("serialNo=")
                 .contains("body=")
                 .contains("occurredAt=");
+    }
+
+    // ===== R2 (P3-DEFER-LISTENER-BODYCAST) — bodyAs helper tests (hot-fix v0.5.1 append) =====
+    //
+    // Closes P3-DEFER-LISTENER-BODYCAST. Replaces the duplicated `raw == null
+    // → return; instanceof X body → throw ISE` pattern in 3 listeners with a
+    // single record-level helper. 5 new tests below cover null body / typed
+    // match / type mismatch ISE / NPE on null Class<T> / subtype match.
+    private static final Instant BODYAS_FIXED_TS =
+            Instant.parse("2026-05-05T10:00:00Z");
+
+    private static InboundMessageProcessedEvent eventWithBody(final Object body) {
+        return new InboundMessageProcessedEvent(
+                MessageType.MSG_3116,
+                "00000001",
+                "SERIAL-001",
+                body,
+                BODYAS_FIXED_TS);
+    }
+
+    @Test
+    void bodyAs_shouldReturnNull_whenBodyIsNull() {
+        final InboundMessageProcessedEvent event = eventWithBody(null);
+
+        final String result = event.bodyAs(String.class);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void bodyAs_shouldReturnTyped_whenBodyMatchesExpected() {
+        final String body = "payload-3116";
+        final InboundMessageProcessedEvent event = eventWithBody(body);
+
+        final String result = event.bodyAs(String.class);
+
+        assertThat(result).isSameAs(body);
+    }
+
+    @Test
+    void bodyAs_shouldThrowISE_whenBodyTypeMismatch() {
+        final Integer body = 42;
+        final InboundMessageProcessedEvent event = eventWithBody(body);
+
+        assertThatThrownBy(() -> event.bodyAs(String.class))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("event.body type mismatch")
+                .hasMessageContaining("expected String")
+                .hasMessageContaining("got java.lang.Integer");
+    }
+
+    @Test
+    void bodyAs_shouldThrowNPE_whenExpectedClassIsNull() {
+        final InboundMessageProcessedEvent event = eventWithBody("any");
+
+        assertThatThrownBy(() -> event.bodyAs(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessage("expected");
+    }
+
+    @Test
+    void bodyAs_shouldReturnTyped_whenBodyIsSubtypeOfExpected() {
+        // 验证 Class.cast 不深拷贝（隐性 API 契约）：ArrayList → List 上溯返回同引用
+        final ArrayList<String> body = new ArrayList<>();
+        final InboundMessageProcessedEvent event = eventWithBody(body);
+
+        final List<?> result = event.bodyAs(List.class);
+
+        assertThat(result).isSameAs(body);
     }
 }

@@ -58,4 +58,46 @@ public record InboundMessageProcessedEvent(
         Objects.requireNonNull(serialNo, "serialNo");
         Objects.requireNonNull(occurredAt, "occurredAt");
     }
+
+    /**
+     * Casts {@link #body()} to the {@code expected} type, returning {@code null}
+     * when the body itself is {@code null} (consistent with listener {@code raw
+     * == null → silent skip} semantics) and throwing {@link IllegalStateException}
+     * when the body is non-null but is not assignable to {@code expected}.
+     *
+     * <p>Replaces the duplicated {@code instanceof X body → throw ISE} pattern
+     * in {@code BankReconciliationEventListener} / {@code ClearingInstructionEventListener}
+     * / {@code PlatformReconciliationEventListener} (P3-DEFER-LISTENER-BODYCAST,
+     * a.k.a. R2). The thrown ISE keeps the registry-contract-violation contract
+     * documented on each listener's class Javadoc — when the dispatcher rolls
+     * back its {@code @Transactional} boundary, {@code message_process_record}
+     * and the per-listener side tables stay consistent.</p>
+     *
+     * <p>Sub-type matching follows {@link Class#isInstance(Object)} semantics
+     * (identical to {@code instanceof}); a {@code java.util.ArrayList} body
+     * passed through {@code bodyAs(java.util.List.class)} returns the same
+     * reference, no copy.</p>
+     *
+     * @param <T>      the expected body type
+     * @param expected the {@link Class} guard, non-null
+     * @return the typed body, or {@code null} when {@link #body()} is {@code null}
+     * @throws NullPointerException  when {@code expected} itself is {@code null}
+     * @throws IllegalStateException when the body is non-null but not assignable
+     *                               to {@code expected}
+     */
+    public <T> T bodyAs(final Class<T> expected) {
+        Objects.requireNonNull(expected, "expected");
+        final Object current = body();
+        if (current == null) {
+            return null;
+        }
+        if (!expected.isInstance(current)) {
+            throw new IllegalStateException(
+                    "event.body type mismatch: expected "
+                            + expected.getSimpleName()
+                            + ", got "
+                            + current.getClass().getName());
+        }
+        return expected.cast(current);
+    }
 }
