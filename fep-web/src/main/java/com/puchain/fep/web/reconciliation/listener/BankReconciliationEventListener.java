@@ -69,16 +69,11 @@ public class BankReconciliationEventListener {
         if (event.type() != MessageType.MSG_3116) {
             return;
         }
-        final Object raw = event.body();
-        if (raw == null) {
+        final BankCheckDay3116 body = event.bodyAs(BankCheckDay3116.class);
+        if (body == null) {
             LOG.debug("3116 listener: body=null, skip serialNo={}",
                     LogSanitizer.sanitize(event.serialNo()));
             return;
-        }
-        if (!(raw instanceof BankCheckDay3116 body)) {
-            throw new IllegalStateException(
-                    "event.body type mismatch: expected BankCheckDay3116, got "
-                            + raw.getClass().getName());
         }
         final ReconciliationOutcome outcome =
                 bankReconciliationService.processInbound(body, event.serialNo());
