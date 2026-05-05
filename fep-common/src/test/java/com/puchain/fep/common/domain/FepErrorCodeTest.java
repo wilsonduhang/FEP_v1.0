@@ -110,4 +110,53 @@ class FepErrorCodeTest {
         }
         assertThat(actual).containsExactlyInAnyOrder(expected);
     }
+
+    @Test
+    void outboundErrorCodes_shouldBeDefined() {
+        // P5 T0: fep-web outbound consumer 8 个错误码
+        assertThat(FepErrorCode.OUTBOUND_5101_ENVELOPE_BUILD_FAILURE.getCode())
+                .isEqualTo("OUTBOUND_5101");
+        assertThat(FepErrorCode.OUTBOUND_5101_ENVELOPE_BUILD_FAILURE.getDefaultMessage())
+                .contains("envelope");
+        assertThat(FepErrorCode.OUTBOUND_5102_XSD_VALIDATION_FAILURE.getCode())
+                .isEqualTo("OUTBOUND_5102");
+        assertThat(FepErrorCode.OUTBOUND_5102_XSD_VALIDATION_FAILURE.getDefaultMessage())
+                .contains("XSD");
+        assertThat(FepErrorCode.OUTBOUND_5103_SIGN_FAILURE.getCode())
+                .isEqualTo("OUTBOUND_5103");
+        assertThat(FepErrorCode.OUTBOUND_5103_SIGN_FAILURE.getDefaultMessage())
+                .contains("加签");
+        assertThat(FepErrorCode.OUTBOUND_5104_SEND_FAILURE.getCode())
+                .isEqualTo("OUTBOUND_5104");
+        assertThat(FepErrorCode.OUTBOUND_5104_SEND_FAILURE.getDefaultMessage())
+                .contains("TLQ");
+        assertThat(FepErrorCode.OUTBOUND_5105_DEAD_LETTER_REACHED.getCode())
+                .isEqualTo("OUTBOUND_5105");
+        assertThat(FepErrorCode.OUTBOUND_5105_DEAD_LETTER_REACHED.getDefaultMessage())
+                .contains("死信");
+        assertThat(FepErrorCode.OUTBOUND_5106_HEAD_FIELDS_INVALID.getCode())
+                .isEqualTo("OUTBOUND_5106");
+        assertThat(FepErrorCode.OUTBOUND_5106_HEAD_FIELDS_INVALID.getDefaultMessage())
+                .contains("head_fields_xml");
+        assertThat(FepErrorCode.OUTBOUND_5107_BODY_CLASS_NOT_FOUND.getCode())
+                .isEqualTo("OUTBOUND_5107");
+        assertThat(FepErrorCode.OUTBOUND_5107_BODY_CLASS_NOT_FOUND.getDefaultMessage())
+                .contains("Body Class");
+        assertThat(FepErrorCode.OUTBOUND_5108_MSGNO_INVALID.getCode())
+                .isEqualTo("OUTBOUND_5108");
+        assertThat(FepErrorCode.OUTBOUND_5108_MSGNO_INVALID.getDefaultMessage())
+                .contains("msgNo");
+
+        // 覆盖 OUTBOUND_5101..OUTBOUND_5108 连续存在
+        String[] expected = {"OUTBOUND_5101", "OUTBOUND_5102", "OUTBOUND_5103",
+                "OUTBOUND_5104", "OUTBOUND_5105", "OUTBOUND_5106",
+                "OUTBOUND_5107", "OUTBOUND_5108"};
+        Set<String> actual = new HashSet<>();
+        for (FepErrorCode ec : FepErrorCode.values()) {
+            if (ec.getCode().startsWith("OUTBOUND_")) {
+                actual.add(ec.getCode());
+            }
+        }
+        assertThat(actual).containsExactlyInAnyOrder(expected);
+    }
 }

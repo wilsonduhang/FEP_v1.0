@@ -110,7 +110,17 @@ public enum FepErrorCode {
     COLLECT_DUPLICATE_KEY("COLLECT_5003", "幂等键冲突，记录已存在"),
     COLLECT_LOCK_TIMEOUT("COLLECT_5004", "调度互斥锁获取超时"),
     COLLECT_PERSIST_FAILURE("COLLECT_5005", "采集运行记录持久化失败"),
-    COLLECT_TRIGGER_REJECTED("COLLECT_5006", "手动触发被拒绝（adapterId 不存在或已禁用）");
+    COLLECT_TRIGGER_REJECTED("COLLECT_5006", "手动触发被拒绝（adapterId 不存在或已禁用）"),
+
+    // 出站发送层错误 OUTBOUND_5xxx（P5 fep-web outbound consumer）
+    OUTBOUND_5101_ENVELOPE_BUILD_FAILURE("OUTBOUND_5101", "出站报文 envelope 组装失败"),
+    OUTBOUND_5102_XSD_VALIDATION_FAILURE("OUTBOUND_5102", "出站报文 XSD 校验失败"),
+    OUTBOUND_5103_SIGN_FAILURE("OUTBOUND_5103", "出站报文加签失败"),
+    OUTBOUND_5104_SEND_FAILURE("OUTBOUND_5104", "出站报文 TLQ 发送失败"),
+    OUTBOUND_5105_DEAD_LETTER_REACHED("OUTBOUND_5105", "出站报文进入死信队列"),
+    OUTBOUND_5106_HEAD_FIELDS_INVALID("OUTBOUND_5106", "出站报文 head_fields_xml 反序列化失败"),
+    OUTBOUND_5107_BODY_CLASS_NOT_FOUND("OUTBOUND_5107", "出站报文 msgNo 对应 Body Class 未注册"),
+    OUTBOUND_5108_MSGNO_INVALID("OUTBOUND_5108", "出站报文 msgNo 格式非法");
 
     private final String code;
     private final String defaultMessage;
