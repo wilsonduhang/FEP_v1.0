@@ -7,6 +7,15 @@ import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * BATCH 1104 报文 XSD schema 校验测试（沿用 Batch1103XsdValidationTest 模式 —
+ * 直构造 XsdValidator + XsdSchemaRegistry，无 Spring 容器依赖）。
+ *
+ * <p>覆盖 valid + 缺必填字段（ItemId）两个场景。HEAD 字段以 Base.xsd 实测 sequence 为准。</p>
+ *
+ * @author FEP Team
+ * @since 1.0.0
+ */
 class Batch1104XsdValidationTest extends AbstractXsdValidationTest {
 
     @Test
