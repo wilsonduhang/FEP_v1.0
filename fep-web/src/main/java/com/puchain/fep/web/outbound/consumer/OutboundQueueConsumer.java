@@ -53,7 +53,9 @@ public class OutboundQueueConsumer {
      * <p>异常隔离：每行 {@code runner.run()} 失败仅记 ERROR + queue_id，整批继续；
      * 整体异常（claimBatch 抛错）会冒泡到 Spring 调度器，下个周期再试。</p>
      */
-    @Scheduled(fixedDelayString = "${fep.outbound.queue.poll-interval-ms:1000}")
+    @Scheduled(
+            fixedDelayString = "${fep.outbound.queue.poll-interval-ms:1000}",
+            initialDelayString = "${fep.outbound.queue.poll-initial-delay-ms:0}")
     public void poll() {
         final List<String> ids = repository.claimBatch(props.getBatchSize());
         if (ids.isEmpty()) {

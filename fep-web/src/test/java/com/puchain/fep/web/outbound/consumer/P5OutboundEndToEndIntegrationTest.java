@@ -61,6 +61,7 @@ import org.springframework.test.context.jdbc.Sql;
 @TestPropertySource(properties = {
         "fep.collector.scheduling.enabled=false",
         "fep.outbound.queue.poll-interval-ms=99999",
+        "fep.outbound.queue.poll-initial-delay-ms=99999",
         "fep.outbound.queue.retry.backoff-millis=0",
         "fep.outbound.queue.retry.max-backoff-millis=0",
         "management.health.redis.enabled=false"
