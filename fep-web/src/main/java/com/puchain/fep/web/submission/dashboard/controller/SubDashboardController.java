@@ -74,19 +74,24 @@ public class SubDashboardController {
     }
 
     /**
-     * Returns Top-10 distribution grouped by the given dimension.
+     * Returns Top-10 distribution grouped by the given dimension, optionally
+     * scoped by a lookback window.
      *
-     * @param dim grouping dimension; must be {@code messageType} or {@code businessType}
+     * @param dim  grouping dimension; must be {@code messageType} or {@code businessType}
+     * @param days optional lookback window in days (1..365); defaults to 90 when omitted
+     *             (PRD v1.3 §5.5.1 D-2)
      * @return Top 10 distribution items sorted by count descending
      */
     @GetMapping("/distribution")
     @OperationLog(module = "报送管理数据概况", type = OperationType.QUERY,
             description = "查询分布统计")
-    @Operation(summary = "分布统计", description = "按 messageType/businessType 分组 Top 10")
+    @Operation(summary = "分布统计",
+            description = "按 messageType/businessType 分组 Top 10，可选 days 限定时间窗（默认 90）")
     @ApiResponse(responseCode = "200", description = "查询成功")
-    @ApiResponse(responseCode = "400", description = "dim 参数非法")
+    @ApiResponse(responseCode = "400", description = "dim 非法 / days 越界（1..365）")
     public ApiResult<List<DashboardDistributionItem>> getDistribution(
-            @RequestParam final String dim) {
-        return ApiResult.success(dashboardService.getDistribution(dim));
+            @RequestParam final String dim,
+            @RequestParam(required = false) final Integer days) {
+        return ApiResult.success(dashboardService.getDistribution(dim, days));
     }
 }

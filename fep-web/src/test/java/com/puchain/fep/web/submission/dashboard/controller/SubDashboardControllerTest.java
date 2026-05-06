@@ -195,4 +195,51 @@ class SubDashboardControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code", is("PARAM_4002")));
     }
+
+    // ===== R4 Task 1: ?days time-window param =====
+
+    /**
+     * Get distribution with explicit ?days=30 should return 200 + Top N list.
+     *
+     * @throws Exception on request failure
+     */
+    @Test
+    void getDistribution_withDaysParam_shouldReturnList() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/distribution")
+                        .param("dim", "messageType")
+                        .param("days", "30")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", notNullValue()))
+                .andExpect(jsonPath("$.data.length()", greaterThanOrEqualTo(0)));
+    }
+
+    /**
+     * Get distribution without ?days defaults to 90-day window and returns 200.
+     *
+     * @throws Exception on request failure
+     */
+    @Test
+    void getDistribution_withoutDaysParam_shouldDefault90AndReturnOk() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/distribution")
+                        .param("dim", "messageType")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", notNullValue()));
+    }
+
+    /**
+     * Out-of-range days (0) should map to 400 PARAM_4002.
+     *
+     * @throws Exception on request failure
+     */
+    @Test
+    void getDistribution_invalidDays_shouldReturn400ParamError() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/distribution")
+                        .param("dim", "messageType")
+                        .param("days", "0")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is("PARAM_4002")));
+    }
 }

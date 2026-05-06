@@ -44,6 +44,15 @@ public class SubDashboardService {
     /** Trend endpoint allowed lookback window (in days) — 30. */
     private static final int TREND_DAYS_30 = 30;
 
+    /** Distribution endpoint default lookback window when {@code days} omitted. */
+    private static final int DISTRIBUTION_DAYS_DEFAULT = 90;
+
+    /** Distribution endpoint minimum lookback window (inclusive). */
+    private static final int DISTRIBUTION_DAYS_MIN = 1;
+
+    /** Distribution endpoint maximum lookback window (inclusive). */
+    private static final int DISTRIBUTION_DAYS_MAX = 365;
+
     private final SubOutputInterfaceRepository outputInterfaceRepository;
     private final SubDataSourceRepository dataSourceRepository;
     private final SubSubmissionRecordRepository recordRepository;
@@ -167,25 +176,47 @@ public class SubDashboardService {
     }
 
     /**
-     * 按维度返回分布 Top 10。
+     * 按维度返回分布 Top 10，支持可选时间窗。
      *
      * <p>支持维度：{@code "messageType"} / {@code "businessType"}。
      * businessType 维度下 {@code null} 业务类型聚合为 {@code "UNSPECIFIED"}。</p>
      *
-     * @param dim 维度（messageType / businessType）
+     * <p>时间窗：{@code days} 为 {@code null} 时使用默认 {@value #DISTRIBUTION_DAYS_DEFAULT}
+     * 天回看（PRD v1.3 §5.5.1 D-2 决议）；非空时必须落在
+     * {@code [DISTRIBUTION_DAYS_MIN, DISTRIBUTION_DAYS_MAX]} 闭区间内。
+     * 校验顺序：先校验 dim，再校验 days，与 PRD 契约一致。</p>
+     *
+     * @param dim  维度（messageType / businessType）
+     * @param days 回看天数（可选，null 时默认 90；越界抛 IAE）
      * @return Top 10 分布项（按 value 降序）
-     * @throws IllegalArgumentException dim 非法（Handler 自动转 400 PARAM_4002）
+     * @throws IllegalArgumentException dim 非法或 days 越界
+     *                                  （Handler 自动转 400 PARAM_4002）
      */
     @Transactional(readOnly = true)
-    public List<DashboardDistributionItem> getDistribution(final String dim) {
-        log.debug("Aggregating dashboard distribution: dim={}", LogSanitizer.sanitize(dim));
+    public List<DashboardDistributionItem> getDistribution(
+            final String dim, final Integer days) {
+        // dim 校验先于 days 校验，确保契约一致（invalidDim+days=0 仍报 dim 错）
+        if (!"messageType".equals(dim) && !"businessType".equals(dim)) {
+            throw new IllegalArgumentException(
+                    "dim must be messageType or businessType");
+        }
+        final int effectiveDays = (days == null) ? DISTRIBUTION_DAYS_DEFAULT : days;
+        if (effectiveDays < DISTRIBUTION_DAYS_MIN
+                || effectiveDays > DISTRIBUTION_DAYS_MAX) {
+            throw new IllegalArgumentException(
+                    "days must be between " + DISTRIBUTION_DAYS_MIN
+                            + " and " + DISTRIBUTION_DAYS_MAX);
+        }
+        final LocalDateTime startTime =
+                LocalDate.now().minusDays(effectiveDays).atStartOfDay();
+        log.debug("Aggregating dashboard distribution: dim={} days={}",
+                LogSanitizer.sanitize(dim), effectiveDays);
         final List<Object[]> raw = switch (dim) {
             case "messageType" -> recordRepository.aggregateDistributionByMessageType(
-                    null, PageRequest.of(0, TOP_N));
+                    startTime, PageRequest.of(0, TOP_N));
             case "businessType" -> recordRepository.aggregateDistributionByBusinessType(
-                    null, PageRequest.of(0, TOP_N));
-            default -> throw new IllegalArgumentException(
-                    "dim must be messageType or businessType");
+                    startTime, PageRequest.of(0, TOP_N));
+            default -> throw new IllegalStateException("unreachable");
         };
         return raw.stream().map(r -> {
             final DashboardDistributionItem item = new DashboardDistributionItem();
@@ -193,5 +224,20 @@ public class SubDashboardService {
             item.setValue(((Number) r[1]).longValue());
             return item;
         }).toList();
+    }
+
+    /**
+     * 单参 overload：维持 R4 之前调用方兼容性（无活跃生产 callsite）。
+     *
+     * @param dim 维度（messageType / businessType）
+     * @return Top 10 分布项（默认 90 天窗口）
+     * @throws IllegalArgumentException dim 非法
+     * @deprecated 改用 {@link #getDistribution(String, Integer)} 显式传 days；
+     *             R5 移除（{@code forRemoval=true}）。
+     */
+    @Deprecated(since = "R4", forRemoval = true)
+    @Transactional(readOnly = true)
+    public List<DashboardDistributionItem> getDistribution(final String dim) {
+        return getDistribution(dim, null);
     }
 }

@@ -9,17 +9,21 @@ import com.puchain.fep.web.submission.record.repository.SubSubmissionRecordRepos
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -155,10 +159,11 @@ class SubDashboardServiceTest {
                 new Object[] {"3101", 42L},
                 new Object[] {"1101", 17L}
         );
-        when(recordRepository.aggregateDistributionByMessageType(isNull(), any(Pageable.class)))
+        when(recordRepository.aggregateDistributionByMessageType(
+                        any(LocalDateTime.class), any(Pageable.class)))
                 .thenReturn(rows);
 
-        final List<DashboardDistributionItem> items = service.getDistribution("messageType");
+        final List<DashboardDistributionItem> items = service.getDistribution("messageType", null);
 
         assertThat(items).hasSize(2);
         assertThat(items.get(0).getName()).isEqualTo("3101");
@@ -173,10 +178,11 @@ class SubDashboardServiceTest {
                 new Object[] {"BIZ_A", 30L},
                 new Object[] {"UNSPECIFIED", 10L}
         );
-        when(recordRepository.aggregateDistributionByBusinessType(isNull(), any(Pageable.class)))
+        when(recordRepository.aggregateDistributionByBusinessType(
+                        any(LocalDateTime.class), any(Pageable.class)))
                 .thenReturn(rows);
 
-        final List<DashboardDistributionItem> items = service.getDistribution("businessType");
+        final List<DashboardDistributionItem> items = service.getDistribution("businessType", null);
 
         assertThat(items).hasSize(2);
         assertThat(items.get(0).getName()).isEqualTo("BIZ_A");
@@ -187,8 +193,70 @@ class SubDashboardServiceTest {
 
     @Test
     void getDistribution_invalidDim_shouldThrowIAE() {
-        assertThatThrownBy(() -> service.getDistribution("foo"))
+        assertThatThrownBy(() -> service.getDistribution("foo", null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("dim must be messageType or businessType");
+    }
+
+    // ===== R4 Task 1: time-window boundary cases =====
+
+    @Test
+    void getDistribution_messageType_defaultDays_passes90DaysAgoToRepo() {
+        when(recordRepository.aggregateDistributionByMessageType(
+                        any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of());
+
+        service.getDistribution("messageType", null);
+
+        ArgumentCaptor<LocalDateTime> captor = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(recordRepository).aggregateDistributionByMessageType(
+                captor.capture(), any(Pageable.class));
+        LocalDateTime expected = LocalDate.now().minusDays(90L).atStartOfDay();
+        assertThat(captor.getValue()).isCloseTo(expected, within(1L, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    void getDistribution_explicitDays30_passes30DaysAgoToRepo() {
+        when(recordRepository.aggregateDistributionByBusinessType(
+                        any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of());
+
+        service.getDistribution("businessType", 30);
+
+        ArgumentCaptor<LocalDateTime> captor = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(recordRepository).aggregateDistributionByBusinessType(
+                captor.capture(), any(Pageable.class));
+        LocalDateTime expected = LocalDate.now().minusDays(30L).atStartOfDay();
+        assertThat(captor.getValue()).isCloseTo(expected, within(1L, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    void getDistribution_daysZero_throwsIAE() {
+        assertThatThrownBy(() -> service.getDistribution("messageType", 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("days");
+    }
+
+    @Test
+    void getDistribution_daysNegative_throwsIAE() {
+        assertThatThrownBy(() -> service.getDistribution("messageType", -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("days");
+    }
+
+    @Test
+    void getDistribution_daysOver365_throwsIAE() {
+        assertThatThrownBy(() -> service.getDistribution("messageType", 366))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("days");
+    }
+
+    @Test
+    void getDistribution_invalidDim_throwsIAEBeforeDaysCheck() {
+        // dim validation must run before days validation: passing days=0 with
+        // an invalid dim should still surface the dim error, not the days error.
+        assertThatThrownBy(() -> service.getDistribution("invalid", 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("dim");
     }
 }
