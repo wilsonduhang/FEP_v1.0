@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[2104] 企业信息查询授权书批量回执报文</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BatchHead2104" type="ResponseHead">
+				<xsd:annotation>
+					<xsd:documentation>2104报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CompanyAuthFileBatchResponse2104" type="CompanyAuthFileBatchResponse2104" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>企业信息查询授权书批量回执</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="CompanyAuthFileBatchResponse2104">
+		<xsd:annotation>
+			<xsd:documentation>企业信息查询授权书批量回执</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="CompanyAuthFileResponse" type="CompanyAuthFileResponse" minOccurs="1" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>企业信息查询授权书回执项</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="CompanyAuthFileResponse">
+		<xsd:annotation>
+			<xsd:documentation>企业信息查询授权书回执项</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="ItemId" type="ItemId">
+				<xsd:annotation>
+					<xsd:documentation>备案回执项ID</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CompanyName" type="CompanyName">
+				<xsd:annotation>
+					<xsd:documentation>企业名称</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="CompanyCode" type="CompanyCode">
+				<xsd:annotation>
+					<xsd:documentation>企业代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AuthBeginDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>授权开始日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AuthEndDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>授权结束日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AuthNo" type="AuthNo">
+				<xsd:annotation>
+					<xsd:documentation>授权书编号</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="AuthOrgCode" type="OrgCode">
+				<xsd:annotation>
+					<xsd:documentation>被授权机构代码</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="IsUpdate" type="Boolean" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>是否变更标记</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecordResult" type="Result">
+				<xsd:annotation>
+					<xsd:documentation>备案结果</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="RecordAddWord" type="AddWord" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>备案结果附言</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>
