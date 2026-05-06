@@ -24,8 +24,12 @@ import java.time.format.DateTimeFormatter;
  *   <li>{@code DesNode} 恒 "A1000143000104"（HNDEMP 中心节点代码，CLAUDE.md 已知约束）</li>
  *   <li>{@code Version} 恒 "1.0"（CommonHead 默认）</li>
  *   <li>{@code App} 恒 "FEP"（PRD §3.2.2 应用代码上行恒 FEP，inbound 侧 default "HNDEMP" 由 CommonHead 模型承担）</li>
- *   <li>{@code MsgId} 占位 "PLACEHOLDER_T6_INJEC"（20 位，T6 OutboundTlqSender 通过
- *       {@code BodyMsgIdGenerator} 注入真实 14datetime+6seq 值）</li>
+ *   <li>{@code MsgId} 占位 "PLACEHOLDER_T6_INJEC"（20 位）— Simplify Q-2 修订：占位
+ *       不在 marshal 后被替换。{@link OutboundTlqSender#send(String)} 不修改 signed XML，
+ *       而是 {@link BodyMsgIdGenerator} 单独生成 20 位 msgId 持久化到
+ *       {@code outbound_message_queue.msg_id} + {@link com.puchain.fep.transport.model.TlqMessageAttributes#forBatch(String)
+ *       TlqMessageAttributes.forBatch} 入参。CFX envelope 内 MsgId 仍保留占位（业务侧
+ *       通过 DB msg_id 列做幂等关联，非 envelope 内字段）。</li>
  *   <li>{@code CorrMsgId} 上行新请求恒 {@code null}（spec N3：未来响应消息回填扩展 OutboundHeadFields）</li>
  *   <li>{@code WorkDate} {@code Asia/Shanghai} 当日 yyyyMMdd</li>
  * </ul>

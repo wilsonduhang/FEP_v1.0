@@ -31,7 +31,12 @@ public class BodyMsgIdGenerator {
 
     private static final long SEQ_MOD = 1_000_000L;
 
-    private final Clock clock;
+    /**
+     * Asia/Shanghai-zoned clock view, derived once at construction.
+     * Simplify E-2 修订：原实现每次 generate() 调 {@code clock.withZone(SHANGHAI)} 都会
+     * 分配新 Clock wrapper；零行为变更地缓存为 final 字段消除每条消息一次的额外分配。
+     */
+    private final Clock shanghaiClock;
 
     private final AtomicLong seq = new AtomicLong();
 
@@ -42,7 +47,7 @@ public class BodyMsgIdGenerator {
      * @throws NullPointerException 当 {@code clock} 为 null
      */
     public BodyMsgIdGenerator(final Clock clock) {
-        this.clock = Objects.requireNonNull(clock, "clock must not be null");
+        this.shanghaiClock = Objects.requireNonNull(clock, "clock must not be null").withZone(SHANGHAI);
     }
 
     /**
@@ -51,8 +56,8 @@ public class BodyMsgIdGenerator {
      * @return 20 位全数字字符串
      */
     public String generate() {
-        String dt = LocalDateTime.now(clock.withZone(SHANGHAI)).format(FMT);
-        long s = seq.incrementAndGet() % SEQ_MOD;
+        final String dt = LocalDateTime.now(shanghaiClock).format(FMT);
+        final long s = seq.incrementAndGet() % SEQ_MOD;
         return dt + String.format("%06d", s);
     }
 }

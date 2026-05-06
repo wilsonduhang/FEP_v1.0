@@ -61,17 +61,17 @@ public class OutboundTlqSender {
     public OutboundSendOutcome send(final String signedXml) {
         Objects.requireNonNull(signedXml, "signedXml must not be null");
 
-        String msgId = msgIdGenerator.generate();
-        TlqMessageAttributes attrs = TlqMessageAttributes.forBatch(msgId);
-        TlqMessage message = new TlqMessage(signedXml, attrs, TlqChannel.BATCH_SEND);
+        final String msgId = msgIdGenerator.generate();
+        final TlqMessageAttributes attrs = TlqMessageAttributes.forBatch(msgId);
+        final TlqMessage message = new TlqMessage(signedXml, attrs, TlqChannel.BATCH_SEND);
 
-        SendResult result = producer.send(message);
-        String tlqResult = result.success()
+        final SendResult result = producer.send(message);
+        final String rawResult = result.success()
             ? "ok:" + result.msgId()
             : "fail:" + result.error();
-        if (tlqResult.length() > RESULT_MAX_LEN) {
-            tlqResult = tlqResult.substring(0, RESULT_MAX_LEN);
-        }
+        final String tlqResult = rawResult.length() > RESULT_MAX_LEN
+            ? rawResult.substring(0, RESULT_MAX_LEN)
+            : rawResult;
         return new OutboundSendOutcome(result.success(), msgId, tlqResult);
     }
 

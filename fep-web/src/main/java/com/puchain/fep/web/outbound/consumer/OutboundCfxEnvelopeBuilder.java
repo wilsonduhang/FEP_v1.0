@@ -118,22 +118,30 @@ public class OutboundCfxEnvelopeBuilder {
             // III. 组装 CommonHead
             final CommonHead commonHead = commonHeadComposer.compose(entity, headFields);
 
-            // IV. 解析 body class + JAXB unmarshal
+            // IV. 解析 body class
             final Class<?> bodyClass = bodyClassRegistry.resolve(msgNo);
-            final JAXBContext bodyCtx = JaxbContextCache.getForClasses(bodyClass);
+
+            // V. 构造 wire-shape head 实例（Simplify E-1 修订：提前到 unmarshal 之前，
+            // 以便步骤 IV.2 unmarshal 与步骤 VI marshal 共享同一 4-class JaxbContextCache 条目，
+            // 消除原 1-class bodyCtx 仅用于 unmarshal 的冗余 cache slot）
+            final RequestBusinessHead wireHead = desc.newHeadInstance();
+            populateWireHead(wireHead, headFields, desc.requiresResultCode());
+
+            // IV.2 body XML JAXB unmarshal — 复用步骤 VI marshalToString 内将再次命中的同一 4-class context
+            final JAXBContext envelopeCtx = JaxbContextCache.getForClasses(
+                    CfxMessage.class,
+                    RequestBusinessHead.class,
+                    wireHead.getClass(),
+                    bodyClass);
             final Object bodyObj;
             try {
-                final Unmarshaller bodyUnmarshaller = bodyCtx.createUnmarshaller();
+                final Unmarshaller bodyUnmarshaller = envelopeCtx.createUnmarshaller();
                 bodyObj = bodyUnmarshaller.unmarshal(new StringReader(entity.getMessageBodyXml()));
             } catch (JAXBException e) {
                 throw new FepBusinessException(
                         FepErrorCode.OUTBOUND_5101_ENVELOPE_BUILD_FAILURE,
                         "body XML 反序列化失败: msgNo=" + msgNo, e);
             }
-
-            // V. 构造 wire-shape head 实例（共享 newHeadInstance，quality 非阻塞 #2）
-            final RequestBusinessHead wireHead = desc.newHeadInstance();
-            populateWireHead(wireHead, headFields, desc.requiresResultCode());
 
             // VI. marshal 完整 CFX envelope
             final String xml = marshalToString(commonHead, wireHead, bodyObj, desc);

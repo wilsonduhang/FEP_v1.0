@@ -46,7 +46,7 @@ import org.springframework.stereotype.Component;
 public class OutboundRetryHandler {
 
     /** Logger for retry / DLQ 转移 telemetry。 */
-    private static final Logger log = LoggerFactory.getLogger(OutboundRetryHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OutboundRetryHandler.class);
 
     /** {@code error_message} 列长度上限（V22 ship TEXT，应用层主动截断防 H2 边界差异）。 */
     private static final int ERROR_MESSAGE_MAX_LENGTH = 1024;
@@ -96,7 +96,7 @@ public class OutboundRetryHandler {
         if (newRetryCount >= props.getRetry().getMaxAttempts()) {
             entity.setStatus("DEAD_LETTER");
             entity.setNextRetryAt(null); // DLQ 不再调度
-            log.warn("queue_id={} -> DEAD_LETTER (retry_count={})", queueId, newRetryCount);
+            LOG.warn("queue_id={} -> DEAD_LETTER (retry_count={})", queueId, newRetryCount);
         } else {
             entity.setStatus("RETRY");
             final long shift = Math.min(newRetryCount, MAX_SHIFT_BITS);
