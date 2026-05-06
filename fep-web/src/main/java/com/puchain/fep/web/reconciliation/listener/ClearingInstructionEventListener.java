@@ -68,16 +68,11 @@ public class ClearingInstructionEventListener {
         if (event.type() != MessageType.MSG_3115) {
             return;
         }
-        final Object raw = event.body();
-        if (raw == null) {
+        final PlatPay3115 body = event.bodyAs(PlatPay3115.class);
+        if (body == null) {
             LOG.debug("3115 listener: body=null, skip serialNo={}",
                     LogSanitizer.sanitize(event.serialNo()));
             return;
-        }
-        if (!(raw instanceof PlatPay3115 body)) {
-            throw new IllegalStateException(
-                    "event.body type mismatch: expected PlatPay3115, got "
-                            + raw.getClass().getName());
         }
         final List<QsInfo> qsList = body.getQsInfo();
         final boolean isInboundReturn =
