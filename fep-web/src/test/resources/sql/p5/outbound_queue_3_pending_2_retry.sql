@@ -11,6 +11,13 @@
 --   UUID_5         - status=RETRY,   next_retry_at=NOW()-1 second (due)
 -- 1 expected to be skipped:
 --   UUID_99        - status=RETRY,   next_retry_at=NOW()+1 hour   (future)
+--
+-- T10 isolation fix: pre-DELETE LIKE 'aaaa1111bbbb2222cccc3333dddd0%' to
+-- clear any rows committed by sibling P5OutboundEndToEndIntegrationTest
+-- (no @Transactional class-level rollback). Both fixtures share the same
+-- queue_id family in shared in-JVM H2 in-memory DB.
+DELETE FROM outbound_message_queue
+WHERE queue_id LIKE 'aaaa1111bbbb2222cccc3333dddd0%';
 
 INSERT INTO outbound_message_queue (
     queue_id, message_type, transition_no, idempotency_key,
