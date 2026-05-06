@@ -1,7 +1,6 @@
 package com.puchain.fep.processor.validation;
 
 import com.puchain.fep.converter.type.MessageType;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -15,14 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>覆盖 valid + 缺必填字段（QueryResult）两个场景。HEAD 字段以 Base.xsd 实测 sequence 为准
  * （Version/SrcNode/DesNode/App/MsgNo/MsgId/CorrMsgId/WorkDate）。</p>
  */
-class Batch2103XsdValidationTest {
-
-    private static XsdValidator validator;
-
-    @BeforeAll
-    static void init() {
-        validator = new XsdValidator(new XsdSchemaRegistry());
-    }
+class Batch2103XsdValidationTest extends AbstractXsdValidationTest {
 
     @Test
     void valid2103Sample_shouldPass() {

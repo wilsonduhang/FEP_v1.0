@@ -1,21 +1,13 @@
 package com.puchain.fep.processor.validation;
 
 import com.puchain.fep.converter.type.MessageType;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class Batch2104XsdValidationTest {
-
-    private static XsdValidator validator;
-
-    @BeforeAll
-    static void init() {
-        validator = new XsdValidator(new XsdSchemaRegistry());
-    }
+class Batch2104XsdValidationTest extends AbstractXsdValidationTest {
 
     @Test
     void valid2104Sample_shouldPass() {
