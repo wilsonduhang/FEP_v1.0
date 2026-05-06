@@ -17,12 +17,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class OutboundStatusWriterTest {
+class OutboundStatusWriterServiceTest {
 
     @Mock private OutboundQueueRepository repository;
     @Mock private OutboundRetryHandler retryHandler;
 
-    @InjectMocks private OutboundStatusWriter writer;
+    @InjectMocks private OutboundStatusWriterService writer;
 
     @Test
     void recordSent_shouldUpdateStatusAndPersist() {

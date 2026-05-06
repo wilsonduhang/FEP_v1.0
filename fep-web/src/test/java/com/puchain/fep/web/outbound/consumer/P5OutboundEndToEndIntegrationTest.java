@@ -11,6 +11,8 @@ import com.puchain.fep.transport.api.TlqProducer;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +20,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * P5 T9 端到端 IT — 验证 outbound queue 完整流水：
@@ -158,5 +161,33 @@ class P5OutboundEndToEndIntegrationTest {
                         + "WHERE queue_id LIKE 'aaaa1111bbbb2222cccc3333dddd00%' "
                         + "AND status='SENT'", Long.class);
         assertThat(sentCount).isEqualTo(8L);
+    }
+
+    /**
+     * B1 不变量：TLQ send 调用时必须无活跃事务 — 验证 IO 不阻塞 DB 连接池。
+     *
+     * <p>调用链：consumer.poll() → runner.run() → tlqSender.send() → mockProducer.send()。
+     * 在 mockProducer.send 拦截点检查 {@link TransactionSynchronizationManager#isActualTransactionActive()}：
+     * 期望 false（B1 重构后 RunnerImpl.run 移除类层 @Transactional，TLQ IO 在非 Tx 上下文执行；
+     * 状态机回写通过 {@link OutboundStatusWriterService} 的独立 @Transactional 短 Tx 承载）。</p>
+     *
+     * <p>seed 数据复用 {@code outbound_queue_8_messages.sql}（8 行 READY），首条 poll 命中
+     * 后 mockProducer.send 即被调用一次，已足够断言 Tx 状态。</p>
+     */
+    @Test
+    @DisplayName("B1: TLQ send 调用时无活跃 Tx — 验证 IO 不阻塞 DB 连接")
+    void send_shouldExecuteOutsideTransaction() {
+        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
+        final AtomicBoolean txActiveDuringSend = new AtomicBoolean(true);
+        when(mockProducer.send(any())).thenAnswer(invocation -> {
+            txActiveDuringSend.set(TransactionSynchronizationManager.isActualTransactionActive());
+            return SendResult.ok("BROKER_X");
+        });
+
+        consumer.poll();
+
+        assertThat(txActiveDuringSend.get())
+                .as("TLQ send must execute outside any active Tx (B1 invariant)")
+                .isFalse();
     }
 }

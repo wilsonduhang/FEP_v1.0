@@ -28,7 +28,7 @@ import java.util.Objects;
  * @since 1.0.0
  */
 @Service
-public class OutboundStatusWriter {
+public class OutboundStatusWriterService {
 
     private final OutboundQueueRepository repository;
     private final OutboundRetryHandler retryHandler;
@@ -39,7 +39,7 @@ public class OutboundStatusWriter {
      * @param repository   outbound queue JPA repository（非空）
      * @param retryHandler 失败路径重试 / DLQ 处理器（非空）
      */
-    public OutboundStatusWriter(final OutboundQueueRepository repository,
+    public OutboundStatusWriterService(final OutboundQueueRepository repository,
                                 final OutboundRetryHandler retryHandler) {
         this.repository = Objects.requireNonNull(repository, "repository");
         this.retryHandler = Objects.requireNonNull(retryHandler, "retryHandler");
