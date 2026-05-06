@@ -18,7 +18,7 @@ class XsdSchemaRegistryTest {
 
     private static final List<MessageType> SUPPORTED = List.of(
             MessageType.MSG_1001, MessageType.MSG_1004,
-            MessageType.MSG_1102, MessageType.MSG_1103,
+            MessageType.MSG_1102, MessageType.MSG_1103, MessageType.MSG_1104,
             MessageType.MSG_2001, MessageType.MSG_2004,
             MessageType.MSG_2102, MessageType.MSG_2103,
             MessageType.MSG_3001, MessageType.MSG_3002,
