@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="./Base.xsd"/>
+	<xsd:element name="CFX" type="CFX">
+		<xsd:annotation>
+			<xsd:documentation>[1102] 外联机构数据报送核对请求报文</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:complexType name="CFX">
+		<xsd:annotation>
+			<xsd:documentation>报文</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="HEAD" type="HEAD">
+				<xsd:annotation>
+					<xsd:documentation>报文头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MSG" type="MSG">
+				<xsd:annotation>
+					<xsd:documentation>报文体</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="MSG">
+		<xsd:annotation>
+			<xsd:documentation>报文体</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="BatchHead1102" type="RequestHead">
+				<xsd:annotation>
+					<xsd:documentation>1102报文业务头</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="DataTransferCheckRequest1102" type="DataTransferCheckRequest1102">
+				<xsd:annotation>
+					<xsd:documentation>外联机构数据报送核对请求</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="DataTransferCheckRequest1102">
+		<xsd:annotation>
+			<xsd:documentation>外联机构数据报送核对请求</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="DataTransferCheck" type="DataTransferCheck" minOccurs="1" maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation>数据报送核对项</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	<xsd:complexType name="DataTransferCheck">
+		<xsd:annotation>
+			<xsd:documentation>数据报送核对项</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="ItemId" type="ItemId">
+				<xsd:annotation>
+					<xsd:documentation>核对项ID</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="MainClass" type="MainClass">
+				<xsd:annotation>
+					<xsd:documentation>业务大类</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="SecondClass" type="SecondClass">
+				<xsd:annotation>
+					<xsd:documentation>业务小类</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Period" type="Period">
+				<xsd:annotation>
+					<xsd:documentation>报送周期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FileName" type="FileName" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>文件名</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="FileDate" type="Date">
+				<xsd:annotation>
+					<xsd:documentation>文件业务日期</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="Status" type="TransferStatus" minOccurs="0">
+				<xsd:annotation>
+					<xsd:documentation>文件报送状态</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

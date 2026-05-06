@@ -24,12 +24,12 @@ import java.util.Set;
  * Loads HNDEMP message XSDs under {@code fep-processor/resources/xsd/} and caches
  * them keyed by {@link MessageType}.
  *
- * <p>Eagerly loads all 37 supported XSDs at construction time using a single-threaded
+ * <p>Eagerly loads all 38 supported XSDs at construction time using a single-threaded
  * {@link SchemaFactory}, then discards the factory. The resulting {@link Schema}
  * instances are thread-safe per JAXP and cached in an unmodifiable map.</p>
  *
- * <p>Current scope supports 37 supported messages
- * (1001/1004/1103/2001/2004/2103/3001-3009/3020/3101/3102/3103/3105/3107/
+ * <p>Current scope supports 38 supported messages
+ * (1001/1004/1102/1103/2001/2004/2103/3001-3009/3020/3101/3102/3103/3105/3107/
  * 3108/3109/3112/3113/3115/3116/3120/9000/9005/9006-9009/9020/9100/9120);
  * all other {@link MessageType} values throw {@link UnsupportedOperationException}.</p>
  */
@@ -39,7 +39,7 @@ public class XsdSchemaRegistry {
     private static final Logger log = LoggerFactory.getLogger(XsdSchemaRegistry.class);
 
     private static final Set<String> SUPPORTED_CODES = Set.of(
-            "1001", "1004", "1103", "2001", "2004", "2103",
+            "1001", "1004", "1102", "1103", "2001", "2004", "2103",
             "3001", "3002", "3003", "3004", "3005", "3006", "3007", "3008", "3009",
             "3020", "3101", "3102", "3103", "3105", "3107", "3108", "3109",
             "3112", "3113", "3115", "3116", "3120",
@@ -52,7 +52,7 @@ public class XsdSchemaRegistry {
     private final Map<String, Schema> cache;
 
     /**
-     * Creates the registry, eagerly loading all 37 supported XSDs into an
+     * Creates the registry, eagerly loading all 38 supported XSDs into an
      * unmodifiable cache. The {@link SchemaFactory} is used only during
      * construction (single-threaded), avoiding its documented thread-safety
      * limitations.
