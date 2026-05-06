@@ -117,4 +117,28 @@ class CompanyInfoBatchResponse2103Test {
                 .doesNotContain("<FileName>")
                 .doesNotContain("<QueryAddWord>");
     }
+
+    @Test
+    void jaxbMarshal_nullItems_shouldNotThrowButProduceEmptyWrapper() throws Exception {
+        CompanyInfoBatchResponse2103 res = new CompanyInfoBatchResponse2103();
+        String xml = JaxbRoundtripSupport.marshal(res);
+        assertThat(xml)
+                .as("marshal with null items must not throw and must produce wrapper element")
+                .contains("<CompanyInfoBatchResponse2103");
+    }
+
+    @Test
+    void jaxbRoundtrip_emptyItemsList_shouldPreserveZeroCount() throws Exception {
+        CompanyInfoBatchResponse2103 res = new CompanyInfoBatchResponse2103();
+        res.setItems(java.util.Collections.emptyList());
+        String xml = JaxbRoundtripSupport.marshal(res);
+        CompanyInfoBatchResponse2103 parsed = JaxbRoundtripSupport.unmarshal(
+                xml, CompanyInfoBatchResponse2103.class);
+        assertThat(parsed.getItems())
+                .as("empty list roundtrip: items must be null or empty, not fabricated")
+                .satisfiesAnyOf(
+                        list -> assertThat(list).isNull(),
+                        list -> assertThat(list).isEmpty()
+                );
+    }
 }

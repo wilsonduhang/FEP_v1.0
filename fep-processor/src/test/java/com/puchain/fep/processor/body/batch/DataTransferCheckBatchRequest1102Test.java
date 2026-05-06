@@ -90,4 +90,28 @@ class DataTransferCheckBatchRequest1102Test {
         String xml = JaxbRoundtripSupport.marshal(wrapper);
         assertThat(xml).doesNotContain("<FileName>").doesNotContain("<Status>");
     }
+
+    @Test
+    void jaxbMarshal_nullItems_shouldNotThrowButProduceEmptyWrapper() throws Exception {
+        DataTransferCheckBatchRequest1102 req = new DataTransferCheckBatchRequest1102();
+        String xml = JaxbRoundtripSupport.marshal(req);
+        assertThat(xml)
+                .as("marshal with null items must not throw and must produce wrapper element")
+                .contains("<DataTransferCheckRequest1102");
+    }
+
+    @Test
+    void jaxbRoundtrip_emptyItemsList_shouldPreserveZeroCount() throws Exception {
+        DataTransferCheckBatchRequest1102 req = new DataTransferCheckBatchRequest1102();
+        req.setItems(java.util.Collections.emptyList());
+        String xml = JaxbRoundtripSupport.marshal(req);
+        DataTransferCheckBatchRequest1102 parsed = JaxbRoundtripSupport.unmarshal(
+                xml, DataTransferCheckBatchRequest1102.class);
+        assertThat(parsed.getItems())
+                .as("empty list roundtrip: items must be null or empty, not fabricated")
+                .satisfiesAnyOf(
+                        list -> assertThat(list).isNull(),
+                        list -> assertThat(list).isEmpty()
+                );
+    }
 }

@@ -105,4 +105,28 @@ class CompanyAuthFileBatchTransfer1104Test {
         String xml = JaxbRoundtripSupport.marshal(wrapper);
         assertThat(xml).doesNotContain("<IsUpdate>").doesNotContain("<Parameters>");
     }
+
+    @Test
+    void jaxbMarshal_nullItems_shouldNotThrowButProduceEmptyWrapper() throws Exception {
+        CompanyAuthFileBatchTransfer1104 req = new CompanyAuthFileBatchTransfer1104();
+        String xml = JaxbRoundtripSupport.marshal(req);
+        assertThat(xml)
+                .as("marshal with null items must not throw and must produce wrapper element")
+                .contains("<CompanyAuthFileBatchTransfer1104");
+    }
+
+    @Test
+    void jaxbRoundtrip_emptyItemsList_shouldPreserveZeroCount() throws Exception {
+        CompanyAuthFileBatchTransfer1104 req = new CompanyAuthFileBatchTransfer1104();
+        req.setItems(java.util.Collections.emptyList());
+        String xml = JaxbRoundtripSupport.marshal(req);
+        CompanyAuthFileBatchTransfer1104 parsed = JaxbRoundtripSupport.unmarshal(
+                xml, CompanyAuthFileBatchTransfer1104.class);
+        assertThat(parsed.getItems())
+                .as("empty list roundtrip: items must be null or empty, not fabricated")
+                .satisfiesAnyOf(
+                        list -> assertThat(list).isNull(),
+                        list -> assertThat(list).isEmpty()
+                );
+    }
 }

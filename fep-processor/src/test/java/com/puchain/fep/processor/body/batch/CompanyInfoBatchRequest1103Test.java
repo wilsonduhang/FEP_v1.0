@@ -114,4 +114,28 @@ class CompanyInfoBatchRequest1103Test {
                 .doesNotContain("<EndDate>")
                 .doesNotContain("<Parameters>");
     }
+
+    @Test
+    void jaxbMarshal_nullItems_shouldNotThrowButProduceEmptyWrapper() throws Exception {
+        CompanyInfoBatchRequest1103 req = new CompanyInfoBatchRequest1103();
+        String xml = JaxbRoundtripSupport.marshal(req);
+        assertThat(xml)
+                .as("marshal with null items must not throw and must produce wrapper element")
+                .contains("<CompanyInfoBatchRequest1103");
+    }
+
+    @Test
+    void jaxbRoundtrip_emptyItemsList_shouldPreserveZeroCount() throws Exception {
+        CompanyInfoBatchRequest1103 req = new CompanyInfoBatchRequest1103();
+        req.setItems(java.util.Collections.emptyList());
+        String xml = JaxbRoundtripSupport.marshal(req);
+        CompanyInfoBatchRequest1103 parsed = JaxbRoundtripSupport.unmarshal(
+                xml, CompanyInfoBatchRequest1103.class);
+        assertThat(parsed.getItems())
+                .as("empty list roundtrip: items must be null or empty, not fabricated")
+                .satisfiesAnyOf(
+                        list -> assertThat(list).isNull(),
+                        list -> assertThat(list).isEmpty()
+                );
+    }
 }
