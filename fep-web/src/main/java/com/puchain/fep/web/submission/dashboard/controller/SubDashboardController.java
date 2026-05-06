@@ -8,6 +8,7 @@ import com.puchain.fep.web.submission.dashboard.service.SubDashboardService;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -90,7 +91,9 @@ public class SubDashboardController {
     @ApiResponse(responseCode = "200", description = "查询成功")
     @ApiResponse(responseCode = "400", description = "dim 非法 / days 越界（1..365）")
     public ApiResult<List<DashboardDistributionItem>> getDistribution(
+            @Parameter(description = "分组维度，messageType 或 businessType", required = true)
             @RequestParam final String dim,
+            @Parameter(description = "回看天数（1..365），默认 90")
             @RequestParam(required = false) final Integer days) {
         return ApiResult.success(dashboardService.getDistribution(dim, days));
     }

@@ -6,15 +6,21 @@ import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.service.CaptchaService;
 import com.puchain.fep.web.config.TestRedisConfiguration;
+import com.puchain.fep.web.submission.dashboard.dto.DashboardDistributionItem;
+import com.puchain.fep.web.submission.dashboard.service.SubDashboardService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import java.util.List;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -59,6 +65,9 @@ class SubDashboardControllerTest {
 
     @Autowired
     private com.puchain.fep.common.security.PasswordHasher passwordHasher;
+
+    @SpyBean
+    private SubDashboardService dashboardService;
 
     private String accessToken;
     private String originalAccount;
@@ -118,6 +127,9 @@ class SubDashboardControllerTest {
         userRepository.save(admin);
 
         TestRedisConfiguration.getStore().clear();
+
+        // Reset @SpyBean stubbing so per-test doReturn(...) does not leak to next test.
+        Mockito.reset(dashboardService);
     }
 
     /**
@@ -205,13 +217,25 @@ class SubDashboardControllerTest {
      */
     @Test
     void getDistribution_withDaysParam_shouldReturnList() throws Exception {
+        DashboardDistributionItem item1 = new DashboardDistributionItem();
+        item1.setName("3101");
+        item1.setValue(42L);
+        DashboardDistributionItem item2 = new DashboardDistributionItem();
+        item2.setName("1101");
+        item2.setValue(17L);
+        Mockito.doReturn(List.of(item1, item2))
+                .when(dashboardService).getDistribution("messageType", 30);
+
         mockMvc.perform(get(BASE_URL + "/distribution")
                         .param("dim", "messageType")
                         .param("days", "30")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", notNullValue()))
-                .andExpect(jsonPath("$.data.length()", greaterThanOrEqualTo(0)));
+                .andExpect(jsonPath("$.data.length()", is(2)))
+                .andExpect(jsonPath("$.data[0].name", is("3101")))
+                .andExpect(jsonPath("$.data[0].value", is(42)))
+                .andExpect(jsonPath("$.data[1].name", is("1101")))
+                .andExpect(jsonPath("$.data[1].value", is(17)));
     }
 
     /**
@@ -221,11 +245,20 @@ class SubDashboardControllerTest {
      */
     @Test
     void getDistribution_withoutDaysParam_shouldDefault90AndReturnOk() throws Exception {
+        DashboardDistributionItem item = new DashboardDistributionItem();
+        item.setName("3115");
+        item.setValue(99L);
+        Mockito.doReturn(List.of(item))
+                .when(dashboardService).getDistribution("messageType", null);
+
         mockMvc.perform(get(BASE_URL + "/distribution")
                         .param("dim", "messageType")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", notNullValue()));
+                .andExpect(jsonPath("$.data.length()", is(1)))
+                .andExpect(jsonPath("$.data[0].name", is("3115")))
+                .andExpect(jsonPath("$.data[0].value", is(99)));
+        Mockito.verify(dashboardService).getDistribution("messageType", null);
     }
 
     /**

@@ -231,6 +231,21 @@ class SubDashboardServiceTest {
     }
 
     @Test
+    void getDistribution_messageType_explicitDays30_passes30DaysAgoToRepo() {
+        when(recordRepository.aggregateDistributionByMessageType(
+                        any(LocalDateTime.class), any(Pageable.class)))
+                .thenReturn(List.of());
+
+        service.getDistribution("messageType", 30);
+
+        ArgumentCaptor<LocalDateTime> captor = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(recordRepository).aggregateDistributionByMessageType(
+                captor.capture(), any(Pageable.class));
+        LocalDateTime expected = LocalDate.now().minusDays(30L).atStartOfDay();
+        assertThat(captor.getValue()).isCloseTo(expected, within(1L, ChronoUnit.SECONDS));
+    }
+
+    @Test
     void getDistribution_daysZero_throwsIAE() {
         assertThatThrownBy(() -> service.getDistribution("messageType", 0))
                 .isInstanceOf(IllegalArgumentException.class)
