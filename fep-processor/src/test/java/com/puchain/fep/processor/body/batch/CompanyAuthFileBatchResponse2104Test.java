@@ -84,6 +84,10 @@ class CompanyAuthFileBatchResponse2104Test {
         assertThat(parsed.getItems()).hasSize(3)
                 .extracting(CompanyAuthFileBatchItem2104::getItemId)
                 .containsExactly("1", "2", "3");
+        assertThat(parsed.getItems())
+                .extracting(CompanyAuthFileBatchItem2104::getRecordResult)
+                .as("all items must preserve RecordResult through roundtrip")
+                .containsOnly("00000");
     }
 
     @Test

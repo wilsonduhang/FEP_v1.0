@@ -4,7 +4,6 @@ import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.JaxbRoundtripSupport;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,20 +69,19 @@ class CompanyInfoBatchResponse2103Test {
 
     @Test
     void jaxbRoundtrip_multipleItems_shouldPreserveCount() throws Exception {
-        List<CompanyInfoBatchItem2103> items = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
-            CompanyInfoBatchItem2103 item = new CompanyInfoBatchItem2103();
-            item.setItemId("ITEM-" + String.format("%04d", i));
-            item.setCompanyName("企业" + i);
-            item.setCompanyCode("9143010000000000" + i + "X");
-            item.setMainClass("MainA01");
-            item.setSecondClass("SubA0101");
-            item.setAuthOrgCode("10000000000001");
-            item.setQueryResult("00000");
-            items.add(item);
-        }
         CompanyInfoBatchResponse2103 response = new CompanyInfoBatchResponse2103();
-        response.setItems(items);
+        response.setItems(java.util.stream.IntStream.rangeClosed(1, 3)
+                .mapToObj(i -> {
+                    CompanyInfoBatchItem2103 it = new CompanyInfoBatchItem2103();
+                    it.setItemId("ITEM-" + String.format("%04d", i));
+                    it.setCompanyName("企业" + i);
+                    it.setCompanyCode("9143010000000000" + i + "X");
+                    it.setMainClass("MainA01");
+                    it.setSecondClass("SubA0101");
+                    it.setAuthOrgCode("10000000000001");
+                    it.setQueryResult("00000");
+                    return it;
+                }).toList());
 
         String xml = JaxbRoundtripSupport.marshal(response);
 
