@@ -106,6 +106,9 @@ class Batch1103XsdValidationTest {
                 xml.getBytes(StandardCharsets.UTF_8));
 
         assertThat(result.valid()).isFalse();
-        assertThat(result.errors()).isNotEmpty();
+        assertThat(result.errors())
+                .as("error must reference missing ItemId field, not unrelated XSD violation")
+                .isNotEmpty()
+                .anyMatch(e -> e.contains("ItemId"));
     }
 }
