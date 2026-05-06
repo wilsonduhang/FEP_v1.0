@@ -68,19 +68,14 @@ public class PlatformReconciliationEventListener {
         if (type != MessageType.MSG_3107 && type != MessageType.MSG_3108) {
             return;
         }
-        final Object raw = event.body();
-        if (raw == null) {
+        if (event.body() == null) {
             LOG.debug("{} listener: body=null, skip serialNo={}",
                     type.msgNo(),
                     LogSanitizer.sanitize(event.serialNo()));
             return;
         }
         if (type == MessageType.MSG_3107) {
-            if (!(raw instanceof PzCheckQuery3107 body)) {
-                throw new IllegalStateException(
-                        "event.body type mismatch: expected PzCheckQuery3107, got "
-                                + raw.getClass().getName());
-            }
+            final PzCheckQuery3107 body = event.bodyAs(PzCheckQuery3107.class);
             final ReconciliationRecord record =
                     platformReconciliationService.initiateOutbound(body, event.serialNo());
             LOG.info("3107 PENDING created reconciliationId={} serialNo={}",
@@ -88,11 +83,7 @@ public class PlatformReconciliationEventListener {
                     LogSanitizer.sanitize(event.serialNo()));
         } else {
             // type == MSG_3108
-            if (!(raw instanceof PzCheckQueryReturn3108 body)) {
-                throw new IllegalStateException(
-                        "event.body type mismatch: expected PzCheckQueryReturn3108, got "
-                                + raw.getClass().getName());
-            }
+            final PzCheckQueryReturn3108 body = event.bodyAs(PzCheckQueryReturn3108.class);
             final ReconciliationOutcome outcome =
                     platformReconciliationService.processInbound(body, event.serialNo());
             LOG.info("3108 paired serialNo={} status={} discrepancy={}",
