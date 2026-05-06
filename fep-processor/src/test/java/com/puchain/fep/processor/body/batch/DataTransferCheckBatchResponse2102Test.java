@@ -90,7 +90,9 @@ class DataTransferCheckBatchResponse2102Test {
         wrapper.setItems(List.of(minimal));
 
         String xml = JaxbRoundtripSupport.marshal(wrapper);
-        assertThat(xml).doesNotContain("<FileName>");
+        assertThat(xml)
+                .as("optional FileName must be absent when null (only optional field in 2102)")
+                .doesNotContain("<FileName>");
     }
 
     @Test
@@ -115,5 +117,25 @@ class DataTransferCheckBatchResponse2102Test {
                         list -> assertThat(list).isNull(),
                         list -> assertThat(list).isEmpty()
                 );
+    }
+
+    @Test
+    void jaxbMarshal_requiredFieldNull_shouldOmitTagSilently() throws Exception {
+        DataTransferCheckBatchItem2102 item = new DataTransferCheckBatchItem2102();
+        item.setItemId("1");
+        item.setMainClass("MainA01");
+        item.setSecondClass("SubA0101");
+        item.setPeriod("01");
+        item.setFileDate("20260505");
+        // status is required=true but intentionally null
+
+        DataTransferCheckBatchResponse2102 wrapper = new DataTransferCheckBatchResponse2102();
+        wrapper.setItems(List.of(item));
+
+        String xml = JaxbRoundtripSupport.marshal(wrapper);
+        assertThat(xml)
+                .as("JAXB marshal must NOT throw when required=true field is null "
+                        + "(enforcement is XSD validation layer, not JAXB marshal)")
+                .doesNotContain("<Status>");
     }
 }

@@ -112,9 +112,16 @@ class CompanyInfoBatchResponse2103Test {
         String xml = JaxbRoundtripSupport.marshal(response);
 
         assertThat(xml)
-                .doesNotContain("<BeginDate>")
-                .doesNotContain("<EndDate>")
-                .doesNotContain("<FileName>")
+                .as("optional BeginDate must be absent when null")
+                .doesNotContain("<BeginDate>");
+        assertThat(xml)
+                .as("optional EndDate must be absent when null")
+                .doesNotContain("<EndDate>");
+        assertThat(xml)
+                .as("optional FileName must be absent when null")
+                .doesNotContain("<FileName>");
+        assertThat(xml)
+                .as("optional QueryAddWord must be absent when null")
                 .doesNotContain("<QueryAddWord>");
     }
 
@@ -140,5 +147,26 @@ class CompanyInfoBatchResponse2103Test {
                         list -> assertThat(list).isNull(),
                         list -> assertThat(list).isEmpty()
                 );
+    }
+
+    @Test
+    void jaxbMarshal_requiredFieldNull_shouldOmitTagSilently() throws Exception {
+        CompanyInfoBatchItem2103 item = new CompanyInfoBatchItem2103();
+        item.setItemId("1");
+        item.setCompanyName("湖南示例实业有限公司");
+        item.setCompanyCode("91430100MA4L5XXXX1");
+        item.setMainClass("MainA01");
+        item.setSecondClass("SubA0101");
+        item.setAuthOrgCode("10000000000001");
+        // queryResult is required=true but intentionally null
+
+        CompanyInfoBatchResponse2103 wrapper = new CompanyInfoBatchResponse2103();
+        wrapper.setItems(List.of(item));
+
+        String xml = JaxbRoundtripSupport.marshal(wrapper);
+        assertThat(xml)
+                .as("JAXB marshal must NOT throw when required=true field is null "
+                        + "(enforcement is XSD validation layer, not JAXB marshal)")
+                .doesNotContain("<QueryResult>");
     }
 }

@@ -88,7 +88,12 @@ class DataTransferCheckBatchRequest1102Test {
         wrapper.setItems(List.of(minimal));
 
         String xml = JaxbRoundtripSupport.marshal(wrapper);
-        assertThat(xml).doesNotContain("<FileName>").doesNotContain("<Status>");
+        assertThat(xml)
+                .as("optional FileName must be absent when null")
+                .doesNotContain("<FileName>");
+        assertThat(xml)
+                .as("optional Status must be absent when null")
+                .doesNotContain("<Status>");
     }
 
     @Test

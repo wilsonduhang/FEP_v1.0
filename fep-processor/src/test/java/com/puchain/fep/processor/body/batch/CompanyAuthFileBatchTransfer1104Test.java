@@ -103,7 +103,12 @@ class CompanyAuthFileBatchTransfer1104Test {
         wrapper.setItems(List.of(minimal));
 
         String xml = JaxbRoundtripSupport.marshal(wrapper);
-        assertThat(xml).doesNotContain("<IsUpdate>").doesNotContain("<Parameters>");
+        assertThat(xml)
+                .as("optional IsUpdate must be absent when null")
+                .doesNotContain("<IsUpdate>");
+        assertThat(xml)
+                .as("optional Parameters must be absent when null")
+                .doesNotContain("<Parameters>");
     }
 
     @Test

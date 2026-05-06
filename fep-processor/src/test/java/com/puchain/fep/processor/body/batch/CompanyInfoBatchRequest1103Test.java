@@ -110,8 +110,13 @@ class CompanyInfoBatchRequest1103Test {
         String xml = JaxbRoundtripSupport.marshal(request);
 
         assertThat(xml)
-                .doesNotContain("<BeginDate>")
-                .doesNotContain("<EndDate>")
+                .as("optional BeginDate must be absent when null")
+                .doesNotContain("<BeginDate>");
+        assertThat(xml)
+                .as("optional EndDate must be absent when null")
+                .doesNotContain("<EndDate>");
+        assertThat(xml)
+                .as("optional Parameters must be absent when null")
                 .doesNotContain("<Parameters>");
     }
 

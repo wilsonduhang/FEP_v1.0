@@ -103,7 +103,12 @@ class CompanyAuthFileBatchResponse2104Test {
         wrapper.setItems(List.of(minimal));
 
         String xml = JaxbRoundtripSupport.marshal(wrapper);
-        assertThat(xml).doesNotContain("<IsUpdate>").doesNotContain("<RecordAddWord>");
+        assertThat(xml)
+                .as("optional IsUpdate must be absent when null")
+                .doesNotContain("<IsUpdate>");
+        assertThat(xml)
+                .as("optional RecordAddWord must be absent when null")
+                .doesNotContain("<RecordAddWord>");
     }
 
     @Test
@@ -128,5 +133,27 @@ class CompanyAuthFileBatchResponse2104Test {
                         list -> assertThat(list).isNull(),
                         list -> assertThat(list).isEmpty()
                 );
+    }
+
+    @Test
+    void jaxbMarshal_requiredFieldNull_shouldOmitTagSilently() throws Exception {
+        CompanyAuthFileBatchItem2104 item = new CompanyAuthFileBatchItem2104();
+        item.setItemId("1");
+        item.setCompanyName("湖南示例实业有限公司");
+        item.setCompanyCode("91430100MA4L5XXXX1");
+        item.setAuthBeginDate("20260101");
+        item.setAuthEndDate("20261231");
+        item.setAuthNo("AUTH2026050500001");
+        item.setAuthOrgCode("12345678901234");
+        // recordResult is required=true but intentionally null
+
+        CompanyAuthFileBatchResponse2104 wrapper = new CompanyAuthFileBatchResponse2104();
+        wrapper.setItems(List.of(item));
+
+        String xml = JaxbRoundtripSupport.marshal(wrapper);
+        assertThat(xml)
+                .as("JAXB marshal must NOT throw when required=true field is null "
+                        + "(enforcement is XSD validation layer, not JAXB marshal)")
+                .doesNotContain("<RecordResult>");
     }
 }
