@@ -28,7 +28,7 @@ class CompanyInfoBatchResponse2103Test {
         item.setEndDate("20260411");
         item.setAuthOrgCode("10000000000001");
         item.setFileName("RESULT-20260505-0001.zip");
-        item.setQueryResult("00");
+        item.setQueryResult("00000");
         item.setQueryAddWord("查询成功");
 
         CompanyInfoBatchResponse2103 response = new CompanyInfoBatchResponse2103();
@@ -48,7 +48,7 @@ class CompanyInfoBatchResponse2103Test {
                 .contains("<EndDate>20260411</EndDate>")
                 .contains("<AuthOrgCode>10000000000001</AuthOrgCode>")
                 .contains("<FileName>RESULT-20260505-0001.zip</FileName>")
-                .contains("<QueryResult>00</QueryResult>")
+                .contains("<QueryResult>00000</QueryResult>")
                 .contains("<QueryAddWord>查询成功</QueryAddWord>");
 
         CompanyInfoBatchResponse2103 parsed =
@@ -64,7 +64,7 @@ class CompanyInfoBatchResponse2103Test {
         assertThat(p.getEndDate()).isEqualTo("20260411");
         assertThat(p.getAuthOrgCode()).isEqualTo("10000000000001");
         assertThat(p.getFileName()).isEqualTo("RESULT-20260505-0001.zip");
-        assertThat(p.getQueryResult()).isEqualTo("00");
+        assertThat(p.getQueryResult()).isEqualTo("00000");
         assertThat(p.getQueryAddWord()).isEqualTo("查询成功");
     }
 
@@ -79,7 +79,7 @@ class CompanyInfoBatchResponse2103Test {
             item.setMainClass("MainA01");
             item.setSecondClass("SubA0101");
             item.setAuthOrgCode("10000000000001");
-            item.setQueryResult("00");
+            item.setQueryResult("00000");
             items.add(item);
         }
         CompanyInfoBatchResponse2103 response = new CompanyInfoBatchResponse2103();
@@ -104,7 +104,7 @@ class CompanyInfoBatchResponse2103Test {
         minimal.setMainClass("MainB01");
         minimal.setSecondClass("SubB0101");
         minimal.setAuthOrgCode("10000000000002");
-        minimal.setQueryResult("99");
+        minimal.setQueryResult("99999");
 
         CompanyInfoBatchResponse2103 response = new CompanyInfoBatchResponse2103();
         response.setItems(List.of(minimal));

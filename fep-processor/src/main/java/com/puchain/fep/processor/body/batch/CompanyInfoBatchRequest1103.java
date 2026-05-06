@@ -29,6 +29,11 @@ public class CompanyInfoBatchRequest1103 extends CfxBody {
 
     /**
      * 查询项列表，对应 XSD {@code <CompanyInfoRequest>} 重复元素（maxOccurs=unbounded）。
+     *
+     * <p><b>注：</b>{@code required=true} 表达 XSD {@code minOccurs≥1} 语义；本字段
+     * 默认 {@code null}（与 codebase 其他 body List 字段约定一致，参考
+     * {@code HxqyCreditAmt3113.creditInfo}），由 caller / dispatcher 在 marshal
+     * 前 {@code setItems(...)} 保证非空。</p>
      */
     @XmlElement(name = "CompanyInfoRequest", required = true)
     private List<CompanyInfoBatchItem1103> items;
