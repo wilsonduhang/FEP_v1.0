@@ -46,7 +46,8 @@ class OutboundQueueConsumerTest {
     void setUp() {
         repository = mock(OutboundQueueRepository.class);
         runner = mock(OutboundQueueRunner.class);
-        props = new OutboundQueueProperties();
+        props = new OutboundQueueProperties(50, 1000L,
+                new OutboundQueueProperties.Retry(30_000L, 1_800_000L, 5));
         consumer = new OutboundQueueConsumer(repository, runner, props);
     }
 

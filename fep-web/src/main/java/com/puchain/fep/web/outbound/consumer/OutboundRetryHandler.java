@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  * Builder/Sign 抛异常时调用：</p>
  * <ul>
  *   <li>{@code retry_count++}，{@code error_message} 截断到 1024 字符</li>
- *   <li>累计次数 ≥ {@link OutboundQueueProperties.Retry#getMaxAttempts()}（默认 5）
+ *   <li>累计次数 ≥ {@link OutboundQueueProperties.Retry#maxAttempts()}（默认 5）
  *       → {@code status='DEAD_LETTER'} + {@code next_retry_at=null} + WARN 日志
  *       （不抛异常，避免中断同批其它行）</li>
  *   <li>否则 → {@code status='RETRY'} + {@code next_retry_at = NOW + exp_backoff}</li>
@@ -93,7 +93,7 @@ public class OutboundRetryHandler {
             error == null ? null : error.getMessage(),
             ERROR_MESSAGE_MAX_LENGTH));
 
-        if (newRetryCount >= props.getRetry().getMaxAttempts()) {
+        if (newRetryCount >= props.retry().maxAttempts()) {
             entity.setStatus("DEAD_LETTER");
             entity.setNextRetryAt(null); // DLQ 不再调度
             LOG.warn("queue_id={} -> DEAD_LETTER (retry_count={})", queueId, newRetryCount);
@@ -101,8 +101,8 @@ public class OutboundRetryHandler {
             entity.setStatus("RETRY");
             final long shift = Math.min(newRetryCount, MAX_SHIFT_BITS);
             final long backoff = Math.min(
-                props.getRetry().getBackoffMillis() << shift,
-                props.getRetry().getMaxBackoffMillis());
+                props.retry().backoffMillis() << shift,
+                props.retry().maxBackoffMillis());
             entity.setNextRetryAt(Instant.now(clock).plusMillis(backoff));
         }
         repo.save(entity);

@@ -63,3 +63,12 @@ logging:
 fep:
   download:
     storage-path: ./fep-downloads
+  # P5 outbound queue consumer 配置（B1 record 修法显式默认双保险，与 @DefaultValue 注解一致）
+  outbound:
+    queue:
+      batch-size: 50
+      poll-interval-ms: 1000
+      retry:
+        backoff-millis: 30000
+        max-backoff-millis: 1800000
+        max-attempts: 5

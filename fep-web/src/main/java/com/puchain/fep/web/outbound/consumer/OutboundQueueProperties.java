@@ -1,107 +1,50 @@
 package com.puchain.fep.web.outbound.consumer;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * P5 outbound queue consumer 配置项。
+ * P5 outbound queue consumer 配置项 (immutable record).
  *
- * <p>绑定前缀: {@code fep.outbound.queue}。
- * 字段：</p>
+ * <p>绑定前缀: {@code fep.outbound.queue}。Spring Boot 3.x record + {@code @ConfigurationProperties}
+ * 自 3.0 起原生支持，无需 {@code @ConstructorBinding}。本类原 POJO 形态在 B1 实施时触发
+ * SpotBugs {@code EI_EXPOSE_REP / EI_EXPOSE_REP2} 警告（getter 暴露内部 {@link Retry} 引用 +
+ * {@link OutboundQueueConsumer} constructor 引用），改 record 后 component 不可变，警告自动消除。</p>
+ *
+ * <p>Components:</p>
  * <ul>
- *   <li>{@code batch-size} — 单轮 poll 最多拉取的待发送条目数（默认 50）</li>
- *   <li>{@code poll-interval-ms} — 两轮 poll 之间的最小等待间隔（默认 1000ms）</li>
- *   <li>{@code retry.backoff-millis} — 首次重试延迟（默认 30s）</li>
- *   <li>{@code retry.max-backoff-millis} — 重试退避上限（默认 30min）</li>
- *   <li>{@code retry.max-attempts} — 最大重试次数（默认 5，超过进入 DLQ）</li>
+ *   <li>{@link #batchSize()} — 单轮 poll 最多拉取的待发送条目数（默认 50，{@code batch-size}）</li>
+ *   <li>{@link #pollIntervalMs()} — 两轮 poll 之间的最小等待间隔（默认 1000ms，{@code poll-interval-ms}）</li>
+ *   <li>{@link #retry()} — 重试退避策略嵌套配置（默认见 {@link Retry}）</li>
  * </ul>
+ *
+ * <p>默认值通过 {@link DefaultValue} 注解逐 component 提供，{@code @DefaultValue Retry retry}
+ * 无值参数表示当配置源未声明 {@code retry.*} 时由 Spring Boot 3.1+ 自动构造默认实例
+ * （递归应用 {@link Retry} 各 component 的 {@code @DefaultValue}）。
+ * {@code application.yml} 同时声明显式默认值作为双保险。</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @ConfigurationProperties(prefix = "fep.outbound.queue")
-public class OutboundQueueProperties {
-
-    /** 默认单轮 poll 拉取上限。 */
-    private static final int DEFAULT_BATCH_SIZE = 50;
-
-    /** 默认 poll 间隔（毫秒，1 秒）。 */
-    private static final long DEFAULT_POLL_INTERVAL_MS = 1000L;
-
-    /** 默认首次重试退避（毫秒，30 秒）。 */
-    private static final long DEFAULT_RETRY_BACKOFF_MILLIS = 30_000L;
-
-    /** 默认重试退避上限（毫秒，30 分钟）。 */
-    private static final long DEFAULT_RETRY_MAX_BACKOFF_MILLIS = 30L * 60L * 1000L;
-
-    /** 默认最大重试次数（超过进入 DLQ）。 */
-    private static final int DEFAULT_RETRY_MAX_ATTEMPTS = 5;
-
-    /** 单轮 poll 拉取条目数上限。 */
-    private int batchSize = DEFAULT_BATCH_SIZE;
-
-    /** 两轮 poll 之间的最小等待间隔（毫秒）。 */
-    private long pollIntervalMs = DEFAULT_POLL_INTERVAL_MS;
-
-    /** 重试退避策略子配置。 */
-    private Retry retry = new Retry();
+public record OutboundQueueProperties(
+        @DefaultValue("50") int batchSize,
+        @DefaultValue("1000") long pollIntervalMs,
+        @DefaultValue Retry retry) {
 
     /**
-     * 重试退避策略嵌套配置。
+     * 重试退避策略嵌套配置 (immutable record).
+     *
+     * <p>Components:</p>
+     * <ul>
+     *   <li>{@link #backoffMillis()} — 首次重试退避（默认 30000ms，{@code retry.backoff-millis}）</li>
+     *   <li>{@link #maxBackoffMillis()} — 重试退避上限（默认 1800000ms = 30min，{@code retry.max-backoff-millis}）</li>
+     *   <li>{@link #maxAttempts()} — 最大重试次数（默认 5，超过进入 DLQ，{@code retry.max-attempts}）</li>
+     * </ul>
      */
-    public static class Retry {
-        /** 首次重试退避（毫秒，默认 30 秒）。 */
-        private long backoffMillis = DEFAULT_RETRY_BACKOFF_MILLIS;
-        /** 重试退避上限（毫秒，默认 30 分钟）。 */
-        private long maxBackoffMillis = DEFAULT_RETRY_MAX_BACKOFF_MILLIS;
-        /** 最大重试次数（默认 5，超过进入 DLQ）。 */
-        private int maxAttempts = DEFAULT_RETRY_MAX_ATTEMPTS;
-
-        public long getBackoffMillis() {
-            return backoffMillis;
-        }
-
-        public void setBackoffMillis(long backoffMillis) {
-            this.backoffMillis = backoffMillis;
-        }
-
-        public long getMaxBackoffMillis() {
-            return maxBackoffMillis;
-        }
-
-        public void setMaxBackoffMillis(long maxBackoffMillis) {
-            this.maxBackoffMillis = maxBackoffMillis;
-        }
-
-        public int getMaxAttempts() {
-            return maxAttempts;
-        }
-
-        public void setMaxAttempts(int maxAttempts) {
-            this.maxAttempts = maxAttempts;
-        }
-    }
-
-    public int getBatchSize() {
-        return batchSize;
-    }
-
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
-    }
-
-    public long getPollIntervalMs() {
-        return pollIntervalMs;
-    }
-
-    public void setPollIntervalMs(long pollIntervalMs) {
-        this.pollIntervalMs = pollIntervalMs;
-    }
-
-    public Retry getRetry() {
-        return retry;
-    }
-
-    public void setRetry(Retry retry) {
-        this.retry = retry;
+    public record Retry(
+            @DefaultValue("30000") long backoffMillis,
+            @DefaultValue("1800000") long maxBackoffMillis,
+            @DefaultValue("5") int maxAttempts) {
     }
 }

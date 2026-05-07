@@ -40,7 +40,7 @@ public interface OutboundQueueRepository extends JpaRepository<OutboundMessageQu
     /**
      * 批量声领 ≤ {@code batchSize} 条待发送的 queue_id。
      *
-     * @param batchSize 单轮 poll 的最大批量上限（来自 {@link OutboundQueueProperties#getBatchSize()}）
+     * @param batchSize 单轮 poll 的最大批量上限（来自 {@link OutboundQueueProperties#batchSize()}）
      * @return 已被本事务持锁的 queue_id 列表，可能为空
      */
     @Query(value = """

@@ -57,7 +57,7 @@ public class OutboundQueueConsumer {
             fixedDelayString = "${fep.outbound.queue.poll-interval-ms:1000}",
             initialDelayString = "${fep.outbound.queue.poll-initial-delay-ms:0}")
     public void poll() {
-        final List<String> ids = repository.claimBatch(props.getBatchSize());
+        final List<String> ids = repository.claimBatch(props.batchSize());
         if (ids.isEmpty()) {
             return;
         }
