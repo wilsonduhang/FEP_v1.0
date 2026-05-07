@@ -1,5 +1,7 @@
 package com.puchain.fep.transport.support;
 
+import com.puchain.fep.common.util.FepConstants;
+
 import java.util.Objects;
 
 /**
@@ -14,8 +16,8 @@ import java.util.Objects;
  */
 public final class QueueNameResolver {
 
-    /** HNDEMP centre node code. */
-    public static final String HNDEMP_CODE = "A1000143000104";
+    /** HNDEMP centre node code. R-2 (2026-05-07): 转引用 {@link FepConstants#HNDEMP_NODE_CODE}。 */
+    public static final String HNDEMP_CODE = FepConstants.HNDEMP_NODE_CODE;
 
     private final String institutionCode;
 

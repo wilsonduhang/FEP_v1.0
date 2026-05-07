@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
  * </ul>
  *
  * <p>{@code srcNode/desNode} 不通过 {@link TlqMessage} 入参传递 — 由 fep-transport
- * 内部 {@code QueueNameResolver} 按 channel + 配置解析队列名（HNDEMP A1000143000104）。
+ * 内部 {@code QueueNameResolver} 按 channel + 配置解析队列名（HNDEMP 中心节点代码见 {@link com.puchain.fep.common.util.FepConstants#HNDEMP_NODE_CODE}）。
  * 因此 {@link #send(String)} 入参仅 {@code signedXml} 一个；msgNo 已嵌入 envelope head。</p>
  *
  * <p>追溯: PRD v1.3 §3.1 + §3.1.3 / FR-MSG-OUTBOUND-SEND</p>

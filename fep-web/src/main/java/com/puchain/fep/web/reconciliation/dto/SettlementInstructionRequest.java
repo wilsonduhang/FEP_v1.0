@@ -1,5 +1,6 @@
 package com.puchain.fep.web.reconciliation.dto;
 
+import com.puchain.fep.common.util.FepConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -32,7 +33,7 @@ public class SettlementInstructionRequest {
     @NotBlank(message = "platPayNo 不能为空")
     private String platPayNo;
 
-    @Schema(description = "发送方节点代码（14 位）", example = "A1000143000104", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "发送方节点代码（14 位）", example = FepConstants.HNDEMP_NODE_CODE, requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank(message = "sendNodeCode 不能为空")
     private String sendNodeCode;
 

@@ -1,5 +1,6 @@
 package com.puchain.fep.web.outbound.consumer;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
@@ -21,7 +22,7 @@ import java.time.format.DateTimeFormatter;
  *
  * <p>固定字段：</p>
  * <ul>
- *   <li>{@code DesNode} 恒 "A1000143000104"（HNDEMP 中心节点代码，CLAUDE.md 已知约束）</li>
+ *   <li>{@code DesNode} 恒 {@link FepConstants#HNDEMP_NODE_CODE}（HNDEMP 中心节点代码，CLAUDE.md 已知约束）</li>
  *   <li>{@code Version} 恒 "1.0"（CommonHead 默认）</li>
  *   <li>{@code App} 恒 "FEP"（PRD §3.2.2 应用代码上行恒 FEP，inbound 侧 default "HNDEMP" 由 CommonHead 模型承担）</li>
  *   <li>{@code MsgId} 占位 "PLACEHOLDER_T6_INJEC"（20 位）— Simplify Q-2 修订：占位
@@ -45,8 +46,8 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class CommonHeadComposer {
 
-    /** HNDEMP 中心节点代码（PRD v1.3 §3.2.2，CLAUDE.md 已知约束）。 */
-    private static final String HNDEMP_NODE = "A1000143000104";
+    /** HNDEMP 中心节点代码（PRD v1.3 §3.2.2，CLAUDE.md 已知约束）。R-2 (2026-05-07): 转引用 {@link FepConstants#HNDEMP_NODE_CODE}。 */
+    private static final String HNDEMP_NODE = FepConstants.HNDEMP_NODE_CODE;
 
     /** 占位 MsgId — 20 位以满足 {@link CommonHead#setMsgId} 长度约束，T6 注入真实值。 */
     static final String MSG_ID_PLACEHOLDER = "PLACEHOLDER_T6_INJEC";

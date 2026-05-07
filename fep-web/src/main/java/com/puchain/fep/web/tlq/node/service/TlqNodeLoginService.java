@@ -2,6 +2,7 @@ package com.puchain.fep.web.tlq.node.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.model.CfxMessage;
@@ -66,8 +67,8 @@ public class TlqNodeLoginService {
     private static final Logger LOG = LoggerFactory.getLogger(TlqNodeLoginService.class);
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    /** HNDEMP 中心节点代码（CLAUDE.md 已知约束 — 14 字符固定值）。 */
-    private static final String HNDEMP_DEST_NODE = "A1000143000104";
+    /** HNDEMP 中心节点代码（CLAUDE.md 已知约束 — 14 字符固定值）。R-2 (2026-05-07): 转引用 {@link FepConstants#HNDEMP_NODE_CODE}。 */
+    private static final String HNDEMP_DEST_NODE = FepConstants.HNDEMP_NODE_CODE;
 
     /** 会话首报文 corrMsgId 兜底约定（PRD §3.2.2 corrMsgId 字段说明）。 */
     private static final String CORR_MSG_ID_NEW_SESSION = "00000000000000000000";
@@ -103,7 +104,7 @@ public class TlqNodeLoginService {
      * @param encoder             fep-converter 出站编码流水线
      * @param nodeRepository      TLQ 节点 Repository（用于校验节点存在）
      * @param srcNode             14 字符发送方机构代码（{@code fep.transport.institution-code}
-     *                            — 默认 {@value #HNDEMP_DEST_NODE} 确保 14 字符长度合法）
+     *                            — 默认 {@value com.puchain.fep.common.util.FepConstants#HNDEMP_NODE_CODE} 确保 14 字符长度合法）
      * @param brokerPassword      broker 接入凭证（{@code fep.transport.tongtech.password}
      *                            — 默认空串，仅 tongtech provider 部署时必填）
      * @param bodyMsgIdGenerator  HNDEMP CommonHead.MsgId 全数字生成器（R-1, 2026-05-06）

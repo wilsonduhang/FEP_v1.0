@@ -3,6 +3,7 @@ package com.puchain.fep.web.tlq.queue.service;
 import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
@@ -35,8 +36,8 @@ public class TlqQueueConfigService {
 
     private static final Logger log = LoggerFactory.getLogger(TlqQueueConfigService.class);
 
-    /** HNDEMP 中心节点代码（固定值，参见 PRD §3.1.2 及 CLAUDE.md 已知约束）。 */
-    private static final String HNDEMP_CODE = "A1000143000104";
+    /** HNDEMP 中心节点代码（固定值，参见 PRD §3.1.2 及 CLAUDE.md 已知约束）。R-2 (2026-05-07): 转引用 {@link FepConstants#HNDEMP_NODE_CODE}。 */
+    private static final String HNDEMP_CODE = FepConstants.HNDEMP_NODE_CODE;
 
     private final TlqQueueConfigRepository queueConfigRepository;
     private final TlqNodeRepository nodeRepository;

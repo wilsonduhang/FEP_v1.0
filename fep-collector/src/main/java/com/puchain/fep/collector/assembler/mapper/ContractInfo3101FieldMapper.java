@@ -4,6 +4,7 @@ import com.puchain.fep.collector.CollectorProperties;
 import com.puchain.fep.collector.assembler.FieldMapper;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
@@ -39,8 +40,8 @@ import java.util.Objects;
 @Component
 public class ContractInfo3101FieldMapper implements FieldMapper {
 
-    /** HNDEMP 平台中心节点代码（CLAUDE.md 已知约束）。 */
-    public static final String DES_NODE_CODE_HNDEMP_CENTER = "A1000143000104";
+    /** HNDEMP 平台中心节点代码（CLAUDE.md 已知约束）。 R-2 (2026-05-07): 转引用 {@link FepConstants#HNDEMP_NODE_CODE}。 */
+    public static final String DES_NODE_CODE_HNDEMP_CENTER = FepConstants.HNDEMP_NODE_CODE;
 
     /** XSD Boolean type 允许的 "假"/"真" 字面量。 */
     private static final String XSD_BOOLEAN_FALSE = "0";

@@ -4,6 +4,7 @@ import com.puchain.fep.collector.CollectorProperties;
 import com.puchain.fep.collector.assembler.FieldMapper;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
@@ -34,8 +35,8 @@ import java.util.function.Consumer;
 @Component
 public class ArchiveInfo3102FieldMapper implements FieldMapper {
 
-    /** HNDEMP 平台中心节点代码（CLAUDE.md 已知约束）。 */
-    public static final String DES_NODE_CODE_HNDEMP_CENTER = "A1000143000104";
+    /** HNDEMP 平台中心节点代码（CLAUDE.md 已知约束）。 R-2 (2026-05-07): 转引用 {@link FepConstants#HNDEMP_NODE_CODE}。 */
+    public static final String DES_NODE_CODE_HNDEMP_CENTER = FepConstants.HNDEMP_NODE_CODE;
 
     /** PRD §3.2 sendNodeCode 14 位 NodeCode 长度。 */
     private static final int NODE_CODE_LENGTH = 14;
