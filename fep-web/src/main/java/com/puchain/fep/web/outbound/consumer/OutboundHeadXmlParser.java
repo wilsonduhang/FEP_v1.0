@@ -59,24 +59,43 @@ final class OutboundHeadXmlParser {
      */
     static OutboundHeadFields parse(final String xml) {
         Objects.requireNonNull(xml, "xml");
+        final Object unmarshalled;
         try {
             final JAXBContext ctx = JaxbContextCache.getForClasses(Binding.class);
             final Unmarshaller unmarshaller = ctx.createUnmarshaller();
-            final Binding bound = (Binding) unmarshaller.unmarshal(new StringReader(xml));
-            return new OutboundHeadFields(
-                    bound.sendOrgCode,
-                    bound.entrustDate,
-                    bound.transitionNo);
+            unmarshalled = unmarshaller.unmarshal(new StringReader(xml));
         } catch (JAXBException e) {
             throw new FepBusinessException(
                     FepErrorCode.OUTBOUND_5106_HEAD_FIELDS_INVALID,
                     "OutboundHeadFields XML 反序列化失败", e);
-        } catch (NullPointerException e) {
-            // record compact constructor 拒绝 null 字段（缺少元素时 unmarshal 字段为 null）
+        }
+        if (!(unmarshalled instanceof Binding bound)) {
             throw new FepBusinessException(
                     FepErrorCode.OUTBOUND_5106_HEAD_FIELDS_INVALID,
-                    "OutboundHeadFields XML 缺少必填字段", e);
+                    "OutboundHeadFields XML 根元素名称不匹配 (期望 <OutboundHeadFields>)");
         }
+        return new OutboundHeadFields(
+                requireField(bound.sendOrgCode, "sendOrgCode"),
+                requireField(bound.entrustDate, "entrustDate"),
+                requireField(bound.transitionNo, "transitionNo"));
+    }
+
+    /**
+     * 显式校验 unmarshal 后的 record 字段非 null（替代 record compact constructor 抛 NPE
+     * 被 catch 的反向控制流，消除 SpotBugs DCN_NULLPOINTER_EXCEPTION 警告）。
+     *
+     * @param value     字段值（可能为 null）
+     * @param fieldName 字段名（用于错误消息）
+     * @return 非 null 字段值
+     * @throws FepBusinessException 字段为 null 时（{@link FepErrorCode#OUTBOUND_5106_HEAD_FIELDS_INVALID}）
+     */
+    private static String requireField(final String value, final String fieldName) {
+        if (value == null) {
+            throw new FepBusinessException(
+                    FepErrorCode.OUTBOUND_5106_HEAD_FIELDS_INVALID,
+                    "OutboundHeadFields XML 缺少必填字段: " + fieldName);
+        }
+        return value;
     }
 
     /**
