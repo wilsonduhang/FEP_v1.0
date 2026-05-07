@@ -12,6 +12,11 @@ import com.puchain.fep.processor.body.supplychain.RzApplyInfo3105;
 import com.puchain.fep.processor.body.supplychain.RzReturnInfo3009;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -86,5 +91,41 @@ class BodyClassRegistryTest {
                 .isInstanceOf(FepBusinessException.class)
                 .hasFieldOrPropertyWithValue(
                         "errorCode", FepErrorCode.OUTBOUND_5107_BODY_CLASS_NOT_FOUND);
+    }
+
+    /**
+     * P4-MSG-B T0 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
+     *
+     * <p>本 Task 不增加 entry，refactor 后保持 8 个；但 source code 必须用
+     * {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}，为后续 P4-MSG-B T1/T4
+     * 加 3000/3007 + Plan A BATCH +3 解锁。</p>
+     *
+     * @throws Exception 反射或文件读取异常
+     */
+    @Test
+    void registry_shouldUseMapOfEntries_supportingMoreThan10Entries() throws Exception {
+        // 1. entry 数仍为 8（本 Task 行为不变）
+        assertThat(countRegistryEntries()).isEqualTo(8);
+
+        // 2. source 含 Map.ofEntries(
+        final String source = Files.readString(Paths.get(
+                "src/main/java/com/puchain/fep/web/outbound/consumer/BodyClassRegistry.java"));
+        assertThat(source).contains("Map.ofEntries(");
+
+        // 3. source 不含 = Map.of(（refactor 完成标志）
+        assertThat(source).doesNotContain("= Map.of(");
+    }
+
+    /**
+     * 反射读 {@link BodyClassRegistry#REGISTRY} 私有静态 entry 数。
+     *
+     * @return REGISTRY map size
+     * @throws Exception 反射异常
+     */
+    private int countRegistryEntries() throws Exception {
+        final Field field = BodyClassRegistry.class.getDeclaredField("REGISTRY");
+        field.setAccessible(true);
+        final Map<?, ?> map = (Map<?, ?>) field.get(null);
+        return map.size();
     }
 }
