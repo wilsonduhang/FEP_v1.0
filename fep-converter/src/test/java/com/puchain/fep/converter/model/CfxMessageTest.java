@@ -1,5 +1,6 @@
 package com.puchain.fep.converter.model;
 
+import com.puchain.fep.common.util.FepConstants;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
@@ -18,7 +19,7 @@ class CfxMessageTest {
     private CfxMessage buildHeadOnlyMessage() {
         CommonHead head = new CommonHead();
         head.setSrcNode("12345678901234");
-        head.setDesNode("A1000143000104");
+        head.setDesNode(FepConstants.HNDEMP_NODE_CODE);
         head.setMsgNo("1001");
         head.setMsgId("20260410120000000001");
         head.setCorrMsgId("20260410120000000001");
@@ -60,7 +61,7 @@ class CfxMessageTest {
                 + "<CFX><HEAD>"
                 + "<Version>1.0</Version>"
                 + "<SrcNode>12345678901234</SrcNode>"
-                + "<DesNode>A1000143000104</DesNode>"
+                + "<DesNode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNode>"
                 + "<App>HNDEMP</App>"
                 + "<MsgNo>1001</MsgNo>"
                 + "<MsgId>TOO_SHORT</MsgId>"
@@ -79,7 +80,7 @@ class CfxMessageTest {
     void msgContainerWithBody_shouldSerializeBodyContent() throws Exception {
         CommonHead head = new CommonHead();
         head.setSrcNode("12345678901234");
-        head.setDesNode("A1000143000104");
+        head.setDesNode(FepConstants.HNDEMP_NODE_CODE);
         head.setMsgNo("9005");
         head.setMsgId("20260410120000000001");
         head.setCorrMsgId("20260410120000000001");
@@ -110,7 +111,7 @@ class CfxMessageTest {
                 + "<CFX><HEAD>"
                 + "<Version>1.0</Version>"
                 + "<SrcNode>12345678901234</SrcNode>"
-                + "<DesNode>A1000143000104</DesNode>"
+                + "<DesNode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNode>"
                 + "<App>HNDEMP</App>"
                 + "<MsgNo>1001</MsgNo>"
                 + "<MsgId>20260410120000000001</MsgId>"
@@ -141,7 +142,7 @@ class CfxMessageTest {
     void marshal_msgWithTwoBodies_shouldSerializeBoth() throws Exception {
         CommonHead head = new CommonHead();
         head.setSrcNode("12345678901234");
-        head.setDesNode("A1000143000104");
+        head.setDesNode(FepConstants.HNDEMP_NODE_CODE);
         head.setMsgNo("9005");
         head.setMsgId("20260410120000000001");
         head.setCorrMsgId("20260410120000000001");

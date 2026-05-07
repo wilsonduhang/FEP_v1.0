@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import com.puchain.fep.processor.body.common.PzFlowInfo;
@@ -55,7 +56,7 @@ class SupplyChainBody3003_3004Test {
         PzInfoQuery3003 original = new PzInfoQuery3003();
         original.setSerialNo("SN3003-001");
         original.setSendNodeCode("12345678901234");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setHxqyName("湖南核心企业有限公司");
         original.setHxqyCode("123456789012345678");
         original.setPzNo("PZ20260416001");
@@ -71,7 +72,7 @@ class SupplyChainBody3003_3004Test {
                 .contains("<pzInfoQuery3003")
                 .contains("<SerialNo>SN3003-001</SerialNo>")
                 .contains("<SendNodeCode>12345678901234</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<hxqyName>湖南核心企业有限公司</hxqyName>")
                 .contains("<hxqyCode>123456789012345678</hxqyCode>")
                 .contains("<pzNo>PZ20260416001</pzNo>")
@@ -82,7 +83,7 @@ class SupplyChainBody3003_3004Test {
         PzInfoQuery3003 parsed = unmarshal(xml, PzInfoQuery3003.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3003-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("12345678901234");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getHxqyName()).isEqualTo("湖南核心企业有限公司");
         assertThat(parsed.getHxqyCode()).isEqualTo("123456789012345678");
         assertThat(parsed.getPzNo()).isEqualTo("PZ20260416001");
@@ -96,7 +97,7 @@ class SupplyChainBody3003_3004Test {
         PzInfoQuery3003 minimal = new PzInfoQuery3003();
         minimal.setSerialNo("SN3003-002");
         minimal.setSendNodeCode("12345678901234");
-        minimal.setDesNodeCode("A1000143000104");
+        minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setHxqyName("最小测试企业");
         minimal.setHxqyCode("123456789012345678");
         minimal.setPzNo("PZ20260416002");
@@ -118,7 +119,7 @@ class SupplyChainBody3003_3004Test {
         PzInfoReturn3004 original = new PzInfoReturn3004();
         original.setSerialNo("SN3004-001");
         original.setSendNodeCode("12345678901234");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setHxqyName("湖南核心企业有限公司");
         original.setHxqyCode("123456789012345678");
         original.setPzNo("PZ20260416001");
@@ -216,7 +217,7 @@ class SupplyChainBody3003_3004Test {
                 .contains("<pzInfoReturn3004")
                 .contains("<SerialNo>SN3004-001</SerialNo>")
                 .contains("<SendNodeCode>12345678901234</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<hxqyName>湖南核心企业有限公司</hxqyName>")
                 .contains("<hxqyCode>123456789012345678</hxqyCode>")
                 .contains("<pzNo>PZ20260416001</pzNo>")
@@ -249,7 +250,7 @@ class SupplyChainBody3003_3004Test {
         PzInfoReturn3004 parsed = unmarshal(xml, PzInfoReturn3004.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3004-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("12345678901234");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getHxqyName()).isEqualTo("湖南核心企业有限公司");
         assertThat(parsed.getHxqyCode()).isEqualTo("123456789012345678");
         assertThat(parsed.getPzNo()).isEqualTo("PZ20260416001");
@@ -294,7 +295,7 @@ class SupplyChainBody3003_3004Test {
         PzInfoReturn3004 minimal = new PzInfoReturn3004();
         minimal.setSerialNo("SN3004-MIN");
         minimal.setSendNodeCode("12345678901234");
-        minimal.setDesNodeCode("A1000143000104");
+        minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setHxqyName("最小测试企业");
         minimal.setHxqyCode("123456789012345678");
         minimal.setPzNo("PZ20260416MIN");
@@ -403,7 +404,7 @@ class SupplyChainBody3003_3004Test {
 
         PzInfoReturn3004 body = new PzInfoReturn3004();
         body.setSerialNo("SN2026042100000000000000000001");
-        body.setSendNodeCode("A1000143000104");
+        body.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         body.setDesNodeCode("10000000000001");
         body.setHxqyName("核心企业A");
         body.setHxqyCode("91110000000000001X");

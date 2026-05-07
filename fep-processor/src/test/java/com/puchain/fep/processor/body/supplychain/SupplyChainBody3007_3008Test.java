@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import jakarta.xml.bind.JAXBContext;
@@ -45,7 +46,7 @@ class SupplyChainBody3007_3008Test {
         InvoCheckQuery3007 original = new InvoCheckQuery3007();
         original.setSerialNo("SN3007-001");
         original.setSendNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setInvoCode("011001234567");
         original.setInvoNum("044001234567890123");
         original.setCheckCode("ABCDEF");
@@ -63,7 +64,7 @@ class SupplyChainBody3007_3008Test {
                 .contains("<InvoCheckQuery3007")
                 .contains("<SerialNo>SN3007-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<InvoCode>011001234567</InvoCode>")
                 .contains("<InvoNum>044001234567890123</InvoNum>")
                 .contains("<CheckCode>ABCDEF</CheckCode>")
@@ -77,7 +78,7 @@ class SupplyChainBody3007_3008Test {
         InvoCheckQuery3007 parsed = unmarshal(xml, InvoCheckQuery3007.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3007-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getInvoCode()).isEqualTo("011001234567");
         assertThat(parsed.getInvoNum()).isEqualTo("044001234567890123");
         assertThat(parsed.getCheckCode()).isEqualTo("ABCDEF");
@@ -123,7 +124,7 @@ class SupplyChainBody3007_3008Test {
     void invoCheckReturn3008_jaxbRoundtrip_shouldPreserveAllFields() throws Exception {
         InvoCheckReturn3008 original = new InvoCheckReturn3008();
         original.setSerialNo("SN3008-001");
-        original.setSendNodeCode("A1000143000104");
+        original.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setDesNodeCode("B1001010203");
         original.setInvoCheckReturnCode("0");
         original.setInvoCheckReturnMemo("核验通过");
@@ -143,7 +144,7 @@ class SupplyChainBody3007_3008Test {
 
         InvoCheckReturn3008 parsed = unmarshal(xml, InvoCheckReturn3008.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3008-001");
-        assertThat(parsed.getSendNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getSendNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getDesNodeCode()).isEqualTo("B1001010203");
         assertThat(parsed.getInvoCheckReturnCode()).isEqualTo("0");
         assertThat(parsed.getInvoCheckReturnMemo()).isEqualTo("核验通过");

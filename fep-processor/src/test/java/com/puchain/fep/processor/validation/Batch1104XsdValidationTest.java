@@ -1,5 +1,7 @@
 package com.puchain.fep.processor.validation;
 
+import com.puchain.fep.common.util.FepConstants;
+
 import com.puchain.fep.converter.type.MessageType;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author FEP Team
  * @since 1.0.0
+ *
+ * <p>R-2 (2026-05-07): 文本块内嵌入字面量 "A1000143000104" 是 HNDEMP 中心节点代码 fixture，与
+ * {@link com.puchain.fep.common.util.FepConstants#HNDEMP_NODE_CODE} 同源。Java 文本块语法
+ * (JEP 378) 不支持中段插入常量引用，故保留字面量于 fixture XML；新写测试请 import
+ * {@code FepConstants} 并仅在 Java 表达式上下文中引用。</p>
  */
 class Batch1104XsdValidationTest extends AbstractXsdValidationTest {
 

@@ -2,6 +2,7 @@ package com.puchain.fep.transport.tongtech.adapter;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.transport.api.SendResult;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
@@ -74,11 +75,11 @@ class TongtechTlqProducerTest {
     }
 
     @Test
-    @DisplayName("send: success path returns ok and sets QSEND.A1000143000104.REAL.1 queue")
+    @DisplayName("send: success path returns ok and sets QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1 queue")
     void send_success_shouldReturnOk_andQueueIsRealtimeSend() throws TlqException {
         final TlqMessage msg = realtimeSendMsg("M1");
         when(channelMapper.toQueueType(TlqChannel.REALTIME_SEND)).thenReturn(QueueType.REALTIME_SEND);
-        when(resolver.resolve(QueueType.REALTIME_SEND)).thenReturn("QSEND.A1000143000104.REAL.1");
+        when(resolver.resolve(QueueType.REALTIME_SEND)).thenReturn("QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
         when(mapper.toSdkMessage(msg)).thenReturn(mock(com.tongtech.tlq.base.TlqMessage.class));
 
         final SendResult result = producer.send(msg);
@@ -87,7 +88,7 @@ class TongtechTlqProducerTest {
         assertThat(result.msgId()).isEqualTo("M1");
         final ArgumentCaptor<TlqMsgOpt> optCap = ArgumentCaptor.forClass(TlqMsgOpt.class);
         verify(qcu).putMessage(any(com.tongtech.tlq.base.TlqMessage.class), optCap.capture());
-        assertThat(optCap.getValue().QueName).isEqualTo("QSEND.A1000143000104.REAL.1");
+        assertThat(optCap.getValue().QueName).isEqualTo("QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
         verify(qcu).txBegin();
         verify(qcu).txCommit();
         verify(qcu, never()).txRollback();
@@ -98,7 +99,7 @@ class TongtechTlqProducerTest {
     void send_putMessageFails_shouldRollbackAndReturnFail() throws TlqException {
         final TlqMessage msg = realtimeSendMsg("M2");
         when(channelMapper.toQueueType(any())).thenReturn(QueueType.REALTIME_SEND);
-        when(resolver.resolve(any())).thenReturn("QSEND.A1000143000104.REAL.1");
+        when(resolver.resolve(any())).thenReturn("QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
         when(mapper.toSdkMessage(msg)).thenReturn(mock(com.tongtech.tlq.base.TlqMessage.class));
         final TlqException tle = mock(TlqException.class);
         when(tle.getErrorCause()).thenReturn("queue full");
@@ -119,7 +120,7 @@ class TongtechTlqProducerTest {
     void send_rollbackAlsoFails_shouldStillReturnFail() throws TlqException {
         final TlqMessage msg = realtimeSendMsg("M3");
         when(channelMapper.toQueueType(any())).thenReturn(QueueType.REALTIME_SEND);
-        when(resolver.resolve(any())).thenReturn("QSEND.A1000143000104.REAL.1");
+        when(resolver.resolve(any())).thenReturn("QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
         when(mapper.toSdkMessage(msg)).thenReturn(mock(com.tongtech.tlq.base.TlqMessage.class));
         final TlqException putEx = mock(TlqException.class);
         when(putEx.getErrorCause()).thenReturn("network");
@@ -142,7 +143,7 @@ class TongtechTlqProducerTest {
         when(factory.isConnected()).thenReturn(false);
         final TlqMessage msg = realtimeSendMsg("M4");
         when(channelMapper.toQueueType(any())).thenReturn(QueueType.REALTIME_SEND);
-        when(resolver.resolve(any())).thenReturn("QSEND.A1000143000104.REAL.1");
+        when(resolver.resolve(any())).thenReturn("QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
         when(mapper.toSdkMessage(msg)).thenReturn(mock(com.tongtech.tlq.base.TlqMessage.class));
 
         final SendResult result = producer.send(msg);

@@ -2,6 +2,7 @@ package com.puchain.fep.web.messageinbound.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
@@ -60,7 +61,7 @@ class InboundMessageDispatcherTest {
                     + "<CFX>"
                     + "<HEAD>"
                     + "<Version>1.0</Version>"
-                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<SrcNode>" + FepConstants.HNDEMP_NODE_CODE + "</SrcNode>"
                     + "<DesNode>B2000456000204</DesNode>"
                     + "<App>HNDEMP</App>"
                     + "<MsgNo>3116</MsgNo>"
@@ -262,7 +263,7 @@ class InboundMessageDispatcherTest {
                 + "<CFX>"
                 + "<HEAD>"
                 + "<Version>1.0</Version>"
-                + "<SrcNode>A1000143000104</SrcNode>"
+                + "<SrcNode>" + FepConstants.HNDEMP_NODE_CODE + "</SrcNode>"
                 + "<DesNode>B2000456000204</DesNode>"
                 + "<App>HNDEMP</App>"
                 + "<MsgNo>3116</MsgNo>"

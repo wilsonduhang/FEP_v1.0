@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import jakarta.xml.bind.JAXBContext;
@@ -66,7 +67,7 @@ class SupplyChainBody3112_3113Test {
         HxqyCreditAmt3112 original = new HxqyCreditAmt3112();
         original.setSerialNo("SN3112-001");
         original.setSendNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setQueryDate("20260424");
         original.setHxqyInfoNum("2");
         original.setHxqyInfo(List.of(hx1, hx2));
@@ -77,7 +78,7 @@ class SupplyChainBody3112_3113Test {
                 .contains("<hxqyCreditAmt3112")
                 .contains("<SerialNo>SN3112-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<QueryDate>20260424</QueryDate>")
                 .contains("<hxqyInfoNum>2</hxqyInfoNum>")
                 .contains("<hxqyInfo>")
@@ -102,7 +103,7 @@ class SupplyChainBody3112_3113Test {
         HxqyCreditAmt3112 parsed = unmarshal(xml, HxqyCreditAmt3112.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3112-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getQueryDate()).isEqualTo("20260424");
         assertThat(parsed.getHxqyInfoNum()).isEqualTo("2");
 
@@ -163,7 +164,7 @@ class SupplyChainBody3112_3113Test {
 
         HxqyCreditAmt3113 original = new HxqyCreditAmt3113();
         original.setSerialNo("SN3113-001");
-        original.setSendNodeCode("A1000143000104");
+        original.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setDesNodeCode("B1001010203");
         original.setQueryDate("20260424");
         original.setCreditInfoNum("2");
@@ -174,7 +175,7 @@ class SupplyChainBody3112_3113Test {
         assertThat(xml)
                 .contains("<hxqyCreditAmt3113")
                 .contains("<SerialNo>SN3113-001</SerialNo>")
-                .contains("<SendNodeCode>A1000143000104</SendNodeCode>")
+                .contains("<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>")
                 .contains("<DesNodeCode>B1001010203</DesNodeCode>")
                 .contains("<QueryDate>20260424</QueryDate>")
                 .contains("<CreditInfoNum>2</CreditInfoNum>")
@@ -194,7 +195,7 @@ class SupplyChainBody3112_3113Test {
 
         HxqyCreditAmt3113 parsed = unmarshal(xml, HxqyCreditAmt3113.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3113-001");
-        assertThat(parsed.getSendNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getSendNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getDesNodeCode()).isEqualTo("B1001010203");
         assertThat(parsed.getQueryDate()).isEqualTo("20260424");
         assertThat(parsed.getCreditInfoNum()).isEqualTo("2");

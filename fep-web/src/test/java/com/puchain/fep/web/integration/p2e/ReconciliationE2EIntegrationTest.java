@@ -1,6 +1,7 @@
 package com.puchain.fep.web.integration.p2e;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.event.InboundMessageProcessedEvent;
 import com.puchain.fep.processor.validation.ValidationResult;
@@ -121,7 +122,7 @@ class ReconciliationE2EIntegrationTest {
     private static final long PERF_BUDGET_MS = 1000L;
 
     /** HNDEMP platform node code (Plan §3.1.2). */
-    private static final String HNDEMP_NODE = "A1000143000104";
+    private static final String HNDEMP_NODE = FepConstants.HNDEMP_NODE_CODE;
 
     /** Demo bank node code (sample fixture). */
     private static final String BANK_NODE = "B43010104B0001";

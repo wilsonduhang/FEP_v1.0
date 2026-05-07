@@ -1,5 +1,6 @@
 package com.puchain.fep.web.outbound.consumer;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
@@ -12,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>断言：</p>
  * <ul>
- *   <li>{@code DesNode} 固定 = "A1000143000104"（HNDEMP 中心节点代码，CLAUDE.md 已知约束）</li>
+ *   <li>{@code DesNode} 固定 = FepConstants.HNDEMP_NODE_CODE（HNDEMP 中心节点代码，CLAUDE.md 已知约束）</li>
  *   <li>{@code SrcNode} 来自 {@link OutboundHeadFields#sendOrgCode()}</li>
  *   <li>{@code MsgNo} 来自 {@link OutboundMessageQueueEntity#getMessageType()}</li>
  *   <li>{@code MsgId} 占位 "PLACEHOLDER_T6_INJEC"（T6 OutboundTlqSender 注入实际 20 位值）</li>
@@ -41,7 +42,7 @@ class CommonHeadComposerTest {
 
         final CommonHead head = composer.compose(entity, hf);
 
-        assertThat(head.getDesNode()).isEqualTo("A1000143000104");
+        assertThat(head.getDesNode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(head.getSrcNode()).isEqualTo("BANK0010000001");
         assertThat(head.getMsgNo()).isEqualTo("3102");
         assertThat(head.getMsgId()).isEqualTo("PLACEHOLDER_T6_INJEC");

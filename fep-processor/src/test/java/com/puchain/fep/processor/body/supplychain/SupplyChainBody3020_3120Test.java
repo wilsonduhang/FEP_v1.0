@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import jakarta.xml.bind.JAXBContext;
@@ -51,7 +52,7 @@ class SupplyChainBody3020_3120Test {
         Forward3020 original = new Forward3020();
         original.setSerialNo("SN3020-001");
         original.setSrcNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setBusinessNo("BIZ-3020-01");
         original.setParameters("param1=value1&param2=value2");
         original.setContent("<payload>3020 real-time forward content</payload>");
@@ -62,7 +63,7 @@ class SupplyChainBody3020_3120Test {
                 .contains("<Forward3020")
                 .contains("<SerialNo>SN3020-001</SerialNo>")
                 .contains("<SrcNodeCode>B1001010203</SrcNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<BusinessNo>BIZ-3020-01</BusinessNo>")
                 .contains("<Parameters>param1=value1&amp;param2=value2</Parameters>")
                 .contains("<Content>")
@@ -73,7 +74,7 @@ class SupplyChainBody3020_3120Test {
         Forward3020 parsed = unmarshal(xml, Forward3020.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3020-001");
         assertThat(parsed.getSrcNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getBusinessNo()).isEqualTo("BIZ-3020-01");
         assertThat(parsed.getParameters()).isEqualTo("param1=value1&param2=value2");
         assertThat(parsed.getContent()).contains("3020 real-time forward content");
@@ -96,7 +97,7 @@ class SupplyChainBody3020_3120Test {
         Forward3120 original = new Forward3120();
         original.setSerialNo("SN3120-001");
         original.setSrcNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setBusinessNo("BIZ-3120-01");
         original.setParameters("batchId=20260424001");
         original.setContent("<payload>3120 batch forward content (required)</payload>");
@@ -107,7 +108,7 @@ class SupplyChainBody3020_3120Test {
                 .contains("<Forward3120")
                 .contains("<SerialNo>SN3120-001</SerialNo>")
                 .contains("<SrcNodeCode>B1001010203</SrcNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<BusinessNo>BIZ-3120-01</BusinessNo>")
                 .contains("<Parameters>batchId=20260424001</Parameters>")
                 .contains("<Content>")
@@ -118,7 +119,7 @@ class SupplyChainBody3020_3120Test {
         Forward3120 parsed = unmarshal(xml, Forward3120.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3120-001");
         assertThat(parsed.getSrcNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getBusinessNo()).isEqualTo("BIZ-3120-01");
         assertThat(parsed.getParameters()).isEqualTo("batchId=20260424001");
         assertThat(parsed.getContent()).contains("3120 batch forward content (required)");

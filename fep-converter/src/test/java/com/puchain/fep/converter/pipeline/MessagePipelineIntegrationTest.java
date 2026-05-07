@@ -1,5 +1,6 @@
 package com.puchain.fep.converter.pipeline;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.compress.ZipBase64Compressor;
 import com.puchain.fep.converter.encrypt.MessageEncryptor;
 import com.puchain.fep.converter.model.CfxMessage;
@@ -57,7 +58,7 @@ class MessagePipelineIntegrationTest {
     /** 测试用 SrcNode（14 位机构代码）。 */
     private static final String TEST_SRC_NODE = "12345678901234";
     /** HNDEMP 中心节点代码。 */
-    private static final String TEST_DES_NODE = "A1000143000104";
+    private static final String TEST_DES_NODE = FepConstants.HNDEMP_NODE_CODE;
     /** 测试用 MsgNo（3101 供应链融资类）。 */
     private static final String TEST_MSG_NO = "3101";
     /** 测试用 20 位 MsgId。 */

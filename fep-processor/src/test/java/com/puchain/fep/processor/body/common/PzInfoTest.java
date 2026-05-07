@@ -1,5 +1,7 @@
 package com.puchain.fep.processor.body.common;
 
+import com.puchain.fep.common.util.FepConstants;
+
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.supplychain.PzInfoReturn3004;
 import com.puchain.fep.processor.validation.ValidationResult;
@@ -17,6 +19,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * R-2 (2026-05-07): 文本块内嵌入字面量 "A1000143000104" 是 HNDEMP 中心节点代码 fixture，与
+ * {@link com.puchain.fep.common.util.FepConstants#HNDEMP_NODE_CODE} 同源。Java 文本块语法
+ * (JEP 378) 不支持中段插入常量引用，故保留字面量于 fixture XML；新写测试请 import
+ * {@code FepConstants} 并仅在 Java 表达式上下文中引用。
+ */
 class PzInfoTest {
 
     private final XsdValidator xsdValidator = new XsdValidator(new XsdSchemaRegistry());
@@ -50,7 +58,7 @@ class PzInfoTest {
     private PzInfoReturn3004 buildMinimalResponseWithPzInfo(PzInfo pz) {
         PzInfoReturn3004 body = new PzInfoReturn3004();
         body.setSerialNo("SN2026042100000000000000000001");   // XSD length=30
-        body.setSendNodeCode("A1000143000104");               // XSD length=14
+        body.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);               // XSD length=14
         body.setDesNodeCode("10000000000001");
         body.setHxqyName("核心企业A");
         body.setHxqyCode("91110000000000001X");

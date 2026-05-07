@@ -2,6 +2,7 @@ package com.puchain.fep.web.reconciliation.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.web.auth.domain.CaptchaResponse;
 import com.puchain.fep.web.auth.domain.LoginRequest;
 import com.puchain.fep.web.auth.service.CaptchaService;
@@ -171,7 +172,7 @@ class SettlementInstructionControllerTest {
                                                               final BigDecimal amt) {
         final SettlementInstructionRequest req = new SettlementInstructionRequest();
         req.setPlatPayNo(platPayNo);
-        req.setSendNodeCode("A1000143000104");
+        req.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         req.setDesNodeCode("B2000456000204");
         req.setSerialNo("SN_" + platPayNo);
 
@@ -216,7 +217,7 @@ class SettlementInstructionControllerTest {
     void initiate_emptyQsInfo_shouldReturnParamError() throws Exception {
         final SettlementInstructionRequest req = new SettlementInstructionRequest();
         req.setPlatPayNo("PP_BAD");
-        req.setSendNodeCode("A1000143000104");
+        req.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         req.setDesNodeCode("B2000456000204");
         req.setSerialNo("SN_BAD");
         req.setQsInfo(List.of());

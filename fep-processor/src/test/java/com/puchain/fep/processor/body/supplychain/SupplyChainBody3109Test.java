@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import com.puchain.fep.processor.body.common.PersonInfo;
@@ -161,7 +162,7 @@ class SupplyChainBody3109Test {
         QyRegister3109 original = new QyRegister3109();
         original.setSerialNo("SN3109-001");
         original.setSendNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setQyFlag("1");
         original.setHxqyInfo(hxqy);
         original.setQyAccLockInfo(lock);
@@ -176,7 +177,7 @@ class SupplyChainBody3109Test {
                 .contains("<qyRegister3109")
                 .contains("<SerialNo>SN3109-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<qyFlag>1</qyFlag>");
 
         // hxqyInfo wrapper + nested hxqyInfoMx (3109 variant: hxqyNum + hxqyInfoMx,
@@ -273,7 +274,7 @@ class SupplyChainBody3109Test {
         QyRegister3109 parsed = unmarshal(xml, QyRegister3109.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3109-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getQyFlag()).isEqualTo("1");
 
         // hxqyInfo (3109 variant)

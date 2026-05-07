@@ -2,6 +2,7 @@ package com.puchain.fep.processor.reconciliation;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.supplychain.PlatPay3115;
 import com.puchain.fep.processor.body.supplychain.QsInfo;
@@ -378,7 +379,7 @@ class ClearingInstructionServiceTest {
     private PlatPay3115 sampleOutbound(final String platPayNo, final List<QsInfo> qsList) {
         final PlatPay3115 body = new PlatPay3115();
         body.setSerialNo("SN-" + platPayNo);
-        body.setSendNodeCode("A1000143000104");
+        body.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         body.setDesNodeCode("A1000143000105");
         body.setPlatPayNo(platPayNo);
         body.setHxqyName("核心企业 X");

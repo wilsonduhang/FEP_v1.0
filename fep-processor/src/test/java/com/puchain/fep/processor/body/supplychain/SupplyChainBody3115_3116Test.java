@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import jakarta.xml.bind.JAXBContext;
@@ -90,7 +91,7 @@ class SupplyChainBody3115_3116Test {
 
         PlatPay3115 original = new PlatPay3115();
         original.setSerialNo("SN3115-MAIN-001");
-        original.setSendNodeCode("A1000143000104");
+        original.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setDesNodeCode("B1001010203");
         original.setPlatPayNo("PLATPAY3115001");
         original.setHxqyName("湖南某某核心企业A");
@@ -105,7 +106,7 @@ class SupplyChainBody3115_3116Test {
         assertThat(xml)
                 .contains("<PlatPay3115")
                 .contains("<SerialNo>SN3115-MAIN-001</SerialNo>")
-                .contains("<SendNodeCode>A1000143000104</SendNodeCode>")
+                .contains("<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>")
                 .contains("<DesNodeCode>B1001010203</DesNodeCode>")
                 .contains("<PlatPayNo>PLATPAY3115001</PlatPayNo>")
                 .contains("<hxqyName>湖南某某核心企业A</hxqyName>")
@@ -142,7 +143,7 @@ class SupplyChainBody3115_3116Test {
 
         PlatPay3115 parsed = unmarshal(xml, PlatPay3115.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3115-MAIN-001");
-        assertThat(parsed.getSendNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getSendNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getDesNodeCode()).isEqualTo("B1001010203");
         assertThat(parsed.getPlatPayNo()).isEqualTo("PLATPAY3115001");
         assertThat(parsed.getHxqyName()).isEqualTo("湖南某某核心企业A");
@@ -203,7 +204,7 @@ class SupplyChainBody3115_3116Test {
         // Detail #1 — full required + selected optional
         CheckDetailInfo d1 = new CheckDetailInfo();
         d1.setSid("1");
-        d1.setPlatNodeCode("A1000143000104");
+        d1.setPlatNodeCode(FepConstants.HNDEMP_NODE_CODE);
         d1.setPzNo("PZ3116001");
         d1.setBizType("01");
         d1.setBillNo("BILL3116-001");
@@ -223,7 +224,7 @@ class SupplyChainBody3115_3116Test {
         // Detail #2 — minimal required, all optional omitted
         CheckDetailInfo d2 = new CheckDetailInfo();
         d2.setSid("2");
-        d2.setPlatNodeCode("A1000143000104");
+        d2.setPlatNodeCode(FepConstants.HNDEMP_NODE_CODE);
         d2.setBizType("02");
         d2.setRzqyName("融资企业B");
         d2.setRzqyCode("91430100MA00000011");
@@ -241,7 +242,7 @@ class SupplyChainBody3115_3116Test {
         BankCheckDay3116 original = new BankCheckDay3116();
         original.setSerialNo("SN3116-MAIN-001");
         original.setSendNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setHxqyName("湖南某某核心企业A");
         original.setHxqyCode("91430100MA00000001");
         original.setCheckDate("20260424");
@@ -254,14 +255,14 @@ class SupplyChainBody3115_3116Test {
                 .contains("<BankCheckDay3116")
                 .contains("<SerialNo>SN3116-MAIN-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<hxqyName>湖南某某核心企业A</hxqyName>")
                 .contains("<hxqyCode>91430100MA00000001</hxqyCode>")
                 .contains("<CheckDate>20260424</CheckDate>")
                 .contains("<CheckDetailNum>2</CheckDetailNum>")
                 .contains("<CheckDetailInfo>")
                 .contains("<sid>1</sid>")
-                .contains("<PlatNodeCode>A1000143000104</PlatNodeCode>")
+                .contains("<PlatNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</PlatNodeCode>")
                 .contains("<pzNo>PZ3116001</pzNo>")
                 .contains("<BizType>01</BizType>")
                 .contains("<BillNo>BILL3116-001</BillNo>")
@@ -296,7 +297,7 @@ class SupplyChainBody3115_3116Test {
         BankCheckDay3116 parsed = unmarshal(xml, BankCheckDay3116.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3116-MAIN-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getHxqyName()).isEqualTo("湖南某某核心企业A");
         assertThat(parsed.getHxqyCode()).isEqualTo("91430100MA00000001");
         assertThat(parsed.getCheckDate()).isEqualTo("20260424");
@@ -307,7 +308,7 @@ class SupplyChainBody3115_3116Test {
 
         CheckDetailInfo pd1 = dList.get(0);
         assertThat(pd1.getSid()).isEqualTo("1");
-        assertThat(pd1.getPlatNodeCode()).isEqualTo("A1000143000104");
+        assertThat(pd1.getPlatNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(pd1.getPzNo()).isEqualTo("PZ3116001");
         assertThat(pd1.getBizType()).isEqualTo("01");
         assertThat(pd1.getBillNo()).isEqualTo("BILL3116-001");
@@ -326,7 +327,7 @@ class SupplyChainBody3115_3116Test {
 
         CheckDetailInfo pd2 = dList.get(1);
         assertThat(pd2.getSid()).isEqualTo("2");
-        assertThat(pd2.getPlatNodeCode()).isEqualTo("A1000143000104");
+        assertThat(pd2.getPlatNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(pd2.getPzNo()).isNull();
         assertThat(pd2.getBizType()).isEqualTo("02");
         assertThat(pd2.getBillNo()).isNull();

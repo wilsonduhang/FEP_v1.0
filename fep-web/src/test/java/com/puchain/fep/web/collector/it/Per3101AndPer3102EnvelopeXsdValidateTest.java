@@ -3,6 +3,7 @@ package com.puchain.fep.web.collector.it;
 import com.puchain.fep.collector.CollectorProperties;
 import com.puchain.fep.collector.assembler.mapper.ArchiveInfo3102FieldMapper;
 import com.puchain.fep.collector.assembler.mapper.ContractInfo3101FieldMapper;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
@@ -49,20 +50,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 class Per3101AndPer3102EnvelopeXsdValidateTest {
 
     private static final String INSTITUTION_CODE = "12345678901234";
-    private static final String HNDEMP_CENTER = "A1000143000104";
+    private static final String HNDEMP_CENTER = FepConstants.HNDEMP_NODE_CODE;
 
     /** Common HEAD shared by 3101 / 3102 (msgNo placeholder). */
     private static final String HEAD_TEMPLATE = """
             <HEAD>
                 <Version>1.0</Version>
                 <SrcNode>12345678901234</SrcNode>
-                <DesNode>A1000143000104</DesNode>
+                <DesNode>%s</DesNode>
                 <App>HNDEMP</App>
                 <MsgNo>{{MSG_NO}}</MsgNo>
                 <MsgId>20260501120000000001</MsgId>
                 <CorrMsgId>20260501120000000001</CorrMsgId>
                 <WorkDate>20260501</WorkDate>
-            </HEAD>""";
+            </HEAD>""".formatted(FepConstants.HNDEMP_NODE_CODE);
 
     /** RequestHead body (3 fields) — used by 3102/3105/3107/3109/3112/3116/3009. */
     private static final String REQUEST_HEAD_FIELDS = """
@@ -112,7 +113,7 @@ class Per3101AndPer3102EnvelopeXsdValidateTest {
         // 3101 BatchHead uses ResponseHead (§6c) — 5 fields incl. Result
         final String envelope = cfx("3101", """
                 <BatchHead3101>
-            """ + RESPONSE_HEAD_FIELDS + """
+        """.formatted(FepConstants.HNDEMP_NODE_CODE) + RESPONSE_HEAD_FIELDS + """
                 </BatchHead3101>
             """ + bodyXml);
 

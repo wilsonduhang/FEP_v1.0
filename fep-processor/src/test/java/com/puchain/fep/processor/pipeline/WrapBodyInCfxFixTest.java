@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.pipeline;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
@@ -113,7 +114,7 @@ class WrapBodyInCfxFixTest {
         CommonHead h = new CommonHead();
         h.setVersion("1.0");
         h.setSrcNode("10000000000001");
-        h.setDesNode("A1000143000104");
+        h.setDesNode(FepConstants.HNDEMP_NODE_CODE);
         h.setApp("HNDEMP");
         h.setMsgNo(msgNo);
         h.setMsgId("20260423120000000001");

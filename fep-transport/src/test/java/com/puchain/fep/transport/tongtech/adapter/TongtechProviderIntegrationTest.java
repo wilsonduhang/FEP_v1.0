@@ -1,5 +1,6 @@
 package com.puchain.fep.transport.tongtech.adapter;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.transport.TransportAutoConfiguration;
 import com.puchain.fep.transport.api.NodeLifecycleManager;
 import com.puchain.fep.transport.api.RemoteAdmin;
@@ -63,13 +64,13 @@ import static org.mockito.Mockito.when;
  *       {@link TongtechTlqConnectionFactory} + {@link TongtechRemoteAdmin}).</li>
  *   <li><b>#2 — 8/9 队列名 IT 覆盖 (PRD §3.1.2 9 队列)</b> — 4 channel × 2 send/recv:
  *       <ul>
- *         <li>{@link TlqChannel#REALTIME_SEND} → {@code QSEND.A1000143000104.REAL.1}
+ *         <li>{@link TlqChannel#REALTIME_SEND} → {@code QSEND.<HNDEMP>.REAL.1}
  *             (核心 QueName + msgId 持久 + 默认 zip/encrypt 透传)</li>
- *         <li>{@link TlqChannel#BATCH_SEND}    → {@code QSEND.A1000143000104.BATCH.1}
+ *         <li>{@link TlqChannel#BATCH_SEND}    → {@code QSEND.<HNDEMP>.BATCH.1}
  *             (核心 QueName + persistence/expiry forBatch 默认值)</li>
- *         <li>{@link TlqChannel#REALTIME_RECEIVE} → {@code QLOCAL.A1000143000104.REAL.1}
+ *         <li>{@link TlqChannel#REALTIME_RECEIVE} → {@code QLOCAL.<HNDEMP>.REAL.1}
  *             (核心 QueName + payload roundtrip)</li>
- *         <li>{@link TlqChannel#BATCH_RECEIVE}    → {@code QLOCAL.A1000143000104.BATCH.1}
+ *         <li>{@link TlqChannel#BATCH_RECEIVE}    → {@code QLOCAL.<HNDEMP>.BATCH.1}
  *             (核心 QueName + empty-poll TlqException → Optional.empty)</li>
  *       </ul>
  *       Each channel test asserts both {@code QueName} and one auxiliary semantic
@@ -83,7 +84,7 @@ import static org.mockito.Mockito.when;
  *       connectivity probe / provider isolation。</li>
  * </ol>
  *
- * <p>Test 数据中 institution code 显式为 {@code A1000143000104}（覆盖
+ * <p>Test 数据中 institution code 取自 {@link com.puchain.fep.common.util.FepConstants#HNDEMP_NODE_CODE}（覆盖
  * {@link com.puchain.fep.transport.TransportProperties#DEFAULT_INSTITUTION_CODE}
  * 默认值 {@code DEFAULT_INST_00}），与 plan 期望的队列前缀一致。</p>
  *
@@ -99,10 +100,10 @@ import static org.mockito.Mockito.when;
         classes = {TransportAutoConfiguration.class, TongtechTransportConfiguration.class},
         properties = {
                 "fep.transport.provider=tongtech",
-                "fep.transport.institution-code=A1000143000104",
+                "fep.transport.institution-code=" + FepConstants.HNDEMP_NODE_CODE,
                 "fep.transport.tongtech.broker-host=127.0.0.1",
                 "fep.transport.tongtech.broker-port=10024",
-                "fep.transport.tongtech.qcu-name=QCU_HNDEMP_A1000143000104_1",
+                "fep.transport.tongtech.qcu-name=QCU_HNDEMP_" + FepConstants.HNDEMP_NODE_CODE + "_1",
                 "fep.transport.tongtech.consumer-poll-interval-ms=100",
                 "fep.transport.tongtech.admin-host=127.0.0.1",
                 "fep.transport.tongtech.admin-port=20001"
@@ -113,7 +114,7 @@ import static org.mockito.Mockito.when;
 class TongtechProviderIntegrationTest {
 
     /** HNDEMP 中心节点代码（PRD v1.3 §3.1.2 / CLAUDE.md "已知约束"）。 */
-    private static final String HNDEMP_CODE = "A1000143000104";
+    private static final String HNDEMP_CODE = FepConstants.HNDEMP_NODE_CODE;
 
     /** 期望的实时 SEND 队列名。 */
     private static final String Q_REALTIME_SEND = "QSEND." + HNDEMP_CODE + ".REAL.1";
@@ -179,7 +180,7 @@ class TongtechProviderIntegrationTest {
     // ============================================================================
 
     @Test
-    @DisplayName("验收#2-1: REALTIME_SEND → QSEND.A1000143000104.REAL.1 (QueName + msgId persistence)")
+    @DisplayName("验收#2-1: REALTIME_SEND → QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1 (QueName + msgId persistence)")
     void producer_send_realtimeSend_shouldUseQSendHndempReal_andPersistMsgId() throws TlqException {
         final TlqMessageAttributes attrs = TlqMessageAttributes.forRealtime("M-RT-SEND-1");
         final TlqMessage msg = new TlqMessage("<CFX/>", attrs, TlqChannel.REALTIME_SEND);
@@ -199,7 +200,7 @@ class TongtechProviderIntegrationTest {
     }
 
     @Test
-    @DisplayName("验收#2-2: BATCH_SEND → QSEND.A1000143000104.BATCH.1 (QueName + forBatch persistence/expiry)")
+    @DisplayName("验收#2-2: BATCH_SEND → QSEND." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1 (QueName + forBatch persistence/expiry)")
     void producer_send_batchSend_shouldUseQSendHndempBatch_andDelegatePersistence() throws TlqException {
         // forBatch() 默认 persistence=true / expiry=-1 (NO_EXPIRY) — 必须透传到 SDK msg
         final TlqMessageAttributes attrs = TlqMessageAttributes.forBatch("M-BATCH-SEND-1");
@@ -218,7 +219,7 @@ class TongtechProviderIntegrationTest {
     }
 
     @Test
-    @DisplayName("验收#2-3: REALTIME_RECEIVE → QLOCAL.A1000143000104.REAL.1 (QueName + payload roundtrip)")
+    @DisplayName("验收#2-3: REALTIME_RECEIVE → QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1 (QueName + payload roundtrip)")
     void consumer_receive_realtimeReceive_shouldUseQLocalHndempReal_andRoundtripPayload() throws TlqException {
         // 配置 SDK getMessage rc=0；mapper.fromSdkMessage 由真实 TongtechMessageMapper 处理，
         // 但 SDK 的 sdk msg.MsgId 是 byte[]，未填充时 mapper 返回 msgId=null。我们通过
@@ -246,7 +247,7 @@ class TongtechProviderIntegrationTest {
     }
 
     @Test
-    @DisplayName("验收#2-4: BATCH_RECEIVE → QLOCAL.A1000143000104.BATCH.1 (QueName + empty poll Optional.empty)")
+    @DisplayName("验收#2-4: BATCH_RECEIVE → QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1 (QueName + empty poll Optional.empty)")
     void consumer_receive_batchReceive_shouldUseQLocalHndempBatch_andEmptyOnTimeout() throws TlqException {
         // SDK rc != 0 模拟无消息可达（业务超时）— 应该返回 Optional.empty（非异常路径）
         doAnswer(inv -> 1).when(qcu).getMessage(any(), any(TlqMsgOpt.class));

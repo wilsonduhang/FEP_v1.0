@@ -2,6 +2,7 @@ package com.puchain.fep.web.tlq.node.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.pipeline.EncodeResult;
 import com.puchain.fep.converter.pipeline.MessageEncoder;
@@ -58,7 +59,7 @@ class TlqNodeLoginServiceTest {
     /** 14-char src node code (passes CommonHead.SrcNode length validation). */
     private static final String TEST_SRC_NODE = "B1234567890123";
     /** HNDEMP fixed dest. */
-    private static final String HNDEMP_NODE = "A1000143000104";
+    private static final String HNDEMP_NODE = FepConstants.HNDEMP_NODE_CODE;
     private static final String NODE_ID = "node-x-001";
 
     /**

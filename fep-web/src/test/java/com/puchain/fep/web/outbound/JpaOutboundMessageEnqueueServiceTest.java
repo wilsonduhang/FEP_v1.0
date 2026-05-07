@@ -2,6 +2,7 @@ package com.puchain.fep.web.outbound;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.processor.intake.port.Direction;
 import com.puchain.fep.processor.intake.port.EnqueueResult;
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
@@ -105,7 +106,7 @@ class JpaOutboundMessageEnqueueServiceTest {
         // head XML should be wrapped in <OutboundHead> with the 3 fields
         assertThat(row.getMessageHeadXml())
                 .contains("<OutboundHead>")
-                .contains("<SendOrgCode>A1000143000104</SendOrgCode>")
+                .contains("<SendOrgCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendOrgCode>")
                 .contains("<EntrustDate>20260501</EntrustDate>")
                 .contains("<TransitionNo>00000001</TransitionNo>");
     }
@@ -237,7 +238,7 @@ class JpaOutboundMessageEnqueueServiceTest {
                 "3101",
                 Direction.OUTBOUND,
                 idempotencyKey,
-                new OutboundHeadFields("A1000143000104", "20260501", "00000001"),
+                new OutboundHeadFields(FepConstants.HNDEMP_NODE_CODE, "20260501", "00000001"),
                 body,
                 "INVOICE_CONTRACT_3101",
                 "ROW-1");

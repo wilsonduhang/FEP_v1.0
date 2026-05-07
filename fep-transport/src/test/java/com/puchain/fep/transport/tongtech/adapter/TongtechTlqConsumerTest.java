@@ -2,6 +2,7 @@ package com.puchain.fep.transport.tongtech.adapter;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.transport.api.MessageListener;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
@@ -91,7 +92,7 @@ class TongtechTlqConsumerTest {
         when(channelMapper.toQueueType(TlqChannel.REALTIME_RECEIVE))
                 .thenReturn(QueueType.REALTIME_DEST);
         when(resolver.resolve(QueueType.REALTIME_DEST))
-                .thenReturn("QLOCAL.A1000143000104.REAL.1");
+                .thenReturn("QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
         when(props.getConsumerPollIntervalMs()).thenReturn(100L);
 
         consumer = new TongtechTlqConsumer(
@@ -139,7 +140,7 @@ class TongtechTlqConsumerTest {
         // Validate the QName + AckMode + WaitInterval that we set on the SDK opt
         final ArgumentCaptor<TlqMsgOpt> optCap = ArgumentCaptor.forClass(TlqMsgOpt.class);
         verify(qcu).getMessage(any(), optCap.capture());
-        assertThat(optCap.getValue().QueName).isEqualTo("QLOCAL.A1000143000104.REAL.1");
+        assertThat(optCap.getValue().QueName).isEqualTo("QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
         assertThat((int) optCap.getValue().AckMode).isEqualTo(TlqMsgOpt.TLQACK_USER);
         assertThat(optCap.getValue().WaitInterval).isEqualTo(100);
     }

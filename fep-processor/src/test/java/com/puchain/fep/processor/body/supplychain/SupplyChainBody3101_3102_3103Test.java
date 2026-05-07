@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import com.puchain.fep.processor.body.common.FileInfo;
@@ -67,7 +68,7 @@ class SupplyChainBody3101_3102_3103Test {
         ContractInfo3101 original = new ContractInfo3101();
         original.setSerialNo("SN3101-001");
         original.setSendNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setContractNo("HT-2026042400001");
         original.setHxqyCode("91430000MA4L7DXY01");
         original.setContractType("供应链融资合同");
@@ -94,7 +95,7 @@ class SupplyChainBody3101_3102_3103Test {
                 .contains("<ContractInfo3101")
                 .contains("<SerialNo>SN3101-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<ContractNo>HT-2026042400001</ContractNo>")
                 .contains("<hxqyCode>91430000MA4L7DXY01</hxqyCode>")
                 .contains("<ContractType>供应链融资合同</ContractType>")
@@ -120,7 +121,7 @@ class SupplyChainBody3101_3102_3103Test {
         ContractInfo3101 parsed = unmarshal(xml, ContractInfo3101.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3101-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getContractNo()).isEqualTo("HT-2026042400001");
         assertThat(parsed.getHxqyCode()).isEqualTo("91430000MA4L7DXY01");
         assertThat(parsed.getContractType()).isEqualTo("供应链融资合同");
@@ -205,7 +206,7 @@ class SupplyChainBody3101_3102_3103Test {
         ArchiveInfo3102 original = new ArchiveInfo3102();
         original.setSerialNo("SN3102-001");
         original.setSendNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setApplyMode("1");
         original.setGroupName("某某集团");
         original.setGroupCode("91430000MA4L7DXY99");
@@ -262,7 +263,7 @@ class SupplyChainBody3101_3102_3103Test {
         // 12 simple fields
         assertThat(parsed.getSerialNo()).isEqualTo("SN3102-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getApplyMode()).isEqualTo("1");
         assertThat(parsed.getGroupName()).isEqualTo("某某集团");
         assertThat(parsed.getGroupCode()).isEqualTo("91430000MA4L7DXY99");
@@ -324,7 +325,7 @@ class SupplyChainBody3101_3102_3103Test {
 
         ArchiveReturnInfo3103 original = new ArchiveReturnInfo3103();
         original.setSerialNo("SN3103-001");
-        original.setSendNodeCode("A1000143000104");
+        original.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setDesNodeCode("B1001010203");
         original.setCreationRetCode("01");
         original.setCreationRetInfo("建档成功");
@@ -348,7 +349,7 @@ class SupplyChainBody3101_3102_3103Test {
         assertThat(xml)
                 .contains("<ArchiveReturnInfo3103")
                 .contains("<SerialNo>SN3103-001</SerialNo>")
-                .contains("<SendNodeCode>A1000143000104</SendNodeCode>")
+                .contains("<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>")
                 .contains("<DesNodeCode>B1001010203</DesNodeCode>")
                 .contains("<CreationRetCode>01</CreationRetCode>")
                 .contains("<CreationRetInfo>建档成功</CreationRetInfo>")
@@ -371,7 +372,7 @@ class SupplyChainBody3101_3102_3103Test {
 
         ArchiveReturnInfo3103 parsed = unmarshal(xml, ArchiveReturnInfo3103.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3103-001");
-        assertThat(parsed.getSendNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getSendNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getDesNodeCode()).isEqualTo("B1001010203");
         assertThat(parsed.getCreationRetCode()).isEqualTo("01");
         assertThat(parsed.getCreationRetInfo()).isEqualTo("建档成功");

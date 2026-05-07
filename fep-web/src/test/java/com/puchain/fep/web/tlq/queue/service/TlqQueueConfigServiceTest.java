@@ -3,6 +3,7 @@ package com.puchain.fep.web.tlq.queue.service;
 import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
 import com.puchain.fep.web.tlq.queue.domain.TlqChannelType;
 import com.puchain.fep.web.tlq.queue.domain.TlqQueueConfig;
@@ -134,18 +135,18 @@ class TlqQueueConfigServiceTest {
                 "应包含 QLOCAL.B1234567890123.REAL.1");
         assertTrue(names.contains("QLOCAL." + orgCode + ".BATCH.1"),
                 "应包含 QLOCAL.B1234567890123.BATCH.1");
-        assertTrue(names.contains("QREMOTE.A1000143000104.REAL.1"),
-                "应包含 QREMOTE.A1000143000104.REAL.1");
-        assertTrue(names.contains("QREMOTE.A1000143000104.BATCH.1"),
-                "应包含 QREMOTE.A1000143000104.BATCH.1");
-        assertTrue(names.contains("QLOCAL.A1000143000104.REAL.1"),
-                "应包含 QLOCAL.A1000143000104.REAL.1");
-        assertTrue(names.contains("QLOCAL.A1000143000104.BATCH.1"),
-                "应包含 QLOCAL.A1000143000104.BATCH.1");
-        assertTrue(names.contains("QSEND.A1000143000104.REAL.1"),
-                "应包含 QSEND.A1000143000104.REAL.1");
-        assertTrue(names.contains("QSEND.A1000143000104.BATCH.1"),
-                "应包含 QSEND.A1000143000104.BATCH.1");
+        assertTrue(names.contains("QREMOTE." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1"),
+                "应包含 QREMOTE." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
+        assertTrue(names.contains("QREMOTE." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1"),
+                "应包含 QREMOTE." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1");
+        assertTrue(names.contains("QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1"),
+                "应包含 QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
+        assertTrue(names.contains("QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1"),
+                "应包含 QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1");
+        assertTrue(names.contains("QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1"),
+                "应包含 QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1");
+        assertTrue(names.contains("QSEND." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1"),
+                "应包含 QSEND." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1");
         assertTrue(names.contains("QDEAD." + orgCode),
                 "应包含 QDEAD.B1234567890123");
     }

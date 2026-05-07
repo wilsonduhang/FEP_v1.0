@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.JaxbRoundtripSupport;
 import com.puchain.fep.processor.body.common.ExtInfo;
@@ -34,7 +35,7 @@ class SupplyChainBody3001_3002Test {
         ProgressQuery3001 original = new ProgressQuery3001();
         original.setSerialNo("SN001");
         original.setSendNodeCode("12345678901234");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setHxqyName("湖南核心企业有限公司");
         original.setHxqyCode("123456789012345678");
         original.setQueryType("01");
@@ -51,7 +52,7 @@ class SupplyChainBody3001_3002Test {
                 .contains("<ProgressQuery3001")
                 .contains("<SerialNo>SN001</SerialNo>")
                 .contains("<SendNodeCode>12345678901234</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<hxqyName>湖南核心企业有限公司</hxqyName>")
                 .contains("<hxqyCode>123456789012345678</hxqyCode>")
                 .contains("<QueryType>01</QueryType>")
@@ -63,7 +64,7 @@ class SupplyChainBody3001_3002Test {
         ProgressQuery3001 parsed = unmarshalWithExtInfo(xml, ProgressQuery3001.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("12345678901234");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getHxqyName()).isEqualTo("湖南核心企业有限公司");
         assertThat(parsed.getHxqyCode()).isEqualTo("123456789012345678");
         assertThat(parsed.getQueryType()).isEqualTo("01");
@@ -78,7 +79,7 @@ class SupplyChainBody3001_3002Test {
         ProgressQuery3001 minimal = new ProgressQuery3001();
         minimal.setSerialNo("SN002");
         minimal.setSendNodeCode("12345678901234");
-        minimal.setDesNodeCode("A1000143000104");
+        minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setHxqyName("最小测试企业");
         minimal.setHxqyCode("123456789012345678");
         minimal.setQueryType("02");
@@ -101,7 +102,7 @@ class SupplyChainBody3001_3002Test {
         ProgressQueryReturn3002 original = new ProgressQueryReturn3002();
         original.setSerialNo("SN001");
         original.setSendNodeCode("12345678901234");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setHxqyName("湖南核心企业有限公司");
         original.setHxqyCode("123456789012345678");
         original.setQueryType("01");
@@ -119,7 +120,7 @@ class SupplyChainBody3001_3002Test {
                 .contains("<ProgressQueryReturn3002")
                 .contains("<SerialNo>SN001</SerialNo>")
                 .contains("<SendNodeCode>12345678901234</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<hxqyName>湖南核心企业有限公司</hxqyName>")
                 .contains("<hxqyCode>123456789012345678</hxqyCode>")
                 .contains("<QueryType>01</QueryType>")
@@ -132,7 +133,7 @@ class SupplyChainBody3001_3002Test {
         ProgressQueryReturn3002 parsed = unmarshalWithExtInfo(xml, ProgressQueryReturn3002.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("12345678901234");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getHxqyName()).isEqualTo("湖南核心企业有限公司");
         assertThat(parsed.getHxqyCode()).isEqualTo("123456789012345678");
         assertThat(parsed.getQueryType()).isEqualTo("01");
@@ -148,7 +149,7 @@ class SupplyChainBody3001_3002Test {
         ProgressQueryReturn3002 minimal = new ProgressQueryReturn3002();
         minimal.setSerialNo("SN003");
         minimal.setSendNodeCode("12345678901234");
-        minimal.setDesNodeCode("A1000143000104");
+        minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setHxqyName("最小测试企业");
         minimal.setHxqyCode("123456789012345678");
         minimal.setQueryType("02");

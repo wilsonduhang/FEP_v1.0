@@ -1,5 +1,6 @@
 package com.puchain.fep.transport.support;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.transport.support.QueueNameResolver.QueueType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,12 +25,12 @@ class QueueNameResolverTest {
     @CsvSource({
         "REALTIME_LOCAL,   QLOCAL.B1234567890123.REAL.1",
         "BATCH_LOCAL,      QLOCAL.B1234567890123.BATCH.1",
-        "REALTIME_REMOTE,  QREMOTE.A1000143000104.REAL.1",
-        "BATCH_REMOTE,     QREMOTE.A1000143000104.BATCH.1",
-        "REALTIME_DEST,    QLOCAL.A1000143000104.REAL.1",
-        "BATCH_DEST,       QLOCAL.A1000143000104.BATCH.1",
-        "REALTIME_SEND,    QSEND.A1000143000104.REAL.1",
-        "BATCH_SEND,       QSEND.A1000143000104.BATCH.1",
+        "REALTIME_REMOTE,  QREMOTE." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1",
+        "BATCH_REMOTE,     QREMOTE." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1",
+        "REALTIME_DEST,    QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1",
+        "BATCH_DEST,       QLOCAL." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1",
+        "REALTIME_SEND,    QSEND." + FepConstants.HNDEMP_NODE_CODE + ".REAL.1",
+        "BATCH_SEND,       QSEND." + FepConstants.HNDEMP_NODE_CODE + ".BATCH.1",
         "DEAD_LETTER,      QDEAD.B1234567890123"
     })
     void resolve_allQueueTypes_shouldReturnCorrectName(final QueueType queueType, final String expected) {

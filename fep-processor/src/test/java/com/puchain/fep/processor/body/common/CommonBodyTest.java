@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.common;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.JaxbRoundtripSupport;
 import org.junit.jupiter.api.Test;
@@ -178,7 +179,7 @@ class CommonBodyTest {
     @Test
     void forward9000_jaxbRoundtrip_shouldPreserveAllFields() throws Exception {
         Forward9000 original = new Forward9000();
-        original.setSrcNodeCode("A1000143000104");
+        original.setSrcNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setSrcOrgCode("ORG-SRC-001");
         original.setDesNodeCode("A1000143000201");
         original.setDesOrgCode("ORG-DES-001");
@@ -189,7 +190,7 @@ class CommonBodyTest {
 
         assertThat(xml)
                 .contains("<Forward9000")
-                .contains("<SrcNodeCode>A1000143000104</SrcNodeCode>")
+                .contains("<SrcNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SrcNodeCode>")
                 .contains("<SrcOrgCode>ORG-SRC-001</SrcOrgCode>")
                 .contains("<DesNodeCode>A1000143000201</DesNodeCode>")
                 .contains("<DesOrgCode>ORG-DES-001</DesOrgCode>")
@@ -197,7 +198,7 @@ class CommonBodyTest {
                 .contains("<Content>&lt;payload&gt;hello&lt;/payload&gt;</Content>");
 
         Forward9000 parsed = JaxbRoundtripSupport.unmarshal(xml, Forward9000.class);
-        assertThat(parsed.getSrcNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getSrcNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getSrcOrgCode()).isEqualTo("ORG-SRC-001");
         assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000201");
         assertThat(parsed.getDesOrgCode()).isEqualTo("ORG-DES-001");
@@ -208,7 +209,7 @@ class CommonBodyTest {
     @Test
     void forward9000_optionalBusinessNo_shouldBeOmittedWhenNull() throws Exception {
         Forward9000 minimal = new Forward9000();
-        minimal.setSrcNodeCode("A1000143000104");
+        minimal.setSrcNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setSrcOrgCode("ORG-SRC-001");
         minimal.setDesNodeCode("A1000143000201");
         minimal.setDesOrgCode("ORG-DES-001");
@@ -231,7 +232,7 @@ class CommonBodyTest {
     @Test
     void forward9100_jaxbRoundtrip_shouldPreserveAllFields() throws Exception {
         Forward9100 original = new Forward9100();
-        original.setSrcNodeCode("A1000143000104");
+        original.setSrcNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setSrcOrgCode("ORG-SRC-100");
         original.setDesNodeCode("A1000143000201");
         original.setDesOrgCode("ORG-DES-100");
@@ -242,7 +243,7 @@ class CommonBodyTest {
 
         assertThat(xml)
                 .contains("<Forward9100")
-                .contains("<SrcNodeCode>A1000143000104</SrcNodeCode>")
+                .contains("<SrcNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SrcNodeCode>")
                 .contains("<SrcOrgCode>ORG-SRC-100</SrcOrgCode>")
                 .contains("<DesNodeCode>A1000143000201</DesNodeCode>")
                 .contains("<DesOrgCode>ORG-DES-100</DesOrgCode>")
@@ -250,7 +251,7 @@ class CommonBodyTest {
                 .contains("<Content>batch-payload</Content>");
 
         Forward9100 parsed = JaxbRoundtripSupport.unmarshal(xml, Forward9100.class);
-        assertThat(parsed.getSrcNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getSrcNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getSrcOrgCode()).isEqualTo("ORG-SRC-100");
         assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000201");
         assertThat(parsed.getDesOrgCode()).isEqualTo("ORG-DES-100");
@@ -261,7 +262,7 @@ class CommonBodyTest {
     @Test
     void forward9100_optionalBusinessNo_shouldBeOmittedWhenNull() throws Exception {
         Forward9100 minimal = new Forward9100();
-        minimal.setSrcNodeCode("A1000143000104");
+        minimal.setSrcNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setSrcOrgCode("ORG-SRC-100");
         minimal.setDesNodeCode("A1000143000201");
         minimal.setDesOrgCode("ORG-DES-100");

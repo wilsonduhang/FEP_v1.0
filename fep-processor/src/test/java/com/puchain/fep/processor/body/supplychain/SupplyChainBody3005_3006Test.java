@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import jakarta.xml.bind.JAXBContext;
@@ -45,7 +46,7 @@ class SupplyChainBody3005_3006Test {
         QyAccQuery3005 original = new QyAccQuery3005();
         original.setSerialNo("SN3005-001");
         original.setSendNodeCode("12345678901234");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setQyAccName("湖南测试企业有限公司");
         original.setQyAccCode("123456789012345678");
 
@@ -60,7 +61,7 @@ class SupplyChainBody3005_3006Test {
                 .contains("<qyAccQuery3005")
                 .contains("<SerialNo>SN3005-001</SerialNo>")
                 .contains("<SendNodeCode>12345678901234</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<qyAccName>湖南测试企业有限公司</qyAccName>")
                 .contains("<qyAccCode>123456789012345678</qyAccCode>")
                 .contains("<ExtInfo>")
@@ -70,7 +71,7 @@ class SupplyChainBody3005_3006Test {
         QyAccQuery3005 parsed = unmarshal(xml, QyAccQuery3005.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3005-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("12345678901234");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getQyAccName()).isEqualTo("湖南测试企业有限公司");
         assertThat(parsed.getQyAccCode()).isEqualTo("123456789012345678");
         assertThat(parsed.getExtInfo()).isNotNull();
@@ -83,7 +84,7 @@ class SupplyChainBody3005_3006Test {
         QyAccQuery3005 minimal = new QyAccQuery3005();
         minimal.setSerialNo("SN3005-002");
         minimal.setSendNodeCode("12345678901234");
-        minimal.setDesNodeCode("A1000143000104");
+        minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setQyAccName("最小测试企业");
         minimal.setQyAccCode("123456789012345678");
 
@@ -104,7 +105,7 @@ class SupplyChainBody3005_3006Test {
         QyAccQueryReturn3006 original = new QyAccQueryReturn3006();
         original.setSerialNo("SN3006-001");
         original.setSendNodeCode("12345678901234");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setQyAccName("湖南测试企业有限公司");
         original.setQyAccCode("123456789012345678");
         original.setAccReturnCode("00");
@@ -120,7 +121,7 @@ class SupplyChainBody3005_3006Test {
                 .contains("<qyAccQueryReturn3006")
                 .contains("<SerialNo>SN3006-001</SerialNo>")
                 .contains("<SendNodeCode>12345678901234</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<qyAccName>湖南测试企业有限公司</qyAccName>")
                 .contains("<qyAccCode>123456789012345678</qyAccCode>")
                 .contains("<AccReturnCode>00</AccReturnCode>")
@@ -131,7 +132,7 @@ class SupplyChainBody3005_3006Test {
         QyAccQueryReturn3006 parsed = unmarshal(xml, QyAccQueryReturn3006.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3006-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("12345678901234");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getQyAccName()).isEqualTo("湖南测试企业有限公司");
         assertThat(parsed.getQyAccCode()).isEqualTo("123456789012345678");
         assertThat(parsed.getAccReturnCode()).isEqualTo("00");
@@ -145,7 +146,7 @@ class SupplyChainBody3005_3006Test {
         QyAccQueryReturn3006 minimal = new QyAccQueryReturn3006();
         minimal.setSerialNo("SN3006-002");
         minimal.setSendNodeCode("12345678901234");
-        minimal.setDesNodeCode("A1000143000104");
+        minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setQyAccName("最小测试企业");
         minimal.setQyAccCode("123456789012345678");
         minimal.setAccReturnCode("01");

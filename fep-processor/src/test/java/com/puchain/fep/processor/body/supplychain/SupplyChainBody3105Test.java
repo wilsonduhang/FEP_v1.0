@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import com.puchain.fep.processor.body.common.FileInfo;
@@ -66,7 +67,7 @@ class SupplyChainBody3105Test {
                 .contains("<rzApplyInfo3105")
                 .contains("<SerialNo>SN3105-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<BranchBankCode>BR-CS-001</BranchBankCode>")
                 .contains("<ApplyMode>1</ApplyMode>")
                 .contains("<PlatApplyNo>PLAT-APPLY-3105-2026042400001</PlatApplyNo>")
@@ -120,7 +121,7 @@ class SupplyChainBody3105Test {
         // 16 scalar main fields
         assertThat(parsed.getSerialNo()).isEqualTo("SN3105-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getBranchBankCode()).isEqualTo("BR-CS-001");
         assertThat(parsed.getApplyMode()).isEqualTo("1");
         assertThat(parsed.getPlatApplyNo()).isEqualTo("PLAT-APPLY-3105-2026042400001");
@@ -399,7 +400,7 @@ class SupplyChainBody3105Test {
         RzApplyInfo3105 original = new RzApplyInfo3105();
         original.setSerialNo("SN3105-001");
         original.setSendNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setBranchBankCode("BR-CS-001");
         original.setApplyMode("1");
         original.setPlatApplyNo("PLAT-APPLY-3105-2026042400001");

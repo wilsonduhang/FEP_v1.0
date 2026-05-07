@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.pipeline;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
@@ -184,7 +185,7 @@ class BatchMessageProcessorServiceIntegrationTest {
         CommonHead h = new CommonHead();
         h.setVersion("1.0");
         h.setSrcNode("10000000000001");
-        h.setDesNode("A1000143000104");
+        h.setDesNode(FepConstants.HNDEMP_NODE_CODE);
         h.setApp("HNDEMP");
         h.setMsgNo(msgNo);
         h.setMsgId("20260423120000000001");
@@ -197,7 +198,7 @@ class BatchMessageProcessorServiceIntegrationTest {
         QyAccQuery3005 body = new QyAccQuery3005();
         body.setSerialNo("SN2026042312000000000000000001");
         body.setSendNodeCode("10000000000001");
-        body.setDesNodeCode("A1000143000104");
+        body.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         body.setQyAccName("test account name");
         body.setQyAccCode("6228480000000000001");
         return body;
@@ -207,7 +208,7 @@ class BatchMessageProcessorServiceIntegrationTest {
         PzInfoQuery3003 body = new PzInfoQuery3003();
         body.setSerialNo("SN2026042312000000000000000003");
         body.setSendNodeCode("10000000000001");
-        body.setDesNodeCode("A1000143000104");
+        body.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         body.setHxqyName("test core enterprise");
         body.setHxqyCode("91430100MA4L0000XY");
         body.setPzNo("PZ2026042300000001");
@@ -218,8 +219,8 @@ class BatchMessageProcessorServiceIntegrationTest {
         Forward9000 body = new Forward9000();
         body.setSrcNodeCode("10000000000001");
         body.setSrcOrgCode("10000000000001");
-        body.setDesNodeCode("A1000143000104");
-        body.setDesOrgCode("A1000143000104");
+        body.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
+        body.setDesOrgCode(FepConstants.HNDEMP_NODE_CODE);
         body.setContent("forward payload content");
         return body;
     }

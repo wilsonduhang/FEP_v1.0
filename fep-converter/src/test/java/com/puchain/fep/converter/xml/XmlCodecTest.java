@@ -1,6 +1,7 @@
 package com.puchain.fep.converter.xml;
 
 import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.exception.MessageConverterException;
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
@@ -26,7 +27,7 @@ class XmlCodecTest {
     private CommonHead sampleHead() {
         CommonHead head = new CommonHead();
         head.setSrcNode("12345678901234");
-        head.setDesNode("A1000143000104");
+        head.setDesNode(FepConstants.HNDEMP_NODE_CODE);
         head.setMsgNo("3101");
         head.setMsgId("20260410120000000001");
         head.setCorrMsgId("20260410120000000001");
@@ -55,7 +56,7 @@ class XmlCodecTest {
         assertThat(h.getVersion()).isEqualTo("1.0");
         assertThat(h.getApp()).isEqualTo("HNDEMP");
         assertThat(h.getSrcNode()).isEqualTo("12345678901234");
-        assertThat(h.getDesNode()).isEqualTo("A1000143000104");
+        assertThat(h.getDesNode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(h.getMsgNo()).isEqualTo("3101");
         assertThat(h.getMsgId()).isEqualTo("20260410120000000001");
         assertThat(h.getCorrMsgId()).isEqualTo("20260410120000000001");
@@ -78,7 +79,7 @@ class XmlCodecTest {
                 + "<CFX><HEAD>"
                 + "<Version>1.0</Version>"
                 + "<SrcNode>12345678901234</SrcNode>"
-                + "<DesNode>A1000143000104</DesNode>"
+                + "<DesNode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNode>"
                 + "<App>HNDEMP</App>"
                 + "<MsgNo>3101</MsgNo>"
                 + "<MsgId>TOO_SHORT</MsgId>"

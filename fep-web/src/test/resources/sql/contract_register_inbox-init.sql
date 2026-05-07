@@ -1,3 +1,4 @@
+-- HNDEMP center node code ("A1000143000104") below: must match FepConstants.HNDEMP_NODE_CODE (R-2 2026-05-07).
 -- P4 T9 IT seed — contract_register_inbox 行内 contract 数据源 + 5 行业务 sample
 --
 -- 表存在前提：H2 MODE=MySQL 模式（与 V22/V23 schema 同款），由 @Sql 在 Flyway

@@ -8,6 +8,7 @@ import com.puchain.fep.collector.adapter.jdbc.JdbcCollectorAdapter;
 import com.puchain.fep.collector.scheduler.CollectorSchedulerConfiguration;
 import com.puchain.fep.collector.support.CollectorAdapter;
 import com.puchain.fep.collector.support.WatermarkStore;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.converter.xml.JaxbContextCache;
@@ -181,7 +182,7 @@ class P4DataCollectorEndToEndIntegrationTest {
     private static final String MESSAGE_TYPE_3101 = "3101";
 
     /** HNDEMP central node code (CLAUDE.md known-constraints). */
-    private static final String HNDEMP_NODE = "A1000143000104";
+    private static final String HNDEMP_NODE = FepConstants.HNDEMP_NODE_CODE;
 
     /** TransitionNo wire format (PRD §3.2.3) — 8 numeric chars. */
     private static final String TRANSITION_NO_REGEX = "\\d{8}";

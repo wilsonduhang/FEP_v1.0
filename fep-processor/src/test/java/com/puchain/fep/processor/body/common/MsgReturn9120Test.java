@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.common;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.JaxbRoundtripSupport;
@@ -62,7 +63,7 @@ class MsgReturn9120Test {
                 + "    <HEAD>\n"
                 + "        <Version>1.0</Version>\n"
                 + "        <SrcNode>10000000000001</SrcNode>\n"
-                + "        <DesNode>A1000143000104</DesNode>\n"
+                + "        <DesNode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNode>\n"
                 + "        <App>HNDEMP</App>\n"
                 + "        <MsgNo>9120</MsgNo>\n"
                 + "        <MsgId>20260416103000000001</MsgId>\n"

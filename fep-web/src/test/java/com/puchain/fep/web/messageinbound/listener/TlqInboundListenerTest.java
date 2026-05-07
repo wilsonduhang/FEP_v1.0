@@ -2,6 +2,7 @@ package com.puchain.fep.web.messageinbound.listener;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.xml.XmlCodec;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
@@ -46,7 +47,7 @@ class TlqInboundListenerTest {
                     + "<CFX>"
                     + "<HEAD>"
                     + "<Version>1.0</Version>"
-                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<SrcNode>" + FepConstants.HNDEMP_NODE_CODE + "</SrcNode>"
                     + "<DesNode>B2000456000204</DesNode>"
                     + "<App>HNDEMP</App>"
                     + "<MsgNo>3116</MsgNo>"

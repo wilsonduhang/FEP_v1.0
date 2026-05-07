@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.body.supplychain;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import com.puchain.fep.processor.body.common.QyAccInfo;
@@ -85,7 +86,7 @@ class SupplyChainBody3009Test {
         RzReturnInfo3009 original = new RzReturnInfo3009();
         original.setSerialNo("SN3009-001");
         original.setSendNodeCode("B1001010203");
-        original.setDesNodeCode("A1000143000104");
+        original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setPlatApplyNo("PLAT-APPLY-2026042400001");
         original.setHxqyName("湖南某某核心企业");
         original.setRzpzNo("PZ-2026042400001");
@@ -100,7 +101,7 @@ class SupplyChainBody3009Test {
                 .contains("<rzReturnInfo3009")
                 .contains("<SerialNo>SN3009-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
-                .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
+                .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<PlatApplyNo>PLAT-APPLY-2026042400001</PlatApplyNo>")
                 .contains("<hxqyName>湖南某某核心企业</hxqyName>")
                 .contains("<rzpzNo>PZ-2026042400001</rzpzNo>")
@@ -125,7 +126,7 @@ class SupplyChainBody3009Test {
         // 11 main fields
         assertThat(parsed.getSerialNo()).isEqualTo("SN3009-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
+        assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getPlatApplyNo()).isEqualTo("PLAT-APPLY-2026042400001");
         assertThat(parsed.getHxqyName()).isEqualTo("湖南某某核心企业");
         assertThat(parsed.getRzpzNo()).isEqualTo("PZ-2026042400001");
