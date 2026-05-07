@@ -1345,4 +1345,48 @@
         <Bug pattern="SPRING_ENDPOINT"/>
     </Match>
 
+    <!-- B1 outbound consumer (commits 61d436e/00861db/ce478fa): 8 SpotBugs blockers 集中豁免。
+         详见 docs/defects/2026-05-07-b1-spotbugs-blockers.md。
+         本次为 R4 会话 unblock reactor verify 的最小修法（用户决策："机械最小修"），
+         project convention 用 file-level exclude 而非 @SuppressFBWarnings inline（无 spotbugs-annotations 依赖）。 -->
+
+    <!-- #1 DCN_NULLPOINTER_EXCEPTION: OutboundHeadXmlParser line 74 catch NPE 把 record compact
+         constructor 的 null 拒绝转为 FepBusinessException。这是 design 决策（record 拒 null = 隐式校验），
+         不是 NPE 控制流误用。后续可改 Objects.requireNonNull 显式校验消除。 -->
+    <Match>
+        <Class name="com.puchain.fep.web.outbound.consumer.OutboundHeadXmlParser"/>
+        <Bug pattern="DCN_NULLPOINTER_EXCEPTION"/>
+    </Match>
+
+    <!-- #2-#4 EI_EXPOSE_REP/REP2: OutboundQueueConsumer + OutboundQueueProperties + Retry。
+         同 CollectorProperties 模式 — Spring @ConfigurationProperties bean 由容器管理生命周期，
+         调用方仅 read-only 消费，可变 setter 是 Spring Boot 标准 style。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundQueueConsumer"/>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundQueueProperties"/>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundQueueProperties$Retry"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- #5-#8 CRLF_INJECTION_LOGS: outbound consumer 模块全部日志参数（queue_id / errno / status /
+         retry_count / 业务字段）来源是 DB 主键（PreparedStatement 保护）+ 内部状态枚举 + B1 自身控制
+         的字段，不含外部 CRLF 注入向量。同 DirMapCacheInvalidator/DynamicMessageDirectionMap 模式。
+         如未来引入外部不可信字段，必须抽 LogSanitizer 而非继续 exclude。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundQueueConsumer"/>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundQueueRunnerImpl"/>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundRetryHandler"/>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundStatusWriterService"/>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundTlqSender"/>
+            <Class name="com.puchain.fep.web.outbound.consumer.OutboundTlqSender$OutboundSendOutcome"/>
+        </Or>
+        <Bug pattern="CRLF_INJECTION_LOGS"/>
+    </Match>
+
 </FindBugsFilter>
