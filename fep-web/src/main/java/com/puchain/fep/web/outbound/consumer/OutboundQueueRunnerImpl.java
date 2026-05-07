@@ -2,6 +2,8 @@ package com.puchain.fep.web.outbound.consumer;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.LogSanitizer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
 import com.puchain.fep.web.outbound.consumer.OutboundTlqSender.OutboundSendOutcome;
@@ -96,6 +98,9 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
      *
      * @param queueId 已被 {@link OutboundQueueRepository#claimBatch(int)} 持锁的 queue_id
      */
+    // queueId/msgId 来自 DB 主键 + LogSanitizer.sanitize 兜底；handleSendFailure caller chain 多 instance 由 byte-code 追踪误报
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "queueId/msgId from DB PK + LogSanitizer.sanitize wraps")
     @Override
     public void run(final String queueId) {
         Objects.requireNonNull(queueId, "queueId");
@@ -113,7 +118,8 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
                 final Instant now = Instant.now();
                 statusWriter.recordSent(queueId, outcome.msgId(), outcome.tlqSendResult(), now);
                 metrics.recordSent(System.nanoTime() - t0);
-                LOG.info("Outbound SENT: queue_id={} msg_id={}", queueId, outcome.msgId());
+                LOG.info("Outbound SENT: queue_id={} msg_id={}",
+                        LogSanitizer.sanitize(queueId), LogSanitizer.sanitize(outcome.msgId()));
             } else {
                 handleSendFailure(queueId, new FepBusinessException(
                         FepErrorCode.OUTBOUND_5104_SEND_FAILURE,
@@ -136,10 +142,13 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
      * @param queueId queue id
      * @param error   触发失败的 throwable（透传给 StatusWriter 写 error_message）
      */
+    // queueId 来自 DB 主键 + LogSanitizer.sanitize 兜底；error 由 SLF4J 内部处理不拼接 log message
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "queueId from DB PK + LogSanitizer.sanitize wraps")
     private void handleSendFailure(final String queueId, final Throwable error) {
         // Include cause chain in log to make root cause visible — a wrapped FepBusinessException
         // hides the JAXB / reflection root cause from operator without stack trace.
-        LOG.warn("Outbound send failure for queue_id={}", queueId, error);
+        LOG.warn("Outbound send failure for queue_id={}", LogSanitizer.sanitize(queueId), error);
         statusWriter.recordFailure(queueId, error);
         // re-read 决定 metrics 分支
         repository.findById(queueId).ifPresent(updated -> {

@@ -2,6 +2,8 @@ package com.puchain.fep.web.outbound.consumer;
 
 // v0.5 修订 M1: OutboundQueueRepository 与本类同在 com.puchain.fep.web.outbound.consumer
 // 包内（见 T2 Step 3），同包类无需 import。
+import com.puchain.fep.common.util.LogSanitizer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
 import java.time.Clock;
 import java.time.Instant;
@@ -83,6 +85,9 @@ public class OutboundRetryHandler {
      * @param queueId outbound_message_queue.queue_id（VARCHAR(32) UUID-no-dash）
      * @param error   Sender / Builder / Sign 抛出的异常（可为 {@link Throwable}）
      */
+    // queueId 来自 DB 主键 + LogSanitizer.sanitize 兜底；newRetryCount 整型，无 CRLF 风险
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "queueId from DB PK + LogSanitizer.sanitize wraps")
     public void handleFailure(final String queueId, final Throwable error) {
         final OutboundMessageQueueEntity entity = repo.findById(queueId)
             .orElseThrow(() -> new IllegalStateException("queue_id not found: " + queueId));
@@ -96,7 +101,8 @@ public class OutboundRetryHandler {
         if (newRetryCount >= props.retry().maxAttempts()) {
             entity.setStatus("DEAD_LETTER");
             entity.setNextRetryAt(null); // DLQ 不再调度
-            LOG.warn("queue_id={} -> DEAD_LETTER (retry_count={})", queueId, newRetryCount);
+            LOG.warn("queue_id={} -> DEAD_LETTER (retry_count={})",
+                LogSanitizer.sanitize(queueId), newRetryCount);
         } else {
             entity.setStatus("RETRY");
             final long shift = Math.min(newRetryCount, MAX_SHIFT_BITS);

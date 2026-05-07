@@ -1,5 +1,7 @@
 package com.puchain.fep.web.outbound.consumer;
 
+import com.puchain.fep.common.util.LogSanitizer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -53,6 +55,9 @@ public class OutboundQueueConsumer {
      * <p>异常隔离：每行 {@code runner.run()} 失败仅记 ERROR + queue_id，整批继续；
      * 整体异常（claimBatch 抛错）会冒泡到 Spring 调度器，下个周期再试。</p>
      */
+    // queue_id 来自 DB 主键 + LogSanitizer.sanitize 兜底；SpotBugs find-sec-bugs 不识别用户消毒函数
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "queue_id from DB PK + LogSanitizer.sanitize wraps")
     @Scheduled(
             fixedDelayString = "${fep.outbound.queue.poll-interval-ms:1000}",
             initialDelayString = "${fep.outbound.queue.poll-initial-delay-ms:0}")
@@ -65,7 +70,7 @@ public class OutboundQueueConsumer {
             try {
                 runner.run(id);
             } catch (final RuntimeException e) {
-                LOG.error("OutboundQueueRunner.run(queue_id={}) failed", id, e);
+                LOG.error("OutboundQueueRunner.run(queue_id={}) failed", LogSanitizer.sanitize(id), e);
             }
         }
     }
