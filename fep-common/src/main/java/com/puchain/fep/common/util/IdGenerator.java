@@ -35,15 +35,23 @@ public final class IdGenerator {
     }
 
     /**
-     * 生成 20 字符的 ID（用于 HNDEMP MsgId / TransitionNo 8 字符的 12 位扩展场景）。
+     * 生成 20 字符的 ID（base36 字符集，13 字符毫秒时间戳 + 7 字符随机数）。
      *
      * <p>组成：13 字符毫秒时间戳 base36 + 7 字符随机数 base36（左 padding '0'）。
      * 单线程 1ms 内可生成 36^7 ≈ 78B 不重复 ID，充分覆盖 FEP 单节点吞吐。</p>
      *
-     * <p>v1d 新增（P1c T0 Step 5）：HNDEMP MsgId 字段长度约束 20 字符，{@link #uuid32}
-     * 32 字符无法直接用；P1c T7 build9006/9008 Message 装配依赖此方法。</p>
+     * <p>用于 TLQ 中间件 corrId 等无 PRD 约束的通用 20 字符 ID 场景，相比
+     * {@link #uuid32} 32 字符更紧凑。</p>
+     *
+     * <p><b>不可用于 HNDEMP CommonHead.MsgId</b>（PRD v1.3 §3.1.3 强制 20 字符全数字
+     * 格式：日期时间 14 位 + 顺序号 6 位）。本方法输出 base36 字符集（含小写字母），
+     * 违反 PRD §3.1.3 约束。HNDEMP CommonHead.MsgId（含业务报文 + 节点登录登出
+     * 9006/9008）必须使用
+     * {@code com.puchain.fep.web.outbound.consumer.BodyMsgIdGenerator}。
+     * 决策依据见 {@code docs/decisions/2026-05-06-bodymsgid-vs-uuid20-rationale.md}（R-1, 2026-05-06）。</p>
      *
      * @return 20 字符 base36 ID
+     * @see com.puchain.fep.web.outbound.consumer.BodyMsgIdGenerator
      */
     public static String uuid20() {
         String tsPart = Long.toString(System.currentTimeMillis(), BASE36_RADIX);

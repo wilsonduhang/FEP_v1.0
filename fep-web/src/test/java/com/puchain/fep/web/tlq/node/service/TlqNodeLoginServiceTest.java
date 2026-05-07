@@ -11,6 +11,7 @@ import com.puchain.fep.transport.api.SendResult;
 import com.puchain.fep.transport.api.TlqProducer;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
+import com.puchain.fep.web.outbound.consumer.BodyMsgIdGenerator;
 import com.puchain.fep.web.tlq.node.domain.TlqNode;
 import com.puchain.fep.web.tlq.node.domain.TlqNodeRole;
 import com.puchain.fep.web.tlq.node.domain.TlqNodeStatus;
@@ -41,6 +42,12 @@ import static org.mockito.Mockito.when;
  * that mere {@code verify(encoder).encode(any())} would miss (P1c T7 v1c
  * B-P0-4 hardening).</p>
  *
+ * <p>R-1 (2026-05-06): added 2 cases verifying CommonHead.MsgId conforms to
+ * PRD v1.3 §3.1.3 全数字格式 ({@code \d{20}}) since 9006/9008 装配 swapped
+ * from {@link com.puchain.fep.common.util.IdGenerator#uuid20()} (base36) to
+ * {@link BodyMsgIdGenerator}. See ADR
+ * {@code docs/decisions/2026-05-06-bodymsgid-vs-uuid20-rationale.md}.</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
@@ -54,10 +61,18 @@ class TlqNodeLoginServiceTest {
     private static final String HNDEMP_NODE = "A1000143000104";
     private static final String NODE_ID = "node-x-001";
 
+    /**
+     * Sample 20-char all-digit MsgId (PRD §3.1.3 format: yyyyMMddHHmmss + 6-digit seq).
+     * Used to stub {@link BodyMsgIdGenerator#generate()} in tests so assertions can
+     * verify the value flows into CommonHead.MsgId unchanged. R-1 (2026-05-06).
+     */
+    private static final String SAMPLE_MSG_ID_DIGITS_20 = "20260507103200000001";
+
     private NodeLifecycleManager lifecycle;
     private TlqProducer producer;
     private MessageEncoder encoder;
     private TlqNodeRepository nodeRepository;
+    private BodyMsgIdGenerator bodyMsgIdGenerator;
     private TlqNodeLoginService service;
 
     /** Shared encoded payload returned by the encoder mock — kept simple so assertions can grep substrings. */
@@ -85,11 +100,13 @@ class TlqNodeLoginServiceTest {
         producer = mock(TlqProducer.class);
         encoder = mock(MessageEncoder.class);
         nodeRepository = mock(TlqNodeRepository.class);
+        bodyMsgIdGenerator = mock(BodyMsgIdGenerator.class);
         service = new TlqNodeLoginService(lifecycle, producer, encoder, nodeRepository,
-                TEST_SRC_NODE, TEST_PASSWORD);
+                TEST_SRC_NODE, TEST_PASSWORD, bodyMsgIdGenerator);
 
         when(encoder.encode(any(CfxMessage.class), any(MessagePipelineOptions.class)))
                 .thenReturn(new EncodeResult(FAKE_ENCODED_PAYLOAD, false, false));
+        when(bodyMsgIdGenerator.generate()).thenReturn(SAMPLE_MSG_ID_DIGITS_20);
     }
 
     private TlqNode existingNode() {
@@ -211,5 +228,52 @@ class TlqNodeLoginServiceTest {
                 .isInstanceOf(FepBusinessException.class)
                 .extracting(e -> ((FepBusinessException) e).getErrorCode())
                 .isEqualTo(FepErrorCode.BIZ_5015);
+    }
+
+    // ---------- R-1 (2026-05-06) PRD §3.1.3 合规验证 ----------
+
+    @Test
+    @DisplayName("R-1: 9006 login CommonHead.MsgId 必须 20 字符全数字 (PRD v1.3 §3.1.3)")
+    void login9006_msgId_shouldBeAllDigits20Chars_perPrd313() {
+        when(nodeRepository.findById(NODE_ID)).thenReturn(Optional.of(existingNode()));
+        when(producer.send(any(TlqMessage.class))).thenReturn(SendResult.ok("MSG-9006"));
+        when(lifecycle.login()).thenReturn(true);
+
+        service.login(NODE_ID);
+
+        ArgumentCaptor<CfxMessage> cfxCaptor = ArgumentCaptor.forClass(CfxMessage.class);
+        verify(encoder).encode(cfxCaptor.capture(), any(MessagePipelineOptions.class));
+        String msgId = cfxCaptor.getValue().getHead().getMsgId();
+
+        assertThat(msgId)
+                .as("PRD v1.3 §3.1.3 强制 CommonHead.MsgId 20 字符全数字 (R-1 swap from uuid20 base36)")
+                .hasSize(20)
+                .matches("\\d{20}")
+                .isEqualTo(SAMPLE_MSG_ID_DIGITS_20);
+
+        // 验证 R-1 swap：bodyMsgIdGenerator 被调用，IdGenerator.uuid20() 不再用于 CommonHead.MsgId
+        verify(bodyMsgIdGenerator, times(1)).generate();
+    }
+
+    @Test
+    @DisplayName("R-1: 9008 logout CommonHead.MsgId 必须 20 字符全数字 (PRD v1.3 §3.1.3)")
+    void logout9008_msgId_shouldBeAllDigits20Chars_perPrd313() {
+        when(nodeRepository.findById(NODE_ID)).thenReturn(Optional.of(existingNode()));
+        when(producer.send(any(TlqMessage.class))).thenReturn(SendResult.ok("MSG-9008"));
+        when(lifecycle.logout()).thenReturn(true);
+
+        service.logout(NODE_ID);
+
+        ArgumentCaptor<CfxMessage> cfxCaptor = ArgumentCaptor.forClass(CfxMessage.class);
+        verify(encoder).encode(cfxCaptor.capture(), any(MessagePipelineOptions.class));
+        String msgId = cfxCaptor.getValue().getHead().getMsgId();
+
+        assertThat(msgId)
+                .as("PRD v1.3 §3.1.3 强制 CommonHead.MsgId 20 字符全数字 (R-1 swap from uuid20 base36)")
+                .hasSize(20)
+                .matches("\\d{20}")
+                .isEqualTo(SAMPLE_MSG_ID_DIGITS_20);
+
+        verify(bodyMsgIdGenerator, times(1)).generate();
     }
 }

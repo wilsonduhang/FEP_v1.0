@@ -19,6 +19,7 @@ import com.puchain.fep.transport.api.TlqProducer;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
 import com.puchain.fep.transport.model.TlqMessageAttributes;
+import com.puchain.fep.web.outbound.consumer.BodyMsgIdGenerator;
 import com.puchain.fep.web.tlq.node.domain.TlqNode;
 import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
 import org.slf4j.Logger;
@@ -50,6 +51,10 @@ import java.time.format.DateTimeFormatter;
  *       配置（broker 接入凭证 — TLQ 节点登录是机器→机器认证；通过
  *       {@code @Value} 直接读取，避免依赖 mock provider 下不存在的
  *       {@code TongtechTlqProperties} bean — 见 closing addendum）</li>
+ *   <li><b>R-1 (2026-05-06)</b>: 9006/9008 CommonHead.MsgId 改用 {@link BodyMsgIdGenerator}
+ *       生成 20 字符全数字（PRD v1.3 §3.1.3 强制）；中间件 corrId（{@link TlqMessageAttributes}）
+ *       继续用 {@link IdGenerator#uuid20()}（base36，不受 PRD 约束）。详见
+ *       {@code docs/decisions/2026-05-06-bodymsgid-vs-uuid20-rationale.md}</li>
  * </ul>
  *
  * @author FEP Team
@@ -85,16 +90,23 @@ public class TlqNodeLoginService {
     private final String brokerPassword;
 
     /**
+     * R-1 (2026-05-06) 注入的 HNDEMP CommonHead.MsgId 全数字生成器（PRD §3.1.3 合规）。
+     * 替换 9006/9008 装配从 {@link IdGenerator#uuid20()} (base36 含小写字母 — 违反 PRD §3.1.3)。
+     */
+    private final BodyMsgIdGenerator bodyMsgIdGenerator;
+
+    /**
      * 构造方法。
      *
-     * @param lifecycle      节点生命周期管理器（mock / tongtech 各 1 个 bean）
-     * @param producer       TLQ 消息生产者（mock / tongtech）
-     * @param encoder        fep-converter 出站编码流水线
-     * @param nodeRepository TLQ 节点 Repository（用于校验节点存在）
-     * @param srcNode        14 字符发送方机构代码（{@code fep.transport.institution-code}
-     *                       — 默认 {@value #HNDEMP_DEST_NODE} 确保 14 字符长度合法）
-     * @param brokerPassword broker 接入凭证（{@code fep.transport.tongtech.password}
-     *                       — 默认空串，仅 tongtech provider 部署时必填）
+     * @param lifecycle           节点生命周期管理器（mock / tongtech 各 1 个 bean）
+     * @param producer            TLQ 消息生产者（mock / tongtech）
+     * @param encoder             fep-converter 出站编码流水线
+     * @param nodeRepository      TLQ 节点 Repository（用于校验节点存在）
+     * @param srcNode             14 字符发送方机构代码（{@code fep.transport.institution-code}
+     *                            — 默认 {@value #HNDEMP_DEST_NODE} 确保 14 字符长度合法）
+     * @param brokerPassword      broker 接入凭证（{@code fep.transport.tongtech.password}
+     *                            — 默认空串，仅 tongtech provider 部署时必填）
+     * @param bodyMsgIdGenerator  HNDEMP CommonHead.MsgId 全数字生成器（R-1, 2026-05-06）
      */
     public TlqNodeLoginService(
             final NodeLifecycleManager lifecycle,
@@ -102,13 +114,15 @@ public class TlqNodeLoginService {
             final MessageEncoder encoder,
             final TlqNodeRepository nodeRepository,
             @Value("${fep.transport.institution-code:" + HNDEMP_DEST_NODE + "}") final String srcNode,
-            @Value("${fep.transport.tongtech.password:}") final String brokerPassword) {
+            @Value("${fep.transport.tongtech.password:}") final String brokerPassword,
+            final BodyMsgIdGenerator bodyMsgIdGenerator) {
         this.lifecycle = lifecycle;
         this.producer = producer;
         this.encoder = encoder;
         this.nodeRepository = nodeRepository;
         this.srcNode = srcNode;
         this.brokerPassword = brokerPassword;
+        this.bodyMsgIdGenerator = bodyMsgIdGenerator;
     }
 
     /**
@@ -129,6 +143,7 @@ public class TlqNodeLoginService {
         final String payload = encoded.getPayload();
         final TlqMessage msg = new TlqMessage(
                 payload,
+                // TLQ 中间件 corrId, 非 CommonHead.MsgId, 不在 PRD §3.1.3 范围（保留 uuid20，R-1 2026-05-06）
                 TlqMessageAttributes.forRealtime(IdGenerator.uuid20()),
                 TlqChannel.REALTIME_SEND);
 
@@ -163,6 +178,7 @@ public class TlqNodeLoginService {
         final String payload = encoded.getPayload();
         final TlqMessage msg = new TlqMessage(
                 payload,
+                // TLQ 中间件 corrId, 非 CommonHead.MsgId, 不在 PRD §3.1.3 范围（保留 uuid20，R-1 2026-05-06）
                 TlqMessageAttributes.forRealtime(IdGenerator.uuid20()),
                 TlqChannel.REALTIME_SEND);
 
@@ -189,11 +205,15 @@ public class TlqNodeLoginService {
      *   <li>{@link LoginRequest9006} — Body（仅 password）</li>
      * </ol>
      *
+     * <p>R-1 (2026-05-06): MsgId 改用 {@link BodyMsgIdGenerator#generate()} 输出 20 字符全数字
+     * （PRD v1.3 §3.1.3 强制：日期时间 14 位 + 顺序号 6 位）。原 {@link IdGenerator#uuid20()}
+     * 输出 base36 含小写字母，违反 PRD §3.1.3。</p>
+     *
      * @param node 目标节点（当前实现仅校验存在，业务字段不依赖节点属性 — 走 broker 凭证）
      * @return 装配好的 CfxMessage
      */
     private CfxMessage build9006Message(final TlqNode node) {
-        final String msgId = IdGenerator.uuid20();   // CommonHead.MsgId 长度 20
+        final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式 (R-1 swap, 2026-05-06)
         final String workDate = LocalDateTime.now().format(DATE_FMT);
 
         final CommonHead commonHead = new CommonHead();
@@ -221,11 +241,13 @@ public class TlqNodeLoginService {
     /**
      * 9008 节点登出请求报文装配（结构同 9006，Body 改 LogoutRequest9008）。
      *
+     * <p>R-1 (2026-05-06): MsgId 同 9006 改用 {@link BodyMsgIdGenerator#generate()}（PRD §3.1.3）。</p>
+     *
      * @param node 目标节点
      * @return 装配好的 CfxMessage
      */
     private CfxMessage build9008Message(final TlqNode node) {
-        final String msgId = IdGenerator.uuid20();
+        final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式 (R-1 swap, 2026-05-06)
         final String workDate = LocalDateTime.now().format(DATE_FMT);
 
         final CommonHead commonHead = new CommonHead();
@@ -263,10 +285,13 @@ public class TlqNodeLoginService {
 
     /**
      * 派生 8 位数字 TransitionNo：取 msgId 末 8 字符并把字母替换为数字（保证 RealHead*
-     * 的 {@code \d{8}} 校验通过）。msgId 由 {@link IdGenerator#uuid20()} 生成
-     * (13 位 base36 时间戳 + 7 位 base36 随机)，末 8 位仍可能含字母。
+     * 的 {@code \d{8}} 校验通过）。
      *
-     * @param msgId 20 字符 base36 ID
+     * <p>R-1 (2026-05-06) 后 msgId 由 {@link BodyMsgIdGenerator#generate()} 生成
+     * 20 字符全数字，末 8 位已是数字，字母替换分支变为 dead code（保留以兼容
+     * 未来 generator 切换；不阻塞当前路径，可留 V3 ticket 清理）。</p>
+     *
+     * @param msgId 20 字符 MsgId（R-1 后全数字；历史 base36 兼容路径保留）
      * @return 8 字符纯数字流水号
      */
     private String deriveTransitionNo(final String msgId) {

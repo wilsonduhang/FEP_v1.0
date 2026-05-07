@@ -19,8 +19,16 @@ import org.springframework.stereotype.Component;
  *
  * <p>追溯: PRD v1.3 §3.1.3 / FR-MSG-OUTBOUND-SEND</p>
  *
+ * <p><b>与 {@link com.puchain.fep.common.util.IdGenerator#uuid20()} 的区分</b>：
+ * 本类输出全数字字符集（{@code [0-9]}），受 PRD v1.3 §3.1.3 强制约束（HNDEMP 协议层
+ * CommonHead.MsgId 用途，含业务报文 + 节点登录登出 9006/9008）。{@code IdGenerator.uuid20}
+ * 输出 base36 字符集（{@code [0-9a-z]} 含小写字母），用于 TLQ 中间件 corrId 等
+ * 无 PRD 约束的通用 ID 场景，<b>不可用于 HNDEMP CommonHead.MsgId</b>（违反 PRD §3.1.3）。
+ * 决策依据见 {@code docs/decisions/2026-05-06-bodymsgid-vs-uuid20-rationale.md}（R-1, 2026-05-06）。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
+ * @see com.puchain.fep.common.util.IdGenerator#uuid20()
  */
 @Component
 public class BodyMsgIdGenerator {
