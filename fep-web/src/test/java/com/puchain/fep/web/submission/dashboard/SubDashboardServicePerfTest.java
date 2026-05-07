@@ -1,5 +1,6 @@
 package com.puchain.fep.web.submission.dashboard;
 
+import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.web.submission.dashboard.service.SubDashboardService;
 import com.puchain.fep.web.submission.record.repository.SubSubmissionRecordRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -101,7 +101,7 @@ class SubDashboardServicePerfTest {
                 .minusDays(SEED_DAYS_SPREAD).atStartOfDay();
         final List<Object[]> batch = new ArrayList<>(SEED_ROWS);
         for (int i = 0; i < SEED_ROWS; i++) {
-            final String recordId = UUID.randomUUID().toString().replace("-", "");
+            final String recordId = IdGenerator.uuid32();
             final String messageType = MSG_TYPES[rng.nextInt(MSG_TYPES.length)];
             final String messageName = "TEST_MSG_" + messageType;
             final String businessTypeId = (rng.nextInt(10) == 0) ? null
