@@ -2,6 +2,7 @@ package com.puchain.fep.web.outbound.consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Field;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -9,6 +10,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -65,5 +67,32 @@ class BodyMsgIdGeneratorTest {
         assertThat(id).startsWith("20260505103045");
         // seq portion is the trailing 6 chars, should be 000001 on first call
         assertThat(id.substring(14)).isEqualTo("000001");
+    }
+
+    /**
+     * Quality Simplify (R-1+R-2 closing 2026-05-07): naive `seq.incrementAndGet() % SEQ_MOD`
+     * produces 000000 on the millionth call, which violates PRD §3.1.3 seq range 000001..999999.
+     * The fix maps the counter to [1, 999_999] permanently. This test seeds the AtomicLong to
+     * just before the overflow boundary via reflection (avoiding 1M sequential calls) and
+     * confirms the next two calls produce 999999 then 000001 — never 000000.
+     */
+    @Test
+    void generate_should_skip_zero_seq_at_million_boundary() throws Exception {
+        Instant fixedInstant = Instant.parse("2026-05-05T02:30:45Z");
+        Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("Asia/Shanghai"));
+        BodyMsgIdGenerator boundaryGen = new BodyMsgIdGenerator(fixedClock);
+
+        Field seqField = BodyMsgIdGenerator.class.getDeclaredField("seq");
+        seqField.setAccessible(true);
+        AtomicLong seq = (AtomicLong) seqField.get(boundaryGen);
+        seq.set(999_998L);
+
+        String near = boundaryGen.generate();
+        String overflow = boundaryGen.generate();
+        String wrap = boundaryGen.generate();
+
+        assertThat(near.substring(14)).isEqualTo("999999");
+        assertThat(overflow.substring(14)).isEqualTo("000001");
+        assertThat(wrap.substring(14)).isEqualTo("000002");
     }
 }

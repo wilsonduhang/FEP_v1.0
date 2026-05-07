@@ -37,7 +37,13 @@ public class BodyMsgIdGenerator {
 
     private static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
 
-    private static final long SEQ_MOD = 1_000_000L;
+    /**
+     * Cycle period for the seq counter — must equal the size of the valid output
+     * range [1, 999_999] (PRD §3.1.3). With this period, the formula
+     * {@code ((n - 1) % SEQ_MOD) + 1} maps any positive {@code n} to {@code [1, 999_999]}
+     * without ever producing 0 or 1_000_000.
+     */
+    private static final long SEQ_MOD = 999_999L;
 
     /**
      * Asia/Shanghai-zoned clock view, derived once at construction.
@@ -65,7 +71,10 @@ public class BodyMsgIdGenerator {
      */
     public String generate() {
         final String dt = LocalDateTime.now(shanghaiClock).format(FMT);
-        final long s = seq.incrementAndGet() % SEQ_MOD;
+        // Quality Simplify (R-1+R-2 closing 2026-05-07): keep seq in [1, 999_999]
+        // permanently — naive `% SEQ_MOD` produces 000000 on the millionth call,
+        // which violates PRD §3.1.3 seq range 000001..999999.
+        final long s = ((seq.incrementAndGet() - 1L) % SEQ_MOD) + 1L;
         return dt + String.format("%06d", s);
     }
 }
