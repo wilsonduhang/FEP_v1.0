@@ -7,6 +7,8 @@ import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.converter.xml.JaxbContextCache;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
+import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
+import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
 import com.puchain.fep.processor.body.supplychain.PlatPay3115;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
 import com.puchain.fep.processor.body.supplychain.PzCheckQueryReturn3108;
@@ -48,7 +50,8 @@ import java.util.Objects;
  * </ol>
  *
  * <p>Body POJO 解析使用本地 JAXBContext 缓存（per body class），按 P3 Phase 2
- * 范围登记 4 种业务 body：3107 / 3108 / 3115 / 3116。其他 messageType 不解析 body，
+ * + P4 T1 范围登记 6 种业务 body：3007 / 3008 (P4 T1 InvoCheck) /
+ * 3107 / 3108 / 3115 / 3116 (P3 Phase 2)。其他 messageType 不解析 body，
  * 事件 {@code body} 字段留 null（listener 自行降级处理）。</p>
  *
  * <p>所有日志参数走 {@link LogSanitizer#sanitize}，防御 CRLF 日志注入。</p>
@@ -62,10 +65,13 @@ public class InboundMessageDispatcher {
     private static final Logger LOG = LoggerFactory.getLogger(InboundMessageDispatcher.class);
 
     /**
-     * P3 Phase 2 注册的 body POJO 反查表：messageType.msgNo → body class。
+     * P3 Phase 2 + P4 T1 注册的 body POJO 反查表：messageType.msgNo → body class。
      * 仅用于 dispatcher 解析 body POJO；listener 各自再做安全 cast。
+     * 顺序：按 msgNo 升序（3007/3008 P4 T1 → 3107/3108/3115/3116 P3 Phase 2）。
      */
     private static final Map<String, Class<?>> BODY_TYPE_REGISTRY = Map.of(
+            MessageType.MSG_3007.msgNo(), InvoCheckQuery3007.class,
+            MessageType.MSG_3008.msgNo(), InvoCheckReturn3008.class,
             MessageType.MSG_3107.msgNo(), PzCheckQuery3107.class,
             MessageType.MSG_3108.msgNo(), PzCheckQueryReturn3108.class,
             MessageType.MSG_3115.msgNo(), PlatPay3115.class,
@@ -239,7 +245,8 @@ public class InboundMessageDispatcher {
      * 暴露给单测验证 body 反查表内容（避免单测做反射读取私有静态字段）。
      * 返回值是显式 {@link Map#copyOf} 副本，确保调用方无法改写内部静态注册表。
      *
-     * @return 4 种 body POJO 注册表的不可变副本
+     * @return 6 种 body POJO 注册表的不可变副本
+     *         （3007/3008 P4 T1 + 3107/3108/3115/3116 P3 Phase 2）
      */
     public static Map<String, Class<?>> bodyTypeRegistry() {
         return Map.copyOf(BODY_TYPE_REGISTRY);

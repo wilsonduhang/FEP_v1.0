@@ -294,6 +294,69 @@ class SupplyChainXsdValidationTest {
     }
 
     @Test
+    void valid3007_shouldPassValidation() {
+        String xml = cfx("3007", """
+                <RealHead3007>
+            """ + REQUEST_HEAD + """
+                </RealHead3007>
+                <InvoCheckQuery3007>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <InvoCode>011001234567</InvoCode>
+                    <InvoNum>044001234567890123</InvoNum>
+                    <CheckCode>ABCDEF</CheckCode>
+                    <InvoAmtTax>10000.00</InvoAmtTax>
+                    <InvoAmt>9433.96</InvoAmt>
+                    <InvoDate>20260417</InvoDate>
+                    <ywKeyValue>BIZKEY-2026041700001</ywKeyValue>
+                </InvoCheckQuery3007>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3007, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    @Test
+    void valid3008_shouldPassValidation() {
+        String xml = cfx("3008", """
+                <RealHead3008>
+            """ + RESPONSE_HEAD + """
+                </RealHead3008>
+                <InvoCheckReturn3008>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>A1000143000104</SendNodeCode>
+                    <DesNodeCode>12345678901234</DesNodeCode>
+                    <InvoCheckReturnCode>0</InvoCheckReturnCode>
+                    <InvoCheckReturnMemo>""" + "核验通过" + """
+            </InvoCheckReturnMemo>
+                    <kpName>""" + "销售方企业" + """
+            </kpName>
+                    <kpCode>91430000123456789X</kpCode>
+                    <spName>""" + "采购方企业" + """
+            </spName>
+                    <spCode>91430000987654321Y</spCode>
+                    <InvoCode>011001234567</InvoCode>
+                    <InvoNum>044001234567890123</InvoNum>
+                    <CheckCode>ABCDEF</CheckCode>
+                    <InvoAmtTax>10000.00</InvoAmtTax>
+                    <InvoAmt>9433.96</InvoAmt>
+                    <InvoDate>20260417</InvoDate>
+                    <InvoFilename>invoice-2026041700001.pdf</InvoFilename>
+                </InvoCheckReturn3008>""");
+
+        ValidationResult result = validator.validate(MessageType.MSG_3008, toBytes(xml));
+
+        assertThat(result.valid())
+                .as("validation errors: %s", result.errors())
+                .isTrue();
+    }
+
+    @Test
     void valid9120_shouldPassValidation() {
         String xml = cfx("9120", """
                 <BatchHead9120>

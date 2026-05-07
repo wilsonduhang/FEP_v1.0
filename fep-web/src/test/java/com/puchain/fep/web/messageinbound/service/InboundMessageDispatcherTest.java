@@ -4,6 +4,8 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
+import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
+import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
 import com.puchain.fep.processor.event.InboundMessageProcessedEvent;
 import com.puchain.fep.processor.pipeline.SyncMessageProcessorService;
 import com.puchain.fep.processor.state.MessageProcessRecord;
@@ -70,6 +72,57 @@ class InboundMessageDispatcherTest {
                     + "<BankCheckDay3116>"
                     + "<SerialNo>SN20260428BANK</SerialNo>"
                     + "</BankCheckDay3116>"
+                    + "</MSG>"
+                    + "</CFX>";
+
+    /**
+     * Minimal CFX wrapper carrying an {@code InvoCheckQuery3007} body with only
+     * the leading {@code SerialNo} populated. P4 T1 mirrors the 3116 template
+     * shape: dispatcher unit test mocks {@link SyncMessageProcessorService}
+     * away, so XSD-validated full envelopes (with {@code RealHead3007}
+     * sibling) are out of scope here. Listener-side IT covers full envelope.
+     */
+    private static final String VALID_3007_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<DesNode>B2000456000204</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3007</MsgNo>"
+                    + "<MsgId>20260507000000003007</MsgId>"
+                    + "<CorrMsgId></CorrMsgId>"
+                    + "<WorkDate>20260507</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<InvoCheckQuery3007>"
+                    + "<SerialNo>SN20260507INVO3007</SerialNo>"
+                    + "</InvoCheckQuery3007>"
+                    + "</MSG>"
+                    + "</CFX>";
+
+    /**
+     * Minimal CFX wrapper carrying an {@code InvoCheckReturn3008} body with
+     * only the leading {@code SerialNo} populated.
+     */
+    private static final String VALID_3008_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<DesNode>B2000456000204</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3008</MsgNo>"
+                    + "<MsgId>20260507000000003008</MsgId>"
+                    + "<CorrMsgId></CorrMsgId>"
+                    + "<WorkDate>20260507</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<InvoCheckReturn3008>"
+                    + "<SerialNo>SN20260507INVO3008</SerialNo>"
+                    + "</InvoCheckReturn3008>"
                     + "</MSG>"
                     + "</CFX>";
 
@@ -172,14 +225,20 @@ class InboundMessageDispatcherTest {
     }
 
     @Test
-    @DisplayName("body type registry exposes 4 P3 Phase 2 entries")
-    void bodyTypeRegistry_contains4P3Phase2Entries() {
+    @DisplayName("body type registry exposes 6 entries (P3 Phase 2 + P4 T1 3007/3008)")
+    void bodyTypeRegistry_contains6Entries() {
         // grep-asserted (feedback_doc_data_grep_first): registry must expose
-        // exactly the 4 P3 Phase 2 messageTypes wired in this Plan.
-        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(4);
-        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).containsKeys("3107", "3108", "3115", "3116");
+        // exactly the 4 P3 Phase 2 messageTypes plus the 2 P4 T1 InvoCheck
+        // messageTypes (3007/3008) wired in this Plan.
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(6);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry())
+                .containsKeys("3007", "3008", "3107", "3108", "3115", "3116");
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3116"))
                 .isEqualTo(BankCheckDay3116.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3007"))
+                .isEqualTo(InvoCheckQuery3007.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3008"))
+                .isEqualTo(InvoCheckReturn3008.class);
     }
 
     /**
@@ -241,5 +300,57 @@ class InboundMessageDispatcherTest {
                 .as("dispatcher must pick BankCheckDay3116 instance, not the leading BatchHead3116 sibling")
                 .isInstanceOf(BankCheckDay3116.class);
         assertThat(event.serialNo()).isEqualTo("SN20260428BATCH");
+    }
+
+    @Test
+    @DisplayName("dispatch 3007 → publishEvent body is InvoCheckQuery3007 (FR-MSG-3007)")
+    void dispatch_3007_shouldPublishEventWithInvoCheckQuery3007Body() {
+        final byte[] xml = VALID_3007_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-007abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3007, "20260507", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3007), eq("20260507"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3007", "20260507", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3007);
+        assertThat(event.transitionNo()).isEqualTo("20260507");
+        assertThat(event.serialNo()).isEqualTo("SN20260507INVO3007");
+        assertThat(event.body())
+                .as("dispatcher must publish typed InvoCheckQuery3007 body (P4 T1 wire-in)")
+                .isInstanceOf(InvoCheckQuery3007.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 3008 → publishEvent body is InvoCheckReturn3008 (FR-MSG-3008)")
+    void dispatch_3008_shouldPublishEventWithInvoCheckReturn3008Body() {
+        final byte[] xml = VALID_3008_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-008abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3008, "20260507", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3008), eq("20260507"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3008", "20260507", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3008);
+        assertThat(event.transitionNo()).isEqualTo("20260507");
+        assertThat(event.serialNo()).isEqualTo("SN20260507INVO3008");
+        assertThat(event.body())
+                .as("dispatcher must publish typed InvoCheckReturn3008 body (P4 T1 wire-in)")
+                .isInstanceOf(InvoCheckReturn3008.class);
     }
 }
