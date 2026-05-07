@@ -1389,4 +1389,35 @@
         <Bug pattern="CRLF_INJECTION_LOGS"/>
     </Match>
 
+    <!-- BATCH 1102/2102/1103/2103/1104/2104 POJO (commits 01f07d4..3e0fa36, 2026-05-06): 14
+         SpotBugs blockers 集中豁免。R4 会话 reactor verify 实测发现，红线
+         feedback_spotbugs_baseline_rot 第三次命中（B1 + R4 BATCH 同源）。 -->
+
+    <!-- 12× EI_EXPOSE_REP/REP2: 6 BATCH POJO 各 getItems()/setItems() — JAXB unmarshal/marshal
+         的 List 容器是报文交换需要的 mutable payload，调用方为 processor pipeline / 测试断言；
+         同 CollectorProperties / OutboundQueueProperties 模式（Spring Boot binder + JAXB 标准）。 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104"/>
+            <Class name="com.puchain.fep.processor.body.batch.CompanyAuthFileBatchTransfer1104"/>
+            <Class name="com.puchain.fep.processor.body.batch.CompanyInfoBatchRequest1103"/>
+            <Class name="com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103"/>
+            <Class name="com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102"/>
+            <Class name="com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- 2× NM_CONFUSING: CompanyAuthFileBatchItem1104.getFileName()/setFileName() (大写 N)
+         与 com.puchain.fep.processor.body.common.FileInfo.getFilename()/setFilename() (小写 n)
+         命名歧义。1104 报文 XSD 字段约定 fileName camelCase；FileInfo 通用类 filename 来自更早设计；
+         不改命名（XSD 约束 + 历史绑定）。后续 Rule of Three 收拢可在下个 BATCH POJO 阶段统一。 -->
+    <Match>
+        <Class name="com.puchain.fep.processor.body.batch.CompanyAuthFileBatchItem1104"/>
+        <Bug pattern="NM_CONFUSING"/>
+    </Match>
+
 </FindBugsFilter>
