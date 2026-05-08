@@ -49,7 +49,7 @@ import org.springframework.test.context.TestPropertySource;
         "fep.collector.scheduling.enabled=false",
         "management.health.redis.enabled=false"
 })
-class Outbound3007WireIT {
+class Outbound3007WireTest {
 
     @Autowired
     private BodyClassRegistry registry;
