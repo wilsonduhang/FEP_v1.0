@@ -57,7 +57,8 @@ public class OutboundQueueConsumer {
      */
     // queue_id 来自 DB 主键 + LogSanitizer.sanitize 兜底；SpotBugs find-sec-bugs 不识别用户消毒函数
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "queue_id from DB PK + LogSanitizer.sanitize wraps")
+            justification = "input from DB PK + LogSanitizer.sanitize wraps; "
+                    + "SpotBugs find-sec-bugs cannot detect user-defined sanitizer")
     @Scheduled(
             fixedDelayString = "${fep.outbound.queue.poll-interval-ms:1000}",
             initialDelayString = "${fep.outbound.queue.poll-initial-delay-ms:0}")

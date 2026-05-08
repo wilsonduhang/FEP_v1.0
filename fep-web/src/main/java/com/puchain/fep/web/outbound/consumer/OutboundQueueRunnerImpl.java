@@ -100,7 +100,8 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
      */
     // queueId/msgId 来自 DB 主键 + LogSanitizer.sanitize 兜底；handleSendFailure caller chain 多 instance 由 byte-code 追踪误报
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "queueId/msgId from DB PK + LogSanitizer.sanitize wraps")
+            justification = "input from DB PK + LogSanitizer.sanitize wraps; "
+                    + "SpotBugs find-sec-bugs cannot detect user-defined sanitizer")
     @Override
     public void run(final String queueId) {
         Objects.requireNonNull(queueId, "queueId");
@@ -144,7 +145,8 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
      */
     // queueId 来自 DB 主键 + LogSanitizer.sanitize 兜底；error 由 SLF4J 内部处理不拼接 log message
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "queueId from DB PK + LogSanitizer.sanitize wraps")
+            justification = "input from DB PK + LogSanitizer.sanitize wraps; "
+                    + "SpotBugs find-sec-bugs cannot detect user-defined sanitizer")
     private void handleSendFailure(final String queueId, final Throwable error) {
         // Include cause chain in log to make root cause visible — a wrapped FepBusinessException
         // hides the JAXB / reflection root cause from operator without stack trace.

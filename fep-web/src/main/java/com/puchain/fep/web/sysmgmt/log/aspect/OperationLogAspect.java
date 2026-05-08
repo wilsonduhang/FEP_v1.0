@@ -1,6 +1,7 @@
 package com.puchain.fep.web.sysmgmt.log.aspect;
 
 import com.puchain.fep.common.util.IdGenerator;
+import com.puchain.fep.common.util.TextUtil;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
 import com.puchain.fep.web.sysmgmt.log.domain.SysOperationLog;
 import com.puchain.fep.web.sysmgmt.log.repository.SysOperationLogRepository;
@@ -104,7 +105,7 @@ public class OperationLogAspect {
             entity.setDescription(annotation.description().isEmpty() ? null : annotation.description());
             entity.setMethod(request.getMethod());
             entity.setRequestUrl(request.getRequestURI());
-            entity.setRequestParams(truncate(request.getQueryString(), PARAMS_MAX_LENGTH));
+            entity.setRequestParams(TextUtil.truncate(request.getQueryString(), PARAMS_MAX_LENGTH));
             entity.setResponseStatus(responseStatus);
             entity.setIpAddress(resolveClientIp(request));
             entity.setDurationMs(durationMs);
@@ -165,17 +166,4 @@ public class OperationLogAspect {
         return request.getRemoteAddr();
     }
 
-    /**
-     * 截断字符串到指定最大长度。
-     *
-     * @param value     原始字符串，可为 null
-     * @param maxLength 最大长度
-     * @return 截断后的字符串，或 null
-     */
-    private String truncate(final String value, final int maxLength) {
-        if (value == null) {
-            return null;
-        }
-        return value.length() > maxLength ? value.substring(0, maxLength) : value;
-    }
 }

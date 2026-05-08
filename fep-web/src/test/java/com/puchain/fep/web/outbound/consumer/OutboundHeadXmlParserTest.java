@@ -82,4 +82,11 @@ class OutboundHeadXmlParserTest {
                 .extracting("errorCode")
                 .isEqualTo(FepErrorCode.OUTBOUND_5106_HEAD_FIELDS_INVALID);
     }
+
+    @Test
+    void parse_shouldThrowNullPointerException_whenXmlIsNull() {
+        assertThatThrownBy(() -> OutboundHeadXmlParser.parse(null))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("xml");
+    }
 }

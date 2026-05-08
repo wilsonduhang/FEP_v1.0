@@ -3,6 +3,7 @@ package com.puchain.fep.web.outbound.consumer;
 // v0.5 修订 M1: OutboundQueueRepository 与本类同在 com.puchain.fep.web.outbound.consumer
 // 包内（见 T2 Step 3），同包类无需 import。
 import com.puchain.fep.common.util.LogSanitizer;
+import com.puchain.fep.common.util.TextUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
 import java.time.Clock;
@@ -87,14 +88,15 @@ public class OutboundRetryHandler {
      */
     // queueId 来自 DB 主键 + LogSanitizer.sanitize 兜底；newRetryCount 整型，无 CRLF 风险
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "queueId from DB PK + LogSanitizer.sanitize wraps")
+            justification = "input from DB PK + LogSanitizer.sanitize wraps; "
+                    + "SpotBugs find-sec-bugs cannot detect user-defined sanitizer")
     public void handleFailure(final String queueId, final Throwable error) {
         final OutboundMessageQueueEntity entity = repo.findById(queueId)
             .orElseThrow(() -> new IllegalStateException("queue_id not found: " + queueId));
 
         final int newRetryCount = entity.getRetryCount() + 1;
         entity.setRetryCount(newRetryCount);
-        entity.setErrorMessage(truncate(
+        entity.setErrorMessage(TextUtil.truncate(
             error == null ? null : error.getMessage(),
             ERROR_MESSAGE_MAX_LENGTH));
 
@@ -114,17 +116,4 @@ public class OutboundRetryHandler {
         repo.save(entity);
     }
 
-    /**
-     * 截断字符串到 max 长度。null-safe。
-     *
-     * @param s   原始字符串（可空）
-     * @param max 长度上限（必 &gt; 0）
-     * @return 不超过 max 的字符串；输入为 null 则返回 null
-     */
-    private String truncate(final String s, final int max) {
-        if (s == null) {
-            return null;
-        }
-        return s.length() <= max ? s : s.substring(0, max);
-    }
 }
