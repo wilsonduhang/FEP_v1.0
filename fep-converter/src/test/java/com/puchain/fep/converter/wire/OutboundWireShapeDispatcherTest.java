@@ -84,6 +84,52 @@ class OutboundWireShapeDispatcherTest {
     }
 
     @Test
+    @DisplayName("1102/1103/1104 → BatchHead{msgNo} + RequestBusinessHead + no result")
+    void describeFor_1102_1103_1104_should_be_BatchHead_RequestHead_no_result() {
+        for (String msgNo : new String[]{"1102", "1103", "1104"}) {
+            WireShapeDescriptor descriptor = dispatcher.describeFor(msgNo);
+
+            assertThat(descriptor.headElementName())
+                    .as("msgNo=%s headElementName", msgNo)
+                    .isEqualTo("BatchHead" + msgNo);
+            assertThat(descriptor.headClass())
+                    .as("msgNo=%s headClass (上行请求 → RequestBusinessHead)", msgNo)
+                    .isEqualTo(RequestBusinessHead.class);
+            assertThat(descriptor.requiresResultCode())
+                    .as("msgNo=%s requiresResultCode (1xxx 请求不带 ResultCode)", msgNo)
+                    .isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("2102/2103/2104 → BatchHead{msgNo} + ResponseBusinessHead + with result")
+    void describeFor_2102_2103_2104_should_be_BatchHead_ResponseHead_with_result() {
+        for (String msgNo : new String[]{"2102", "2103", "2104"}) {
+            WireShapeDescriptor descriptor = dispatcher.describeFor(msgNo);
+
+            assertThat(descriptor.headElementName())
+                    .as("msgNo=%s headElementName", msgNo)
+                    .isEqualTo("BatchHead" + msgNo);
+            assertThat(descriptor.headClass())
+                    .as("msgNo=%s headClass (上行回执 → ResponseBusinessHead)", msgNo)
+                    .isEqualTo(ResponseBusinessHead.class);
+            assertThat(descriptor.requiresResultCode())
+                    .as("msgNo=%s requiresResultCode (2xxx 回执含 ResultCode)", msgNo)
+                    .isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("6 BATCH (1102/1103/1104/2102/2103/2104) → isRegisteredOutboundMsgNo true")
+    void isRegisteredOutboundMsgNo_6_batch_should_be_true() {
+        for (String msgNo : new String[]{"1102", "1103", "1104", "2102", "2103", "2104"}) {
+            assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
+                    .as("msgNo=%s 必须在 16 上行报文集合内（10 supplychain + 6 BATCH）", msgNo)
+                    .isTrue();
+        }
+    }
+
+    @Test
     @DisplayName("invalid msgNo throws FepBusinessException with OUTBOUND_5108")
     void describeFor_invalid_msgNo_should_throw_5108() {
         // 4 位数字但不在 8 集合
