@@ -39,9 +39,6 @@ public final class LogSanitizer {
         if (input == null) {
             return "";
         }
-        if (input.indexOf('\r') < 0 && input.indexOf('\n') < 0) {
-            return input;
-        }
         return input.replace("\r", "\\r").replace("\n", "\\n");
     }
 }
