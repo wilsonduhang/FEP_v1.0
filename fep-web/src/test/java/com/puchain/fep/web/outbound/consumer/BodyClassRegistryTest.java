@@ -6,6 +6,7 @@ import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
+import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
 import com.puchain.fep.processor.body.supplychain.QyRegister3109;
 import com.puchain.fep.processor.body.supplychain.RzApplyInfo3105;
@@ -23,9 +24,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * P5 T4 Step 1 — {@link BodyClassRegistry} 单元测试。
  *
- * <p>覆盖：</p>
+ * <p>覆盖（P4-MSG-B T1 起 9 entries，含 3007）：</p>
  * <ul>
- *   <li>8 上行报文 msgNo → Body POJO Class 主映射 hits</li>
+ *   <li>9 上行报文 msgNo → Body POJO Class 主映射 hits</li>
  *   <li>未注册 msgNo（"9999" / null）→ {@link FepBusinessException} +
  *       {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}</li>
  * </ul>
@@ -36,6 +37,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BodyClassRegistryTest {
 
     private final BodyClassRegistry registry = new BodyClassRegistry();
+
+    @Test
+    void resolve_3007_should_return_InvoCheckQuery3007() {
+        assertThat(registry.resolve("3007")).isEqualTo(InvoCheckQuery3007.class);
+    }
 
     @Test
     void resolve_3009_should_return_RzReturnInfo3009() {
@@ -94,18 +100,18 @@ class BodyClassRegistryTest {
     }
 
     /**
-     * P4-MSG-B T0 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
+     * P4-MSG-B T0/T1 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
      *
-     * <p>本 Task 不增加 entry，refactor 后保持 8 个；但 source code 必须用
-     * {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}，为后续 P4-MSG-B T1/T4
-     * 加 3000/3007 + Plan A BATCH +3 解锁。</p>
+     * <p>P4-MSG-B T0 完成 refactor（Map.of → Map.ofEntries，行为不变 8 entries）；T1 起 append
+     * 3007 → {@link InvoCheckQuery3007}，entry 数 8 → 9。后续 P4-MSG-B T4 / Plan A BATCH +3
+     * 继续 append。source code 必须保持用 {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常
      */
     @Test
     void registry_shouldUseMapOfEntries_supportingMoreThan10Entries() throws Exception {
-        // 1. entry 数仍为 8（本 Task 行为不变）
-        assertThat(countRegistryEntries()).isEqualTo(8);
+        // 1. entry 数 9（T1 +3007 后；后续 Task 继续 append）
+        assertThat(countRegistryEntries()).isEqualTo(9);
 
         // 2. source 含 Map.ofEntries(
         final String source = Files.readString(Paths.get(

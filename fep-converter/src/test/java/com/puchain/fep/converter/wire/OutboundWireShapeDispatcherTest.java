@@ -30,13 +30,28 @@ class OutboundWireShapeDispatcherTest {
     private final OutboundWireShapeDispatcher dispatcher = new OutboundWireShapeDispatcher();
 
     @Test
-    @DisplayName("3009 → RealHead3009 + RequestBusinessHead + no result")
-    void describeFor_3009_should_be_RealHead_RequestHead_no_result() {
-        WireShapeDescriptor descriptor = dispatcher.describeFor("3009");
+    @DisplayName("3007/3009 → RealHead{msgNo} + RequestBusinessHead + no result")
+    void describeFor_3007_3009_should_be_RealHead_RequestHead_no_result() {
+        for (String msgNo : new String[]{"3007", "3009"}) {
+            WireShapeDescriptor descriptor = dispatcher.describeFor(msgNo);
 
-        assertThat(descriptor.headElementName()).isEqualTo("RealHead3009");
-        assertThat(descriptor.headClass()).isEqualTo(RequestBusinessHead.class);
-        assertThat(descriptor.requiresResultCode()).isFalse();
+            assertThat(descriptor.headElementName())
+                    .as("msgNo=%s headElementName", msgNo)
+                    .isEqualTo("RealHead" + msgNo);
+            assertThat(descriptor.headClass())
+                    .as("msgNo=%s headClass", msgNo)
+                    .isEqualTo(RequestBusinessHead.class);
+            assertThat(descriptor.requiresResultCode())
+                    .as("msgNo=%s requiresResultCode", msgNo)
+                    .isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("3007/3009 → isRegisteredOutboundMsgNo true")
+    void isRegisteredOutboundMsgNo_3007_3009_should_be_true() {
+        assertThat(dispatcher.isRegisteredOutboundMsgNo("3007")).isTrue();
+        assertThat(dispatcher.isRegisteredOutboundMsgNo("3009")).isTrue();
     }
 
     @Test

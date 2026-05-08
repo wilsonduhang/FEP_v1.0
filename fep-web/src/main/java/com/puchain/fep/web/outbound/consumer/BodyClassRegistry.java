@@ -6,6 +6,7 @@ import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
+import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
 import com.puchain.fep.processor.body.supplychain.QyRegister3109;
 import com.puchain.fep.processor.body.supplychain.RzApplyInfo3105;
@@ -21,6 +22,7 @@ import java.util.Map;
  * P4-MSG-A / P4-MSG-B / P4-MSG-C 阶段陆续 append-only 增加报文。当前注册（按 msgNo 升序）：</p>
  *
  * <ul>
+ *   <li>3007 → {@link InvoCheckQuery3007}（受理单位发起发票核验请求，P4-MSG-B T1）</li>
  *   <li>3009 → {@link RzReturnInfo3009}（电子凭证融资结果登记，P5 T4）</li>
  *   <li>3101 → {@link ContractInfo3101}（合同信息，P5 T4）</li>
  *   <li>3102 → {@link ArchiveInfo3102}（凭证档案信息，P5 T4）</li>
@@ -50,6 +52,7 @@ public class BodyClassRegistry {
 
     /** 不可变，无 entry 数上限（{@link Map#ofEntries}）。 */
     private static final Map<String, Class<?>> REGISTRY = Map.ofEntries(
+            Map.entry("3007", InvoCheckQuery3007.class),
             Map.entry("3009", RzReturnInfo3009.class),
             Map.entry("3101", ContractInfo3101.class),
             Map.entry("3102", ArchiveInfo3102.class),

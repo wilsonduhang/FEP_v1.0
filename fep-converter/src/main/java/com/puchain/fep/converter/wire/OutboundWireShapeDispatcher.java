@@ -7,12 +7,13 @@ import com.puchain.fep.converter.model.ResponseBusinessHead;
 import org.springframework.stereotype.Component;
 
 /**
- * 出站报文 wire-shape 路由 — 单一真相源，决定 8 上行报文 msgNo 对应的
+ * 出站报文 wire-shape 路由 — 单一真相源，决定 9 上行报文 msgNo 对应的
  * head 元素名 / head 类型 / 是否要求 ResultCode（PRD v1.3 §3.2 + §4.6）。
  *
- * <p>实测自 8 份 XSD（{@code fep-processor/src/main/resources/xsd/{3009,3101,3102,3105,3107,3109,3112,3116}.xsd}）：</p>
+ * <p>实测自 9 份 XSD（{@code fep-processor/src/main/resources/xsd/{3007,3009,3101,3102,3105,3107,3109,3112,3116}.xsd}）：</p>
  * <ul>
- *   <li>3009 → {@code RealHead3009} + {@link RequestBusinessHead}（实时单笔，仅一个）</li>
+ *   <li>3007 → {@code RealHead3007} + {@link RequestBusinessHead}（受理单位发起核验请求，模式 1 同步，P4-MSG-B T1）</li>
+ *   <li>3009 → {@code RealHead3009} + {@link RequestBusinessHead}（实时单笔）</li>
  *   <li>3101 → {@code BatchHead3101} + {@link ResponseBusinessHead}（含 5 位 ResultCode，仅一个）</li>
  *   <li>3102/3105/3107/3109/3112/3116 → {@code BatchHead{msgNo}} + {@link RequestBusinessHead}</li>
  * </ul>
@@ -38,7 +39,7 @@ public class OutboundWireShapeDispatcher {
      *
      * @param msgNo 4 位数字报文号（{@code "3009"} / {@code "3101"} / ...）
      * @return wire-shape 描述符
-     * @throws FepBusinessException msgNo 为 {@code null} / 非 4 位数字 / 不在 8 上行报文集合，
+     * @throws FepBusinessException msgNo 为 {@code null} / 非 4 位数字 / 不在 9 上行报文集合，
      *                              错误码 {@link FepErrorCode#OUTBOUND_5108_MSGNO_INVALID}
      */
     public WireShapeDescriptor describeFor(final String msgNo) {
@@ -48,34 +49,34 @@ public class OutboundWireShapeDispatcher {
                     "msgNo 必须为 4 位数字: " + msgNo);
         }
         return switch (msgNo) {
-            case "3009" -> new WireShapeDescriptor(
-                    "RealHead3009", RequestBusinessHead.class, false);
+            case "3007", "3009" -> new WireShapeDescriptor(
+                    "RealHead" + msgNo, RequestBusinessHead.class, false);
             case "3101" -> new WireShapeDescriptor(
                     "BatchHead3101", ResponseBusinessHead.class, true);
             case "3102", "3105", "3107", "3109", "3112", "3116" -> new WireShapeDescriptor(
                     "BatchHead" + msgNo, RequestBusinessHead.class, false);
             default -> throw new FepBusinessException(
                     FepErrorCode.OUTBOUND_5108_MSGNO_INVALID,
-                    "msgNo 不在 8 上行报文集合: " + msgNo);
+                    "msgNo 不在 9 上行报文集合: " + msgNo);
         };
     }
 
     /**
-     * 判断 msgNo 是否在已登记的 8 上行报文集合内。
+     * 判断 msgNo 是否在已登记的 9 上行报文集合内。
      *
      * <p>用于 {@code BatchMessageProcessorService.wrapBodyInCfx} 等 inbound + outbound
      * 共用方法识别"是否为已登记 outbound msgNo"，未登记的（例如 inbound-only 的 3003 /
      * 3005 / 9000）走 legacy 路径，避免对 inbound 链路产生回归。</p>
      *
      * @param msgNo 4 位数字报文号；{@code null} 或非法格式返回 {@code false}
-     * @return {@code true} 当且仅当 msgNo 是 8 上行报文之一
+     * @return {@code true} 当且仅当 msgNo 是 9 上行报文之一
      */
     public boolean isRegisteredOutboundMsgNo(final String msgNo) {
         if (msgNo == null || !msgNo.matches(MSG_NO_PATTERN)) {
             return false;
         }
         return switch (msgNo) {
-            case "3009", "3101", "3102", "3105", "3107", "3109", "3112", "3116" -> true;
+            case "3007", "3009", "3101", "3102", "3105", "3107", "3109", "3112", "3116" -> true;
             default -> false;
         };
     }
