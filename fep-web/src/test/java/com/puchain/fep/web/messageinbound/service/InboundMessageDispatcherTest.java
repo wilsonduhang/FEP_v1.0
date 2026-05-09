@@ -4,6 +4,9 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.type.MessageType;
+import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
+import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
+import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
 import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
@@ -127,6 +130,108 @@ class InboundMessageDispatcherTest {
                     + "</MSG>"
                     + "</CFX>";
 
+    private static final String VALID_2102_XML_TEMPLATE = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <CFX>
+              <HEAD>
+                <Version>1.0</Version>
+                <SrcNode>A1000143000104</SrcNode>
+                <DesNode>12345678901234</DesNode>
+                <App>HNDEMP</App>
+                <MsgNo>2102</MsgNo>
+                <MsgId>20260509120000000001</MsgId>
+                <CorrMsgId>20260509120000000001</CorrMsgId>
+                <WorkDate>20260509</WorkDate>
+              </HEAD>
+              <MSG>
+                <BatchHead2102>
+                  <SendOrgCode>A1000143000104</SendOrgCode>
+                  <EntrustDate>20260509</EntrustDate>
+                  <TransitionNo>00000003</TransitionNo>
+                  <Result>00000</Result>
+                </BatchHead2102>
+                <DataTransferCheckResponse2102>
+                  <DataTransferResult>
+                    <ItemId>1</ItemId>
+                    <MainClass>MainA01</MainClass>
+                    <SecondClass>SubA0101</SecondClass>
+                    <Period>01</Period>
+                    <FileDate>20260509</FileDate>
+                    <Status>01</Status>
+                  </DataTransferResult>
+                </DataTransferCheckResponse2102>
+              </MSG>
+            </CFX>
+            """;
+
+    private static final String VALID_2103_XML_TEMPLATE = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <CFX>
+              <HEAD>
+                <Version>1.0</Version>
+                <SrcNode>A1000143000104</SrcNode>
+                <DesNode>12345678901234</DesNode>
+                <App>HNDEMP</App>
+                <MsgNo>2103</MsgNo>
+                <MsgId>20260509120000000003</MsgId>
+                <CorrMsgId>20260509120000000001</CorrMsgId>
+                <WorkDate>20260509</WorkDate>
+              </HEAD>
+              <MSG>
+                <BatchHead2103>
+                  <SendOrgCode>12345678901234</SendOrgCode>
+                  <EntrustDate>20260509</EntrustDate>
+                  <TransitionNo>00000003</TransitionNo>
+                  <Result>00000</Result>
+                </BatchHead2103>
+                <CompanyInfoBatchResponse2103>
+                  <CompanyInfo>
+                    <ItemId>1</ItemId>
+                    <CompanyName>湖南示例实业有限公司</CompanyName>
+                    <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
+                    <MainClass>MainA01</MainClass>
+                    <SecondClass>SubA0101</SecondClass>
+                    <AuthOrgCode>12345678901234</AuthOrgCode>
+                    <QueryResult>00000</QueryResult>
+                  </CompanyInfo>
+                </CompanyInfoBatchResponse2103>
+              </MSG>
+            </CFX>
+            """;
+
+    private static final String VALID_2104_XML_TEMPLATE = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <CFX>
+              <HEAD>
+                <Version>1.0</Version><SrcNode>A1000143000104</SrcNode>
+                <DesNode>12345678901234</DesNode><App>HNDEMP</App>
+                <MsgNo>2104</MsgNo><MsgId>20260509120000000001</MsgId>
+                <CorrMsgId>20260509120000000001</CorrMsgId><WorkDate>20260509</WorkDate>
+              </HEAD>
+              <MSG>
+                <BatchHead2104>
+                  <SendOrgCode>A1000143000104</SendOrgCode>
+                  <EntrustDate>20260509</EntrustDate>
+                  <TransitionNo>00000003</TransitionNo>
+                  <Result>00000</Result>
+                </BatchHead2104>
+                <CompanyAuthFileBatchResponse2104>
+                  <CompanyAuthFileResponse>
+                    <ItemId>1</ItemId>
+                    <CompanyName>湖南示例实业有限公司</CompanyName>
+                    <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
+                    <AuthBeginDate>20260101</AuthBeginDate>
+                    <AuthEndDate>20261231</AuthEndDate>
+                    <AuthNo>AUTH2026050500001</AuthNo>
+                    <AuthOrgCode>12345678901234</AuthOrgCode>
+                    <IsUpdate>0</IsUpdate>
+                    <RecordResult>00000</RecordResult>
+                  </CompanyAuthFileResponse>
+                </CompanyAuthFileBatchResponse2104>
+              </MSG>
+            </CFX>
+            """;
+
     private SyncMessageProcessorService syncProcessor;
     private ApplicationEventPublisher eventPublisher;
     private InboundMessageDispatcher dispatcher;
@@ -226,14 +331,22 @@ class InboundMessageDispatcherTest {
     }
 
     @Test
-    @DisplayName("body type registry exposes 6 entries (P3 Phase 2 + P4 T1 3007/3008)")
-    void bodyTypeRegistry_contains6Entries() {
+    @DisplayName("body type registry exposes 9 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104)")
+    void bodyTypeRegistry_contains9Entries() {
         // grep-asserted (feedback_doc_data_grep_first): registry must expose
-        // exactly the 4 P3 Phase 2 messageTypes plus the 2 P4 T1 InvoCheck
-        // messageTypes (3007/3008) wired in this Plan.
-        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(6);
+        // exactly the 4 P3 Phase 2 messageTypes (3107/3108/3115/3116) plus the
+        // 2 P4-MSG-B-inbound InvoCheck messageTypes (3007/3008) plus the 3
+        // P4-MSG-A-inbound BATCH Response messageTypes (2102/2103/2104).
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(9);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry())
-                .containsKeys("3007", "3008", "3107", "3108", "3115", "3116");
+                .containsKeys("2102", "2103", "2104",
+                              "3007", "3008", "3107", "3108", "3115", "3116");
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2102"))
+                .isEqualTo(DataTransferCheckBatchResponse2102.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2103"))
+                .isEqualTo(CompanyInfoBatchResponse2103.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2104"))
+                .isEqualTo(CompanyAuthFileBatchResponse2104.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3116"))
                 .isEqualTo(BankCheckDay3116.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3007"))
@@ -353,5 +466,91 @@ class InboundMessageDispatcherTest {
         assertThat(event.body())
                 .as("dispatcher must publish typed InvoCheckReturn3008 body (P4 T1 wire-in)")
                 .isInstanceOf(InvoCheckReturn3008.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 2102 → publishEvent body is DataTransferCheckBatchResponse2102 (FR-MSG-2102)")
+    void dispatch_2102_shouldPublishEventWithDataTransferCheckBatchResponse2102Body() {
+        final byte[] xml = VALID_2102_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-2102abcdef0123456789abcdef01230000",
+                        MessageType.MSG_2102, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_2102), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("2102", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_2102);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        // BATCH Response Body 无 SerialNo 字段（grep 实测仅 DataTransferResult 1 个 @XmlElement），
+        // dispatcher.extractSerialNo line 223-237 走 NoSuchMethodException fallback 返回 transitionNo。
+        assertThat(event.serialNo())
+                .as("BATCH Response Body lacks getSerialNo, dispatcher falls back to transitionNo")
+                .isEqualTo("20260509");
+        assertThat(event.body())
+                .as("dispatcher must publish typed DataTransferCheckBatchResponse2102 body (P4-MSG-A-inbound T1)")
+                .isInstanceOf(DataTransferCheckBatchResponse2102.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 2103 → publishEvent body is CompanyInfoBatchResponse2103 (FR-MSG-2103)")
+    void dispatch_2103_shouldPublishEventWithCompanyInfoBatchResponse2103Body() {
+        final byte[] xml = VALID_2103_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-2103abcdef0123456789abcdef01230000",
+                        MessageType.MSG_2103, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_2103), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("2103", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_2103);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        assertThat(event.serialNo())
+                .as("BATCH Response Body lacks getSerialNo, dispatcher falls back to transitionNo")
+                .isEqualTo("20260509");
+        assertThat(event.body())
+                .as("dispatcher must publish typed CompanyInfoBatchResponse2103 body (P4-MSG-A-inbound T1)")
+                .isInstanceOf(CompanyInfoBatchResponse2103.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 2104 → publishEvent body is CompanyAuthFileBatchResponse2104 (FR-MSG-2104)")
+    void dispatch_2104_shouldPublishEventWithCompanyAuthFileBatchResponse2104Body() {
+        final byte[] xml = VALID_2104_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-2104abcdef0123456789abcdef01230000",
+                        MessageType.MSG_2104, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_2104), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("2104", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_2104);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        assertThat(event.serialNo())
+                .as("BATCH Response Body lacks getSerialNo, dispatcher falls back to transitionNo")
+                .isEqualTo("20260509");
+        assertThat(event.body())
+                .as("dispatcher must publish typed CompanyAuthFileBatchResponse2104 body (P4-MSG-A-inbound T1)")
+                .isInstanceOf(CompanyAuthFileBatchResponse2104.class);
     }
 }
