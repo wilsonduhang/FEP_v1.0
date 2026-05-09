@@ -28,8 +28,8 @@ import java.util.Set;
  * {@link SchemaFactory}, then discards the factory. The resulting {@link Schema}
  * instances are thread-safe per JAXP and cached in an unmodifiable map.</p>
  *
- * <p>Current scope supports 43 supported messages
- * (1001/1004/1101/1102/1103/1104/2001/2004/2102/2103/2104/3000/3001-3009/3020/3101/3102/3103/3105/
+ * <p>Current scope supports 44 supported messages
+ * (1001/1004/1101/1102/1103/1104/2001/2004/2101/2102/2103/2104/3000/3001-3009/3020/3101/3102/3103/3105/
  * 3107/3108/3109/3112/3113/3115/3116/3120/9000/9005/9006-9009/9020/9100/9120);
  * all other {@link MessageType} values throw {@link UnsupportedOperationException}.</p>
  */
@@ -39,7 +39,7 @@ public class XsdSchemaRegistry {
     private static final Logger log = LoggerFactory.getLogger(XsdSchemaRegistry.class);
 
     private static final Set<String> SUPPORTED_CODES = Set.of(
-            "1001", "1004", "1101", "1102", "1103", "1104", "2001", "2004", "2102", "2103", "2104",
+            "1001", "1004", "1101", "1102", "1103", "1104", "2001", "2004", "2101", "2102", "2103", "2104",
             "3000", "3001", "3002", "3003", "3004", "3005", "3006", "3007", "3008", "3009",
             "3020", "3101", "3102", "3103", "3105", "3107", "3108", "3109",
             "3112", "3113", "3115", "3116", "3120",
