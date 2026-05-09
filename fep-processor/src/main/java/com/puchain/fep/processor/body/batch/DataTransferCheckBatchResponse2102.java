@@ -1,6 +1,7 @@
 package com.puchain.fep.processor.body.batch;
 
 import com.puchain.fep.converter.model.CfxBody;
+import com.puchain.fep.converter.model.SerialNoBearing;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -28,7 +29,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "DataTransferCheckResponse2102")
 @XmlType(propOrder = {"items"})
-public class DataTransferCheckBatchResponse2102 extends CfxBody {
+public class DataTransferCheckBatchResponse2102 extends CfxBody implements SerialNoBearing {
 
     /**
      * 核对结果项列表，对应 XSD {@code <DataTransferResult>} 重复元素（maxOccurs=unbounded）。
@@ -45,5 +46,16 @@ public class DataTransferCheckBatchResponse2102 extends CfxBody {
 
     public void setItems(final List<DataTransferCheckBatchItem2102> v) {
         this.items = v;
+    }
+
+    /**
+     * BATCH 响应无顶层 SerialNo（逐条流水号位于 sub-records 内），
+     * 返回 {@code null} 让 {@code InboundMessageDispatcher.extractSerialNo}
+     * fallback 到 transitionNo（E-3 invariant — 注册项必 implements
+     * {@link SerialNoBearing}，BATCH 类约定 null/空串触发 fallback）。
+     */
+    @Override
+    public String getSerialNo() {
+        return null;
     }
 }
