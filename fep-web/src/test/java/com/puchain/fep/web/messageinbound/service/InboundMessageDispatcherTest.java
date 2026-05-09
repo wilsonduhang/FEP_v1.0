@@ -6,6 +6,7 @@ import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
+import com.puchain.fep.processor.body.batch.DataTransfer2101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
@@ -129,6 +130,36 @@ class InboundMessageDispatcherTest {
                     + "</InvoCheckReturn3008>"
                     + "</MSG>"
                     + "</CFX>";
+
+    private static final String VALID_2101_XML_TEMPLATE = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <CFX>
+              <HEAD>
+                <Version>1.0</Version>
+                <SrcNode>A1000143000104</SrcNode>
+                <DesNode>A1000142000001</DesNode>
+                <App>HNDEMP</App>
+                <MsgNo>2101</MsgNo>
+                <MsgId>20260509120000002101</MsgId>
+                <CorrMsgId></CorrMsgId>
+                <WorkDate>20260509</WorkDate>
+              </HEAD>
+              <MSG>
+                <BatchHead2101>
+                  <SendOrgCode>A1000143000104</SendOrgCode>
+                  <EntrustDate>20260509</EntrustDate>
+                  <TransitionNo>20260509</TransitionNo>
+                </BatchHead2101>
+                <DataTransfer2101>
+                  <MainClass>LSDX</MainClass>
+                  <SecondClass>LSDX01</SecondClass>
+                  <Period>01</Period>
+                  <Type>01</Type>
+                  <FileDate>20260509</FileDate>
+                </DataTransfer2101>
+              </MSG>
+            </CFX>
+            """;
 
     private static final String VALID_2102_XML_TEMPLATE = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -331,16 +362,19 @@ class InboundMessageDispatcherTest {
     }
 
     @Test
-    @DisplayName("body type registry exposes 9 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104)")
-    void bodyTypeRegistry_contains9Entries() {
+    @DisplayName("body type registry exposes 10 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104 + P4-MSG-D 2101)")
+    void bodyTypeRegistry_contains10Entries() {
         // grep-asserted (feedback_doc_data_grep_first): registry must expose
         // exactly the 4 P3 Phase 2 messageTypes (3107/3108/3115/3116) plus the
         // 2 P4-MSG-B-inbound InvoCheck messageTypes (3007/3008) plus the 3
-        // P4-MSG-A-inbound BATCH Response messageTypes (2102/2103/2104).
-        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(9);
+        // P4-MSG-A-inbound BATCH Response messageTypes (2102/2103/2104) plus
+        // the 1 P4-MSG-D T4 messageType (2101).
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(10);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry())
-                .containsKeys("2102", "2103", "2104",
+                .containsKeys("2101", "2102", "2103", "2104",
                               "3007", "3008", "3107", "3108", "3115", "3116");
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2101"))
+                .isEqualTo(DataTransfer2101.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2102"))
                 .isEqualTo(DataTransferCheckBatchResponse2102.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2103"))
@@ -466,6 +500,42 @@ class InboundMessageDispatcherTest {
         assertThat(event.body())
                 .as("dispatcher must publish typed InvoCheckReturn3008 body (P4 T1 wire-in)")
                 .isInstanceOf(InvoCheckReturn3008.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 2101 → publishEvent body is DataTransfer2101 (FR-MSG-2101 P4-MSG-D T4)")
+    void dispatch_2101_shouldPublishEventWithDataTransfer2101Body() {
+        final byte[] xml = VALID_2101_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-2101abcdef0123456789abcdef01230000",
+                        MessageType.MSG_2101, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_2101), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("2101", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_2101);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        // DataTransfer2101 Body 无 SerialNo 字段（grep 实测 5 fields: mainClass/secondClass/period/type/fileDate），
+        // dispatcher.extractSerialNo line 240-258 走 NoSuchMethodException fallback 返回 transitionNo。
+        assertThat(event.serialNo())
+                .as("DataTransfer2101 lacks getSerialNo, dispatcher falls back to transitionNo")
+                .isEqualTo("20260509");
+        assertThat(event.body())
+                .as("dispatcher must publish typed DataTransfer2101 body (P4-MSG-D T4)")
+                .isInstanceOf(DataTransfer2101.class);
+        final DataTransfer2101 body = (DataTransfer2101) event.body();
+        assertThat(body.getMainClass()).isEqualTo("LSDX");
+        assertThat(body.getSecondClass()).isEqualTo("LSDX01");
+        assertThat(body.getPeriod()).isEqualTo("01");
+        assertThat(body.getType()).isEqualTo("01");
+        assertThat(body.getFileDate()).isEqualTo("20260509");
     }
 
     @Test

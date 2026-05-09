@@ -13,12 +13,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * {@link OutboundWireShapeDispatcher} 单元测试（P5 T3 + P4-MSG-B T4 扩展）。
  *
- * <p>覆盖 16 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16，含 6 BATCH）：</p>
+ * <p>覆盖 17 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16 含 6 BATCH，P4-MSG-D T3 起 17 含 1101）：</p>
  * <ul>
  *   <li>3000/3007/3009 → RealHead{msgNo} + RequestBusinessHead + requiresResultCode=false</li>
  *   <li>3101 → BatchHead3101 + ResponseBusinessHead + requiresResultCode=true</li>
  *   <li>3102/3105/3107/3109/3112/3116 → BatchHead{msgNo} + RequestBusinessHead + false</li>
- *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 16 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
+ *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 17 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
  * </ul>
  *
  * @author FEP Team
@@ -124,15 +124,39 @@ class OutboundWireShapeDispatcherTest {
     void isRegisteredOutboundMsgNo_6_batch_should_be_true() {
         for (String msgNo : new String[]{"1102", "1103", "1104", "2102", "2103", "2104"}) {
             assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
-                    .as("msgNo=%s 必须在 16 上行报文集合内（10 supplychain + 6 BATCH）", msgNo)
+                    .as("msgNo=%s 必须在 17 上行报文集合内（10 supplychain + 6 BATCH + 1101）", msgNo)
                     .isTrue();
         }
     }
 
     @Test
+    @DisplayName("1101 → BatchHead1101 + RequestBusinessHead + no result (P4-MSG-D T3)")
+    void describeFor_1101_should_be_BatchHead_RequestHead_no_result() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("1101");
+
+        assertThat(descriptor.headElementName())
+                .as("1101 head 元素名（与 1101.xsd BatchHead1101 一致）")
+                .isEqualTo("BatchHead1101");
+        assertThat(descriptor.headClass())
+                .as("1101 head 类型（请求报文用 RequestBusinessHead，模式 3 异步 9120 ack）")
+                .isEqualTo(RequestBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("1101 是请求报文不带 ResultCode（异步无业务回执路径）")
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("1101 → isRegisteredOutboundMsgNo true (P4-MSG-D T3)")
+    void isRegisteredOutboundMsgNo_1101_should_be_true() {
+        assertThat(dispatcher.isRegisteredOutboundMsgNo("1101"))
+                .as("1101 必须在 17 上行报文集合内（P4-MSG-D T3 注册）")
+                .isTrue();
+    }
+
+    @Test
     @DisplayName("invalid msgNo throws FepBusinessException with OUTBOUND_5108")
     void describeFor_invalid_msgNo_should_throw_5108() {
-        // 4 位数字但不在 16 集合
+        // 4 位数字但不在 17 集合
         assertThatThrownBy(() -> dispatcher.describeFor("9999"))
                 .isInstanceOf(FepBusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", FepErrorCode.OUTBOUND_5108_MSGNO_INVALID);

@@ -8,6 +8,7 @@ import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.converter.xml.JaxbContextCache;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
+import com.puchain.fep.processor.body.batch.DataTransfer2101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
@@ -53,11 +54,12 @@ import java.util.Objects;
  * </ol>
  *
  * <p>Body POJO 解析使用本地 JAXBContext 缓存（per body class），按 P3 Phase 2
- * + P4-MSG-B-inbound + P4-MSG-A-inbound 范围登记 9 种业务 body。其他 messageType
+ * + P4-MSG-B-inbound + P4-MSG-A-inbound + P4-MSG-D 范围登记 10 种业务 body。其他 messageType
  * 不解析 body，事件 {@code body} 字段留 null（listener 自行降级处理）。</p>
  *
- * <p>Inbound BODY_TYPE_REGISTRY 注册项（按 msgNo 升序，{@link Map#of} 上限 10）:</p>
+ * <p>Inbound BODY_TYPE_REGISTRY 注册项（按 msgNo 升序，{@link Map#ofEntries} 不限 entry 数）:</p>
  * <ul>
+ *   <li>2101 → {@link DataTransfer2101}（HNDEMP 数据推送，P4-MSG-D T4）</li>
  *   <li>2102 → {@link DataTransferCheckBatchResponse2102}（数据报送核对回执，P4-MSG-A-inbound T1）</li>
  *   <li>2103 → {@link CompanyInfoBatchResponse2103}（企业信息批量查询回执，P4-MSG-A-inbound T1）</li>
  *   <li>2104 → {@link CompanyAuthFileBatchResponse2104}（授权书批量回执，P4-MSG-A-inbound T1）</li>
@@ -77,21 +79,27 @@ public class InboundMessageDispatcher {
     private static final Logger LOG = LoggerFactory.getLogger(InboundMessageDispatcher.class);
 
     /**
-     * P3 Phase 2 + P4-MSG-B-inbound + P4-MSG-A-inbound 注册的 body POJO 反查表：
+     * P3 Phase 2 + P4-MSG-B-inbound + P4-MSG-A-inbound + P4-MSG-D 注册的 body POJO 反查表：
      * messageType.msgNo → body class。仅用于 dispatcher 解析 body POJO；listener
-     * 各自再做安全 cast。顺序：按 msgNo 升序（2102/2103/2104 P4-MSG-A-inbound →
+     * 各自再做安全 cast。顺序：按 msgNo 升序（2101 P4-MSG-D T4 → 2102/2103/2104 P4-MSG-A-inbound →
      * 3007/3008 P4-MSG-B-inbound → 3107/3108/3115/3116 P3 Phase 2）。
+     *
+     * <p>使用 {@link Map#ofEntries} 不限 entry 数（P4-MSG-D T0 起，从 {@link Map#of}
+     * 9/10 上限 refactor — Roadmap §3 强制约束，为 P4-MSG-D T4 起后续 inbound Plan
+     * append-only 增长留出空间）。{@code Map.ofEntries} 与 {@code Map.of} 同样产
+     * 出不可变 Map，性能与 hash 行为一致。</p>
      */
-    private static final Map<String, Class<?>> BODY_TYPE_REGISTRY = Map.of(
-            MessageType.MSG_2102.msgNo(), DataTransferCheckBatchResponse2102.class,
-            MessageType.MSG_2103.msgNo(), CompanyInfoBatchResponse2103.class,
-            MessageType.MSG_2104.msgNo(), CompanyAuthFileBatchResponse2104.class,
-            MessageType.MSG_3007.msgNo(), InvoCheckQuery3007.class,
-            MessageType.MSG_3008.msgNo(), InvoCheckReturn3008.class,
-            MessageType.MSG_3107.msgNo(), PzCheckQuery3107.class,
-            MessageType.MSG_3108.msgNo(), PzCheckQueryReturn3108.class,
-            MessageType.MSG_3115.msgNo(), PlatPay3115.class,
-            MessageType.MSG_3116.msgNo(), BankCheckDay3116.class);
+    private static final Map<String, Class<?>> BODY_TYPE_REGISTRY = Map.ofEntries(
+            Map.entry(MessageType.MSG_2101.msgNo(), DataTransfer2101.class),
+            Map.entry(MessageType.MSG_2102.msgNo(), DataTransferCheckBatchResponse2102.class),
+            Map.entry(MessageType.MSG_2103.msgNo(), CompanyInfoBatchResponse2103.class),
+            Map.entry(MessageType.MSG_2104.msgNo(), CompanyAuthFileBatchResponse2104.class),
+            Map.entry(MessageType.MSG_3007.msgNo(), InvoCheckQuery3007.class),
+            Map.entry(MessageType.MSG_3008.msgNo(), InvoCheckReturn3008.class),
+            Map.entry(MessageType.MSG_3107.msgNo(), PzCheckQuery3107.class),
+            Map.entry(MessageType.MSG_3108.msgNo(), PzCheckQueryReturn3108.class),
+            Map.entry(MessageType.MSG_3115.msgNo(), PlatPay3115.class),
+            Map.entry(MessageType.MSG_3116.msgNo(), BankCheckDay3116.class));
 
     private final SyncMessageProcessorService syncProcessor;
     private final ApplicationEventPublisher eventPublisher;
@@ -261,9 +269,10 @@ public class InboundMessageDispatcher {
      * 暴露给单测验证 body 反查表内容（避免单测做反射读取私有静态字段）。
      * 返回值是显式 {@link Map#copyOf} 副本，确保调用方无法改写内部静态注册表。
      *
-     * @return 9 种 body POJO 注册表的不可变副本
-     *         （2102/2103/2104 P4-MSG-A-inbound + 3007/3008 P4-MSG-B-inbound
-     *         + 3107/3108/3115/3116 P3 Phase 2）
+     * @return 10 种 body POJO 注册表的不可变副本
+     *         （2101 P4-MSG-D T4 + 2102/2103/2104 P4-MSG-A-inbound + 3007/3008 P4-MSG-B-inbound
+     *         + 3107/3108/3115/3116 P3 Phase 2）。底层使用 {@link Map#ofEntries}
+     *         不限 entry 数（P4-MSG-D T0 refactor）。
      */
     public static Map<String, Class<?>> bodyTypeRegistry() {
         return Map.copyOf(BODY_TYPE_REGISTRY);

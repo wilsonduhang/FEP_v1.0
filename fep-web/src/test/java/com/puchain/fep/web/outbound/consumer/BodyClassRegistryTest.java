@@ -6,6 +6,7 @@ import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchTransfer1104;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchRequest1103;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
+import com.puchain.fep.processor.body.batch.DataTransfer1101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
@@ -32,9 +33,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * P5 T4 Step 1 — {@link BodyClassRegistry} 单元测试。
  *
- * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，含 3000 + 3007 + 6 BATCH）：</p>
+ * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，含 3000 + 3007 + 6 BATCH + 1101）：</p>
  * <ul>
- *   <li>16 上行报文 msgNo → Body POJO Class 主映射 hits</li>
+ *   <li>17 上行报文 msgNo → Body POJO Class 主映射 hits</li>
  *   <li>未注册 msgNo（"9999" / null）→ {@link FepBusinessException} +
  *       {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}</li>
  * </ul>
@@ -45,6 +46,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BodyClassRegistryTest {
 
     private final BodyClassRegistry registry = new BodyClassRegistry();
+
+    @Test
+    @DisplayName("1101 → DataTransfer1101.class（外联机构数据报送，P4-MSG-D T3）")
+    void resolve_1101_should_return_DataTransfer1101() {
+        assertThat(registry.resolve("1101")).isEqualTo(DataTransfer1101.class);
+    }
 
     @Test
     void resolve_3000_should_return_DzpzInfo3000() {
@@ -155,19 +162,19 @@ class BodyClassRegistryTest {
     }
 
     /**
-     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
+     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
      *
      * <p>P4-MSG-B T0 完成 refactor（Map.of → Map.ofEntries，行为不变 8 entries）；T1 append
      * 3007 → {@link InvoCheckQuery3007}（8 → 9）；T4 append 3000 → {@link DzpzInfo3000}（9 → 10）；
-     * P4-MSG-A T2 +6 BATCH（10 → 16）。source code 必须保持用 {@code Map.ofEntries(...)} 而非
-     * {@code Map.of(...)}。</p>
+     * P4-MSG-A T2 +6 BATCH（10 → 16）；P4-MSG-D T3 +1101 → {@link DataTransfer1101}（16 → 17）。
+     * source code 必须保持用 {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常
      */
     @Test
-    void registry_shouldUseMapOfEntries_supportingMoreThan16Entries() throws Exception {
-        // 1. entry 数 16（P4-MSG-A T2 +6 BATCH 后；后续 Task 继续 append）
-        assertThat(countRegistryEntries()).isEqualTo(16);
+    void registry_shouldUseMapOfEntries_supportingMoreThan17Entries() throws Exception {
+        // 1. entry 数 17（P4-MSG-D T3 +1101 后；后续 Task 继续 append）
+        assertThat(countRegistryEntries()).isEqualTo(17);
 
         // 2. source 含 Map.ofEntries(
         final String source = Files.readString(Paths.get(

@@ -6,6 +6,7 @@ import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchTransfer1104;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchRequest1103;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
+import com.puchain.fep.processor.body.batch.DataTransfer1101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
@@ -29,6 +30,7 @@ import java.util.Map;
  * P4-MSG-A / P4-MSG-B / P4-MSG-C 阶段陆续 append-only 增加报文。当前注册（按 msgNo 升序）：</p>
  *
  * <ul>
+ *   <li>1101 → {@link DataTransfer1101}（外联机构数据报送，P4-MSG-D T3）</li>
  *   <li>1102 → {@link DataTransferCheckBatchRequest1102}（外联机构数据报送核对请求，P4-MSG-A）</li>
  *   <li>1103 → {@link CompanyInfoBatchRequest1103}（企业信息批量查询请求，P4-MSG-A）</li>
  *   <li>1104 → {@link CompanyAuthFileBatchTransfer1104}（企业信息查询授权书批量发送，P4-MSG-A）</li>
@@ -51,8 +53,8 @@ import java.util.Map;
  * {@code HxqyInfo3109}）。本注册表选取主类对齐 PRD §4.6 上行/下行映射；备用类由其他业务路径
  * 单独消费。</p>
  *
- * <p>未实现 outbound Body POJO 的报文：1101（**修订自 P5 T4 stale Javadoc 5 项 / Plan B T0**；
- * 1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册到本表；3000 已于 Plan B T4 注册）。</p>
+ * <p>本 Plan D T3 起 1101 已注册（P4-MSG-D T3）；不再有未实现的 outbound Body POJO（除 9XXX 通用报文外）。
+ * 1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册；3000 已于 Plan B T4 注册。</p>
  *
  * <p>未注册 msgNo（含 {@code null}）抛 {@link FepBusinessException} +
  * {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}。</p>
@@ -65,6 +67,7 @@ public class BodyClassRegistry {
 
     /** 不可变，无 entry 数上限（{@link Map#ofEntries}）。 */
     private static final Map<String, Class<?>> REGISTRY = Map.ofEntries(
+            Map.entry("1101", DataTransfer1101.class),
             Map.entry("1102", DataTransferCheckBatchRequest1102.class),
             Map.entry("1103", CompanyInfoBatchRequest1103.class),
             Map.entry("1104", CompanyAuthFileBatchTransfer1104.class),
