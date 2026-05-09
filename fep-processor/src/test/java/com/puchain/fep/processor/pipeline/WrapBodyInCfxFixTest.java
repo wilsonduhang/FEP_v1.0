@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * P5 T3 修复测试 — 验证 {@link BatchMessageProcessorService#wrapBodyInCfx} 头元素名
  * 按 {@link OutboundWireShapeDispatcher} 决定，而非历史 hardcoded {@code "RealHead" + msgNo}。
  *
- * <p>对照 8 上行报文 wire-shape：</p>
+ * <p>对照 16 上行报文 wire-shape（P4-MSG-A T1 起 8→16，本测试覆盖典型 3 例）：</p>
  * <ul>
  *   <li>3009 → {@code <RealHead3009>}（保留 RealHead，dispatcher 验证不破坏 1/8 正确路径）</li>
  *   <li>3101 → {@code <BatchHead3101>}（修复：不应再是 RealHead3101，dispatcher 切换为 BatchHead）</li>

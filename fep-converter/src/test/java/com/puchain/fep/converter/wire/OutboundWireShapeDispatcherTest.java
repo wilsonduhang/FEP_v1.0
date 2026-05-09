@@ -13,12 +13,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * {@link OutboundWireShapeDispatcher} 单元测试（P5 T3 + P4-MSG-B T4 扩展）。
  *
- * <p>覆盖 10 上行报文的 dispatch 矩阵：</p>
+ * <p>覆盖 16 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16，含 6 BATCH）：</p>
  * <ul>
  *   <li>3000/3007/3009 → RealHead{msgNo} + RequestBusinessHead + requiresResultCode=false</li>
  *   <li>3101 → BatchHead3101 + ResponseBusinessHead + requiresResultCode=true</li>
  *   <li>3102/3105/3107/3109/3112/3116 → BatchHead{msgNo} + RequestBusinessHead + false</li>
- *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 10 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
+ *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 16 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
  * </ul>
  *
  * @author FEP Team
@@ -132,7 +132,7 @@ class OutboundWireShapeDispatcherTest {
     @Test
     @DisplayName("invalid msgNo throws FepBusinessException with OUTBOUND_5108")
     void describeFor_invalid_msgNo_should_throw_5108() {
-        // 4 位数字但不在 8 集合
+        // 4 位数字但不在 16 集合
         assertThatThrownBy(() -> dispatcher.describeFor("9999"))
                 .isInstanceOf(FepBusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", FepErrorCode.OUTBOUND_5108_MSGNO_INVALID);

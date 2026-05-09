@@ -32,9 +32,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * P5 T4 Step 1 — {@link BodyClassRegistry} 单元测试。
  *
- * <p>覆盖（P4-MSG-B T4 起 10 entries，含 3000 + 3007）：</p>
+ * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，含 3000 + 3007 + 6 BATCH）：</p>
  * <ul>
- *   <li>10 上行报文 msgNo → Body POJO Class 主映射 hits</li>
+ *   <li>16 上行报文 msgNo → Body POJO Class 主映射 hits</li>
  *   <li>未注册 msgNo（"9999" / null）→ {@link FepBusinessException} +
  *       {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}</li>
  * </ul>
@@ -155,11 +155,11 @@ class BodyClassRegistryTest {
     }
 
     /**
-     * P4-MSG-B T0/T1/T4 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
+     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
      *
      * <p>P4-MSG-B T0 完成 refactor（Map.of → Map.ofEntries，行为不变 8 entries）；T1 append
-     * 3007 → {@link InvoCheckQuery3007}（8 → 9）；T4 append 3000 → {@link DzpzInfo3000}（9 → 10）。
-     * 后续 Plan A BATCH +3 继续 append。source code 必须保持用 {@code Map.ofEntries(...)} 而非
+     * 3007 → {@link InvoCheckQuery3007}（8 → 9）；T4 append 3000 → {@link DzpzInfo3000}（9 → 10）；
+     * P4-MSG-A T2 +6 BATCH（10 → 16）。source code 必须保持用 {@code Map.ofEntries(...)} 而非
      * {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常

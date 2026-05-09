@@ -73,7 +73,7 @@ public class BatchMessageProcessorService {
      * @param stateMachine         状态机（5 态）
      * @param store                持久化端口
      * @param adapter              8KB 分拆适配
-     * @param wireShapeDispatcher  wire-shape 路由（决定 head 元素名按 8 上行报文 dispatch）
+     * @param wireShapeDispatcher  wire-shape 路由（决定 head 元素名按 16 上行报文 dispatch）
      * @throws NullPointerException 任一参数为 {@code null}
      */
     public BatchMessageProcessorService(
@@ -178,7 +178,7 @@ public class BatchMessageProcessorService {
      * 本方法通过 {@link #wrapBodyInCfx} 把每条 body 包回
      * {@code <CFX><HEAD/><MSG><{wireHead}/><body/></MSG></CFX>} 完整壳体再 marshal，
      * 解决 fragment/root 不匹配且 MSG 缺 head 的双重问题。
-     * P5 T3：head 元素名由 {@link OutboundWireShapeDispatcher} 按 8 上行报文派发，
+     * P5 T3：head 元素名由 {@link OutboundWireShapeDispatcher} 按 16 上行报文派发，
      * inbound-only msgNo 走 legacy 路径。</p>
      *
      * <p>约定：{@link CfxMessage#getBodies()} 返回的 {@code List<Object>} 中每个
@@ -210,7 +210,7 @@ public class BatchMessageProcessorService {
      *   <li>派生默认 {@link RequestBusinessHead}（SendOrgCode=head.srcNode，
      *       EntrustDate=head.workDate，TransitionNo=head.msgId 后 8 位数字），
      *       包装为 {@link JAXBElement} 动态指定 QName 为按 {@link OutboundWireShapeDispatcher}
-     *       决定的 wire-shape head 元素名（8 上行报文：{@code RealHead3009} 或
+     *       决定的 wire-shape head 元素名（16 上行报文：{@code RealHead3009} 或
      *       {@code BatchHead{msgNo}}），其余 inbound-only msgNo 走 legacy
      *       {@code "RealHead" + msgNo} 路径；</li>
      *   <li>把 head JAXBElement 和 body 按序放入 {@code msgContainer.contents}；</li>
@@ -221,7 +221,7 @@ public class BatchMessageProcessorService {
      * </ol>
      *
      * <p><b>P5 T3 修复</b>：历史实现 hardcoded {@code "RealHead" + msgNo} 仅 3009 正确
-     * （8 上行报文中其余 7 个为 {@code BatchHead{msgNo}}）。改用
+     * （16 上行报文中其余 15 个为 {@code BatchHead{msgNo}}）。改用
      * {@link OutboundWireShapeDispatcher#describeFor} 决定 head 元素名。
      * 对未登记 outbound msgNo（如 inbound-only 的 3003/3005/9000），保留 legacy
      * 行为避免 inbound 链路回归。</p>
@@ -250,8 +250,8 @@ public class BatchMessageProcessorService {
         // 强行补齐，RequestBusinessHead setter 的入参 null 允许通过。
         final RequestBusinessHead realHead = deriveRealHead(head);
 
-        // P5 T3 fix: wire-shape head 元素名按 dispatcher 决定。8 上行报文使用
-        // dispatcher.describeFor 派发（3009→RealHead3009，其余 7→BatchHead{msgNo}）；
+        // P5 T3 fix: wire-shape head 元素名按 dispatcher 决定。16 上行报文使用
+        // dispatcher.describeFor 派发（3009→RealHead3009，其余 15→BatchHead{msgNo}）；
         // 未登记 msgNo（inbound-only 如 3003/3005/9000）走 legacy 路径不变以避免回归。
         final String headElementName = resolveHeadElementName(msgNo);
         final JAXBElement<RequestBusinessHead> headElement = new JAXBElement<>(
@@ -274,9 +274,9 @@ public class BatchMessageProcessorService {
     }
 
     /**
-     * 解析 wire-shape head 元素名：8 上行报文走 dispatcher，其余走 legacy。
+     * 解析 wire-shape head 元素名：16 上行报文走 dispatcher，其余走 legacy。
      *
-     * <p>P5 T3 — dispatcher 仅登记 8 上行报文。inbound-only msgNo（如 3003/3005/9000）
+     * <p>P5 T3 — dispatcher 仅登记 16 上行报文。inbound-only msgNo（如 3003/3005/9000）
      * 直接调用 {@code dispatcher.describeFor} 会抛 OUTBOUND_5108 误伤已有 inbound IT。
      * 用 {@link OutboundWireShapeDispatcher#isRegisteredOutboundMsgNo} 先判断，未登记
      * 走 legacy {@code "RealHead" + msgNo} 路径保持向后兼容。</p>

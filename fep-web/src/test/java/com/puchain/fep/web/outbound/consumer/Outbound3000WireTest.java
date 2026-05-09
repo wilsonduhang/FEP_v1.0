@@ -21,7 +21,7 @@ import org.springframework.test.context.TestPropertySource;
  *
  * <ul>
  *   <li>{@code registry.resolve("3000")} → {@link DzpzInfo3000}.class（
- *       P4-MSG-B T4 注册的第 10 entry，按 msgNo 升序排在首位）</li>
+ *       P4-MSG-B T4 注册，P4-MSG-A T2 起 16 entries 之一，按 msgNo 升序排在首位）</li>
  *   <li>{@code dispatcher.describeFor("3000")} → {@code RealHead3000} +
  *       {@link RequestBusinessHead} + {@code requiresResultCode=false}（与 3000.xsd
  *       {@code <element name="RealHead3000" type="RequestHead"/>} 一致，模式 3 异步）</li>
@@ -31,14 +31,11 @@ import org.springframework.test.context.TestPropertySource;
  *
  * <p><b>完整 e2e 流水（enqueue → consumer.poll → claim → envelope build → sign →
  * send → SENT）</b>由 Plan B closing 阶段（T5）的全 reactor verify 兜底验证 —
- * 既有 {@code P5OutboundEndToEndIntegrationTest} 的 e2e codepath 在 10 上行报文集合
+ * 既有 {@code P5OutboundEndToEndIntegrationTest} 的 e2e codepath 在 16 上行报文集合
  * （含 3000）下行为不变（dispatcher + registry 是 append-only lookup，不引入新分支）。</p>
  *
- * <p>命名沿用 sibling {@code Outbound3007WireIT}（Plan B v0.4 T4 约定）；与 T1 已 ship
- * 的 {@code Outbound3007WireIT} 一致以 {@code WireIT} 后缀命名。<b>注</b>：surefire 默认
- * 仅 include {@code *Test.java}，{@code *IT.java} 当前会被静默跳过（red line
- * {@code DEFECT-002}）；该问题源于 T1 命名选择，T4 不引入新偏差。后续若启用 failsafe
- * 或重命名为 {@code *Test.java}，本 IT 会自动被纳入执行流。</p>
+ * <p>命名沿用 sibling {@code Outbound3007WireTest}（P4-MSG-A Q2 dead-test rename
+ * 后改 {@code WireTest} 后缀以纳入 surefire 默认 include {@code *Test.java}）。</p>
  *
  * <p>PRD 依据: §3.2 报文结构 + §4.6 报文方向（3000 主动上报）+ §4.7 模式 3 异步无回执。</p>
  *
@@ -61,7 +58,7 @@ class Outbound3000WireTest {
     @Test
     @DisplayName("3000 outbound wire bean 协调: registry.resolve + dispatcher.describeFor + isRegistered")
     void wire_3000_should_resolve_consistently_across_registry_and_dispatcher() {
-        // BodyClassRegistry: msgNo "3000" → DzpzInfo3000.class（第 10 entry）
+        // BodyClassRegistry: msgNo "3000" → DzpzInfo3000.class（16 entries 之一）
         assertThat(registry.resolve("3000"))
                 .as("BodyClassRegistry.resolve(\"3000\") 必须返回 DzpzInfo3000.class（P4-MSG-B T4 注册）")
                 .isEqualTo(DzpzInfo3000.class);

@@ -21,7 +21,7 @@ import org.springframework.test.context.TestPropertySource;
  *
  * <ul>
  *   <li>{@code registry.resolve("3007")} → {@link InvoCheckQuery3007}.class（
- *       P4-MSG-B T1 注册的第 9 entry）</li>
+ *       P4-MSG-B T1 注册，P4-MSG-A T2 起 16 entries 之一）</li>
  *   <li>{@code dispatcher.describeFor("3007")} → {@code RealHead3007} +
  *       {@link RequestBusinessHead} + {@code requiresResultCode=false}（与 3007.xsd
  *       {@code <element name="RealHead3007" type="RequestHead"/>} 一致，模式 1 同步）</li>
@@ -32,11 +32,11 @@ import org.springframework.test.context.TestPropertySource;
  * <p><b>完整 e2e 流水（enqueue → consumer.poll → claim → envelope build → sign →
  * send → SENT）</b>由 Plan B closing 阶段（T5）的全 reactor verify 兜底验证 —
  * 既有 {@link P5OutboundEndToEndIntegrationTest} 的 8 报文 e2e codepath 在
- * 9 上行报文集合（含 3007）下行为不变（dispatcher + registry 是 append-only
+ * 16 上行报文集合（含 3007）下行为不变（dispatcher + registry 是 append-only
  * lookup，不引入新分支）。</p>
  *
  * <p>互补已签字 Plan {@code 2026-05-07-p4-3007-3008-inbound-wire.md}（处理 3007
- * inbound 路径 + XSD positive IT）；本 IT 仅覆盖 3007 outbound wire 注册路径，
+ * inbound 路径 + XSD positive IT）；本 Test 仅覆盖 3007 outbound wire 注册路径，
  * 不重复 inbound + XSD 范围。</p>
  *
  * <p>PRD 依据: §4.6 line 372（3007 主动发起）+ §4.7 line 831（模式 1 同步）。</p>
@@ -60,7 +60,7 @@ class Outbound3007WireTest {
     @Test
     @DisplayName("3007 outbound wire bean 协调: registry.resolve + dispatcher.describeFor + isRegistered")
     void wire_3007_should_resolve_consistently_across_registry_and_dispatcher() {
-        // BodyClassRegistry: msgNo "3007" → InvoCheckQuery3007.class（第 9 entry）
+        // BodyClassRegistry: msgNo "3007" → InvoCheckQuery3007.class（16 entries 之一）
         assertThat(registry.resolve("3007"))
                 .as("BodyClassRegistry.resolve(\"3007\") 必须返回 InvoCheckQuery3007.class（P4-MSG-B T1 注册）")
                 .isEqualTo(InvoCheckQuery3007.class);
