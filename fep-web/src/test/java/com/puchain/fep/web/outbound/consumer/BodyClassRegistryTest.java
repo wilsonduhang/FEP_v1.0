@@ -2,6 +2,12 @@ package com.puchain.fep.web.outbound.consumer;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
+import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchTransfer1104;
+import com.puchain.fep.processor.body.batch.CompanyInfoBatchRequest1103;
+import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
+import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
+import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
@@ -12,6 +18,7 @@ import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
 import com.puchain.fep.processor.body.supplychain.QyRegister3109;
 import com.puchain.fep.processor.body.supplychain.RzApplyInfo3105;
 import com.puchain.fep.processor.body.supplychain.RzReturnInfo3009;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -90,6 +97,48 @@ class BodyClassRegistryTest {
     }
 
     @Test
+    @DisplayName("1102 → DataTransferCheckBatchRequest1102.class")
+    void resolve_1102_should_return_DataTransferCheckBatchRequest1102() {
+        assertThat(registry.resolve("1102"))
+                .isEqualTo(DataTransferCheckBatchRequest1102.class);
+    }
+
+    @Test
+    @DisplayName("1103 → CompanyInfoBatchRequest1103.class")
+    void resolve_1103_should_return_CompanyInfoBatchRequest1103() {
+        assertThat(registry.resolve("1103"))
+                .isEqualTo(CompanyInfoBatchRequest1103.class);
+    }
+
+    @Test
+    @DisplayName("1104 → CompanyAuthFileBatchTransfer1104.class（注：Transfer 非 Request）")
+    void resolve_1104_should_return_CompanyAuthFileBatchTransfer1104() {
+        assertThat(registry.resolve("1104"))
+                .isEqualTo(CompanyAuthFileBatchTransfer1104.class);
+    }
+
+    @Test
+    @DisplayName("2102 → DataTransferCheckBatchResponse2102.class")
+    void resolve_2102_should_return_DataTransferCheckBatchResponse2102() {
+        assertThat(registry.resolve("2102"))
+                .isEqualTo(DataTransferCheckBatchResponse2102.class);
+    }
+
+    @Test
+    @DisplayName("2103 → CompanyInfoBatchResponse2103.class")
+    void resolve_2103_should_return_CompanyInfoBatchResponse2103() {
+        assertThat(registry.resolve("2103"))
+                .isEqualTo(CompanyInfoBatchResponse2103.class);
+    }
+
+    @Test
+    @DisplayName("2104 → CompanyAuthFileBatchResponse2104.class")
+    void resolve_2104_should_return_CompanyAuthFileBatchResponse2104() {
+        assertThat(registry.resolve("2104"))
+                .isEqualTo(CompanyAuthFileBatchResponse2104.class);
+    }
+
+    @Test
     void resolve_invalid_msgNo_should_throw_5107() {
         assertThatThrownBy(() -> registry.resolve("9999"))
                 .isInstanceOf(FepBusinessException.class)
@@ -116,9 +165,9 @@ class BodyClassRegistryTest {
      * @throws Exception 反射或文件读取异常
      */
     @Test
-    void registry_shouldUseMapOfEntries_supportingMoreThan10Entries() throws Exception {
-        // 1. entry 数 10（T4 +3000 后；后续 Task 继续 append）
-        assertThat(countRegistryEntries()).isEqualTo(10);
+    void registry_shouldUseMapOfEntries_supportingMoreThan16Entries() throws Exception {
+        // 1. entry 数 16（P4-MSG-A T2 +6 BATCH 后；后续 Task 继续 append）
+        assertThat(countRegistryEntries()).isEqualTo(16);
 
         // 2. source 含 Map.ofEntries(
         final String source = Files.readString(Paths.get(

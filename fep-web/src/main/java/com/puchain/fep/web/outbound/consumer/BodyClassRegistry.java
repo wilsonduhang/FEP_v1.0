@@ -2,6 +2,12 @@ package com.puchain.fep.web.outbound.consumer;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
+import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchTransfer1104;
+import com.puchain.fep.processor.body.batch.CompanyInfoBatchRequest1103;
+import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
+import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
+import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
@@ -23,6 +29,12 @@ import java.util.Map;
  * P4-MSG-A / P4-MSG-B / P4-MSG-C 阶段陆续 append-only 增加报文。当前注册（按 msgNo 升序）：</p>
  *
  * <ul>
+ *   <li>1102 → {@link DataTransferCheckBatchRequest1102}（外联机构数据报送核对请求，P4-MSG-A）</li>
+ *   <li>1103 → {@link CompanyInfoBatchRequest1103}（企业信息批量查询请求，P4-MSG-A）</li>
+ *   <li>1104 → {@link CompanyAuthFileBatchTransfer1104}（企业信息查询授权书批量发送，P4-MSG-A）</li>
+ *   <li>2102 → {@link DataTransferCheckBatchResponse2102}（数据报送核对回执，P4-MSG-A）</li>
+ *   <li>2103 → {@link CompanyInfoBatchResponse2103}（企业信息批量查询回执，P4-MSG-A）</li>
+ *   <li>2104 → {@link CompanyAuthFileBatchResponse2104}（授权书批量回执，P4-MSG-A）</li>
  *   <li>3000 → {@link DzpzInfo3000}（电子凭证信息报送，P4-MSG-B T4）</li>
  *   <li>3007 → {@link InvoCheckQuery3007}（受理单位发起发票核验请求，P4-MSG-B T1）</li>
  *   <li>3009 → {@link RzReturnInfo3009}（电子凭证融资结果登记，P5 T4）</li>
@@ -40,8 +52,7 @@ import java.util.Map;
  * 单独消费。</p>
  *
  * <p>未实现 outbound Body POJO 的报文：1101（**修订自 P5 T4 stale Javadoc 5 项 / Plan B T0**；
- * 1102/1103/1104 已通过 BATCH 1102-2104 / BATCH 1103-2103 阶段 ship Body POJO，将由 P4-MSG-A 阶段
- * 注册到本表；3000 已于 Plan B T4 注册）。</p>
+ * 1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册到本表；3000 已于 Plan B T4 注册）。</p>
  *
  * <p>未注册 msgNo（含 {@code null}）抛 {@link FepBusinessException} +
  * {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}。</p>
@@ -54,6 +65,12 @@ public class BodyClassRegistry {
 
     /** 不可变，无 entry 数上限（{@link Map#ofEntries}）。 */
     private static final Map<String, Class<?>> REGISTRY = Map.ofEntries(
+            Map.entry("1102", DataTransferCheckBatchRequest1102.class),
+            Map.entry("1103", CompanyInfoBatchRequest1103.class),
+            Map.entry("1104", CompanyAuthFileBatchTransfer1104.class),
+            Map.entry("2102", DataTransferCheckBatchResponse2102.class),
+            Map.entry("2103", CompanyInfoBatchResponse2103.class),
+            Map.entry("2104", CompanyAuthFileBatchResponse2104.class),
             Map.entry("3000", DzpzInfo3000.class),
             Map.entry("3007", InvoCheckQuery3007.class),
             Map.entry("3009", RzReturnInfo3009.class),
