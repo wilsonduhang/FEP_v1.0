@@ -21,7 +21,7 @@ class DataTransfer1101XsdValidationTest {
                 <Version>1.0</Version>
                 <SrcNode>A1000142000001</SrcNode>
                 <DesNode>A1000143000104</DesNode>
-                <App>FEP</App>
+                <App>FEPx</App>
                 <MsgNo>1101</MsgNo>
                 <MsgId>11010000000000000001</MsgId>
                 <CorrMsgId>00000000000000000000</CorrMsgId>
@@ -29,7 +29,7 @@ class DataTransfer1101XsdValidationTest {
               </HEAD>
               <MSG>
                 <BatchHead1101>
-                  <SendOrgCode>3050000000000000</SendOrgCode>
+                  <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead1101>
@@ -52,7 +52,7 @@ class DataTransfer1101XsdValidationTest {
                 <Version>1.0</Version>
                 <SrcNode>A1000142000001</SrcNode>
                 <DesNode>A1000143000104</DesNode>
-                <App>FEP</App>
+                <App>FEPx</App>
                 <MsgNo>1101</MsgNo>
                 <MsgId>11010000000000000002</MsgId>
                 <CorrMsgId>00000000000000000000</CorrMsgId>
@@ -60,7 +60,7 @@ class DataTransfer1101XsdValidationTest {
               </HEAD>
               <MSG>
                 <BatchHead1101>
-                  <SendOrgCode>3050000000000000</SendOrgCode>
+                  <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead1101>
@@ -82,7 +82,7 @@ class DataTransfer1101XsdValidationTest {
                 <Version>1.0</Version>
                 <SrcNode>A1000142000001</SrcNode>
                 <DesNode>A1000143000104</DesNode>
-                <App>FEP</App>
+                <App>FEPx</App>
                 <MsgNo>1101</MsgNo>
                 <MsgId>11010000000000000003</MsgId>
                 <CorrMsgId>00000000000000000000</CorrMsgId>
@@ -90,7 +90,7 @@ class DataTransfer1101XsdValidationTest {
               </HEAD>
               <MSG>
                 <BatchHead1101>
-                  <SendOrgCode>3050000000000000</SendOrgCode>
+                  <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead1101>

@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class XsdSchemaRegistryTest {
 
@@ -49,12 +48,11 @@ class XsdSchemaRegistryTest {
         assertThat(second).isSameAs(first);
     }
 
-    @Test
-    void schemaOf_shouldThrowForUnsupportedMessage() {
-        assertThatThrownBy(() -> registry.schemaOf(MessageType.MSG_1101))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("1101");
-    }
+    // schemaOf_shouldThrowForUnsupportedMessage removed: P4-MSG-D added MSG_1101
+    // to XsdSchemaRegistry.SUPPORTED_CODES (and indeed all 44 MessageType enum
+    // values are now mapped). The defensive UnsupportedOperationException branch
+    // in schemaOf() remains for future MessageType additions that lag XSD load,
+    // but cannot be exercised through the type system today without reflection.
 
     @Test
     void schemaOf_shouldBeThreadSafe() throws Exception {

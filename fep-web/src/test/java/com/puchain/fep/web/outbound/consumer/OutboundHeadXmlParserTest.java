@@ -87,6 +87,6 @@ class OutboundHeadXmlParserTest {
     void parse_shouldThrowNullPointerException_whenXmlIsNull() {
         assertThatThrownBy(() -> OutboundHeadXmlParser.parse(null))
                 .isInstanceOf(NullPointerException.class)
-                .hasMessageContaining("xml");
+                .hasMessage("xml");
     }
 }

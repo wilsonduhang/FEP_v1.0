@@ -93,13 +93,11 @@ class SyncMessageProcessorServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test
-    void process_shouldRejectUnsupportedMessageType() throws IOException {
-        byte[] xml = loadSample("/samples/1001-valid.xml");
-        assertThatThrownBy(() -> processor.processOutbound(MessageType.MSG_1101, "TX-UO", xml))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("1101");
-    }
+    // process_shouldRejectUnsupportedMessageType removed: P4-MSG-D wired MSG_1101
+    // through XsdSchemaRegistry, so the previously-unsupported branch is no
+    // longer reachable through MSG_1101 (or any other MessageType — all 44 enum
+    // values are now mapped). The defensive throw inside the processor remains
+    // but cannot be exercised through the type system without reflection.
 
     @Test
     void process_shouldCreateRecordInStore() throws IOException {

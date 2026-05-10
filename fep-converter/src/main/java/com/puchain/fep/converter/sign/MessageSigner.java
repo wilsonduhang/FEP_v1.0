@@ -2,6 +2,7 @@ package com.puchain.fep.converter.sign;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.util.LogSanitizer;
+import com.puchain.fep.common.util.TextUtil;
 import com.puchain.fep.converter.exception.MessageConverterException;
 import com.puchain.fep.converter.xml.SignatureCommentCodec;
 import com.puchain.fep.converter.xml.SignatureRangeExtractor;
@@ -74,9 +75,7 @@ public class MessageSigner {
         if (log.isDebugEnabled()) {
             // CWE-117 CRLF 清洗，避免日志注入；只记录签名前 8 位防止签名值泄露
             String safeSig = LogSanitizer.sanitize(signature);
-            String sigPrefix = safeSig.length() > SIG_LOG_PREFIX_LENGTH
-                    ? safeSig.substring(0, SIG_LOG_PREFIX_LENGTH)
-                    : safeSig;
+            String sigPrefix = TextUtil.truncate(safeSig, SIG_LOG_PREFIX_LENGTH);
             log.debug("sign ok: range={} bytes, sigPrefix={}", data.length, sigPrefix);
         }
         return commentCodec.append(xml, signature);

@@ -29,7 +29,7 @@ class DataTransfer2101XsdValidationTest {
               </HEAD>
               <MSG>
                 <BatchHead2101>
-                  <SendOrgCode>0000000000000000</SendOrgCode>
+                  <SendOrgCode>00000000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead2101>
@@ -59,7 +59,7 @@ class DataTransfer2101XsdValidationTest {
               </HEAD>
               <MSG>
                 <BatchHead2101>
-                  <SendOrgCode>0000000000000000</SendOrgCode>
+                  <SendOrgCode>00000000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead2101>

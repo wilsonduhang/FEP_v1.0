@@ -1,5 +1,6 @@
 package com.puchain.fep.web.outbound.consumer;
 
+import com.puchain.fep.common.util.TextUtil;
 import com.puchain.fep.transport.api.SendResult;
 import com.puchain.fep.transport.api.TlqProducer;
 import com.puchain.fep.transport.model.TlqChannel;
@@ -69,9 +70,7 @@ public class OutboundTlqSender {
         final String rawResult = result.success()
             ? "ok:" + result.msgId()
             : "fail:" + result.error();
-        final String tlqResult = rawResult.length() > RESULT_MAX_LEN
-            ? rawResult.substring(0, RESULT_MAX_LEN)
-            : rawResult;
+        final String tlqResult = TextUtil.truncate(rawResult, RESULT_MAX_LEN);
         return new OutboundSendOutcome(result.success(), msgId, tlqResult);
     }
 
