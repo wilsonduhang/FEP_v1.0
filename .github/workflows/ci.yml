@@ -45,6 +45,12 @@ jobs:
           cache: 'maven'
 
       - name: Build and verify with quality gates
+        # CI runs the default Maven profile (no -P). The fep-transport
+        # module's tongtech/ sources and com.tongtech:* SDK dependencies are
+        # excluded by default (see fep-transport/pom.xml <profile id="tongtech">).
+        # The tongtech provider integration is verified locally via
+        # `./mvnw verify -P tongtech` after running scripts/install-tlq-sdk.sh.
+        # GHA runners do not have the TongLINK/Q SDK and must not require it.
         run: ./mvnw verify --batch-mode --no-transfer-progress
 
       - name: Upload JaCoCo reports
