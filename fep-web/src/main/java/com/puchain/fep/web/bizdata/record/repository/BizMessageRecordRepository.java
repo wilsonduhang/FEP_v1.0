@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository for {@link BizMessageRecord}.
@@ -33,6 +34,18 @@ public interface BizMessageRecordRepository
      * @return true if exists
      */
     boolean existsBySerialNo(String serialNo);
+
+    /**
+     * Find record by serial number for IT / runtime audit
+     * (P4-MSG-D-2101-consumer T2). Serial number is enforced unique
+     * at insert time by {@link #existsBySerialNo(String)} pre-flight
+     * inside {@code BizMessageRecordService.create}; this finder returns
+     * the single matching row or empty.
+     *
+     * @param serialNo unique serial number
+     * @return record if exists, else empty
+     */
+    Optional<BizMessageRecord> findBySerialNo(String serialNo);
 
     /**
      * Search records with optional filters.
