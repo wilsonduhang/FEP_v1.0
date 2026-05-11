@@ -4,6 +4,7 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.model.CfxMessage;
+import com.puchain.fep.converter.model.SerialNoBearing;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.converter.xml.JaxbContextCache;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
@@ -32,8 +33,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -236,31 +235,38 @@ public class InboundMessageDispatcher {
     }
 
     /**
-     * 从 body POJO 反射调用 {@code getSerialNo()}；body 为 null 或方法不存在时
-     * fallback 到 {@code transitionNo}。所有 P3 Phase 2 注册 body 都有此方法
-     * （grep 实测 BankCheckDay3116/PzCheckQuery3107/PzCheckQueryReturn3108/PlatPay3115）。
+     * 从 body POJO 提取业务 SerialNo；body 为 null、未实现
+     * {@link SerialNoBearing} 或 {@code getSerialNo()} 返回 null/empty 时
+     * fallback 到 {@code transitionNo}。
      *
-     * @param body         body POJO，可空
+     * <p>E-3 重构（2026-05-08）— 改用 {@code instanceof} 模式匹配替代反射 hot path。
+     * 仅 {@link #BODY_TYPE_REGISTRY} 注册的 6 个顶层 Body 实现该接口；
+     * ArchUnit 不变量 {@code InboundRegistryArchTest} 保证未来注册新 body
+     * 漏 implements 立即编译期/测试期被抓。</p>
+     *
+     * <p><b>无 LOG 路径</b>（v0.2 santa Round 1 Reviewer 提出）：旧反射版本对
+     * {@code NoSuchMethodException} / {@code IllegalAccessException} /
+     * {@code InvocationTargetException} 三类异常分别 LOG.debug / LOG.warn 诊断；
+     * 新版本 {@code instanceof} 类型守卫 + {@code String?.isEmpty()} 检查不会抛
+     * 异常，三条 catch 路径不可达，故 LOG 全部移除。注册漂移由
+     * {@code InboundRegistryArchTest} 编译期/测试期捕获，无需运行期日志。</p>
+     *
+     * <p>v0.3 修订（santa Round 2 Reviewer B'+C' S1/C12/F7）— private 改 package-private
+     * 让 {@code InboundMessageDispatcherSerialNoTest} 与 {@code InboundDispatcherSerialNoMicroBenchmark}
+     * 不需 Method.setAccessible+invoke 反射调用，benchmark 直接测 instanceof 真实代价
+     * （v0.2 反射 wrapper 主导测量使 P95 阈值断言 tautological）。视图：fep-web 内部
+     * service 包暴露 default 可见性，跨包仍不可见，封装隔离仍成立。</p>
+     *
+     * @param body         body POJO，可空；非 {@link SerialNoBearing} 时走 fallback
      * @param transitionNo 备用流水号，非空
      * @return 业务 serialNo（非 null）
      */
-    private static String extractSerialNo(final Object body, final String transitionNo) {
-        if (body == null) {
-            return transitionNo;
-        }
-        try {
-            final Method getter = body.getClass().getMethod("getSerialNo");
-            final Object value = getter.invoke(body);
-            if (value instanceof String s && !s.isEmpty()) {
-                return s;
+    static String extractSerialNo(final Object body, final String transitionNo) {
+        if (body instanceof SerialNoBearing s) {
+            String value = s.getSerialNo();
+            if (value != null && !value.isEmpty()) {
+                return value;
             }
-        } catch (NoSuchMethodException e) {
-            // body 类型未公开 getSerialNo，回退到 transitionNo
-            LOG.debug("body class={} lacks getSerialNo; fallback to transitionNo",
-                    body.getClass().getSimpleName());
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            LOG.warn("body getSerialNo invocation failed class={}",
-                    body.getClass().getSimpleName(), e);
         }
         return transitionNo;
     }

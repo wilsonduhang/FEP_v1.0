@@ -223,6 +223,8 @@
                 <version>0.8.12</version>
                 <configuration>
                     <excludes>
+                        <!-- 排除 E-3 micro-benchmark (避免 instrumentation 影响 nanoTime 测量) -->
+                        <exclude>**/InboundDispatcherSerialNoMicroBenchmark.class</exclude>
                         <!-- 排除 Spring 启动类 (无业务逻辑) -->
                         <exclude>**/FepApplication.class</exclude>
                         <!-- 排除 Spring Boot auto-configuration 类 (Spring 约定) -->
