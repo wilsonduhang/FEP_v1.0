@@ -1,6 +1,7 @@
 package com.puchain.fep.processor.body.batch;
 
 import com.puchain.fep.converter.model.CfxBody;
+import com.puchain.fep.converter.model.SerialNoBearing;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -29,7 +30,7 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "DataTransfer2101")
 @XmlType(propOrder = {"mainClass", "secondClass", "period", "type", "fileDate"})
-public class DataTransfer2101 extends CfxBody {
+public class DataTransfer2101 extends CfxBody implements SerialNoBearing {
 
     /** 业务大类（XSD MainClass，Token 2-16）。必填。 */
     @XmlElement(name = "MainClass", required = true)
@@ -89,5 +90,19 @@ public class DataTransfer2101 extends CfxBody {
 
     public void setFileDate(final String v) {
         this.fileDate = v;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>2101 业务体不携带 SerialNo（XSD {@code DataTransfer2101} sequence 仅 MainClass /
+     * SecondClass / Period / Type / FileDate，无 SerialNo 元素）— 业务流水号由 envelope
+     * 外层 {@code BatchHead2101}（类型 RequestBusinessHead）的 {@code RequestSerialNo}
+     * 字段承担。返回 {@code null} 触发 inbound dispatcher fallback 到 transitionNo，
+     * 与 sibling 2102/2103/2104 BATCH 响应体一致。</p>
+     */
+    @Override
+    public String getSerialNo() {
+        return null;
     }
 }

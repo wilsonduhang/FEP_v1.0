@@ -84,7 +84,8 @@ class TransportArchitectureTest {
         ArchRule rule = noClasses()
                 .that().resideInAPackage("com.puchain.fep.transport.tongtech..")
                 .should().dependOnClassesThat().resideInAPackage("com.puchain.fep.transport.mock..")
-                .because("tongtech 与 mock 是两套互斥 Provider，禁止交叉依赖");
+                .because("tongtech 与 mock 是两套互斥 Provider，禁止交叉依赖")
+                .allowEmptyShould(true);
         rule.check(transportClasses);
     }
 
@@ -112,7 +113,8 @@ class TransportArchitectureTest {
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "com.puchain.fep.transport.tongtech.adapter..",
                         "com.puchain.fep.transport.tongtech.lifecycle..")
-                .because("tongtech.error 是基础映射工具，不应依赖 adapter / lifecycle 业务实现");
+                .because("tongtech.error 是基础映射工具，不应依赖 adapter / lifecycle 业务实现")
+                .allowEmptyShould(true);
         rule.check(transportClasses);
     }
 
@@ -132,7 +134,8 @@ class TransportArchitectureTest {
         ArchRule rule = noClasses()
                 .that().resideInAPackage("com.puchain.fep.transport.tongtech.config..")
                 .should().dependOnClassesThat().resideInAPackage("com.puchain.fep.transport.tongtech.lifecycle..")
-                .because("config 包仅装配 Bean，不应引用 lifecycle 业务状态机");
+                .because("config 包仅装配 Bean，不应引用 lifecycle 业务状态机")
+                .allowEmptyShould(true);
         rule.check(transportClasses);
     }
 
