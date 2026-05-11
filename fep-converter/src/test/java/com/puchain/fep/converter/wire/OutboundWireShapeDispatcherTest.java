@@ -13,12 +13,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * {@link OutboundWireShapeDispatcher} 单元测试（P5 T3 + P4-MSG-B T4 扩展）。
  *
- * <p>覆盖 17 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16 含 6 BATCH，P4-MSG-D T3 起 17 含 1101）：</p>
+ * <p>覆盖 21 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16 含 6 BATCH，P4-MSG-D T3 起 17 含 1101，
+ * P4-MSG-E T2 起 21 含 4 realtime 1001/2001/1004/2004）：</p>
  * <ul>
- *   <li>3000/3007/3009 → RealHead{msgNo} + RequestBusinessHead + requiresResultCode=false</li>
+ *   <li>1001/1004/3000/3007/3009 → RealHead{msgNo} + RequestBusinessHead + requiresResultCode=false</li>
+ *   <li>2001/2004 → RealHead{msgNo} + ResponseBusinessHead + requiresResultCode=true（P4-MSG-E T2 新增类目）</li>
  *   <li>3101 → BatchHead3101 + ResponseBusinessHead + requiresResultCode=true</li>
  *   <li>3102/3105/3107/3109/3112/3116 → BatchHead{msgNo} + RequestBusinessHead + false</li>
- *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 17 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
+ *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 21 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
  * </ul>
  *
  * @author FEP Team
@@ -124,7 +126,7 @@ class OutboundWireShapeDispatcherTest {
     void isRegisteredOutboundMsgNo_6_batch_should_be_true() {
         for (String msgNo : new String[]{"1102", "1103", "1104", "2102", "2103", "2104"}) {
             assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
-                    .as("msgNo=%s 必须在 17 上行报文集合内（10 supplychain + 6 BATCH + 1101）", msgNo)
+                    .as("msgNo=%s 必须在 21 上行报文集合内（10 supplychain + 6 BATCH + 1101 + 4 realtime）", msgNo)
                     .isTrue();
         }
     }
@@ -149,8 +151,54 @@ class OutboundWireShapeDispatcherTest {
     @DisplayName("1101 → isRegisteredOutboundMsgNo true (P4-MSG-D T3)")
     void isRegisteredOutboundMsgNo_1101_should_be_true() {
         assertThat(dispatcher.isRegisteredOutboundMsgNo("1101"))
-                .as("1101 必须在 17 上行报文集合内（P4-MSG-D T3 注册）")
+                .as("1101 必须在 21 上行报文集合内（P4-MSG-D T3 注册）")
                 .isTrue();
+    }
+
+    @Test
+    @DisplayName("1001/1004 → RealHead{msgNo} + RequestBusinessHead + no result (P4-MSG-E T2)")
+    void describeFor_1001_1004_should_be_RealHead_RequestHead_no_result() {
+        for (String msgNo : new String[]{"1001", "1004"}) {
+            WireShapeDescriptor descriptor = dispatcher.describeFor(msgNo);
+
+            assertThat(descriptor.headElementName())
+                    .as("msgNo=%s headElementName (与 %s.xsd RealHead%s 一致)", msgNo, msgNo, msgNo)
+                    .isEqualTo("RealHead" + msgNo);
+            assertThat(descriptor.headClass())
+                    .as("msgNo=%s headClass (实时查询请求 → RequestBusinessHead)", msgNo)
+                    .isEqualTo(RequestBusinessHead.class);
+            assertThat(descriptor.requiresResultCode())
+                    .as("msgNo=%s requiresResultCode (1xxx 请求不带 ResultCode)", msgNo)
+                    .isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("2001/2004 → RealHead{msgNo} + ResponseBusinessHead + with result (P4-MSG-E T2 新类目)")
+    void describeFor_2001_2004_should_be_RealHead_ResponseHead_with_result() {
+        for (String msgNo : new String[]{"2001", "2004"}) {
+            WireShapeDescriptor descriptor = dispatcher.describeFor(msgNo);
+
+            assertThat(descriptor.headElementName())
+                    .as("msgNo=%s headElementName (与 %s.xsd RealHead%s 一致)", msgNo, msgNo, msgNo)
+                    .isEqualTo("RealHead" + msgNo);
+            assertThat(descriptor.headClass())
+                    .as("msgNo=%s headClass (实时查询回执 → ResponseBusinessHead，新类目 RealHead+Response)", msgNo)
+                    .isEqualTo(ResponseBusinessHead.class);
+            assertThat(descriptor.requiresResultCode())
+                    .as("msgNo=%s requiresResultCode (2xxx 回执含 ResultCode)", msgNo)
+                    .isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("4 realtime (1001/2001/1004/2004) → isRegisteredOutboundMsgNo true (P4-MSG-E T2)")
+    void isRegisteredOutboundMsgNo_realtimeQueryMsgs_should_be_true() {
+        for (String msgNo : new String[]{"1001", "2001", "1004", "2004"}) {
+            assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
+                    .as("msgNo=%s 必须在 21 上行报文集合内（P4-MSG-E T2 注册）", msgNo)
+                    .isTrue();
+        }
     }
 
     @Test
