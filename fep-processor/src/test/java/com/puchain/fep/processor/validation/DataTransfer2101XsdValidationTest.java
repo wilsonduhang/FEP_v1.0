@@ -145,16 +145,19 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
 
     @Test
     void invalid2101_fileDateNotMatchingPattern_shouldFail() {
+        // XSD Date pattern: [0-9]{4}(0[1-9]|1[0-2])([0-2][1-9]|[12][0-9]|3[01]) — lexical only,
+        // 不校验语义日期 (02/30 / 04/31 等会通过 pattern 校验)。negative case 必须用 lexical-detectable
+        // 越界：month 13 不在 (0[1-9]|1[0-2]) 范围内，会被 pattern reject。
         String xml = VALID_2101_XML.replace(
                 "<FileDate>20260509</FileDate>",
-                "<FileDate>20260230</FileDate>");
+                "<FileDate>20261301</FileDate>");
 
         ValidationResult result = validator.validate(MessageType.MSG_2101,
                 xml.getBytes(StandardCharsets.UTF_8));
 
         assertThat(result.valid()).isFalse();
         assertThat(result.errors())
-                .as("error must reference FileDate pattern violation (invalid calendar day 20260230)")
+                .as("error must reference FileDate pattern violation (invalid month 13)")
                 .isNotEmpty()
                 .anyMatch(e -> e.contains("FileDate"));
     }
