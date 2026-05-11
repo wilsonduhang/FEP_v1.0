@@ -522,8 +522,8 @@ class InboundMessageDispatcherTest {
         final InboundMessageProcessedEvent event = captor.getValue();
         assertThat(event.type()).isEqualTo(MessageType.MSG_2101);
         assertThat(event.transitionNo()).isEqualTo("20260509");
-        // DataTransfer2101 Body 无 SerialNo 字段（grep 实测 5 fields: mainClass/secondClass/period/type/fileDate），
-        // dispatcher.extractSerialNo line 240-258 走 NoSuchMethodException fallback 返回 transitionNo。
+        // DataTransfer2101 不实现 SerialNoBearing（5 fields: mainClass/secondClass/period/type/fileDate），
+        // dispatcher.extractSerialNo 通过 instanceof 类型守卫判定后走 fallback 返回 transitionNo（E-3 重构后无反射）。
         assertThat(event.serialNo())
                 .as("DataTransfer2101 lacks getSerialNo, dispatcher falls back to transitionNo")
                 .isEqualTo("20260509");

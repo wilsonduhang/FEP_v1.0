@@ -31,8 +31,9 @@ import org.springframework.test.context.TestPropertySource;
  *
  * <p><b>完整 e2e 流水（enqueue → consumer.poll → claim → envelope build → sign →
  * send → SENT）</b>由 Plan D closing 阶段（T5）的全 reactor verify 兜底验证 —
- * 既有 {@code P5OutboundEndToEndIntegrationTest} 的 e2e codepath 在 17 上行报文集合
- * （含 1101）下行为不变（dispatcher + registry 是 append-only lookup，不引入新分支）。</p>
+ * 既有 {@code P5OutboundEndToEndIntegrationTest} 的 e2e codepath 在 1101 加入既有
+ * {@code BatchHead+RequestBusinessHead+no-result} 分支（与 1102/1103/1104 同代码路径）后
+ * 行为不变，未引入新 wire-shape 形态；dispatcher + registry 维持 append-only lookup。</p>
  *
  * <p>命名沿用 sibling {@code Outbound3000WireTest} / {@code Outbound3007WireTest}
  * （{@code WireTest} 后缀以纳入 surefire 默认 include {@code *Test.java}，红线

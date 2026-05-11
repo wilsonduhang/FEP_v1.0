@@ -1,18 +1,36 @@
 package com.puchain.fep.processor.validation;
 
+import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.type.MessageType;
 import org.junit.jupiter.api.Test;
-import org.xml.sax.SAXParseException;
 
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Validator;
-import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class DataTransfer1101XsdValidationTest {
+/**
+ * XSD-driven validation tests for the 1101 (outbound DataTransfer) message body.
+ *
+ * <p>Coverage:</p>
+ * <ul>
+ *     <li>Valid 1101 XML with all required fields passes schema validation</li>
+ *     <li>Valid 1101 XML with optional {@code Parameters} omitted still passes</li>
+ *     <li>Invalid 1101 XML missing required {@code MainClass} is rejected</li>
+ *     <li>Invalid 1101 XML violating MainClass minLength=2 / SecondClass maxLength=16 /
+ *         Parameters maxLength=2000 / FileDate pattern is rejected
+ *         (红线 {@code feedback_xsd_validation_gap} +
+ *         {@code feedback_fixture_data_must_satisfy_xsd_constraints})</li>
+ *     <li>{@link XsdSchemaRegistry} resolves {@link MessageType#MSG_1101}</li>
+ * </ul>
+ *
+ * <p>R-2 (2026-05-07): 文本块内嵌入字面量 "A1000143000104" 是 HNDEMP 中心节点代码 fixture，与
+ * {@link FepConstants#HNDEMP_NODE_CODE} 同源。Java 文本块语法 (JEP 378) 不支持中段插入常量引用，
+ * 故保留字面量于 fixture XML；新写测试请 import {@code FepConstants} 并仅在 Java 表达式上下文中引用。</p>
+ *
+ * @author FEP Team
+ * @since 1.0.0
+ */
+class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -104,34 +122,103 @@ class DataTransfer1101XsdValidationTest {
             </CFX>
             """;
 
-    private final XsdSchemaRegistry registry = new XsdSchemaRegistry();
-
     @Test
-    void schema_should_validate_well_formed_1101_xml_with_all_fields() throws Exception {
-        Validator v = registry.schemaOf(MessageType.MSG_1101).newValidator();
-        v.validate(new StreamSource(new ByteArrayInputStream(
-                VALID_FULL_FIELDS_XML.getBytes(StandardCharsets.UTF_8))));
-        // 无异常即通过
+    void valid1101FullFields_shouldPass() {
+        ValidationResult result = validator.validate(MessageType.MSG_1101,
+                VALID_FULL_FIELDS_XML.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(result.valid()).isTrue();
+        assertThat(result.errors()).isEmpty();
     }
 
     @Test
-    void schema_should_validate_1101_xml_with_optional_parameters_omitted() throws Exception {
-        Validator v = registry.schemaOf(MessageType.MSG_1101).newValidator();
-        v.validate(new StreamSource(new ByteArrayInputStream(
-                VALID_OPTIONAL_OMITTED_XML.getBytes(StandardCharsets.UTF_8))));
+    void valid1101OptionalParametersOmitted_shouldPass() {
+        ValidationResult result = validator.validate(MessageType.MSG_1101,
+                VALID_OPTIONAL_OMITTED_XML.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(result.valid()).isTrue();
+        assertThat(result.errors()).isEmpty();
     }
 
     @Test
-    void schema_should_reject_1101_xml_missing_required_main_class() {
-        Validator v = registry.schemaOf(MessageType.MSG_1101).newValidator();
-        assertThatThrownBy(() -> v.validate(new StreamSource(new ByteArrayInputStream(
-                INVALID_MISSING_MAINCLASS_XML.getBytes(StandardCharsets.UTF_8)))))
-                .isInstanceOf(SAXParseException.class)
-                .hasMessageContaining("MainClass");
+    void invalid1101_missingMainClass_shouldFail() {
+        ValidationResult result = validator.validate(MessageType.MSG_1101,
+                INVALID_MISSING_MAINCLASS_XML.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors())
+                .as("error must reference missing MainClass field")
+                .isNotEmpty()
+                .anyMatch(e -> e.contains("MainClass"));
+    }
+
+    @Test
+    void invalid1101_mainClassShorterThanMinLength_shouldFail() {
+        String xml = VALID_FULL_FIELDS_XML.replace(
+                "<MainClass>LSDX</MainClass>",
+                "<MainClass>L</MainClass>");
+
+        ValidationResult result = validator.validate(MessageType.MSG_1101,
+                xml.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors())
+                .as("error must reference MainClass minLength=2 violation")
+                .isNotEmpty()
+                .anyMatch(e -> e.contains("MainClass"));
+    }
+
+    @Test
+    void invalid1101_secondClassLongerThanMaxLength_shouldFail() {
+        String xml = VALID_FULL_FIELDS_XML.replace(
+                "<SecondClass>LSDX01</SecondClass>",
+                "<SecondClass>LSDX0123456789ABZ</SecondClass>");
+
+        ValidationResult result = validator.validate(MessageType.MSG_1101,
+                xml.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors())
+                .as("error must reference SecondClass maxLength=16 violation")
+                .isNotEmpty()
+                .anyMatch(e -> e.contains("SecondClass"));
+    }
+
+    @Test
+    void invalid1101_parametersLongerThanMaxLength_shouldFail() {
+        final String overflowParams = "k=" + "v".repeat(1999);
+        String xml = VALID_FULL_FIELDS_XML.replace(
+                "<Parameters>k1=v1</Parameters>",
+                "<Parameters>" + overflowParams + "</Parameters>");
+
+        ValidationResult result = validator.validate(MessageType.MSG_1101,
+                xml.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors())
+                .as("error must reference Parameters maxLength=2000 violation")
+                .isNotEmpty()
+                .anyMatch(e -> e.contains("Parameters"));
+    }
+
+    @Test
+    void invalid1101_fileDateNotMatchingPattern_shouldFail() {
+        String xml = VALID_FULL_FIELDS_XML.replace(
+                "<FileDate>20260509</FileDate>",
+                "<FileDate>20260230</FileDate>");
+
+        ValidationResult result = validator.validate(MessageType.MSG_1101,
+                xml.getBytes(StandardCharsets.UTF_8));
+
+        assertThat(result.valid()).isFalse();
+        assertThat(result.errors())
+                .as("error must reference FileDate pattern violation (invalid calendar day 20260230)")
+                .isNotEmpty()
+                .anyMatch(e -> e.contains("FileDate"));
     }
 
     @Test
     void registry_should_supports_msg_1101() {
-        assertThat(registry.schemaOf(MessageType.MSG_1101)).isNotNull();
+        assertThat(new XsdSchemaRegistry().schemaOf(MessageType.MSG_1101)).isNotNull();
     }
 }
