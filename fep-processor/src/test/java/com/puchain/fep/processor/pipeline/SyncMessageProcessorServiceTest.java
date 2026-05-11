@@ -7,6 +7,7 @@ import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageStateMachine;
 import com.puchain.fep.processor.validation.XsdSchemaRegistry;
 import com.puchain.fep.processor.validation.XsdValidator;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -35,13 +36,26 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class SyncMessageProcessorServiceTest {
 
+    // XsdSchemaRegistry eagerly compiles all 44 XSDs (~hundreds of ms) and the
+    // resulting cache is immutable; XsdValidator is stateless (per-validate
+    // CollectingErrorHandler). Sharing them across the 6 tests avoids ~264
+    // redundant schema builds (6 × 44).
+    private static XsdSchemaRegistry registry;
+    private static XsdValidator validator;
+
     private SyncMessageProcessorService processor;
     private InMemoryMessageProcessStore store;
 
+    @BeforeAll
+    static void initSharedFixtures() {
+        registry = new XsdSchemaRegistry();
+        validator = new XsdValidator(registry);
+    }
+
     @BeforeEach
     void setUp() {
-        XsdSchemaRegistry registry = new XsdSchemaRegistry();
-        XsdValidator validator = new XsdValidator(registry);
+        // store is stateful (ConcurrentMap) — the duplicate-transitionNo test
+        // requires a clean instance per case, so machine/processor rebuild too.
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
         processor = new SyncMessageProcessorService(validator, machine, store);
