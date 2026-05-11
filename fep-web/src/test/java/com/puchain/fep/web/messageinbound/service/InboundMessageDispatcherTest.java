@@ -11,6 +11,12 @@ import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
 import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
+import com.puchain.fep.processor.body.supplychain.ProgressQuery3001;
+import com.puchain.fep.processor.body.supplychain.ProgressQueryReturn3002;
+import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
+import com.puchain.fep.processor.body.supplychain.PzInfoReturn3004;
+import com.puchain.fep.processor.body.supplychain.QyAccQuery3005;
+import com.puchain.fep.processor.body.supplychain.QyAccQueryReturn3006;
 import com.puchain.fep.processor.event.InboundMessageProcessedEvent;
 import com.puchain.fep.processor.pipeline.SyncMessageProcessorService;
 import com.puchain.fep.processor.state.MessageProcessRecord;
@@ -263,6 +269,157 @@ class InboundMessageDispatcherTest {
             </CFX>
             """;
 
+    /**
+     * Minimal CFX wrapper carrying a {@code ProgressQuery3001} body with only
+     * the leading {@code SerialNo} populated. P4-Plan-C T1 mirrors the 3007
+     * template shape: dispatcher unit test mocks {@link SyncMessageProcessorService}
+     * away, so XSD-validated full envelopes (with {@code RealHead3001} sibling)
+     * are out of scope here. Listener-side IT covers full envelope.
+     *
+     * <p>Root element {@code <ProgressQuery3001>} per XSD grep (PascalCase,
+     * not the camelCase exception that 3003-3006 use).</p>
+     */
+    private static final String VALID_3001_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<DesNode>B2000456000204</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3001</MsgNo>"
+                    + "<MsgId>20260509120000000001</MsgId>"
+                    + "<CorrMsgId></CorrMsgId>"
+                    + "<WorkDate>20260509</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<ProgressQuery3001>"
+                    + "<SerialNo>SN2026050900000000000000003001</SerialNo>"
+                    + "</ProgressQuery3001>"
+                    + "</MSG>"
+                    + "</CFX>";
+
+    /**
+     * Minimal CFX wrapper carrying a {@code ProgressQueryReturn3002} body.
+     * Root element {@code <ProgressQueryReturn3002>} per XSD grep (PascalCase).
+     */
+    private static final String VALID_3002_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<DesNode>B2000456000204</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3002</MsgNo>"
+                    + "<MsgId>20260509120000000002</MsgId>"
+                    + "<CorrMsgId>20260509120000000001</CorrMsgId>"
+                    + "<WorkDate>20260509</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<ProgressQueryReturn3002>"
+                    + "<SerialNo>SN2026050900000000000000003002</SerialNo>"
+                    + "</ProgressQueryReturn3002>"
+                    + "</MSG>"
+                    + "</CFX>";
+
+    /**
+     * Minimal CFX wrapper carrying a {@code PzInfoQuery3003} body.
+     * Root element {@code <pzInfoQuery3003>} per XSD grep (camelCase exception,
+     * leading lowercase). Plan v3 混合命名警告：不可凭"全 PascalCase"猜测。
+     */
+    private static final String VALID_3003_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<DesNode>B2000456000204</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3003</MsgNo>"
+                    + "<MsgId>20260509120000000003</MsgId>"
+                    + "<CorrMsgId></CorrMsgId>"
+                    + "<WorkDate>20260509</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<pzInfoQuery3003>"
+                    + "<SerialNo>SN2026050900000000000000003003</SerialNo>"
+                    + "</pzInfoQuery3003>"
+                    + "</MSG>"
+                    + "</CFX>";
+
+    /**
+     * Minimal CFX wrapper carrying a {@code PzInfoReturn3004} body.
+     * Root element {@code <pzInfoReturn3004>} per XSD grep (camelCase exception).
+     */
+    private static final String VALID_3004_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<DesNode>B2000456000204</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3004</MsgNo>"
+                    + "<MsgId>20260509120000000004</MsgId>"
+                    + "<CorrMsgId>20260509120000000003</CorrMsgId>"
+                    + "<WorkDate>20260509</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<pzInfoReturn3004>"
+                    + "<SerialNo>SN2026050900000000000000003004</SerialNo>"
+                    + "</pzInfoReturn3004>"
+                    + "</MSG>"
+                    + "</CFX>";
+
+    /**
+     * Minimal CFX wrapper carrying a {@code QyAccQuery3005} body.
+     * Root element {@code <qyAccQuery3005>} per XSD grep (camelCase exception).
+     */
+    private static final String VALID_3005_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<DesNode>B2000456000204</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3005</MsgNo>"
+                    + "<MsgId>20260509120000000005</MsgId>"
+                    + "<CorrMsgId></CorrMsgId>"
+                    + "<WorkDate>20260509</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<qyAccQuery3005>"
+                    + "<SerialNo>SN2026050900000000000000003005</SerialNo>"
+                    + "</qyAccQuery3005>"
+                    + "</MSG>"
+                    + "</CFX>";
+
+    /**
+     * Minimal CFX wrapper carrying a {@code QyAccQueryReturn3006} body.
+     * Root element {@code <qyAccQueryReturn3006>} per XSD grep (camelCase exception).
+     */
+    private static final String VALID_3006_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>A1000143000104</SrcNode>"
+                    + "<DesNode>B2000456000204</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3006</MsgNo>"
+                    + "<MsgId>20260509120000000006</MsgId>"
+                    + "<CorrMsgId>20260509120000000005</CorrMsgId>"
+                    + "<WorkDate>20260509</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<qyAccQueryReturn3006>"
+                    + "<SerialNo>SN2026050900000000000000003006</SerialNo>"
+                    + "</qyAccQueryReturn3006>"
+                    + "</MSG>"
+                    + "</CFX>";
+
     private SyncMessageProcessorService syncProcessor;
     private ApplicationEventPublisher eventPublisher;
     private InboundMessageDispatcher dispatcher;
@@ -362,16 +519,18 @@ class InboundMessageDispatcherTest {
     }
 
     @Test
-    @DisplayName("body type registry exposes 10 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104 + P4-MSG-D 2101)")
-    void bodyTypeRegistry_contains10Entries() {
+    @DisplayName("body type registry exposes 16 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104 + P4-MSG-D 2101 + P4-Plan-C 3001-3006)")
+    void bodyTypeRegistry_contains16Entries() {
         // grep-asserted (feedback_doc_data_grep_first): registry must expose
-        // exactly the 4 P3 Phase 2 messageTypes (3107/3108/3115/3116) plus the
-        // 2 P4-MSG-B-inbound InvoCheck messageTypes (3007/3008) plus the 3
-        // P4-MSG-A-inbound BATCH Response messageTypes (2102/2103/2104) plus
-        // the 1 P4-MSG-D T4 messageType (2101).
-        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(10);
+        // exactly the 4 P3 Phase 2 messageTypes (3107/3108/3115/3116), the
+        // 2 P4-MSG-B-inbound InvoCheck messageTypes (3007/3008), the 3
+        // P4-MSG-A-inbound BATCH Response messageTypes (2102/2103/2104), the
+        // 1 P4-MSG-D T4 messageType (2101), and the 6 P4-Plan-C SUPPLY_CHAIN
+        // BIDIRECTIONAL messageTypes (3001-3006).
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(16);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry())
                 .containsKeys("2101", "2102", "2103", "2104",
+                              "3001", "3002", "3003", "3004", "3005", "3006",
                               "3007", "3008", "3107", "3108", "3115", "3116");
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2101"))
                 .isEqualTo(DataTransfer2101.class);
@@ -381,6 +540,18 @@ class InboundMessageDispatcherTest {
                 .isEqualTo(CompanyInfoBatchResponse2103.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2104"))
                 .isEqualTo(CompanyAuthFileBatchResponse2104.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3001"))
+                .isEqualTo(ProgressQuery3001.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3002"))
+                .isEqualTo(ProgressQueryReturn3002.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3003"))
+                .isEqualTo(PzInfoQuery3003.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3004"))
+                .isEqualTo(PzInfoReturn3004.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3005"))
+                .isEqualTo(QyAccQuery3005.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3006"))
+                .isEqualTo(QyAccQueryReturn3006.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3116"))
                 .isEqualTo(BankCheckDay3116.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3007"))
@@ -622,5 +793,169 @@ class InboundMessageDispatcherTest {
         assertThat(event.body())
                 .as("dispatcher must publish typed CompanyAuthFileBatchResponse2104 body (P4-MSG-A-inbound T1)")
                 .isInstanceOf(CompanyAuthFileBatchResponse2104.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 3001 → publishEvent body is ProgressQuery3001 (FR-MSG-3001)")
+    void dispatch_3001_shouldPublishEventWithProgressQuery3001Body() {
+        final byte[] xml = VALID_3001_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-3001abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3001, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3001), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3001", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3001);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        // 3001 Body POJO has getSerialNo() — dispatcher extractSerialNo walks
+        // the positive path and returns the <SerialNo> text from the fixture
+        // XML (T1.1 grep sanity check: 6/6 SUPPLY_CHAIN BIDIRECTIONAL bodies
+        // expose getSerialNo). NOT the transitionNo fallback.
+        assertThat(event.serialNo()).isEqualTo("SN2026050900000000000000003001");
+        assertThat(event.body())
+                .as("dispatcher must publish typed ProgressQuery3001 body (P4-Plan-C T1 wire-in)")
+                .isInstanceOf(ProgressQuery3001.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 3002 → publishEvent body is ProgressQueryReturn3002 (FR-MSG-3002)")
+    void dispatch_3002_shouldPublishEventWithProgressQueryReturn3002Body() {
+        final byte[] xml = VALID_3002_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-3002abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3002, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3002), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3002", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3002);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        assertThat(event.serialNo()).isEqualTo("SN2026050900000000000000003002");
+        assertThat(event.body())
+                .as("dispatcher must publish typed ProgressQueryReturn3002 body (P4-Plan-C T1 wire-in)")
+                .isInstanceOf(ProgressQueryReturn3002.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 3003 → publishEvent body is PzInfoQuery3003 (FR-MSG-3003)")
+    void dispatch_3003_shouldPublishEventWithPzInfoQuery3003Body() {
+        final byte[] xml = VALID_3003_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-3003abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3003, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3003), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3003", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3003);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        assertThat(event.serialNo()).isEqualTo("SN2026050900000000000000003003");
+        assertThat(event.body())
+                .as("dispatcher must publish typed PzInfoQuery3003 body (P4-Plan-C T1 wire-in, "
+                        + "camelCase root <pzInfoQuery3003> per XSD)")
+                .isInstanceOf(PzInfoQuery3003.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 3004 → publishEvent body is PzInfoReturn3004 (FR-MSG-3004)")
+    void dispatch_3004_shouldPublishEventWithPzInfoReturn3004Body() {
+        final byte[] xml = VALID_3004_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-3004abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3004, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3004), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3004", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3004);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        assertThat(event.serialNo()).isEqualTo("SN2026050900000000000000003004");
+        assertThat(event.body())
+                .as("dispatcher must publish typed PzInfoReturn3004 body (P4-Plan-C T1 wire-in, "
+                        + "camelCase root <pzInfoReturn3004> per XSD)")
+                .isInstanceOf(PzInfoReturn3004.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 3005 → publishEvent body is QyAccQuery3005 (FR-MSG-3005)")
+    void dispatch_3005_shouldPublishEventWithQyAccQuery3005Body() {
+        final byte[] xml = VALID_3005_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-3005abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3005, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3005), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3005", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3005);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        assertThat(event.serialNo()).isEqualTo("SN2026050900000000000000003005");
+        assertThat(event.body())
+                .as("dispatcher must publish typed QyAccQuery3005 body (P4-Plan-C T1 wire-in, "
+                        + "camelCase root <qyAccQuery3005> per XSD)")
+                .isInstanceOf(QyAccQuery3005.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 3006 → publishEvent body is QyAccQueryReturn3006 (FR-MSG-3006)")
+    void dispatch_3006_shouldPublishEventWithQyAccQueryReturn3006Body() {
+        final byte[] xml = VALID_3006_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-3006abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3006, "20260509", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3006), eq("20260509"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3006", "20260509", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3006);
+        assertThat(event.transitionNo()).isEqualTo("20260509");
+        assertThat(event.serialNo()).isEqualTo("SN2026050900000000000000003006");
+        assertThat(event.body())
+                .as("dispatcher must publish typed QyAccQueryReturn3006 body (P4-Plan-C T1 wire-in, "
+                        + "camelCase root <qyAccQueryReturn3006> per XSD)")
+                .isInstanceOf(QyAccQueryReturn3006.class);
     }
 }
