@@ -65,13 +65,19 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <!--
-                        Default profile excludes tongtech/ sources to avoid compile errors
-                        when com.tongtech:* SDK jars are not available (e.g. GHA CI without
-                        scripts/install-tlq-sdk.sh). Activate `-P tongtech` to include.
+                        Default profile excludes tongtech/ main sources AND test sources to
+                        avoid compile errors when com.tongtech:* SDK jars are not available
+                        (e.g. GHA CI without scripts/install-tlq-sdk.sh). Activate `-P tongtech`
+                        to include both. Note: <excludes> targets main compile goal only;
+                        <testExcludes> is the symmetric counterpart for the testCompile goal —
+                        Maven Compiler Plugin treats them as independent parameters.
                     -->
                     <excludes>
                         <exclude>com/puchain/fep/transport/tongtech/**</exclude>
                     </excludes>
+                    <testExcludes>
+                        <testExclude>com/puchain/fep/transport/tongtech/**</testExclude>
+                    </testExcludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -114,11 +120,12 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
                             <!--
-                                Re-include tongtech/ sources when this profile is active.
-                                Maven plugin configuration merging: this empty <excludes>
-                                overrides the default profile's exclude pattern above.
+                                Re-include tongtech/ main + test sources when this profile is
+                                active. Maven plugin configuration merging: empty <excludes>
+                                and <testExcludes> override the default profile's patterns above.
                             -->
                             <excludes combine.self="override"/>
+                            <testExcludes combine.self="override"/>
                         </configuration>
                     </plugin>
                     <plugin>
