@@ -16,6 +16,23 @@ import java.io.InputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Unit tests for {@link SyncMessageProcessorService} — synchronous message
+ * pipeline coordinating XSD validation, state machine transitions, and process
+ * record persistence.
+ *
+ * <p>Coverage:</p>
+ * <ul>
+ *     <li>Outbound: valid message completes; invalid XML fails with {@link com.puchain.fep.common.exception.FepBusinessException}</li>
+ *     <li>Inbound: valid message completes</li>
+ *     <li>Deduplication: duplicate {@code transitionNo} is rejected</li>
+ *     <li>Defensive: null inputs are rejected</li>
+ *     <li>State store: process record is created in the {@link com.puchain.fep.processor.state.InMemoryMessageProcessStore}</li>
+ * </ul>
+ *
+ * @author FEP Team
+ * @since 1.0.0
+ */
 class SyncMessageProcessorServiceTest {
 
     private SyncMessageProcessorService processor;

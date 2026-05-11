@@ -13,6 +13,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Unit tests for {@link XsdSchemaRegistry} — central registry of compiled XSD
+ * {@link Schema} instances keyed by {@link MessageType}.
+ *
+ * <p>Coverage:</p>
+ * <ul>
+ *     <li>{@code schemaOf} returns non-null for every registered {@link MessageType}</li>
+ *     <li>{@code schemaOf} caches compiled {@link Schema} instances (identity equality)</li>
+ *     <li>{@code schemaOf} is thread-safe under concurrent access</li>
+ * </ul>
+ *
+ * @author FEP Team
+ * @since 1.0.0
+ */
 class XsdSchemaRegistryTest {
 
     private static final List<MessageType> SUPPORTED = List.of(

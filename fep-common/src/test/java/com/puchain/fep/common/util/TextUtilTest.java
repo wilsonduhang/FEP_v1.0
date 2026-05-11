@@ -77,7 +77,6 @@ class TextUtilTest {
     @Test
     void truncate_zeroMaxWithNullStringThrowsIllegalArgument() {
         assertThrows(IllegalArgumentException.class,
-                () -> TextUtil.truncate(null, 0),
-                "max validation runs before null check");
+                () -> TextUtil.truncate(null, 0));
     }
 }

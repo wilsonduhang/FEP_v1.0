@@ -45,7 +45,9 @@ class OutboundHeadXmlParserTest {
                 + "</OutboundHeadFields>";
         assertThatThrownBy(() -> OutboundHeadXmlParser.parse(xml))
                 .isInstanceOf(FepBusinessException.class)
-                .hasMessageContaining("entrustDate");
+                .hasMessageContaining("entrustDate")
+                .extracting("errorCode")
+                .isEqualTo(FepErrorCode.OUTBOUND_5106_HEAD_FIELDS_INVALID);
     }
 
     @Test
@@ -56,7 +58,9 @@ class OutboundHeadXmlParserTest {
                 + "</OutboundHeadFields>";
         assertThatThrownBy(() -> OutboundHeadXmlParser.parse(xml))
                 .isInstanceOf(FepBusinessException.class)
-                .hasMessageContaining("transitionNo");
+                .hasMessageContaining("transitionNo")
+                .extracting("errorCode")
+                .isEqualTo(FepErrorCode.OUTBOUND_5106_HEAD_FIELDS_INVALID);
     }
 
     @Test
