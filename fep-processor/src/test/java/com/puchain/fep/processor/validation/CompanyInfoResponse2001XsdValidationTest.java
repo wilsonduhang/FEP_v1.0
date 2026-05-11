@@ -100,7 +100,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
 
     /**
      * 错误回执场景：head 仅 Result+AddWord 错误码描述，body element 整段缺失
-     * (XSD 1001.xsd body minOccurs="0" 允许)。
+     * (XSD 2001.xsd:36 CompanyInfoResponse2001 minOccurs="0" 允许)。
      */
     private static final String VALID_EMPTY_BODY_XML = """
             <?xml version="1.0" encoding="UTF-8"?>

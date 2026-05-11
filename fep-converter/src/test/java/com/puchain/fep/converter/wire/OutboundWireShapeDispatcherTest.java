@@ -204,7 +204,7 @@ class OutboundWireShapeDispatcherTest {
     @Test
     @DisplayName("invalid msgNo throws FepBusinessException with OUTBOUND_5108")
     void describeFor_invalid_msgNo_should_throw_5108() {
-        // 4 位数字但不在 17 集合
+        // 4 位数字但不在 21 集合
         assertThatThrownBy(() -> dispatcher.describeFor("9999"))
                 .isInstanceOf(FepBusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", FepErrorCode.OUTBOUND_5108_MSGNO_INVALID);
