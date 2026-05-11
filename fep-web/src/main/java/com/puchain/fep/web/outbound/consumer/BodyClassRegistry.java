@@ -9,6 +9,10 @@ import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
 import com.puchain.fep.processor.body.batch.DataTransfer1101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
+import com.puchain.fep.processor.body.realtime.CompanyAuthFileResponse2004;
+import com.puchain.fep.processor.body.realtime.CompanyAuthFileTransfer1004;
+import com.puchain.fep.processor.body.realtime.CompanyInfoRequest1001;
+import com.puchain.fep.processor.body.realtime.CompanyInfoResponse2001;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
@@ -30,10 +34,14 @@ import java.util.Map;
  * P4-MSG-A / P4-MSG-B / P4-MSG-C 阶段陆续 append-only 增加报文。当前注册（按 msgNo 升序）：</p>
  *
  * <ul>
+ *   <li>1001 → {@link CompanyInfoRequest1001}（企业信息实时查询请求，P4-MSG-E T1）</li>
+ *   <li>1004 → {@link CompanyAuthFileTransfer1004}（企业信息查询授权书发送，P4-MSG-E T1）</li>
  *   <li>1101 → {@link DataTransfer1101}（外联机构数据报送，P4-MSG-D T3）</li>
  *   <li>1102 → {@link DataTransferCheckBatchRequest1102}（外联机构数据报送核对请求，P4-MSG-A）</li>
  *   <li>1103 → {@link CompanyInfoBatchRequest1103}（企业信息批量查询请求，P4-MSG-A）</li>
  *   <li>1104 → {@link CompanyAuthFileBatchTransfer1104}（企业信息查询授权书批量发送，P4-MSG-A）</li>
+ *   <li>2001 → {@link CompanyInfoResponse2001}（企业信息实时查询回执，P4-MSG-E T1）</li>
+ *   <li>2004 → {@link CompanyAuthFileResponse2004}（企业信息查询授权书回执，P4-MSG-E T1）</li>
  *   <li>2102 → {@link DataTransferCheckBatchResponse2102}（数据报送核对回执，P4-MSG-A）</li>
  *   <li>2103 → {@link CompanyInfoBatchResponse2103}（企业信息批量查询回执，P4-MSG-A）</li>
  *   <li>2104 → {@link CompanyAuthFileBatchResponse2104}（授权书批量回执，P4-MSG-A）</li>
@@ -53,8 +61,9 @@ import java.util.Map;
  * {@code HxqyInfo3109}）。本注册表选取主类对齐 PRD §4.6 上行/下行映射；备用类由其他业务路径
  * 单独消费。</p>
  *
- * <p>本 Plan D T3 起 1101 已注册（P4-MSG-D T3）；不再有未实现的 outbound Body POJO（除 9XXX 通用报文外）。
- * 1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册；3000 已于 Plan B T4 注册。</p>
+ * <p>本 Plan E T1 起 1001/2001/1004/2004 已注册（P4-MSG-E T1，企业查询 8/12→12/12 收尾）；21 entries /
+ * 下一阶段（P4-MSG-F+）处理 9XXX 通用报文与 supplychain 剩余。
+ * 1101 于 P4-MSG-D T3 注册；1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册；3000 已于 Plan B T4 注册。</p>
  *
  * <p>未注册 msgNo（含 {@code null}）抛 {@link FepBusinessException} +
  * {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}。</p>
@@ -67,10 +76,14 @@ public class BodyClassRegistry {
 
     /** 不可变，无 entry 数上限（{@link Map#ofEntries}）。 */
     private static final Map<String, Class<?>> REGISTRY = Map.ofEntries(
+            Map.entry("1001", CompanyInfoRequest1001.class),
+            Map.entry("1004", CompanyAuthFileTransfer1004.class),
             Map.entry("1101", DataTransfer1101.class),
             Map.entry("1102", DataTransferCheckBatchRequest1102.class),
             Map.entry("1103", CompanyInfoBatchRequest1103.class),
             Map.entry("1104", CompanyAuthFileBatchTransfer1104.class),
+            Map.entry("2001", CompanyInfoResponse2001.class),
+            Map.entry("2004", CompanyAuthFileResponse2004.class),
             Map.entry("2102", DataTransferCheckBatchResponse2102.class),
             Map.entry("2103", CompanyInfoBatchResponse2103.class),
             Map.entry("2104", CompanyAuthFileBatchResponse2104.class),

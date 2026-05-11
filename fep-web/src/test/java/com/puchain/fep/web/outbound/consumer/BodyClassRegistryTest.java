@@ -9,6 +9,10 @@ import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
 import com.puchain.fep.processor.body.batch.DataTransfer1101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
+import com.puchain.fep.processor.body.realtime.CompanyAuthFileResponse2004;
+import com.puchain.fep.processor.body.realtime.CompanyAuthFileTransfer1004;
+import com.puchain.fep.processor.body.realtime.CompanyInfoRequest1001;
+import com.puchain.fep.processor.body.realtime.CompanyInfoResponse2001;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
@@ -33,9 +37,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * P5 T4 Step 1 — {@link BodyClassRegistry} 单元测试。
  *
- * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，含 3000 + 3007 + 6 BATCH + 1101）：</p>
+ * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，P4-MSG-E T1 起 21 entries，含 3000 + 3007 + 6 BATCH + 1101 + 4 realtime）：</p>
  * <ul>
- *   <li>17 上行报文 msgNo → Body POJO Class 主映射 hits</li>
+ *   <li>21 上行报文 msgNo → Body POJO Class 主映射 hits</li>
  *   <li>未注册 msgNo（"9999" / null）→ {@link FepBusinessException} +
  *       {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}</li>
  * </ul>
@@ -146,6 +150,30 @@ class BodyClassRegistryTest {
     }
 
     @Test
+    @DisplayName("1001 → CompanyInfoRequest1001.class（企业信息实时查询请求，P4-MSG-E T1）")
+    void resolve_1001_returnsCompanyInfoRequest1001() {
+        assertThat(registry.resolve("1001")).isEqualTo(CompanyInfoRequest1001.class);
+    }
+
+    @Test
+    @DisplayName("2001 → CompanyInfoResponse2001.class（企业信息实时查询回执，P4-MSG-E T1）")
+    void resolve_2001_returnsCompanyInfoResponse2001() {
+        assertThat(registry.resolve("2001")).isEqualTo(CompanyInfoResponse2001.class);
+    }
+
+    @Test
+    @DisplayName("1004 → CompanyAuthFileTransfer1004.class（企业信息查询授权书发送，P4-MSG-E T1）")
+    void resolve_1004_returnsCompanyAuthFileTransfer1004() {
+        assertThat(registry.resolve("1004")).isEqualTo(CompanyAuthFileTransfer1004.class);
+    }
+
+    @Test
+    @DisplayName("2004 → CompanyAuthFileResponse2004.class（企业信息查询授权书回执，P4-MSG-E T1）")
+    void resolve_2004_returnsCompanyAuthFileResponse2004() {
+        assertThat(registry.resolve("2004")).isEqualTo(CompanyAuthFileResponse2004.class);
+    }
+
+    @Test
     void resolve_invalid_msgNo_should_throw_5107() {
         assertThatThrownBy(() -> registry.resolve("9999"))
                 .isInstanceOf(FepBusinessException.class)
@@ -162,19 +190,20 @@ class BodyClassRegistryTest {
     }
 
     /**
-     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
+     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 + P4-MSG-E T1 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
      *
      * <p>P4-MSG-B T0 完成 refactor（Map.of → Map.ofEntries，行为不变 8 entries）；T1 append
      * 3007 → {@link InvoCheckQuery3007}（8 → 9）；T4 append 3000 → {@link DzpzInfo3000}（9 → 10）；
-     * P4-MSG-A T2 +6 BATCH（10 → 16）；P4-MSG-D T3 +1101 → {@link DataTransfer1101}（16 → 17）。
+     * P4-MSG-A T2 +6 BATCH（10 → 16）；P4-MSG-D T3 +1101 → {@link DataTransfer1101}（16 → 17）；
+     * P4-MSG-E T1 +4 realtime 1001/2001/1004/2004（17 → 21）。
      * source code 必须保持用 {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常
      */
     @Test
-    void registry_shouldUseMapOfEntries_supportingMoreThan17Entries() throws Exception {
-        // 1. entry 数 17（P4-MSG-D T3 +1101 后；后续 Task 继续 append）
-        assertThat(countRegistryEntries()).isEqualTo(17);
+    void registry_shouldUseMapOfEntries_supportingMoreThan21Entries() throws Exception {
+        // 1. entry 数 21（P4-MSG-E T1 +1001/1004/2001/2004 后；后续 Task 继续 append）
+        assertThat(countRegistryEntries()).isEqualTo(21);
 
         // 2. source 含 Map.ofEntries(
         final String source = Files.readString(Paths.get(
