@@ -1,6 +1,7 @@
 package com.puchain.fep.processor.body.supplychain;
 
 import com.puchain.fep.converter.model.CfxBody;
+import com.puchain.fep.converter.model.SerialNoBearing;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -27,7 +28,7 @@ import jakarta.xml.bind.annotation.XmlType;
         "serialNo", "sendNodeCode", "desNodeCode",
         "hxqyName", "hxqyCode", "pzNo", "extInfo"
 })
-public class PzInfoQuery3003 extends CfxBody {
+public class PzInfoQuery3003 extends CfxBody implements SerialNoBearing {
 
     @XmlElement(name = "SerialNo", required = true)
     private String serialNo;

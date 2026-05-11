@@ -15,9 +15,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 注册的所有 Body class 必须 {@code implements SerialNoBearing}。
  *
  * <p>未来 P4 / P5 阶段注册新 inbound body 时，若漏 implements，本测试立即抓到。
- * 现状（2026-05-11）注册 10 个：2101（HNDEMP→外联 数据推送，P4-MSG-D T4，返回 null）
- * + 2102/2103/2104（BATCH 响应，T2-ext 实现返回 null）
- * + 3007/3008/3107/3108/3115/3116（单条业务体，T2 base 实现返回 SerialNo 字段）。</p>
+ * 现状（2026-05-11，P4-Plan-C T1.5 同步）注册 16 个：
+ * 2101（P4-MSG-D T4 数据推送，T2-ext 实现返回 null）+
+ * 2102/2103/2104（P4-MSG-A-inbound BATCH 响应，T2-ext 实现返回 null）+
+ * 3001/3002/3003/3004/3005/3006（P4-Plan-C SUPPLY_CHAIN BIDIRECTIONAL 业务体，
+ *   T2 base 实现返回 SerialNo 字段）+
+ * 3007/3008/3107/3108/3115/3116（P4-MSG-B-inbound / P3 Phase 2 单条业务体，
+ *   T2 base 实现返回 SerialNo 字段）。</p>
  *
  * <p><b>实现策略</b>: 不用 ArchUnit DSL（DSL 描述"所有被 X 引用的类"较绕），直接读
  * dispatcher 暴露的 {@link InboundMessageDispatcher#bodyTypeRegistry()} 公开方法，
@@ -43,15 +47,16 @@ class InboundRegistryArchTest {
     }
 
     @Test
-    void registry_currentSnapshot_hasTenEntries() {
-        // Snapshot guard — 提示开发者注册新 body 时同步更新 SerialNoBearingComplianceTest
-        // 10 项 = 1 推送（2101，null fallback）+ 3 BATCH（2102/2103/2104，null fallback）
-        //   + 6 单条（3007/3008/3107/3108/3115/3116，返回 SerialNo 字段）
+    void registry_currentSnapshot_hasSixteenEntries() {
+        // Snapshot guard — 提示开发者注册新 body 时同步更新 SerialNoBearingComplianceTest.
+        // 16 项 = 1 P4-MSG-D（2101，null fallback）+ 3 P4-MSG-A-inbound BATCH（2102/2103/2104，
+        // null fallback）+ 6 P4-Plan-C（3001/3002/3003/3004/3005/3006，单条业务体）+
+        // 6 P4-MSG-B-inbound / P3 Phase 2（3007/3008/3107/3108/3115/3116，单条业务体）。
         Map<String, Class<?>> registry = InboundMessageDispatcher.bodyTypeRegistry();
-        assertThat(registry).hasSize(10);
+        assertThat(registry).hasSize(16);
         assertThat(registry).containsKeys(
-                "2101",
-                "2102", "2103", "2104",
+                "2101", "2102", "2103", "2104",
+                "3001", "3002", "3003", "3004", "3005", "3006",
                 "3007", "3008", "3107", "3108", "3115", "3116");
     }
 }

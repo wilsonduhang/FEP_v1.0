@@ -1,6 +1,7 @@
 package com.puchain.fep.processor.body.supplychain;
 
 import com.puchain.fep.converter.model.CfxBody;
+import com.puchain.fep.converter.model.SerialNoBearing;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import com.puchain.fep.processor.body.common.PzInfo;
 import com.puchain.fep.processor.body.common.PzrzStatusInfo;
@@ -43,7 +44,7 @@ import java.util.List;
         "pzrzStatusInfo", "riskRateList", "edUpdateDateTime",
         "pzInfo", "zpzAllInfoList", "extInfo"
 })
-public class PzInfoReturn3004 extends CfxBody {
+public class PzInfoReturn3004 extends CfxBody implements SerialNoBearing {
 
     @XmlElement(name = "SerialNo", required = true)
     private String serialNo;
