@@ -33,17 +33,14 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- TongLINK/Q SDK (installed via scripts/install-tlq-sdk.sh, see P1c §3.2). -->
-        <dependency>
-            <groupId>com.tongtech</groupId>
-            <artifactId>tlclient</artifactId>
-            <version>8.1.15.2-P3</version>
-        </dependency>
-        <dependency>
-            <groupId>com.tongtech</groupId>
-            <artifactId>tlq-remote-api</artifactId>
-            <version>8.1.15.2-P3</version>
-        </dependency>
+        <!--
+            TongLINK/Q SDK dependencies are moved into the <profile id="tongtech"> below.
+            Reason: tlclient.jar / tlq-remote-api.jar are not published to Maven Central
+            (商业 license, installed locally via scripts/install-tlq-sdk.sh per P1c §3.2).
+            GHA CI runs without `-P tongtech` and must not require these jars.
+            Production / integration runs use `./mvnw verify -P tongtech`.
+            See: docs/plans/2026-05-11-ci-tongtech-profile-isolation.md
+        -->
 
         <dependency>
             <groupId>org.mockito</groupId>
@@ -61,4 +58,77 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!--
+                        Default profile excludes tongtech/ sources to avoid compile errors
+                        when com.tongtech:* SDK jars are not available (e.g. GHA CI without
+                        scripts/install-tlq-sdk.sh). Activate `-P tongtech` to include.
+                    -->
+                    <excludes>
+                        <exclude>com/puchain/fep/transport/tongtech/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!--
+                        Default profile excludes tongtech/ tests for the same reason
+                        as the compiler excludes above. Activate `-P tongtech` to include.
+                    -->
+                    <excludes>
+                        <exclude>**/tongtech/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>tongtech</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <!-- TongLINK/Q SDK (installed via scripts/install-tlq-sdk.sh, see P1c §3.2). -->
+                <dependency>
+                    <groupId>com.tongtech</groupId>
+                    <artifactId>tlclient</artifactId>
+                    <version>8.1.15.2-P3</version>
+                </dependency>
+                <dependency>
+                    <groupId>com.tongtech</groupId>
+                    <artifactId>tlq-remote-api</artifactId>
+                    <version>8.1.15.2-P3</version>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <!--
+                                Re-include tongtech/ sources when this profile is active.
+                                Maven plugin configuration merging: this empty <excludes>
+                                overrides the default profile's exclude pattern above.
+                            -->
+                            <excludes combine.self="override"/>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.self="override"/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
