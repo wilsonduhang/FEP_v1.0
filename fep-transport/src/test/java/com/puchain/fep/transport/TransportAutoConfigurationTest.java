@@ -14,7 +14,6 @@ import com.puchain.fep.transport.mock.InMemoryTlqProducer;
 import com.puchain.fep.transport.mock.MockProducerConfiguration;
 import com.puchain.fep.transport.support.MessageDeduplicator;
 import com.puchain.fep.transport.support.QueueNameResolver;
-import com.puchain.fep.transport.tongtech.config.TongtechTransportConfiguration;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -103,7 +102,7 @@ class TransportAutoConfigurationTest {
      */
     @Configuration
     @EnableAutoConfiguration
-    @Import({TransportAutoConfiguration.class, TongtechTransportConfiguration.class, MockProducerConfiguration.class})
+    @Import({TransportAutoConfiguration.class, MockProducerConfiguration.class})
     @ComponentScan(basePackages = "com.puchain.fep.transport")
     static class TestConfig {
     }

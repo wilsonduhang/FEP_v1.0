@@ -3,7 +3,6 @@ package com.puchain.fep.transport.mock;
 import com.puchain.fep.transport.TransportAutoConfiguration;
 import com.puchain.fep.transport.api.RetryableProducer;
 import com.puchain.fep.transport.api.TlqProducer;
-import com.puchain.fep.transport.tongtech.config.TongtechTransportConfiguration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -21,7 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ul>
  *   <li>The {@code @Primary TlqProducer} bean is a {@link RetryableProducer} instance
  *       wrapping the underlying {@link InMemoryTlqProducer} on the mock provider path
- *       (mirrors {@link com.puchain.fep.transport.tongtech.config.TongtechProducerConfiguration})</li>
+ *       (the tongtech counterpart is verified in -P tongtech profile tests, not here —
+ *       default profile excludes tongtech/ sources per pom.xml profile config)</li>
  *   <li>The named bean {@code inMemoryTlqProducer} is independently injectable for
  *       direct mock-broker assertions in tests</li>
  *   <li>{@link InMemoryTlqProducer} is registered exclusively via
@@ -66,7 +66,7 @@ class MockProducerConfigTest {
      */
     @Configuration
     @EnableAutoConfiguration
-    @Import({TransportAutoConfiguration.class, TongtechTransportConfiguration.class})
+    @Import({TransportAutoConfiguration.class})
     @ComponentScan(basePackages = "com.puchain.fep.transport")
     static class TestConfig {
     }
