@@ -240,9 +240,11 @@ public class InboundMessageDispatcher {
      * fallback 到 {@code transitionNo}。
      *
      * <p>E-3 重构（2026-05-08）— 改用 {@code instanceof} 模式匹配替代反射 hot path。
-     * 仅 {@link #BODY_TYPE_REGISTRY} 注册的 6 个顶层 Body 实现该接口；
-     * ArchUnit 不变量 {@code InboundRegistryArchTest} 保证未来注册新 body
-     * 漏 implements 立即编译期/测试期被抓。</p>
+     * {@link #BODY_TYPE_REGISTRY} 注册的 body 中实现该接口的子集走类型守卫分支；
+     * 不实现该接口的 body（如 {@code DataTransfer2101} 等无业务 SerialNo 字段者）
+     * 走 fallback 返回 {@code transitionNo}。注册漂移由 ArchUnit 不变量
+     * {@code InboundRegistryArchTest} 保证未来注册新 body 漏 implements 立即
+     * 编译期/测试期被抓（具体实现者集合以 grep {@code implements SerialNoBearing} 实测为准）。</p>
      *
      * <p><b>无 LOG 路径</b>（v0.2 santa Round 1 Reviewer 提出）：旧反射版本对
      * {@code NoSuchMethodException} / {@code IllegalAccessException} /
