@@ -37,11 +37,16 @@ class SyncMessageProcessorServiceTest {
 
     // E-NIT-7: registry + validator promoted to module-level static singletons
     // on {@link AbstractXsdValidationTest}. XsdSchemaRegistry eager-compiles
-    // 44 XSDs (~hundreds of ms) with an immutable cache; XsdValidator is
-    // stateless (per-validate CollectingErrorHandler). Sharing one instance
-    // across all fep-processor test classes (Surefire default forkCount=1
-    // reuseForks=true → single JVM per module) eliminates 264+ redundant
-    // schema builds module-wide.
+    // 44 XSDs (~hundreds of ms) with an immutable cache (Map.copyOf) — sharing
+    // the registry amortizes this eager-load cost across all 6 tests in this
+    // class and across the entire fep-processor module (Surefire default
+    // forkCount=1 reuseForks=true → single JVM per module), eliminating
+    // 264+ redundant schema builds module-wide.
+    //
+    // XsdValidator is stateless (each validate() call creates a fresh
+    // CollectingErrorHandler) — sharing the validator instance is incidental
+    // and yields no measurable timing benefit, only convenience. The real win
+    // is registry sharing.
 
     private SyncMessageProcessorService processor;
     private InMemoryMessageProcessStore store;
