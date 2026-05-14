@@ -5,9 +5,8 @@ import com.puchain.fep.processor.state.InMemoryMessageProcessStore;
 import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageStateMachine;
-import com.puchain.fep.processor.validation.XsdSchemaRegistry;
+import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
 import com.puchain.fep.processor.validation.XsdValidator;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,26 +35,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class SyncMessageProcessorServiceTest {
 
-    // XsdSchemaRegistry eagerly compiles all 44 XSDs (~hundreds of ms) and the
-    // resulting cache is immutable; XsdValidator is stateless (per-validate
-    // CollectingErrorHandler). Sharing them across the 6 tests avoids ~264
-    // redundant schema builds (6 × 44).
-    private static XsdSchemaRegistry registry;
-    private static XsdValidator validator;
+    // E-NIT-7: registry + validator promoted to module-level static singletons
+    // on {@link AbstractXsdValidationTest}. XsdSchemaRegistry eager-compiles
+    // 44 XSDs (~hundreds of ms) with an immutable cache; XsdValidator is
+    // stateless (per-validate CollectingErrorHandler). Sharing one instance
+    // across all fep-processor test classes (Surefire default forkCount=1
+    // reuseForks=true → single JVM per module) eliminates 264+ redundant
+    // schema builds module-wide.
 
     private SyncMessageProcessorService processor;
     private InMemoryMessageProcessStore store;
-
-    @BeforeAll
-    static void initSharedFixtures() {
-        registry = new XsdSchemaRegistry();
-        validator = new XsdValidator(registry);
-    }
 
     @BeforeEach
     void setUp() {
         // store is stateful (ConcurrentMap) — the duplicate-transitionNo test
         // requires a clean instance per case, so machine/processor rebuild too.
+        XsdValidator validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
         processor = new SyncMessageProcessorService(validator, machine, store);

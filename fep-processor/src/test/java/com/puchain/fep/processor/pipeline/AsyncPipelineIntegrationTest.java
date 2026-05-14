@@ -7,7 +7,7 @@ import com.puchain.fep.processor.state.InMemoryMessageProcessStore;
 import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageStateMachine;
-import com.puchain.fep.processor.validation.XsdSchemaRegistry;
+import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
 import com.puchain.fep.processor.validation.XsdValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -75,8 +75,7 @@ class AsyncPipelineIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        XsdSchemaRegistry registry = new XsdSchemaRegistry();
-        XsdValidator validator = new XsdValidator(registry);
+        XsdValidator validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
         service = new AsyncMessageProcessorService(validator, machine, store);

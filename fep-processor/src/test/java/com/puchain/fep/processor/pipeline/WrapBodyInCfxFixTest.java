@@ -9,7 +9,7 @@ import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
 import com.puchain.fep.processor.body.supplychain.RzReturnInfo3009;
 import com.puchain.fep.processor.state.InMemoryMessageProcessStore;
 import com.puchain.fep.processor.state.MessageStateMachine;
-import com.puchain.fep.processor.validation.XsdSchemaRegistry;
+import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
 import com.puchain.fep.processor.validation.XsdValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,8 +41,7 @@ class WrapBodyInCfxFixTest {
 
     @BeforeEach
     void setUp() {
-        XsdSchemaRegistry registry = new XsdSchemaRegistry();
-        XsdValidator validator = new XsdValidator(registry);
+        XsdValidator validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
         InMemoryMessageProcessStore store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
         BatchPayloadAdapter adapter = new BatchPayloadAdapter();
