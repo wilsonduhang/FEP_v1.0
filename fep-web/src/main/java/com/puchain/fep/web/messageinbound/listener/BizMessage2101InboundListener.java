@@ -14,6 +14,7 @@ import com.puchain.fep.processor.intake.port.OutboundMessageEnvelope;
 import com.puchain.fep.web.bizdata.domain.MessageDirection;
 import com.puchain.fep.web.bizdata.record.dto.RecordCreateRequest;
 import com.puchain.fep.web.bizdata.record.service.BizMessageRecordService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -106,6 +107,9 @@ public class BizMessage2101InboundListener {
      *                               or when ack enqueue surfaces a non-COLLECT_DUPLICATE_KEY error
      */
     @EventListener
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "all log args wrapped by LogSanitizer.sanitize; "
+                    + "find-sec-bugs cannot detect user-defined sanitizer")
     public void onProcessed(final InboundMessageProcessedEvent event) {
         if (event.type() != MessageType.MSG_2101) {
             return;
@@ -127,6 +131,9 @@ public class BizMessage2101InboundListener {
                 LogSanitizer.sanitize(body != null ? "decoded" : "null"));
     }
 
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "log arg wrapped by LogSanitizer.sanitize; "
+                    + "find-sec-bugs cannot detect user-defined sanitizer")
     private void persistRecord(final InboundMessageProcessedEvent event, final String safeSerial) {
         try {
             final RecordCreateRequest req = new RecordCreateRequest();
@@ -144,6 +151,9 @@ public class BizMessage2101InboundListener {
         }
     }
 
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "log arg wrapped by LogSanitizer.sanitize; "
+                    + "find-sec-bugs cannot detect user-defined sanitizer")
     private void enqueue9120Ack(final InboundMessageProcessedEvent event,
                                 final String debugReason,
                                 final String safeSerial) {
