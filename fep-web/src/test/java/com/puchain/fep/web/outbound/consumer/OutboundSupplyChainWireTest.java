@@ -73,8 +73,9 @@ class OutboundSupplyChainWireTest {
                 Arguments.of("3007", InvoCheckQuery3007.class, "RealHead3007"));
     }
 
-    @ParameterizedTest(name = "msgNo {0} wire bean coordination")
+    @ParameterizedTest(name = "[{index}] msgNo={0} -> {1} wire bean coordination")
     @MethodSource("supplyChainOutboundCases")
+    @org.junit.jupiter.api.DisplayName("2 供应链报文 outbound wire bean 协调 (3000 + 3007)")
     void wireBeansShouldCoordinate(String msgNo, Class<?> expectedBodyClass, String expectedRealHead) {
         assertThat(registry.resolve(msgNo)).isEqualTo(expectedBodyClass);
 
