@@ -6,6 +6,11 @@ import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.model.ResponseBusinessHead;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,14 +18,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * {@link OutboundWireShapeDispatcher} 单元测试（P5 T3 + P4-MSG-B T4 扩展）。
  *
- * <p>覆盖 21 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16 含 6 BATCH，P4-MSG-D T3 起 17 含 1101，
- * P4-MSG-E T2 起 21 含 4 realtime 1001/2001/1004/2004）：</p>
+ * <p>覆盖 27 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16 含 6 BATCH，P4-MSG-D T3 起 17 含 1101，
+ * P4-MSG-E T2 起 21 含 4 realtime 1001/2001/1004/2004，P4-MSG-F T2 起 27 含 6 supplychain query
+ * 3001/3002/3003/3004/3005/3006）：</p>
  * <ul>
- *   <li>1001/1004/3000/3007/3009 → RealHead{msgNo} + RequestBusinessHead + requiresResultCode=false</li>
- *   <li>2001/2004 → RealHead{msgNo} + ResponseBusinessHead + requiresResultCode=true（P4-MSG-E T2 新增类目）</li>
+ *   <li>1001/1004/3000/3001/3003/3005/3007/3009 → RealHead{msgNo} + RequestBusinessHead + requiresResultCode=false</li>
+ *   <li>2001/2004/3002/3004/3006 → RealHead{msgNo} + ResponseBusinessHead + requiresResultCode=true（P4-MSG-E T2 新类目，P4-MSG-F T2 扩展 3 case）</li>
  *   <li>3101 → BatchHead3101 + ResponseBusinessHead + requiresResultCode=true</li>
  *   <li>3102/3105/3107/3109/3112/3116 → BatchHead{msgNo} + RequestBusinessHead + false</li>
- *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 21 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
+ *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 27 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
  * </ul>
  *
  * @author FEP Team
@@ -227,5 +233,58 @@ class OutboundWireShapeDispatcherTest {
         assertThatThrownBy(() -> dispatcher.describeFor("31010"))
                 .isInstanceOf(FepBusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", FepErrorCode.OUTBOUND_5108_MSGNO_INVALID);
+    }
+
+    /**
+     * P4-MSG-F T2 — 3001-3006 供应链查询 6 报文 wire-shape 路由验证。
+     *
+     * <p>3 对请求/回执：</p>
+     * <ul>
+     *   <li>3001/3002 业务进展实时查询请求 + 回执</li>
+     *   <li>3003/3004 电子凭证融资状态查询请求 + 回执</li>
+     *   <li>3005/3006 对公账户状态查询请求 + 回执</li>
+     * </ul>
+     *
+     * <p>3001/3003/3005 → RealHead + RequestBusinessHead + false（既有 1001/1004/3000/3007/3009 类目）；
+     * 3002/3004/3006 → RealHead + ResponseBusinessHead + true（P4-MSG-E T2 新类目，原仅含 2001/2004）。</p>
+     *
+     * @param msgNo                       4 位数字报文号
+     * @param expectedHeadElementName     期望 head 元素名（{@code "RealHead" + msgNo}）
+     * @param expectedHeadClass           期望 head 类型（{@link RequestBusinessHead} / {@link ResponseBusinessHead}）
+     * @param expectedRequiresResultCode  期望是否要求 ResultCode（请求 false / 回执 true）
+     */
+    @ParameterizedTest(name = "[{index}] msgNo={0} → head={1}({2}), result={3}")
+    @MethodSource("supplychainQueryShapeMatrix")
+    @DisplayName("3001-3006 supplychain query wire-shape 路由 (P4-MSG-F T2)")
+    void describeFor_shouldRouteSupplychainQuery(
+            final String msgNo,
+            final String expectedHeadElementName,
+            final Class<?> expectedHeadClass,
+            final boolean expectedRequiresResultCode) {
+
+        final WireShapeDescriptor desc = dispatcher.describeFor(msgNo);
+        assertThat(desc.headElementName())
+                .as("msgNo=%s headElementName", msgNo)
+                .isEqualTo(expectedHeadElementName);
+        assertThat(desc.headClass())
+                .as("msgNo=%s headClass", msgNo)
+                .isEqualTo(expectedHeadClass);
+        assertThat(desc.requiresResultCode())
+                .as("msgNo=%s requiresResultCode", msgNo)
+                .isEqualTo(expectedRequiresResultCode);
+        assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
+                .as("msgNo=%s 必须在 isRegisteredOutboundMsgNo true (P4-MSG-F T2 注册)", msgNo)
+                .isTrue();
+    }
+
+    static Stream<Arguments> supplychainQueryShapeMatrix() {
+        return Stream.of(
+                Arguments.of("3001", "RealHead3001", RequestBusinessHead.class, false),
+                Arguments.of("3002", "RealHead3002", ResponseBusinessHead.class, true),
+                Arguments.of("3003", "RealHead3003", RequestBusinessHead.class, false),
+                Arguments.of("3004", "RealHead3004", ResponseBusinessHead.class, true),
+                Arguments.of("3005", "RealHead3005", RequestBusinessHead.class, false),
+                Arguments.of("3006", "RealHead3006", ResponseBusinessHead.class, true)
+        );
     }
 }

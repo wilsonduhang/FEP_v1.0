@@ -28,8 +28,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>3107 → {@code <BatchHead3107>}（修复：批量报文头）</li>
  * </ul>
  *
- * <p>同时验证 inbound-only msgNo（如 3003）走 legacy 路径不回归，避免对
+ * <p>同时验证 inbound-only msgNo（如 9000 心跳类通用报文）走 legacy 路径不回归，避免对
  * {@link BatchMessageProcessorServiceIntegrationTest} 已有 IT 产生破坏。</p>
+ *
+ * <p>P4-MSG-F T2 — 原 3003 inbound-only 测试已升级：3003 加入 dispatcher 27 集合后不再
+ * 是 inbound-only，本测试改用 9000 心跳类报文保持 legacy fallback 路径覆盖（红线
+ * {@code feedback_obsolete_negative_test_cleanup}）。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -95,19 +99,25 @@ class WrapBodyInCfxFixTest {
     }
 
     @Test
-    @DisplayName("Inbound-only msgNo (3003) preserved via legacy path — no OUTBOUND_5108 regression")
+    @DisplayName("Inbound-only msgNo (9000) preserved via legacy path — no OUTBOUND_5108 regression")
     void wrapBodyInCfx_inboundOnlyMsgNo_should_preserve_legacy_RealHead() {
-        // 3003 not in 8 outbound set; dispatcher.describeFor("3003") would throw
-        // OUTBOUND_5108. The fix must fall back to legacy "RealHead{msgNo}" for
-        // inbound-only msgNos to keep BatchMessageProcessorServiceIntegrationTest green.
-        CommonHead head = head("3003");
+        // 9000 是心跳类通用报文，不在 dispatcher 的 27 上行报文集合内。
+        // dispatcher.describeFor("9000") 会抛 OUTBOUND_5108。resolveHeadElementName
+        // 必须 fall back 到 legacy "RealHead{msgNo}" 保持向后兼容
+        // （BatchMessageProcessorServiceIntegrationTest 等 IT 不回归）。
+        //
+        // P4-MSG-F T2: 原测试用 3003（彼时 inbound-only）。3003 加入 dispatcher 27 集合
+        // 后不再是 inbound-only，本测试改用 9000 心跳类报文保持 legacy fallback 覆盖。
+        // body class 任选已注册 JAXB 类（PzInfoQuery3003 仅用于触发 marshal，不影响 head
+        // element name 拼装路径判断）。
+        CommonHead head = head("9000");
         PzInfoQuery3003 body = new PzInfoQuery3003();
 
-        String wrapped = service.wrapBodyInCfx(head, "3003", body);
+        String wrapped = service.wrapBodyInCfx(head, "9000", body);
 
         assertThat(wrapped)
-                .as("inbound-only 3003 must keep RealHead3003 via legacy fallback")
-                .contains("<RealHead3003");
+                .as("inbound-only 9000 must use RealHead9000 via legacy fallback")
+                .contains("<RealHead9000");
     }
 
     private static CommonHead head(final String msgNo) {
