@@ -19,7 +19,13 @@ import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
 import com.puchain.fep.processor.body.supplychain.DzpzInfo3000;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
+import com.puchain.fep.processor.body.supplychain.ProgressQuery3001;
+import com.puchain.fep.processor.body.supplychain.ProgressQueryReturn3002;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
+import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
+import com.puchain.fep.processor.body.supplychain.PzInfoReturn3004;
+import com.puchain.fep.processor.body.supplychain.QyAccQuery3005;
+import com.puchain.fep.processor.body.supplychain.QyAccQueryReturn3006;
 import com.puchain.fep.processor.body.supplychain.QyRegister3109;
 import com.puchain.fep.processor.body.supplychain.RzApplyInfo3105;
 import com.puchain.fep.processor.body.supplychain.RzReturnInfo3009;
@@ -46,6 +52,12 @@ import java.util.Map;
  *   <li>2103 → {@link CompanyInfoBatchResponse2103}（企业信息批量查询回执，P4-MSG-A）</li>
  *   <li>2104 → {@link CompanyAuthFileBatchResponse2104}（授权书批量回执，P4-MSG-A）</li>
  *   <li>3000 → {@link DzpzInfo3000}（电子凭证信息报送，P4-MSG-B T4）</li>
+ *   <li>3001 → {@link ProgressQuery3001}（业务进展实时查询请求，P4-MSG-F T1）</li>
+ *   <li>3002 → {@link ProgressQueryReturn3002}（业务进展查询回执，P4-MSG-F T1）</li>
+ *   <li>3003 → {@link PzInfoQuery3003}（电子凭证融资状态查询请求，P4-MSG-F T1）</li>
+ *   <li>3004 → {@link PzInfoReturn3004}（电子凭证融资状态查询回执，P4-MSG-F T1）</li>
+ *   <li>3005 → {@link QyAccQuery3005}（对公账户状态查询请求，P4-MSG-F T1）</li>
+ *   <li>3006 → {@link QyAccQueryReturn3006}（对公客户状态查询回执，P4-MSG-F T1）</li>
  *   <li>3007 → {@link InvoCheckQuery3007}（受理单位发起发票核验请求，P4-MSG-B T1）</li>
  *   <li>3009 → {@link RzReturnInfo3009}（电子凭证融资结果登记，P5 T4）</li>
  *   <li>3101 → {@link ContractInfo3101}（合同信息，P5 T4）</li>
@@ -61,9 +73,11 @@ import java.util.Map;
  * {@code HxqyInfo3109}）。本注册表选取主类对齐 PRD §4.6 上行/下行映射；备用类由其他业务路径
  * 单独消费。</p>
  *
- * <p>本 Plan E T1 起 1001/2001/1004/2004 已注册（P4-MSG-E T1，企业查询 8/12→12/12 收尾）；21 entries /
- * 下一阶段（P4-MSG-F+）处理 9XXX 通用报文与 supplychain 剩余。
- * 1101 于 P4-MSG-D T3 注册；1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册；3000 已于 Plan B T4 注册。</p>
+ * <p>P4-MSG-F T1 注册 3001-3006 供应链查询 6 报文（业务进展查询/凭证融资状态查询/对公账户查询请求+回执 3 对）；
+ * 27 entries / 下一阶段 P4-MSG-G（batch2）候选 3008/3020/3103/3108 / P4-MSG-H（batch3）候选 3113/3115/3120 +
+ * 9XXX 通用报文（9000/9005/9006/9007/9008/9009/9100/9120）独立 Plan 处理。
+ * 1001/2001/1004/2004 于 P4-MSG-E T1 注册；1101 于 P4-MSG-D T3 注册；
+ * 1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册；3000 已于 Plan B T4 注册。</p>
  *
  * <p>未注册 msgNo（含 {@code null}）抛 {@link FepBusinessException} +
  * {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}。</p>
@@ -88,6 +102,12 @@ public class BodyClassRegistry {
             Map.entry("2103", CompanyInfoBatchResponse2103.class),
             Map.entry("2104", CompanyAuthFileBatchResponse2104.class),
             Map.entry("3000", DzpzInfo3000.class),
+            Map.entry("3001", ProgressQuery3001.class),
+            Map.entry("3002", ProgressQueryReturn3002.class),
+            Map.entry("3003", PzInfoQuery3003.class),
+            Map.entry("3004", PzInfoReturn3004.class),
+            Map.entry("3005", QyAccQuery3005.class),
+            Map.entry("3006", QyAccQueryReturn3006.class),
             Map.entry("3007", InvoCheckQuery3007.class),
             Map.entry("3009", RzReturnInfo3009.class),
             Map.entry("3101", ContractInfo3101.class),
