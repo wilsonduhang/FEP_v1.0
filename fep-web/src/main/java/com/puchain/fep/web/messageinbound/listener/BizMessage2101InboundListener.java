@@ -117,12 +117,14 @@ public class BizMessage2101InboundListener {
             debugReason = DEBUG_BODY_NULL;
             LOG.warn("2101 listener: body=null, skip record persist; still enqueue 9120 ack "
                             + "serialNo={} debug={}",
-                    safeSerial, debugReason);
+                    LogSanitizer.sanitize(safeSerial), LogSanitizer.sanitize(debugReason));
         } else {
             persistRecord(event, safeSerial);
         }
         enqueue9120Ack(event, debugReason, safeSerial);
-        LOG.info("2101 processed serialNo={} body={}", safeSerial, body != null ? "decoded" : "null");
+        LOG.info("2101 processed serialNo={} body={}",
+                LogSanitizer.sanitize(safeSerial),
+                LogSanitizer.sanitize(body != null ? "decoded" : "null"));
     }
 
     private void persistRecord(final InboundMessageProcessedEvent event, final String safeSerial) {
@@ -135,7 +137,7 @@ public class BizMessage2101InboundListener {
         } catch (final FepBusinessException dup) {
             if (dup.getErrorCode() == FepErrorCode.BIZ_5002) {
                 LOG.warn("2101 listener: record dup serialNo={}, continue 9120 ack (idempotent)",
-                        safeSerial);
+                        LogSanitizer.sanitize(safeSerial));
             } else {
                 throw dup;
             }
@@ -174,7 +176,7 @@ public class BizMessage2101InboundListener {
             if (dup.getErrorCode() == FepErrorCode.COLLECT_DUPLICATE_KEY) {
                 LOG.warn("9120 ack already enqueued for serialNo={} "
                                 + "(at-least-once idempotency hit), swallow dup",
-                        safeSerial);
+                        LogSanitizer.sanitize(safeSerial));
                 return;
             }
             throw dup;
