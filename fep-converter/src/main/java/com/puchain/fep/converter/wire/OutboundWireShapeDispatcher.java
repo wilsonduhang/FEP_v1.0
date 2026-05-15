@@ -4,13 +4,14 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.model.ResponseBusinessHead;
+import java.util.Set;
 import org.springframework.stereotype.Component;
 
 /**
- * 出站报文 wire-shape 路由 — 单一真相源，决定 27 上行报文 msgNo 对应的
+ * 出站报文 wire-shape 路由 — 单一真相源，决定 {@value #REGISTERED_MSG_NO_COUNT} 上行报文 msgNo 对应的
  * head 元素名 / head 类型 / 是否要求 ResultCode（PRD v1.3 §3.2 + §4.6）。
  *
- * <p>实测自 27 份 XSD（{@code fep-processor/src/main/resources/xsd/{1001,1004,1101,1102,1103,1104,
+ * <p>实测自 {@value #REGISTERED_MSG_NO_COUNT} 份 XSD（{@code fep-processor/src/main/resources/xsd/{1001,1004,1101,1102,1103,1104,
  * 2001,2004,2102,2103,2104,3000,3001,3002,3003,3004,3005,3006,3007,3009,3101,3102,3105,
  * 3107,3109,3112,3116}.xsd}）：</p>
  * <ul>
@@ -51,7 +52,7 @@ import org.springframework.stereotype.Component;
  * {@code OutboundCfxEnvelopeBuilder} 的两条 head 元素拼装路径分歧。两者统一通过
  * {@link #describeFor(String)} 拿描述符。</p>
  *
- * <p>非法 msgNo（{@code null} / 非 4 位数字 / 不在 27 集合）抛
+ * <p>非法 msgNo（{@code null} / 非 4 位数字 / 不在 {@value #REGISTERED_MSG_NO_COUNT} 集合）抛
  * {@link FepBusinessException} + {@link FepErrorCode#OUTBOUND_5108_MSGNO_INVALID}。</p>
  *
  * @author FEP Team
@@ -63,12 +64,32 @@ public class OutboundWireShapeDispatcher {
     /** 4 位数字 msgNo 校验正则。 */
     private static final String MSG_NO_PATTERN = "\\d{4}";
 
+    /** RealHead + {@link RequestBusinessHead} + false 类目 msgNo 集合。 */
+    public static final Set<String> REAL_HEAD_REQUEST_MSG_NOS = Set.of(
+            "1001", "1004", "3000", "3001", "3003", "3005", "3007", "3009");
+
+    /** BatchHead + {@link RequestBusinessHead} + false 类目 msgNo 集合。 */
+    public static final Set<String> BATCH_HEAD_REQUEST_MSG_NOS = Set.of(
+            "1101", "1102", "1103", "1104",
+            "3102", "3105", "3107", "3109", "3112", "3116");
+
+    /** RealHead + {@link ResponseBusinessHead} + true 类目 msgNo 集合。 */
+    public static final Set<String> REAL_HEAD_RESPONSE_MSG_NOS = Set.of(
+            "2001", "2004", "3002", "3004", "3006");
+
+    /** BatchHead + {@link ResponseBusinessHead} + true 类目 msgNo 集合。 */
+    public static final Set<String> BATCH_HEAD_RESPONSE_MSG_NOS = Set.of(
+            "2102", "2103", "2104", "3101");
+
+    /** 已登记上行报文总数（Javadoc {@value} 自更新引用）. */
+    public static final int REGISTERED_MSG_NO_COUNT = 27;
+
     /**
      * 路由 msgNo → {@link WireShapeDescriptor}。
      *
      * @param msgNo 4 位数字报文号（{@code "3009"} / {@code "3101"} / ...）
      * @return wire-shape 描述符
-     * @throws FepBusinessException msgNo 为 {@code null} / 非 4 位数字 / 不在 27 上行报文集合，
+     * @throws FepBusinessException msgNo 为 {@code null} / 非 4 位数字 / 不在 {@value #REGISTERED_MSG_NO_COUNT} 上行报文集合，
      *                              错误码 {@link FepErrorCode#OUTBOUND_5108_MSGNO_INVALID}
      */
     public WireShapeDescriptor describeFor(final String msgNo) {
@@ -77,47 +98,44 @@ public class OutboundWireShapeDispatcher {
                     FepErrorCode.OUTBOUND_5108_MSGNO_INVALID,
                     "msgNo 必须为 4 位数字: " + msgNo);
         }
-        return switch (msgNo) {
-            case "1001", "1004",
-                 "3000", "3001", "3003", "3005",
-                 "3007", "3009" -> new WireShapeDescriptor(
+        if (REAL_HEAD_REQUEST_MSG_NOS.contains(msgNo)) {
+            return new WireShapeDescriptor(
                     "RealHead" + msgNo, RequestBusinessHead.class, false);
-            case "1101", "1102", "1103", "1104",
-                 "3102", "3105", "3107", "3109", "3112", "3116" -> new WireShapeDescriptor(
+        }
+        if (BATCH_HEAD_REQUEST_MSG_NOS.contains(msgNo)) {
+            return new WireShapeDescriptor(
                     "BatchHead" + msgNo, RequestBusinessHead.class, false);
-            case "2001", "2004",
-                 "3002", "3004", "3006" -> new WireShapeDescriptor(
+        }
+        if (REAL_HEAD_RESPONSE_MSG_NOS.contains(msgNo)) {
+            return new WireShapeDescriptor(
                     "RealHead" + msgNo, ResponseBusinessHead.class, true);
-            case "3101", "2102", "2103", "2104" -> new WireShapeDescriptor(
+        }
+        if (BATCH_HEAD_RESPONSE_MSG_NOS.contains(msgNo)) {
+            return new WireShapeDescriptor(
                     "BatchHead" + msgNo, ResponseBusinessHead.class, true);
-            default -> throw new FepBusinessException(
-                    FepErrorCode.OUTBOUND_5108_MSGNO_INVALID,
-                    "msgNo 不在 27 上行报文集合: " + msgNo);
-        };
+        }
+        throw new FepBusinessException(
+                FepErrorCode.OUTBOUND_5108_MSGNO_INVALID,
+                "msgNo 不在 " + REGISTERED_MSG_NO_COUNT + " 上行报文集合: " + msgNo);
     }
 
     /**
-     * 判断 msgNo 是否在已登记的 27 上行报文集合内。
+     * 判断 msgNo 是否在已登记的 {@value #REGISTERED_MSG_NO_COUNT} 上行报文集合内。
      *
      * <p>用于 {@code BatchMessageProcessorService.wrapBodyInCfx} 等 inbound + outbound
      * 共用方法识别"是否为已登记 outbound msgNo"，未登记的（例如 9000/9005 心跳类
      * 通用报文）走 legacy 路径，避免对 inbound 链路产生回归。</p>
      *
      * @param msgNo 4 位数字报文号；{@code null} 或非法格式返回 {@code false}
-     * @return {@code true} 当且仅当 msgNo 是 27 上行报文之一
+     * @return {@code true} 当且仅当 msgNo 是 {@value #REGISTERED_MSG_NO_COUNT} 上行报文之一
      */
     public boolean isRegisteredOutboundMsgNo(final String msgNo) {
         if (msgNo == null || !msgNo.matches(MSG_NO_PATTERN)) {
             return false;
         }
-        return switch (msgNo) {
-            case "1001", "1004", "2001", "2004",
-                 "1101", "1102", "1103", "1104",
-                 "2102", "2103", "2104",
-                 "3000", "3001", "3002", "3003", "3004", "3005", "3006",
-                 "3007", "3009", "3101", "3102",
-                 "3105", "3107", "3109", "3112", "3116" -> true;
-            default -> false;
-        };
+        return REAL_HEAD_REQUEST_MSG_NOS.contains(msgNo)
+                || BATCH_HEAD_REQUEST_MSG_NOS.contains(msgNo)
+                || REAL_HEAD_RESPONSE_MSG_NOS.contains(msgNo)
+                || BATCH_HEAD_RESPONSE_MSG_NOS.contains(msgNo);
     }
 }
