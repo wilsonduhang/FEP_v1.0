@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -86,17 +85,16 @@ public class DashboardTodoService {
                                             final TodoStatus status,
                                             final int pageNum,
                                             final int pageSize) {
-        Sort sort = Sort.by(
-                Sort.Order.asc("priority"),
-                Sort.Order.asc("deadline").nullsLast(),
-                Sort.Order.desc("createTime"));
-        PageRequest pageable = PageRequest.of(pageNum - 1, pageSize, sort);
+        // 排序固定在 DashboardTodoRepository 的 JPQL ORDER BY（priority ASC,
+        // deadline ASC NULLS LAST, createTime DESC）。不能用 Pageable 的 Sort 携带
+        // nullsLast：Hibernate 6.6 起 Criteria API 不支持 null precedence。
+        PageRequest pageable = PageRequest.of(pageNum - 1, pageSize);
 
         Page<DashboardTodo> page;
         if (status != null) {
-            page = todoRepository.findByAssignedUserIdAndTodoStatus(userId, status, pageable);
+            page = todoRepository.searchByUserAndStatus(userId, status, pageable);
         } else {
-            page = todoRepository.findByAssignedUserId(userId, pageable);
+            page = todoRepository.searchByUser(userId, pageable);
         }
 
         return new PageResult<>(
