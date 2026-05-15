@@ -59,6 +59,13 @@
 
         <!-- Caffeine cache (P3a T3 — DynamicMessageDirectionMap) -->
         <caffeine.version>3.1.8</caffeine.version>
+
+        <!-- Tomcat override: SB 3.5.14 BOM pins 10.1.54 which carries
+             CVE-2026-41284 (7.5) + CVE-2026-42498 (7.3). Both fixed in 10.1.55
+             (patch within 10.1.x line). Spring Boot honors this property to
+             bump tomcat-embed-* without changing the parent BOM. See
+             docs/plans/2026-05-15-spring-boot-3.5.14-residual-cve-adr.md -->
+        <tomcat.version>10.1.55</tomcat.version>
     </properties>
 
     <dependencyManagement>
@@ -400,6 +407,12 @@
                 <configuration>
                     <!-- CVSS >= 7.0 (High) 阻断构建 -->
                     <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <!-- 抑制不可利用的 CPE 误报（log4j-core CVE 误匹配 log4j-api，
+                         FEP 用 Logback，log4j-core 不在 classpath）。每条抑制含
+                         理由 + ADR 引用 + muzhou 签字，见 owasp-suppression.xml -->
+                    <suppressionFiles>
+                        <suppressionFile>${maven.multiModuleProjectDirectory}/owasp-suppression.xml</suppressionFile>
+                    </suppressionFiles>
                     <!-- 不扫描测试依赖（加速） -->
                     <skipTestScope>true</skipTestScope>
                     <!-- 生成 HTML + XML 报告 -->
