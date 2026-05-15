@@ -3,6 +3,7 @@ package com.puchain.fep.converter.wire;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.converter.model.RequestBusinessHead;
+import com.puchain.fep.converter.model.RequestResponseHead;
 import com.puchain.fep.converter.model.ResponseBusinessHead;
 import java.util.Set;
 import org.springframework.stereotype.Component;
@@ -12,8 +13,8 @@ import org.springframework.stereotype.Component;
  * head 元素名 / head 类型 / 是否要求 ResultCode（PRD v1.3 §3.2 + §4.6）。
  *
  * <p>实测自 {@value #REGISTERED_MSG_NO_COUNT} 份 XSD（{@code fep-processor/src/main/resources/xsd/{1001,1004,1101,1102,1103,1104,
- * 2001,2004,2102,2103,2104,3000,3001,3002,3003,3004,3005,3006,3007,3009,3101,3102,3105,
- * 3107,3109,3112,3116}.xsd}）：</p>
+ * 2001,2004,2102,2103,2104,3000,3001,3002,3003,3004,3005,3006,3007,3008,3009,3020,3101,3102,3103,3105,
+ * 3107,3108,3109,3112,3116}.xsd}）：</p>
  * <ul>
  *   <li>1001 → {@code RealHead1001} + {@link RequestBusinessHead}（企业信息实时查询请求，P4-MSG-E T2）</li>
  *   <li>1004 → {@code RealHead1004} + {@link RequestBusinessHead}（授权书实时发送请求，P4-MSG-E T2）</li>
@@ -34,18 +35,25 @@ import org.springframework.stereotype.Component;
  *   <li>3005 → {@code RealHead3005} + {@link RequestBusinessHead}（对公账户状态查询请求，P4-MSG-F T2）</li>
  *   <li>3006 → {@code RealHead3006} + {@link ResponseBusinessHead}（对公客户状态查询回执，含 ResultCode，P4-MSG-F T2）</li>
  *   <li>3007 → {@code RealHead3007} + {@link RequestBusinessHead}（受理单位发起核验请求，模式 1 同步，P4-MSG-B T1）</li>
+ *   <li>3008 → {@code RealHead3008} + {@link ResponseBusinessHead}（发票核验回执，含 ResultCode，P4-MSG-G T3）</li>
  *   <li>3009 → {@code RealHead3009} + {@link RequestBusinessHead}（实时单笔）</li>
+ *   <li>3020 → {@code RealHead3020} + {@link RequestResponseHead}（供应链实时业务通用转发，孤儿成员第 5 类目，P4-MSG-G T3）</li>
  *   <li>3101 → {@code BatchHead3101} + {@link ResponseBusinessHead}（含 5 位 ResultCode，仅一个）</li>
  *   <li>3102/3105/3107/3109/3112/3116 → {@code BatchHead{msgNo}} + {@link RequestBusinessHead}</li>
+ *   <li>3103 → {@code BatchHead3103} + {@link ResponseBusinessHead}（企业建档信息回执，含 ResultCode，P4-MSG-G T3）</li>
+ *   <li>3108 → {@code BatchHead3108} + {@link ResponseBusinessHead}（平台凭证核对回执，含 ResultCode，P4-MSG-G T3）</li>
  * </ul>
  *
- * <p>4 类 wire-shape (P4-MSG-E T2 起新增 RealHead + ResponseBusinessHead + true 类目；
- * P4-MSG-F T2 起 RealHead+Request 扩展 3001/3003/3005，RealHead+Response 扩展 3002/3004/3006)：</p>
+ * <p>5 类 wire-shape (P4-MSG-E T2 起新增 RealHead + ResponseBusinessHead + true 类目；
+ * P4-MSG-F T2 起 RealHead+Request 扩展 3001/3003/3005，RealHead+Response 扩展 3002/3004/3006；
+ * P4-MSG-G T3 起新增第 5 类 RealHead + RequestResponseHead + false 孤儿类目，并扩展类目 3/4)：</p>
  * <ul>
  *   <li>RealHead + RequestBusinessHead + false: 1001/1004/3000/3001/3003/3005/3007/3009</li>
- *   <li>RealHead + ResponseBusinessHead + true: 2001/2004/3002/3004/3006（P4-MSG-E T2 新类目，P4-MSG-F T2 扩展）</li>
+ *   <li>RealHead + ResponseBusinessHead + true: 2001/2004/3002/3004/3006/3008（P4-MSG-E T2 新类目，P4-MSG-F/G 扩展）</li>
  *   <li>BatchHead + RequestBusinessHead + false: 1101/1102/1103/1104/3102/3105/3107/3109/3112/3116（既有，本 Plan 不动）</li>
- *   <li>BatchHead + ResponseBusinessHead + true: 2102/2103/2104/3101（既有，本 Plan 不动；3101 历史归类于此类目，参见 PRD v1.3 §4.6）</li>
+ *   <li>BatchHead + ResponseBusinessHead + true: 2102/2103/2104/3101/3103/3108
+ *       （3101 历史归类于此类目，参见 PRD v1.3 §4.6；3103/3108 P4-MSG-G T3 扩展）</li>
+ *   <li>RealHead + RequestResponseHead + false: 3020（孤儿成员；3115/3120 同 family，P4-MSG-H 候选）</li>
  * </ul>
  *
  * <p>P5 T3：消除 inbound {@code BatchMessageProcessorService.wrapBodyInCfx} 与 outbound
@@ -73,16 +81,23 @@ public class OutboundWireShapeDispatcher {
             "1101", "1102", "1103", "1104",
             "3102", "3105", "3107", "3109", "3112", "3116");
 
-    /** RealHead + {@link ResponseBusinessHead} + true 类目 msgNo 集合。 */
+    /** RealHead + {@link ResponseBusinessHead} + true 类目 msgNo 集合（P4-MSG-G T3 扩展 3008）。 */
     public static final Set<String> REAL_HEAD_RESPONSE_MSG_NOS = Set.of(
-            "2001", "2004", "3002", "3004", "3006");
+            "2001", "2004", "3002", "3004", "3006", "3008");
 
-    /** BatchHead + {@link ResponseBusinessHead} + true 类目 msgNo 集合。 */
+    /** BatchHead + {@link ResponseBusinessHead} + true 类目 msgNo 集合（P4-MSG-G T3 扩展 3103/3108）。 */
     public static final Set<String> BATCH_HEAD_RESPONSE_MSG_NOS = Set.of(
-            "2102", "2103", "2104", "3101");
+            "2102", "2103", "2104", "3101", "3103", "3108");
+
+    /**
+     * RealHead + {@link RequestResponseHead} + false 第 5 类目 msgNo 集合
+     * （P4-MSG-G T3 新增孤儿类目；3115/3120 同 family，P4-MSG-H 候选）。
+     */
+    public static final Set<String> REAL_HEAD_REQUEST_RESPONSE_MSG_NOS = Set.of(
+            "3020");
 
     /** 已登记上行报文总数（Javadoc {@value} 自更新引用）. */
-    public static final int REGISTERED_MSG_NO_COUNT = 27;
+    public static final int REGISTERED_MSG_NO_COUNT = 31;
 
     /**
      * 路由 msgNo → {@link WireShapeDescriptor}。
@@ -114,6 +129,10 @@ public class OutboundWireShapeDispatcher {
             return new WireShapeDescriptor(
                     "BatchHead" + msgNo, ResponseBusinessHead.class, true);
         }
+        if (REAL_HEAD_REQUEST_RESPONSE_MSG_NOS.contains(msgNo)) {
+            return new WireShapeDescriptor(
+                    "RealHead" + msgNo, RequestResponseHead.class, false);
+        }
         throw new FepBusinessException(
                 FepErrorCode.OUTBOUND_5108_MSGNO_INVALID,
                 "msgNo 不在 " + REGISTERED_MSG_NO_COUNT + " 上行报文集合: " + msgNo);
@@ -136,6 +155,7 @@ public class OutboundWireShapeDispatcher {
         return REAL_HEAD_REQUEST_MSG_NOS.contains(msgNo)
                 || BATCH_HEAD_REQUEST_MSG_NOS.contains(msgNo)
                 || REAL_HEAD_RESPONSE_MSG_NOS.contains(msgNo)
-                || BATCH_HEAD_RESPONSE_MSG_NOS.contains(msgNo);
+                || BATCH_HEAD_RESPONSE_MSG_NOS.contains(msgNo)
+                || REAL_HEAD_REQUEST_RESPONSE_MSG_NOS.contains(msgNo);
     }
 }

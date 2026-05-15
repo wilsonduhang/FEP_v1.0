@@ -3,6 +3,7 @@ package com.puchain.fep.converter.wire;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.converter.model.RequestBusinessHead;
+import com.puchain.fep.converter.model.RequestResponseHead;
 import com.puchain.fep.converter.model.ResponseBusinessHead;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,15 +19,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * {@link OutboundWireShapeDispatcher} 单元测试（P5 T3 + P4-MSG-B T4 扩展）。
  *
- * <p>覆盖 27 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16 含 6 BATCH，P4-MSG-D T3 起 17 含 1101，
+ * <p>覆盖 31 上行报文的 dispatch 矩阵（P4-MSG-A T1 起 10→16 含 6 BATCH，P4-MSG-D T3 起 17 含 1101，
  * P4-MSG-E T2 起 21 含 4 realtime 1001/2001/1004/2004，P4-MSG-F T2 起 27 含 6 supplychain query
- * 3001/3002/3003/3004/3005/3006）：</p>
+ * 3001/3002/3003/3004/3005/3006，P4-MSG-G T3 起 31 含 3008/3020/3103/3108）：</p>
  * <ul>
- *   <li>1001/1004/3000/3001/3003/3005/3007/3009 → RealHead{msgNo} + RequestBusinessHead + requiresResultCode=false</li>
- *   <li>2001/2004/3002/3004/3006 → RealHead{msgNo} + ResponseBusinessHead + requiresResultCode=true（P4-MSG-E T2 新类目，P4-MSG-F T2 扩展 3 case）</li>
- *   <li>3101 → BatchHead3101 + ResponseBusinessHead + requiresResultCode=true</li>
+ *   <li>1001/1004/3000/3001/3003/3005/3007/3009 → RealHead{msgNo} + RequestBusinessHead + false</li>
+ *   <li>2001/2004/3002/3004/3006/3008 → RealHead{msgNo} + ResponseBusinessHead + true（P4-MSG-E/F/G）</li>
+ *   <li>3020 → RealHead3020 + RequestResponseHead + false（P4-MSG-G T3 第 5 类目，孤儿成员）</li>
+ *   <li>3101/3103/3108 → BatchHead{msgNo} + ResponseBusinessHead + true（3103/3108 P4-MSG-G T3 扩展）</li>
  *   <li>3102/3105/3107/3109/3112/3116 → BatchHead{msgNo} + RequestBusinessHead + false</li>
- *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 27 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
+ *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 31 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
  * </ul>
  *
  * @author FEP Team
@@ -203,6 +205,80 @@ class OutboundWireShapeDispatcherTest {
         for (String msgNo : new String[]{"1001", "2001", "1004", "2004"}) {
             assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
                     .as("msgNo=%s 必须在 21 上行报文集合内（P4-MSG-E T2 注册）", msgNo)
+                    .isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("3008 → RealHead3008 + ResponseBusinessHead + with result (P4-MSG-G T3)")
+    void describeFor3008_returnsRealHeadResponseBusinessHeadTrue() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("3008");
+
+        assertThat(descriptor.headElementName())
+                .as("3008 head 元素名（发票核验回执，与 3008.xsd RealHead3008 一致）")
+                .isEqualTo("RealHead3008");
+        assertThat(descriptor.headClass())
+                .as("3008 head 类型（回执 → ResponseBusinessHead，类目 3）")
+                .isEqualTo(ResponseBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("3008 是回执报文带 ResultCode")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("3020 → RealHead3020 + RequestResponseHead + no result (P4-MSG-G T3 第 5 类目)")
+    void describeFor3020_returnsRealHeadRequestResponseHeadFalse() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("3020");
+
+        assertThat(descriptor.headElementName())
+                .as("3020 head 元素名（供应链实时业务通用转发，与 3020.xsd RealHead3020 一致）")
+                .isEqualTo("RealHead3020");
+        assertThat(descriptor.headClass())
+                .as("3020 head 类型（孤儿成员第 5 类目 → RequestResponseHead，非 ResponseBusinessHead）")
+                .isEqualTo(RequestResponseHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("3020 Result minOccurs=0，requiresResultCode=false")
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("3103 → BatchHead3103 + ResponseBusinessHead + with result (P4-MSG-G T3)")
+    void describeFor3103_returnsBatchHeadResponseBusinessHeadTrue() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("3103");
+
+        assertThat(descriptor.headElementName())
+                .as("3103 head 元素名（企业建档信息回执，与 3103.xsd BatchHead3103 一致）")
+                .isEqualTo("BatchHead3103");
+        assertThat(descriptor.headClass())
+                .as("3103 head 类型（回执 → ResponseBusinessHead，类目 4）")
+                .isEqualTo(ResponseBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("3103 是回执报文带 ResultCode")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("3108 → BatchHead3108 + ResponseBusinessHead + with result (P4-MSG-G T3)")
+    void describeFor3108_returnsBatchHeadResponseBusinessHeadTrue() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("3108");
+
+        assertThat(descriptor.headElementName())
+                .as("3108 head 元素名（平台凭证核对回执，与 3108.xsd BatchHead3108 一致）")
+                .isEqualTo("BatchHead3108");
+        assertThat(descriptor.headClass())
+                .as("3108 head 类型（回执 → ResponseBusinessHead，类目 4）")
+                .isEqualTo(ResponseBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("3108 是回执报文带 ResultCode")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("3008/3020/3103/3108 → isRegisteredOutboundMsgNo true (P4-MSG-G T3)")
+    void isRegisteredOutboundMsgNo_returnsTrueFor3008_3020_3103_3108() {
+        for (String msgNo : new String[]{"3008", "3020", "3103", "3108"}) {
+            assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
+                    .as("msgNo=%s 必须在 31 上行报文集合内（P4-MSG-G T3 注册）", msgNo)
                     .isTrue();
         }
     }
