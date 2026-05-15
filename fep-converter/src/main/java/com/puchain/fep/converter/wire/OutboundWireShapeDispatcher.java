@@ -51,7 +51,7 @@ import org.springframework.stereotype.Component;
  *   <li>RealHead + RequestBusinessHead + false: 1001/1004/3000/3001/3003/3005/3007/3009</li>
  *   <li>RealHead + ResponseBusinessHead + true: 2001/2004/3002/3004/3006/3008（P4-MSG-E T2 新类目，P4-MSG-F/G 扩展）</li>
  *   <li>BatchHead + RequestBusinessHead + false: 1101/1102/1103/1104/3102/3105/3107/3109/3112/3116（既有，本 Plan 不动）</li>
- *   <li>BatchHead + ResponseBusinessHead + true: 2102/2103/2104/3101/3103/3108
+ *   <li>BatchHead + ResponseBusinessHead + true: 3101/3103/3108/2102/2103/2104
  *       （3101 历史归类于此类目，参见 PRD v1.3 §4.6；3103/3108 P4-MSG-G T3 扩展）</li>
  *   <li>RealHead + RequestResponseHead + false: 3020（孤儿成员；3115/3120 同 family，P4-MSG-H 候选）</li>
  * </ul>
