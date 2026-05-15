@@ -139,4 +139,9 @@ class ArchiveReturnInfo3103XsdValidationTest extends AbstractXsdValidationTest {
                 .isNotEmpty()
                 .anyMatch(e -> e.contains("rzqyCode"));
     }
+
+    @Test
+    void registry_should_supports_msg_3103() {
+        assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_3103)).isNotNull();
+    }
 }
