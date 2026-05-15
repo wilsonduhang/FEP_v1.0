@@ -94,13 +94,13 @@ class BodyClassRegistryTest {
     }
 
     @Test
-    @DisplayName("3103 → ArchiveReturnInfo3103.class（融资企业建档回执，P4-MSG-G T2）")
+    @DisplayName("3103 → ArchiveReturnInfo3103.class（企业建档信息回执，P4-MSG-G T2）")
     void resolve_3103_should_return_ArchiveReturnInfo3103() {
         assertThat(registry.resolve("3103")).isEqualTo(ArchiveReturnInfo3103.class);
     }
 
     @Test
-    @DisplayName("3108 → PzCheckQueryReturn3108.class（平台凭证对账回执，P4-MSG-G T2）")
+    @DisplayName("3108 → PzCheckQueryReturn3108.class（平台凭证核对回执，P4-MSG-G T2）")
     void resolve_3108_should_return_PzCheckQueryReturn3108() {
         assertThat(registry.resolve("3108")).isEqualTo(PzCheckQueryReturn3108.class);
     }

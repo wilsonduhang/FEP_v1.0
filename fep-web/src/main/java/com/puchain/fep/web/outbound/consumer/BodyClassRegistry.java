@@ -68,10 +68,10 @@ import java.util.Map;
  *   <li>3020 → {@link Forward3020}（供应链实时业务通用转发，P4-MSG-G T2）</li>
  *   <li>3101 → {@link ContractInfo3101}（合同信息，P5 T4）</li>
  *   <li>3102 → {@link ArchiveInfo3102}（凭证档案信息，P5 T4）</li>
- *   <li>3103 → {@link ArchiveReturnInfo3103}（融资企业建档回执，P4-MSG-G T2）</li>
+ *   <li>3103 → {@link ArchiveReturnInfo3103}（企业建档信息回执，P4-MSG-G T2）</li>
  *   <li>3105 → {@link RzApplyInfo3105}（融资申请信息，P5 T4）</li>
  *   <li>3107 → {@link PzCheckQuery3107}（凭证核验查询，P5 T4）</li>
- *   <li>3108 → {@link PzCheckQueryReturn3108}（平台凭证对账回执，P4-MSG-G T2）</li>
+ *   <li>3108 → {@link PzCheckQueryReturn3108}（平台凭证核对回执，P4-MSG-G T2）</li>
  *   <li>3109 → {@link QyRegister3109}（企业注册信息，P5 T4）</li>
  *   <li>3112 → {@link HxqyCreditAmt3112}（核心企业授信额度，P5 T4）</li>
  *   <li>3116 → {@link BankCheckDay3116}（银行对账日，P5 T4）</li>
@@ -82,7 +82,7 @@ import java.util.Map;
  * 单独消费。</p>
  *
  * <p>P4-MSG-F T1 注册 3001-3006 供应链查询 6 报文（业务进展查询/凭证融资状态查询/对公账户查询请求+回执 3 对）；
- * P4-MSG-G T2 注册 3008/3020/3103/3108 供应链查询 batch2 4 报文（发票核验回执/通用转发/建档回执/凭证对账回执）；
+ * P4-MSG-G T2 注册 3008/3020/3103/3108 供应链查询 batch2 4 报文（发票核验回执/通用转发/建档回执/凭证核对回执）；
  * 31 entries / 下一阶段 P4-MSG-H 候选 3115/3120 + 9XXX 通用报文
  * （9000/9005/9006/9007/9008/9009/9100/9120）独立 Plan 处理。
  * 1001/2001/1004/2004 于 P4-MSG-E T1 注册；1101 于 P4-MSG-D T3 注册；
