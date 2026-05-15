@@ -228,7 +228,7 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
     }
 
     @Test
-    void registry_should_supports_msg_1001() {
+    void registrySupportsMsg1001() {
         assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_1001)).isNotNull();
     }
 }

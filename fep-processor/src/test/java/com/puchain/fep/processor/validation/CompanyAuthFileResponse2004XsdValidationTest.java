@@ -238,7 +238,7 @@ class CompanyAuthFileResponse2004XsdValidationTest extends AbstractXsdValidation
     }
 
     @Test
-    void registry_should_supports_msg_2004() {
+    void registrySupportsMsg2004() {
         assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_2004)).isNotNull();
     }
 }
