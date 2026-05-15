@@ -32,20 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1001</MsgNo>
-                <MsgId>10010000000000000001</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1001",
+            "10010000000000000001", "00000000000000000000", "20260511", """
                 <RealHead1001>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -61,25 +50,11 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
                   <Parameters>k=v</Parameters>
-                </CompanyInfoRequest1001>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyInfoRequest1001>""");
 
-    private static final String INVALID_MISSING_COMPANY_NAME_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1001</MsgNo>
-                <MsgId>10010000000000000003</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String INVALID_MISSING_COMPANY_NAME_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1001",
+            "10010000000000000003", "00000000000000000000", "20260511", """
                 <RealHead1001>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -91,25 +66,11 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
                   <SecondClass>QYXX01</SecondClass>
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
-                </CompanyInfoRequest1001>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyInfoRequest1001>""");
 
-    private static final String VALID_OPTIONAL_OMITTED_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1001</MsgNo>
-                <MsgId>10010000000000000002</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1001",
+            "10010000000000000002", "00000000000000000000", "20260511", """
                 <RealHead1001>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -122,10 +83,7 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
                   <SecondClass>QYXX01</SecondClass>
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
-                </CompanyInfoRequest1001>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyInfoRequest1001>""");
 
     @Test
     void valid1001FullFields_shouldPass() {

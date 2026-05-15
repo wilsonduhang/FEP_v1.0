@@ -32,20 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000143000104</SrcNode>
-                <DesNode>A1000142000001</DesNode>
-                <App>FEPx</App>
-                <MsgNo>2001</MsgNo>
-                <MsgId>20010000000000000001</MsgId>
-                <CorrMsgId>10010000000000000001</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "2001",
+            "20010000000000000001", "10010000000000000001", "20260511", """
                 <RealHead2001>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -62,25 +51,11 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                   <EndDate>20260511</EndDate>
                   <QueryResult>00000</QueryResult>
                   <QueryAddWord>查询成功</QueryAddWord>
-                </CompanyInfoResponse2001>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyInfoResponse2001>""");
 
-    private static final String VALID_OPTIONAL_OMITTED_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000143000104</SrcNode>
-                <DesNode>A1000142000001</DesNode>
-                <App>FEPx</App>
-                <MsgNo>2001</MsgNo>
-                <MsgId>20010000000000000002</MsgId>
-                <CorrMsgId>10010000000000000002</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "2001",
+            "20010000000000000002", "10010000000000000002", "20260511", """
                 <RealHead2001>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -93,54 +68,26 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                   <MainClass>QYXX</MainClass>
                   <SecondClass>QYXX01</SecondClass>
                   <QueryResult>00000</QueryResult>
-                </CompanyInfoResponse2001>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyInfoResponse2001>""");
 
     /**
      * 错误回执场景：head 仅 Result+AddWord 错误码描述，body element 整段缺失
      * (XSD 2001.xsd:36 CompanyInfoResponse2001 minOccurs="0" 允许)。
      */
-    private static final String VALID_EMPTY_BODY_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000143000104</SrcNode>
-                <DesNode>A1000142000001</DesNode>
-                <App>FEPx</App>
-                <MsgNo>2001</MsgNo>
-                <MsgId>20010000000000000003</MsgId>
-                <CorrMsgId>10010000000000000003</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_EMPTY_BODY_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "2001",
+            "20010000000000000003", "10010000000000000003", "20260511", """
                 <RealHead2001>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
                   <Result>99999</Result>
                   <AddWord>查询授权过期，请重新申请授权</AddWord>
-                </RealHead2001>
-              </MSG>
-            </CFX>
-            """;
+                </RealHead2001>""");
 
-    private static final String INVALID_MISSING_QUERY_RESULT_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000143000104</SrcNode>
-                <DesNode>A1000142000001</DesNode>
-                <App>FEPx</App>
-                <MsgNo>2001</MsgNo>
-                <MsgId>20010000000000000004</MsgId>
-                <CorrMsgId>10010000000000000004</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String INVALID_MISSING_QUERY_RESULT_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "2001",
+            "20010000000000000004", "10010000000000000004", "20260511", """
                 <RealHead2001>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -152,10 +99,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                   <CompanyCode>91110000ABCDEFGH12</CompanyCode>
                   <MainClass>QYXX</MainClass>
                   <SecondClass>QYXX01</SecondClass>
-                </CompanyInfoResponse2001>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyInfoResponse2001>""");
 
     @Test
     void valid2001FullFields_shouldPass() {

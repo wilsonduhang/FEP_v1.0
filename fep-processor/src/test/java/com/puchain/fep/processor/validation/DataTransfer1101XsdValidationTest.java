@@ -32,20 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1101</MsgNo>
-                <MsgId>11010000000000000001</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260509</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1101",
+            "11010000000000000001", "00000000000000000000", "20260509", """
                 <BatchHead1101>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
@@ -58,25 +47,11 @@ class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
                   <Type>01</Type>
                   <FileDate>20260509</FileDate>
                   <Parameters>k1=v1</Parameters>
-                </DataTransfer1101>
-              </MSG>
-            </CFX>
-            """;
+                </DataTransfer1101>""");
 
-    private static final String VALID_OPTIONAL_OMITTED_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1101</MsgNo>
-                <MsgId>11010000000000000002</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260509</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1101",
+            "11010000000000000002", "00000000000000000000", "20260509", """
                 <BatchHead1101>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
@@ -88,25 +63,11 @@ class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
                   <Period>1</Period>
                   <Type>1</Type>
                   <FileDate>20260509</FileDate>
-                </DataTransfer1101>
-              </MSG>
-            </CFX>
-            """;
+                </DataTransfer1101>""");
 
-    private static final String INVALID_MISSING_MAINCLASS_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1101</MsgNo>
-                <MsgId>11010000000000000003</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260509</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String INVALID_MISSING_MAINCLASS_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1101",
+            "11010000000000000003", "00000000000000000000", "20260509", """
                 <BatchHead1101>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
@@ -117,10 +78,7 @@ class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
                   <Period>01</Period>
                   <Type>01</Type>
                   <FileDate>20260509</FileDate>
-                </DataTransfer1101>
-              </MSG>
-            </CFX>
-            """;
+                </DataTransfer1101>""");
 
     @Test
     void valid1101FullFields_shouldPass() {

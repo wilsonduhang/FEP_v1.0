@@ -24,39 +24,25 @@ class Batch1103XsdValidationTest extends AbstractXsdValidationTest {
 
     @Test
     void valid1103Sample_shouldPass() {
-        String xml = """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <CFX>
-                  <HEAD>
-                    <Version>1.0</Version>
-                    <SrcNode>12345678901234</SrcNode>
-                    <DesNode>A1000143000104</DesNode>
-                    <App>HNDEMP</App>
-                    <MsgNo>1103</MsgNo>
-                    <MsgId>20260505120000000001</MsgId>
-                    <CorrMsgId>20260505120000000001</CorrMsgId>
-                    <WorkDate>20260505</WorkDate>
-                  </HEAD>
-                  <MSG>
-                    <BatchHead1103>
-                      <SendOrgCode>12345678901234</SendOrgCode>
-                      <EntrustDate>20260505</EntrustDate>
-                      <TransitionNo>00000001</TransitionNo>
-                    </BatchHead1103>
-                    <CompanyInfoBatchRequest1103>
-                      <CompanyInfoRequest>
-                        <ItemId>1</ItemId>
-                        <CompanyName>湖南示例实业有限公司</CompanyName>
-                        <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
-                        <MainClass>MainA01</MainClass>
-                        <SecondClass>SubA0101</SecondClass>
-                        <AuthNo>AUTH2026050500001</AuthNo>
-                        <AuthOrgCode>12345678901234</AuthOrgCode>
-                      </CompanyInfoRequest>
-                    </CompanyInfoBatchRequest1103>
-                  </MSG>
-                </CFX>
-                """;
+        String xml = wrapCfxTemplate(
+                "12345678901234", "A1000143000104", "HNDEMP", "1103",
+                "20260505120000000001", "20260505120000000001", "20260505", """
+                <BatchHead1103>
+                  <SendOrgCode>12345678901234</SendOrgCode>
+                  <EntrustDate>20260505</EntrustDate>
+                  <TransitionNo>00000001</TransitionNo>
+                </BatchHead1103>
+                <CompanyInfoBatchRequest1103>
+                  <CompanyInfoRequest>
+                    <ItemId>1</ItemId>
+                    <CompanyName>湖南示例实业有限公司</CompanyName>
+                    <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
+                    <MainClass>MainA01</MainClass>
+                    <SecondClass>SubA0101</SecondClass>
+                    <AuthNo>AUTH2026050500001</AuthNo>
+                    <AuthOrgCode>12345678901234</AuthOrgCode>
+                  </CompanyInfoRequest>
+                </CompanyInfoBatchRequest1103>""");
 
         ValidationResult result = validator.validate(MessageType.MSG_1103,
                 xml.getBytes(StandardCharsets.UTF_8));
@@ -68,38 +54,24 @@ class Batch1103XsdValidationTest extends AbstractXsdValidationTest {
 
     @Test
     void invalid1103_missingItemId_shouldFail() {
-        String xml = """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <CFX>
-                  <HEAD>
-                    <Version>1.0</Version>
-                    <SrcNode>12345678901234</SrcNode>
-                    <DesNode>A1000143000104</DesNode>
-                    <App>HNDEMP</App>
-                    <MsgNo>1103</MsgNo>
-                    <MsgId>20260505120000000002</MsgId>
-                    <CorrMsgId>20260505120000000002</CorrMsgId>
-                    <WorkDate>20260505</WorkDate>
-                  </HEAD>
-                  <MSG>
-                    <BatchHead1103>
-                      <SendOrgCode>12345678901234</SendOrgCode>
-                      <EntrustDate>20260505</EntrustDate>
-                      <TransitionNo>00000002</TransitionNo>
-                    </BatchHead1103>
-                    <CompanyInfoBatchRequest1103>
-                      <CompanyInfoRequest>
-                        <CompanyName>缺 ItemId 测试</CompanyName>
-                        <CompanyCode>91430100MA4L5XXXX2</CompanyCode>
-                        <MainClass>MainA01</MainClass>
-                        <SecondClass>SubA0101</SecondClass>
-                        <AuthNo>AUTH-INVALID</AuthNo>
-                        <AuthOrgCode>12345678901234</AuthOrgCode>
-                      </CompanyInfoRequest>
-                    </CompanyInfoBatchRequest1103>
-                  </MSG>
-                </CFX>
-                """;
+        String xml = wrapCfxTemplate(
+                "12345678901234", "A1000143000104", "HNDEMP", "1103",
+                "20260505120000000002", "20260505120000000002", "20260505", """
+                <BatchHead1103>
+                  <SendOrgCode>12345678901234</SendOrgCode>
+                  <EntrustDate>20260505</EntrustDate>
+                  <TransitionNo>00000002</TransitionNo>
+                </BatchHead1103>
+                <CompanyInfoBatchRequest1103>
+                  <CompanyInfoRequest>
+                    <CompanyName>缺 ItemId 测试</CompanyName>
+                    <CompanyCode>91430100MA4L5XXXX2</CompanyCode>
+                    <MainClass>MainA01</MainClass>
+                    <SecondClass>SubA0101</SecondClass>
+                    <AuthNo>AUTH-INVALID</AuthNo>
+                    <AuthOrgCode>12345678901234</AuthOrgCode>
+                  </CompanyInfoRequest>
+                </CompanyInfoBatchRequest1103>""");
 
         ValidationResult result = validator.validate(MessageType.MSG_1103,
                 xml.getBytes(StandardCharsets.UTF_8));

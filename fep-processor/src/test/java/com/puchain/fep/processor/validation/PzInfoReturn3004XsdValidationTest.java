@@ -34,10 +34,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = wrapCfx(
-            "A1000143000104", "A1000142000001", "3004",
-            "30040000000000000001", "30030000000000000001", """
-
+    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "3004",
+            "30040000000000000001", "30030000000000000001", "20260513", """
                 <RealHead3004>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -62,13 +61,11 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                   <ExtInfo>
                     <ExtData>customExt</ExtData>
                   </ExtInfo>
-                </pzInfoReturn3004>
-              """);
+                </pzInfoReturn3004>""");
 
-    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfx(
-            "A1000143000104", "A1000142000001", "3004",
-            "30040000000000000002", "30030000000000000002", """
-
+    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "3004",
+            "30040000000000000002", "30030000000000000002", "20260513", """
                 <RealHead3004>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -89,13 +86,11 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                     <rzPhaseCode>01</rzPhaseCode>
                     <BankNodeCode>A1000142000001</BankNodeCode>
                   </pzrzStatusInfo>
-                </pzInfoReturn3004>
-              """);
+                </pzInfoReturn3004>""");
 
-    private static final String INVALID_MISSING_PZSTATE_XML = wrapCfx(
-            "A1000143000104", "A1000142000001", "3004",
-            "30040000000000000003", "30030000000000000003", """
-
+    private static final String INVALID_MISSING_PZSTATE_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "3004",
+            "30040000000000000003", "30030000000000000003", "20260513", """
                 <RealHead3004>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -115,8 +110,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                     <rzPhaseCode>01</rzPhaseCode>
                     <BankNodeCode>A1000142000001</BankNodeCode>
                   </pzrzStatusInfo>
-                </pzInfoReturn3004>
-              """);
+                </pzInfoReturn3004>""");
 
     @Test
     void valid3004FullFields_shouldPass() {

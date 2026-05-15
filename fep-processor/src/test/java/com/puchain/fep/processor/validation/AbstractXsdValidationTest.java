@@ -57,45 +57,66 @@ public abstract class AbstractXsdValidationTest {
     protected static XsdValidator validator = SHARED_VALIDATOR;
 
     /**
-     * Wrap the CFX {@code <HEAD>}+{@code <MSG>} envelope (no XML namespace,
-     * no BusinessHead, no Body wrapper) around a per-fixture MSG inner XML
-     * fragment. Eliminates the duplicate 8-field {@code <HEAD>} boilerplate
-     * repeated across the supplychain-query {@code *XsdValidationTest}
-     * subclasses (3001-3006).
+     * Builds a complete CFX envelope XML for *XsdValidationTest fixtures.
      *
-     * <p>{@code Version} (1.0), {@code App} (FEPx) and {@code WorkDate}
-     * (20260513) are constant across all fixtures and therefore hard-coded
-     * here; the five varying HEAD fields are passed as parameters.</p>
+     * <p>The fixed HEAD frame (8 mandatory child elements in Base.xsd
+     * {@code HEAD} sequence: Version, SrcNode, DesNode, App, MsgNo, MsgId,
+     * CorrMsgId, WorkDate; {@code Version} hard-coded to {@code 1.0} since all
+     * 19 existing fixtures use it) is generated once here; the caller supplies
+     * the 7 variable fields plus the full {@code MSG} inner content (business
+     * head {@code RealHead/BatchHead} + body element).</p>
      *
-     * @param srcNode     {@code <SrcNode>} (request {@code A1000142000001} /
-     *                    response swapped to {@code A1000143000104})
-     * @param desNode     {@code <DesNode>}
-     * @param msgNo       4-digit message number, also {@code <MsgNo>}
-     * @param msgId       20-char {@code <MsgId>}
-     * @param corrMsgId   20-char {@code <CorrMsgId>} (request all-zero /
-     *                    response = corresponding request {@code MsgId})
-     * @param msgInnerXml verbatim XML placed inside {@code <MSG>}
-     *                    ({@code RealHead{msgNo}} + body element)
-     * @return the full CFX envelope XML
+     * <p>0 behavior change for the 19 existing fixtures it replaces: XSD
+     * validation ignores element whitespace, so normalizing the HEAD layout
+     * (incl. previously compact one-line-per-multi-element Batch fixtures) to
+     * the standard indented form leaves every {@code valid}/{@code invalid}
+     * assertion result identical. Body content (incl. substrings consumed by
+     * {@code String.replace(...)} negative-case helpers in 1001/2001/1004/2004/
+     * 1101/2101 tests) is passed through verbatim via {@code msgInnerXml}.</p>
+     *
+     * <p>{@code MsgId} is a single full 20-digit value (NOT {@code msgNo}
+     * concatenated with a suffix): 8 of the 19 fixtures (Batch 1102/1103/1104/
+     * 2102/2103/2104, DataTransfer2101, DzpzInfo3000) use a timestamp-style
+     * MsgId that does not begin with the MsgNo, so a single param is the only
+     * way to preserve byte-for-byte HEAD equivalence.</p>
+     *
+     * @param srcNode 14-char originating node code ({@code HEAD/SrcNode})
+     * @param desNode 14-char destination node code ({@code HEAD/DesNode})
+     * @param app application code, e.g. {@code FEPx} (institution side) or
+     *            {@code HNDEMP} (platform side)
+     * @param msgNo 4-digit message number ({@code HEAD/MsgNo})
+     * @param msgId full 20-digit message id ({@code HEAD/MsgId})
+     * @param corrMsgId full 20-digit correlation message id
+     *                  ({@code HEAD/CorrMsgId}); may be all zeros, a
+     *                  correlation id, or a timestamp depending on fixture
+     * @param workDate 8-digit YYYYMMDD work date ({@code HEAD/WorkDate})
+     * @param msgInnerXml complete inner XML of the {@code MSG} element
+     *                    (business head + body element), carrying its own
+     *                    indentation
+     * @return complete CFX envelope XML
      */
-    protected static String wrapCfx(final String srcNode, final String desNode,
-                                    final String msgNo, final String msgId,
-                                    final String corrMsgId, final String msgInnerXml) {
-        return """
+    public static String wrapCfxTemplate(
+            String srcNode, String desNode, String app,
+            String msgNo, String msgId, String corrMsgId, String workDate,
+            String msgInnerXml) {
+        return ("""
                 <?xml version="1.0" encoding="UTF-8"?>
                 <CFX>
                   <HEAD>
                     <Version>1.0</Version>
                     <SrcNode>%s</SrcNode>
                     <DesNode>%s</DesNode>
-                    <App>FEPx</App>
+                    <App>%s</App>
                     <MsgNo>%s</MsgNo>
                     <MsgId>%s</MsgId>
                     <CorrMsgId>%s</CorrMsgId>
-                    <WorkDate>20260513</WorkDate>
+                    <WorkDate>%s</WorkDate>
                   </HEAD>
-                  <MSG>%s</MSG>
+                  <MSG>
+                %s
+                  </MSG>
                 </CFX>
-                """.formatted(srcNode, desNode, msgNo, msgId, corrMsgId, msgInnerXml);
+                """).formatted(srcNode, desNode, app, msgNo, msgId, corrMsgId,
+                workDate, msgInnerXml);
     }
 }

@@ -31,20 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class CompanyAuthFileTransfer1004XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1004</MsgNo>
-                <MsgId>10040000000000000001</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1004",
+            "10040000000000000001", "00000000000000000000", "20260511", """
                 <RealHead1004>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -59,25 +48,11 @@ class CompanyAuthFileTransfer1004XsdValidationTest extends AbstractXsdValidation
                   <AuthOrgCode>30500000000099</AuthOrgCode>
                   <IsUpdate>0</IsUpdate>
                   <Parameters>k=v</Parameters>
-                </CompanyAuthFileTransfer1004>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyAuthFileTransfer1004>""");
 
-    private static final String VALID_OPTIONAL_OMITTED_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1004</MsgNo>
-                <MsgId>10040000000000000002</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1004",
+            "10040000000000000002", "00000000000000000000", "20260511", """
                 <RealHead1004>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -90,25 +65,11 @@ class CompanyAuthFileTransfer1004XsdValidationTest extends AbstractXsdValidation
                   <AuthEndDate>20271231</AuthEndDate>
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
-                </CompanyAuthFileTransfer1004>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyAuthFileTransfer1004>""");
 
-    private static final String INVALID_MISSING_AUTH_BEGIN_DATE_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>1004</MsgNo>
-                <MsgId>10040000000000000003</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260511</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String INVALID_MISSING_AUTH_BEGIN_DATE_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "1004",
+            "10040000000000000003", "00000000000000000000", "20260511", """
                 <RealHead1004>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
@@ -120,10 +81,7 @@ class CompanyAuthFileTransfer1004XsdValidationTest extends AbstractXsdValidation
                   <AuthEndDate>20271231</AuthEndDate>
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
-                </CompanyAuthFileTransfer1004>
-              </MSG>
-            </CFX>
-            """;
+                </CompanyAuthFileTransfer1004>""");
 
     @Test
     void valid1004FullFields_shouldPass() {

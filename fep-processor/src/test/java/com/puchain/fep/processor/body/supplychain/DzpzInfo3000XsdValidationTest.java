@@ -41,34 +41,20 @@ class DzpzInfo3000XsdValidationTest {
 
     @Test
     void valid3000_shouldPassValidation() {
-        String xml = """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <CFX>
-                  <HEAD>
-                    <Version>1.0</Version>
-                    <SrcNode>12345678901234</SrcNode>
-                    <DesNode>A1000143000104</DesNode>
-                    <App>HNDEMP</App>
-                    <MsgNo>3000</MsgNo>
-                    <MsgId>20260508120000000001</MsgId>
-                    <CorrMsgId>20260508120000000001</CorrMsgId>
-                    <WorkDate>20260508</WorkDate>
-                  </HEAD>
-                  <MSG>
-                    <RealHead3000>
-                      <SendOrgCode>12345678901234</SendOrgCode>
-                      <EntrustDate>20260508</EntrustDate>
-                      <TransitionNo>00000001</TransitionNo>
-                    </RealHead3000>
-                    <dzpzInfo3000>
-                      <SerialNo>SN2026050800000000000000000001</SerialNo>
-                      <SendNodeCode>12345678901234</SendNodeCode>
-                      <DesNodeCode>A1000143000104</DesNodeCode>
-                      <ApplyMode>01</ApplyMode>
-                    </dzpzInfo3000>
-                  </MSG>
-                </CFX>
-                """;
+        String xml = AbstractXsdValidationTest.wrapCfxTemplate(
+                "12345678901234", "A1000143000104", "HNDEMP", "3000",
+                "20260508120000000001", "20260508120000000001", "20260508", """
+                <RealHead3000>
+                  <SendOrgCode>12345678901234</SendOrgCode>
+                  <EntrustDate>20260508</EntrustDate>
+                  <TransitionNo>00000001</TransitionNo>
+                </RealHead3000>
+                <dzpzInfo3000>
+                  <SerialNo>SN2026050800000000000000000001</SerialNo>
+                  <SendNodeCode>12345678901234</SendNodeCode>
+                  <DesNodeCode>A1000143000104</DesNodeCode>
+                  <ApplyMode>01</ApplyMode>
+                </dzpzInfo3000>""");
 
         ValidationResult result = validator.validate(MessageType.MSG_3000,
                 xml.getBytes(StandardCharsets.UTF_8));
@@ -82,33 +68,19 @@ class DzpzInfo3000XsdValidationTest {
     @Test
     void invalid3000_missingApplyMode_shouldFailValidation() {
         // ApplyMode 是 dzpzInfo3000 sequence 中的必填字段，移除应触发 XSD violation
-        String xml = """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <CFX>
-                  <HEAD>
-                    <Version>1.0</Version>
-                    <SrcNode>12345678901234</SrcNode>
-                    <DesNode>A1000143000104</DesNode>
-                    <App>HNDEMP</App>
-                    <MsgNo>3000</MsgNo>
-                    <MsgId>20260508120000000002</MsgId>
-                    <CorrMsgId>20260508120000000002</CorrMsgId>
-                    <WorkDate>20260508</WorkDate>
-                  </HEAD>
-                  <MSG>
-                    <RealHead3000>
-                      <SendOrgCode>12345678901234</SendOrgCode>
-                      <EntrustDate>20260508</EntrustDate>
-                      <TransitionNo>00000002</TransitionNo>
-                    </RealHead3000>
-                    <dzpzInfo3000>
-                      <SerialNo>SN2026050800000000000000000002</SerialNo>
-                      <SendNodeCode>12345678901234</SendNodeCode>
-                      <DesNodeCode>A1000143000104</DesNodeCode>
-                    </dzpzInfo3000>
-                  </MSG>
-                </CFX>
-                """;
+        String xml = AbstractXsdValidationTest.wrapCfxTemplate(
+                "12345678901234", "A1000143000104", "HNDEMP", "3000",
+                "20260508120000000002", "20260508120000000002", "20260508", """
+                <RealHead3000>
+                  <SendOrgCode>12345678901234</SendOrgCode>
+                  <EntrustDate>20260508</EntrustDate>
+                  <TransitionNo>00000002</TransitionNo>
+                </RealHead3000>
+                <dzpzInfo3000>
+                  <SerialNo>SN2026050800000000000000000002</SerialNo>
+                  <SendNodeCode>12345678901234</SendNodeCode>
+                  <DesNodeCode>A1000143000104</DesNodeCode>
+                </dzpzInfo3000>""");
 
         ValidationResult result = validator.validate(MessageType.MSG_3000,
                 xml.getBytes(StandardCharsets.UTF_8));

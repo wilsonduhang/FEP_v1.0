@@ -32,10 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class ProgressQueryReturn3002XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = wrapCfx(
-            "A1000143000104", "A1000142000001", "3002",
-            "30020000000000000001", "30010000000000000001", """
-
+    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "3002",
+            "30020000000000000001", "30010000000000000001", "20260513", """
                 <RealHead3002>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -56,13 +55,11 @@ class ProgressQueryReturn3002XsdValidationTest extends AbstractXsdValidationTest
                   <ExtInfo>
                     <ExtData>customExt</ExtData>
                   </ExtInfo>
-                </ProgressQueryReturn3002>
-              """);
+                </ProgressQueryReturn3002>""");
 
-    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfx(
-            "A1000143000104", "A1000142000001", "3002",
-            "30020000000000000002", "30010000000000000002", """
-
+    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "3002",
+            "30020000000000000002", "30010000000000000002", "20260513", """
                 <RealHead3002>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -78,13 +75,11 @@ class ProgressQueryReturn3002XsdValidationTest extends AbstractXsdValidationTest
                   <QueryType>1</QueryType>
                   <QueryKey>BIZ20260513000002</QueryKey>
                   <ReturnCode>01</ReturnCode>
-                </ProgressQueryReturn3002>
-              """);
+                </ProgressQueryReturn3002>""");
 
-    private static final String INVALID_MISSING_RETURNCODE_XML = wrapCfx(
-            "A1000143000104", "A1000142000001", "3002",
-            "30020000000000000003", "30010000000000000003", """
-
+    private static final String INVALID_MISSING_RETURNCODE_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "FEPx", "3002",
+            "30020000000000000003", "30010000000000000003", "20260513", """
                 <RealHead3002>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -99,8 +94,7 @@ class ProgressQueryReturn3002XsdValidationTest extends AbstractXsdValidationTest
                   <hxqyCode>91110000ABCDEFGH12</hxqyCode>
                   <QueryType>1</QueryType>
                   <QueryKey>BIZ20260513000003</QueryKey>
-                </ProgressQueryReturn3002>
-              """);
+                </ProgressQueryReturn3002>""");
 
     @Test
     void valid3002FullFields_shouldPass() {

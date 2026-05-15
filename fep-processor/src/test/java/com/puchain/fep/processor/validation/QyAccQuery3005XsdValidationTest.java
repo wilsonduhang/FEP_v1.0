@@ -30,10 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class QyAccQuery3005XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = wrapCfx(
-            "A1000142000001", "A1000143000104", "3005",
-            "30050000000000000001", "00000000000000000000", """
-
+    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "3005",
+            "30050000000000000001", "00000000000000000000", "20260513", """
                 <RealHead3005>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -48,13 +47,11 @@ class QyAccQuery3005XsdValidationTest extends AbstractXsdValidationTest {
                   <ExtInfo>
                     <ExtData>customExt</ExtData>
                   </ExtInfo>
-                </qyAccQuery3005>
-              """);
+                </qyAccQuery3005>""");
 
-    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfx(
-            "A1000142000001", "A1000143000104", "3005",
-            "30050000000000000002", "00000000000000000000", """
-
+    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "3005",
+            "30050000000000000002", "00000000000000000000", "20260513", """
                 <RealHead3005>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -66,13 +63,11 @@ class QyAccQuery3005XsdValidationTest extends AbstractXsdValidationTest {
                   <DesNodeCode>A1000143000104</DesNodeCode>
                   <qyAccName>测试企业账户</qyAccName>
                   <qyAccCode>6228480000000000</qyAccCode>
-                </qyAccQuery3005>
-              """);
+                </qyAccQuery3005>""");
 
-    private static final String INVALID_MISSING_QYACCCODE_XML = wrapCfx(
-            "A1000142000001", "A1000143000104", "3005",
-            "30050000000000000003", "00000000000000000000", """
-
+    private static final String INVALID_MISSING_QYACCCODE_XML = wrapCfxTemplate(
+            "A1000142000001", "A1000143000104", "FEPx", "3005",
+            "30050000000000000003", "00000000000000000000", "20260513", """
                 <RealHead3005>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -83,8 +78,7 @@ class QyAccQuery3005XsdValidationTest extends AbstractXsdValidationTest {
                   <SendNodeCode>A1000142000001</SendNodeCode>
                   <DesNodeCode>A1000143000104</DesNodeCode>
                   <qyAccName>测试企业账户</qyAccName>
-                </qyAccQuery3005>
-              """);
+                </qyAccQuery3005>""");
 
     @Test
     void valid3005FullFields_shouldPass() {

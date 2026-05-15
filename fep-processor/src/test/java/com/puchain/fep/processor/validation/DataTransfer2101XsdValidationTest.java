@@ -31,20 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_2101_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000143000104</SrcNode>
-                <DesNode>A1000142000001</DesNode>
-                <App>HNDEMP</App>
-                <MsgNo>2101</MsgNo>
-                <MsgId>21010000000000000001</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260509</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_2101_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "HNDEMP", "2101",
+            "21010000000000000001", "00000000000000000000", "20260509", """
                 <BatchHead2101>
                   <SendOrgCode>00000000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
@@ -56,25 +45,11 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
                   <Period>01</Period>
                   <Type>01</Type>
                   <FileDate>20260509</FileDate>
-                </DataTransfer2101>
-              </MSG>
-            </CFX>
-            """;
+                </DataTransfer2101>""");
 
-    private static final String INVALID_MISSING_FILEDATE_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000143000104</SrcNode>
-                <DesNode>A1000142000001</DesNode>
-                <App>HNDEMP</App>
-                <MsgNo>2101</MsgNo>
-                <MsgId>21010000000000000002</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260509</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String INVALID_MISSING_FILEDATE_XML = wrapCfxTemplate(
+            "A1000143000104", "A1000142000001", "HNDEMP", "2101",
+            "21010000000000000002", "00000000000000000000", "20260509", """
                 <BatchHead2101>
                   <SendOrgCode>00000000000000</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
@@ -85,10 +60,7 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
                   <SecondClass>LSDX01</SecondClass>
                   <Period>01</Period>
                   <Type>01</Type>
-                </DataTransfer2101>
-              </MSG>
-            </CFX>
-            """;
+                </DataTransfer2101>""");
 
     @Test
     void valid2101_shouldPass() {
