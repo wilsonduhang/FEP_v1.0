@@ -233,6 +233,6 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
 
     @Test
     void registry_should_supports_msg_2001() {
-        assertThat(new XsdSchemaRegistry().schemaOf(MessageType.MSG_2001)).isNotNull();
+        assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_2001)).isNotNull();
     }
 }

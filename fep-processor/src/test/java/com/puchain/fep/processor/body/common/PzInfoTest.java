@@ -4,8 +4,8 @@ import com.puchain.fep.common.util.FepConstants;
 
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.supplychain.PzInfoReturn3004;
+import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
 import com.puchain.fep.processor.validation.ValidationResult;
-import com.puchain.fep.processor.validation.XsdSchemaRegistry;
 import com.puchain.fep.processor.validation.XsdValidator;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.Marshaller;
@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PzInfoTest {
 
-    private final XsdValidator xsdValidator = new XsdValidator(new XsdSchemaRegistry());
+    private final XsdValidator xsdValidator = AbstractXsdValidationTest.SHARED_VALIDATOR;
 
     // ==================== helpers ====================
 

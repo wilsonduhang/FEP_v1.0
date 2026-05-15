@@ -164,6 +164,6 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
 
     @Test
     void registry_should_supports_msg_2101() {
-        assertThat(new XsdSchemaRegistry().schemaOf(MessageType.MSG_2101)).isNotNull();
+        assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_2101)).isNotNull();
     }
 }

@@ -209,6 +209,6 @@ class CompanyAuthFileTransfer1004XsdValidationTest extends AbstractXsdValidation
 
     @Test
     void registry_should_supports_msg_1004() {
-        assertThat(new XsdSchemaRegistry().schemaOf(MessageType.MSG_1004)).isNotNull();
+        assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_1004)).isNotNull();
     }
 }

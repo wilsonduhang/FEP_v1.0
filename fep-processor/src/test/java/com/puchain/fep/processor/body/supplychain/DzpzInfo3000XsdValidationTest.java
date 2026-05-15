@@ -1,8 +1,8 @@
 package com.puchain.fep.processor.body.supplychain;
 
 import com.puchain.fep.converter.type.MessageType;
+import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
 import com.puchain.fep.processor.validation.ValidationResult;
-import com.puchain.fep.processor.validation.XsdSchemaRegistry;
 import com.puchain.fep.processor.validation.XsdValidator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -15,9 +15,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * P4-MSG-B T4 — 3000 报文 XSD 结构校验测试（电子凭证信息报送）。
  *
  * <p>验证 {@link DzpzInfo3000} 对应的完整 CFX envelope（HEAD + RealHead3000 + dzpzInfo3000）
- * 在 {@link XsdValidator} 下的合法 / 缺必填两个核心场景。沿用
- * {@code Batch1102XsdValidationTest} 模式：直构造 {@link XsdSchemaRegistry} +
- * {@link XsdValidator}，无 Spring 容器依赖。</p>
+ * 在 {@link XsdValidator} 下的合法 / 缺必填两个核心场景。复用
+ * {@link AbstractXsdValidationTest#SHARED_VALIDATOR}（模块级共享 stateless 实例，
+ * 节省 XSD schema 编译开销），无 Spring 容器依赖。</p>
  *
  * <p>3000.xsd 定义 dzpzInfo3000 sequence: SerialNo, SendNodeCode, DesNodeCode, ApplyMode,
  * pzInfo?, ExtInfo? — 前 4 个为必填，后 2 个 minOccurs=0。</p>
@@ -36,7 +36,7 @@ class DzpzInfo3000XsdValidationTest {
 
     @BeforeAll
     static void initValidator() {
-        validator = new XsdValidator(new XsdSchemaRegistry());
+        validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
     }
 
     @Test

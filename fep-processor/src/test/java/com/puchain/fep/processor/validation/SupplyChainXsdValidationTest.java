@@ -56,7 +56,7 @@ class SupplyChainXsdValidationTest {
 
     @BeforeAll
     static void init() {
-        validator = new XsdValidator(new XsdSchemaRegistry());
+        validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
     }
 
     // ── positive samples ──────────────────────────────────────────────

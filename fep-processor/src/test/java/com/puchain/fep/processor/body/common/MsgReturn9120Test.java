@@ -4,8 +4,8 @@ import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxBody;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.JaxbRoundtripSupport;
+import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
 import com.puchain.fep.processor.validation.ValidationResult;
-import com.puchain.fep.processor.validation.XsdSchemaRegistry;
 import com.puchain.fep.processor.validation.XsdValidator;
 import org.junit.jupiter.api.Test;
 
@@ -83,8 +83,7 @@ class MsgReturn9120Test {
                 + "    </MSG>\n"
                 + "</CFX>";
 
-        XsdSchemaRegistry registry = new XsdSchemaRegistry();
-        XsdValidator validator = new XsdValidator(registry);
+        XsdValidator validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
         ValidationResult result = validator.validate(
                 MessageType.MSG_9120, xml.getBytes(StandardCharsets.UTF_8));
 
