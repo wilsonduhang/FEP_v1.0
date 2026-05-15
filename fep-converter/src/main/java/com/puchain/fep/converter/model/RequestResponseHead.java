@@ -71,7 +71,7 @@ public class RequestResponseHead extends RequestBusinessHead {
      *
      * @return 业务处理结果附言，可选 (XSD minOccurs=0)，可能为 {@code null}
      */
-    @XmlElement(name = "AddWord", required = false)
+    @XmlElement(name = "AddWord")
     public String getAddWord() {
         return addWord;
     }

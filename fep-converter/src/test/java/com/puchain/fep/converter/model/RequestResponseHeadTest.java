@@ -18,11 +18,13 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 /**
  * 单元测试：{@link RequestResponseHead} 3020/3115/3120 通用转发报文双向业务头 POJO。
  *
- * <p>覆盖 8 用例，验证 {@code Result}/{@code AddWord} 可选 (XSD minOccurs=0)
+ * <p>覆盖 10 用例，验证 {@code Result}/{@code AddWord} 可选 (XSD minOccurs=0)
  * 的 null-passthrough 语义，区别于 {@link ResponseBusinessHead} 的 5 位数字强校验。</p>
  *
  * <ol>
  *   <li>getterSetterRoundtrip — 基础 getter/setter 往返</li>
+ *   <li>resultNullPassthrough — setResult(null) 不校验 (核心设计差异点)</li>
+ *   <li>addWordNullPassthrough — setAddWord(null) 不校验 (核心设计差异点)</li>
  *   <li>extendsRequestBusinessHeadInheritsSendOrgCode — 继承父类 3 字段</li>
  *   <li>marshalEmptyResultProducesNoResultElement — Result null → 不输出 element</li>
  *   <li>marshalFilledResultProducesResultElement — Result 非 null → 输出 element</li>
@@ -44,6 +46,20 @@ class RequestResponseHeadTest {
         h.setAddWord("通用转发应答附言");
         assertThat(h.getResult()).isEqualTo("RESPONSE-OK");
         assertThat(h.getAddWord()).isEqualTo("通用转发应答附言");
+    }
+
+    @Test
+    void resultNullPassthrough() {
+        RequestResponseHead h = new RequestResponseHead();
+        h.setResult(null);
+        assertThat(h.getResult()).isNull();
+    }
+
+    @Test
+    void addWordNullPassthrough() {
+        RequestResponseHead h = new RequestResponseHead();
+        h.setAddWord(null);
+        assertThat(h.getAddWord()).isNull();
     }
 
     @Test
