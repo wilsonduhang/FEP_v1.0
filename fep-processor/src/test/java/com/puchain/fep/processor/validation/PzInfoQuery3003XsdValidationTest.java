@@ -30,20 +30,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class PzInfoQuery3003XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>3003</MsgNo>
-                <MsgId>30030000000000000001</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260513</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_FULL_FIELDS_XML = wrapCfx(
+            "A1000142000001", "A1000143000104", "3003",
+            "30030000000000000001", "00000000000000000000", """
+
                 <RealHead3003>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -60,24 +50,12 @@ class PzInfoQuery3003XsdValidationTest extends AbstractXsdValidationTest {
                     <ExtData>customExt</ExtData>
                   </ExtInfo>
                 </pzInfoQuery3003>
-              </MSG>
-            </CFX>
-            """;
+              """);
 
-    private static final String VALID_OPTIONAL_OMITTED_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>3003</MsgNo>
-                <MsgId>30030000000000000002</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260513</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfx(
+            "A1000142000001", "A1000143000104", "3003",
+            "30030000000000000002", "00000000000000000000", """
+
                 <RealHead3003>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -91,24 +69,12 @@ class PzInfoQuery3003XsdValidationTest extends AbstractXsdValidationTest {
                   <hxqyCode>91110000ABCDEFGH12</hxqyCode>
                   <pzNo>PZ20260513000000000002</pzNo>
                 </pzInfoQuery3003>
-              </MSG>
-            </CFX>
-            """;
+              """);
 
-    private static final String INVALID_MISSING_PZNO_XML = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CFX>
-              <HEAD>
-                <Version>1.0</Version>
-                <SrcNode>A1000142000001</SrcNode>
-                <DesNode>A1000143000104</DesNode>
-                <App>FEPx</App>
-                <MsgNo>3003</MsgNo>
-                <MsgId>30030000000000000003</MsgId>
-                <CorrMsgId>00000000000000000000</CorrMsgId>
-                <WorkDate>20260513</WorkDate>
-              </HEAD>
-              <MSG>
+    private static final String INVALID_MISSING_PZNO_XML = wrapCfx(
+            "A1000142000001", "A1000143000104", "3003",
+            "30030000000000000003", "00000000000000000000", """
+
                 <RealHead3003>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
@@ -121,9 +87,7 @@ class PzInfoQuery3003XsdValidationTest extends AbstractXsdValidationTest {
                   <hxqyName>核心企业测试有限公司</hxqyName>
                   <hxqyCode>91110000ABCDEFGH12</hxqyCode>
                 </pzInfoQuery3003>
-              </MSG>
-            </CFX>
-            """;
+              """);
 
     @Test
     void valid3003FullFields_shouldPass() {

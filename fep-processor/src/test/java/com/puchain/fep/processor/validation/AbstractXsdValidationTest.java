@@ -55,4 +55,47 @@ public abstract class AbstractXsdValidationTest {
      * directly.</p>
      */
     protected static XsdValidator validator = SHARED_VALIDATOR;
+
+    /**
+     * Wrap the CFX {@code <HEAD>}+{@code <MSG>} envelope (no XML namespace,
+     * no BusinessHead, no Body wrapper) around a per-fixture MSG inner XML
+     * fragment. Eliminates the duplicate 8-field {@code <HEAD>} boilerplate
+     * repeated across the supplychain-query {@code *XsdValidationTest}
+     * subclasses (3001-3006).
+     *
+     * <p>{@code Version} (1.0), {@code App} (FEPx) and {@code WorkDate}
+     * (20260513) are constant across all fixtures and therefore hard-coded
+     * here; the five varying HEAD fields are passed as parameters.</p>
+     *
+     * @param srcNode     {@code <SrcNode>} (request {@code A1000142000001} /
+     *                    response swapped to {@code A1000143000104})
+     * @param desNode     {@code <DesNode>}
+     * @param msgNo       4-digit message number, also {@code <MsgNo>}
+     * @param msgId       20-char {@code <MsgId>}
+     * @param corrMsgId   20-char {@code <CorrMsgId>} (request all-zero /
+     *                    response = corresponding request {@code MsgId})
+     * @param msgInnerXml verbatim XML placed inside {@code <MSG>}
+     *                    ({@code RealHead{msgNo}} + body element)
+     * @return the full CFX envelope XML
+     */
+    protected static String wrapCfx(final String srcNode, final String desNode,
+                                    final String msgNo, final String msgId,
+                                    final String corrMsgId, final String msgInnerXml) {
+        return """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <CFX>
+                  <HEAD>
+                    <Version>1.0</Version>
+                    <SrcNode>%s</SrcNode>
+                    <DesNode>%s</DesNode>
+                    <App>FEPx</App>
+                    <MsgNo>%s</MsgNo>
+                    <MsgId>%s</MsgId>
+                    <CorrMsgId>%s</CorrMsgId>
+                    <WorkDate>20260513</WorkDate>
+                  </HEAD>
+                  <MSG>%s</MSG>
+                </CFX>
+                """.formatted(srcNode, desNode, msgNo, msgId, corrMsgId, msgInnerXml);
+    }
 }
