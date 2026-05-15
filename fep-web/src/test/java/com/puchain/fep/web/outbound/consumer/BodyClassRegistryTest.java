@@ -14,14 +14,18 @@ import com.puchain.fep.processor.body.realtime.CompanyAuthFileTransfer1004;
 import com.puchain.fep.processor.body.realtime.CompanyInfoRequest1001;
 import com.puchain.fep.processor.body.realtime.CompanyInfoResponse2001;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
+import com.puchain.fep.processor.body.supplychain.ArchiveReturnInfo3103;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
 import com.puchain.fep.processor.body.supplychain.DzpzInfo3000;
+import com.puchain.fep.processor.body.supplychain.Forward3020;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
+import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
 import com.puchain.fep.processor.body.supplychain.ProgressQuery3001;
 import com.puchain.fep.processor.body.supplychain.ProgressQueryReturn3002;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
+import com.puchain.fep.processor.body.supplychain.PzCheckQueryReturn3108;
 import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
 import com.puchain.fep.processor.body.supplychain.PzInfoReturn3004;
 import com.puchain.fep.processor.body.supplychain.QyAccQuery3005;
@@ -47,9 +51,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * P5 T4 Step 1 — {@link BodyClassRegistry} 单元测试。
  *
- * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，P4-MSG-E T1 起 21 entries，P4-MSG-F T1 起 27 entries，含 3000 + 3007 + 6 BATCH + 1101 + 4 realtime + 6 supplychain query）：</p>
+ * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，P4-MSG-E T1 起 21 entries，P4-MSG-F T1 起 27 entries，P4-MSG-G T2 起 31 entries，含 3000 + 3007 + 6 BATCH + 1101 + 4 realtime + 6 supplychain query + 4 supplychain query batch2）：</p>
  * <ul>
- *   <li>27 上行报文 msgNo → Body POJO Class 主映射 hits</li>
+ *   <li>31 上行报文 msgNo → Body POJO Class 主映射 hits</li>
  *   <li>未注册 msgNo（"9999" / null）→ {@link FepBusinessException} +
  *       {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}</li>
  * </ul>
@@ -75,6 +79,30 @@ class BodyClassRegistryTest {
     @Test
     void resolve_3007_should_return_InvoCheckQuery3007() {
         assertThat(registry.resolve("3007")).isEqualTo(InvoCheckQuery3007.class);
+    }
+
+    @Test
+    @DisplayName("3008 → InvoCheckReturn3008.class（发票核验回执，P4-MSG-G T2）")
+    void resolve_3008_should_return_InvoCheckReturn3008() {
+        assertThat(registry.resolve("3008")).isEqualTo(InvoCheckReturn3008.class);
+    }
+
+    @Test
+    @DisplayName("3020 → Forward3020.class（供应链实时业务通用转发，P4-MSG-G T2）")
+    void resolve_3020_should_return_Forward3020() {
+        assertThat(registry.resolve("3020")).isEqualTo(Forward3020.class);
+    }
+
+    @Test
+    @DisplayName("3103 → ArchiveReturnInfo3103.class（融资企业建档回执，P4-MSG-G T2）")
+    void resolve_3103_should_return_ArchiveReturnInfo3103() {
+        assertThat(registry.resolve("3103")).isEqualTo(ArchiveReturnInfo3103.class);
+    }
+
+    @Test
+    @DisplayName("3108 → PzCheckQueryReturn3108.class（平台凭证对账回执，P4-MSG-G T2）")
+    void resolve_3108_should_return_PzCheckQueryReturn3108() {
+        assertThat(registry.resolve("3108")).isEqualTo(PzCheckQueryReturn3108.class);
     }
 
     @Test
@@ -220,21 +248,22 @@ class BodyClassRegistryTest {
     }
 
     /**
-     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 + P4-MSG-E T1 + P4-MSG-F T1 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
+     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 + P4-MSG-E T1 + P4-MSG-F T1 + P4-MSG-G T2 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
      *
      * <p>P4-MSG-B T0 完成 refactor（Map.of → Map.ofEntries，行为不变 8 entries）；T1 append
      * 3007 → {@link InvoCheckQuery3007}（8 → 9）；T4 append 3000 → {@link DzpzInfo3000}（9 → 10）；
      * P4-MSG-A T2 +6 BATCH（10 → 16）；P4-MSG-D T3 +1101 → {@link DataTransfer1101}（16 → 17）；
      * P4-MSG-E T1 +4 realtime 1001/2001/1004/2004（17 → 21）；P4-MSG-F T1 +6 supplychain query
-     * 3001/3002/3003/3004/3005/3006（21 → 27）。
+     * 3001/3002/3003/3004/3005/3006（21 → 27）；P4-MSG-G T2 +4 supplychain query batch2
+     * 3008/3020/3103/3108（27 → 31）。
      * source code 必须保持用 {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常
      */
     @Test
-    void registry_shouldUseMapOfEntries_supportingMoreThan27Entries() throws Exception {
-        // 1. entry 数 27（P4-MSG-F T1 +3001/3002/3003/3004/3005/3006 后；后续 Task 继续 append）
-        assertThat(countRegistryEntries()).isEqualTo(27);
+    void registry_shouldUseMapOfEntries_supportingMoreThan31Entries() throws Exception {
+        // 1. entry 数 31（P4-MSG-G T2 +3008/3020/3103/3108 后；后续 Task 继续 append）
+        assertThat(countRegistryEntries()).isEqualTo(31);
 
         // 2. source 含 Map.ofEntries(
         final String source = Files.readString(Paths.get(

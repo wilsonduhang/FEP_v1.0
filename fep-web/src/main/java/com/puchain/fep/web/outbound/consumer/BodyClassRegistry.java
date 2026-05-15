@@ -14,14 +14,18 @@ import com.puchain.fep.processor.body.realtime.CompanyAuthFileTransfer1004;
 import com.puchain.fep.processor.body.realtime.CompanyInfoRequest1001;
 import com.puchain.fep.processor.body.realtime.CompanyInfoResponse2001;
 import com.puchain.fep.processor.body.supplychain.ArchiveInfo3102;
+import com.puchain.fep.processor.body.supplychain.ArchiveReturnInfo3103;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
 import com.puchain.fep.processor.body.supplychain.DzpzInfo3000;
+import com.puchain.fep.processor.body.supplychain.Forward3020;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
+import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
 import com.puchain.fep.processor.body.supplychain.ProgressQuery3001;
 import com.puchain.fep.processor.body.supplychain.ProgressQueryReturn3002;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
+import com.puchain.fep.processor.body.supplychain.PzCheckQueryReturn3108;
 import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
 import com.puchain.fep.processor.body.supplychain.PzInfoReturn3004;
 import com.puchain.fep.processor.body.supplychain.QyAccQuery3005;
@@ -59,11 +63,15 @@ import java.util.Map;
  *   <li>3005 → {@link QyAccQuery3005}（对公账户状态查询请求，P4-MSG-F T1）</li>
  *   <li>3006 → {@link QyAccQueryReturn3006}（对公客户状态查询回执，P4-MSG-F T1）</li>
  *   <li>3007 → {@link InvoCheckQuery3007}（受理单位发起发票核验请求，P4-MSG-B T1）</li>
+ *   <li>3008 → {@link InvoCheckReturn3008}（发票核验回执，P4-MSG-G T2）</li>
  *   <li>3009 → {@link RzReturnInfo3009}（电子凭证融资结果登记，P5 T4）</li>
+ *   <li>3020 → {@link Forward3020}（供应链实时业务通用转发，P4-MSG-G T2）</li>
  *   <li>3101 → {@link ContractInfo3101}（合同信息，P5 T4）</li>
  *   <li>3102 → {@link ArchiveInfo3102}（凭证档案信息，P5 T4）</li>
+ *   <li>3103 → {@link ArchiveReturnInfo3103}（融资企业建档回执，P4-MSG-G T2）</li>
  *   <li>3105 → {@link RzApplyInfo3105}（融资申请信息，P5 T4）</li>
  *   <li>3107 → {@link PzCheckQuery3107}（凭证核验查询，P5 T4）</li>
+ *   <li>3108 → {@link PzCheckQueryReturn3108}（平台凭证对账回执，P4-MSG-G T2）</li>
  *   <li>3109 → {@link QyRegister3109}（企业注册信息，P5 T4）</li>
  *   <li>3112 → {@link HxqyCreditAmt3112}（核心企业授信额度，P5 T4）</li>
  *   <li>3116 → {@link BankCheckDay3116}（银行对账日，P5 T4）</li>
@@ -74,8 +82,9 @@ import java.util.Map;
  * 单独消费。</p>
  *
  * <p>P4-MSG-F T1 注册 3001-3006 供应链查询 6 报文（业务进展查询/凭证融资状态查询/对公账户查询请求+回执 3 对）；
- * 27 entries / 下一阶段 P4-MSG-G（batch2）候选 3008/3020/3103/3108 / P4-MSG-H（batch3）候选 3113/3115/3120 +
- * 9XXX 通用报文（9000/9005/9006/9007/9008/9009/9100/9120）独立 Plan 处理。
+ * P4-MSG-G T2 注册 3008/3020/3103/3108 供应链查询 batch2 4 报文（发票核验回执/通用转发/建档回执/凭证对账回执）；
+ * 31 entries / 下一阶段 P4-MSG-H 候选 3115/3120 + 9XXX 通用报文
+ * （9000/9005/9006/9007/9008/9009/9100/9120）独立 Plan 处理。
  * 1001/2001/1004/2004 于 P4-MSG-E T1 注册；1101 于 P4-MSG-D T3 注册；
  * 1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册；3000 已于 Plan B T4 注册。</p>
  *
@@ -109,11 +118,15 @@ public class BodyClassRegistry {
             Map.entry("3005", QyAccQuery3005.class),
             Map.entry("3006", QyAccQueryReturn3006.class),
             Map.entry("3007", InvoCheckQuery3007.class),
+            Map.entry("3008", InvoCheckReturn3008.class),
             Map.entry("3009", RzReturnInfo3009.class),
+            Map.entry("3020", Forward3020.class),
             Map.entry("3101", ContractInfo3101.class),
             Map.entry("3102", ArchiveInfo3102.class),
+            Map.entry("3103", ArchiveReturnInfo3103.class),
             Map.entry("3105", RzApplyInfo3105.class),
             Map.entry("3107", PzCheckQuery3107.class),
+            Map.entry("3108", PzCheckQueryReturn3108.class),
             Map.entry("3109", QyRegister3109.class),
             Map.entry("3112", HxqyCreditAmt3112.class),
             Map.entry("3116", BankCheckDay3116.class));
