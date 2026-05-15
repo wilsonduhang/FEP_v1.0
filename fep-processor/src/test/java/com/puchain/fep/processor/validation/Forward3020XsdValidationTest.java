@@ -150,4 +150,9 @@ class Forward3020XsdValidationTest extends AbstractXsdValidationTest {
                 .isNotEmpty()
                 .anyMatch(e -> e.contains("SerialNo"));
     }
+
+    @Test
+    void registry_should_supports_msg_3020() {
+        assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_3020)).isNotNull();
+    }
 }
