@@ -147,7 +147,7 @@ class PzCheckQueryReturn3108XsdValidationTest extends AbstractXsdValidationTest 
     }
 
     @Test
-    void registry_should_supports_msg_3108() {
+    void registrySupportsMsg3108() {
         assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_3108)).isNotNull();
     }
 }

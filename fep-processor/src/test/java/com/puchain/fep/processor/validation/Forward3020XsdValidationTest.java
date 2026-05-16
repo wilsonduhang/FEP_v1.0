@@ -152,7 +152,7 @@ class Forward3020XsdValidationTest extends AbstractXsdValidationTest {
     }
 
     @Test
-    void registry_should_supports_msg_3020() {
+    void registrySupportsMsg3020() {
         assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_3020)).isNotNull();
     }
 }

@@ -141,7 +141,7 @@ class ArchiveReturnInfo3103XsdValidationTest extends AbstractXsdValidationTest {
     }
 
     @Test
-    void registry_should_supports_msg_3103() {
+    void registrySupportsMsg3103() {
         assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_3103)).isNotNull();
     }
 }

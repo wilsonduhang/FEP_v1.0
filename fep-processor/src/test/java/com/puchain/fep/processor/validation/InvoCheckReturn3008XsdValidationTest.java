@@ -135,7 +135,7 @@ class InvoCheckReturn3008XsdValidationTest extends AbstractXsdValidationTest {
     }
 
     @Test
-    void registry_should_supports_msg_3008() {
+    void registrySupportsMsg3008() {
         assertThat(SHARED_REGISTRY.schemaOf(MessageType.MSG_3008)).isNotNull();
     }
 }
