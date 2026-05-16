@@ -37,12 +37,5 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- TEMPORARY: surfaces deprecated application.yml keys after SB 3.5.14
-             upgrade. Removed in Plan T2 after verify. Do not keep in main long-term. -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-properties-migrator</artifactId>
-            <scope>runtime</scope>
-        </dependency>
     </dependencies>
 </project>
