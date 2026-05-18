@@ -415,6 +415,13 @@
                     </suppressionFiles>
                     <!-- 不扫描测试依赖（加速） -->
                     <skipTestScope>true</skipTestScope>
+                    <!-- 禁用 OSS Index (Sonatype) 补充 analyzer：匿名访问被弃用后
+                         返回硬 401，在 plugin auto-disable fallback 生效前抛
+                         AnalysisException 终止 build（ref jeremylong/DependencyCheck
+                         #2278/#5728）。NVD analyzer 为主数据源，对本项目 Maven-only
+                         依赖面已实证充分（SB 3.5.14 CVSS≥7 31→0 全由 NVD 检出）。
+                         Plan: docs/plans/2026-05-18-disable-ossindex-analyzer.md -->
+                    <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
                     <!-- 生成 HTML + XML 报告 -->
                     <formats>
                         <format>HTML</format>
