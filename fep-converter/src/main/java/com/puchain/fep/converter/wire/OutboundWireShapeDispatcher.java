@@ -6,6 +6,7 @@ import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.model.RequestResponseHead;
 import com.puchain.fep.converter.model.ResponseBusinessHead;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,7 +37,7 @@ import org.springframework.stereotype.Component;
  *   <li>3006 → {@code RealHead3006} + {@link ResponseBusinessHead}（对公客户状态查询回执，含 ResultCode，P4-MSG-F T2）</li>
  *   <li>3007 → {@code RealHead3007} + {@link RequestBusinessHead}（受理单位发起核验请求，模式 1 同步，P4-MSG-B T1）</li>
  *   <li>3008 → {@code RealHead3008} + {@link ResponseBusinessHead}（发票核验回执，含 ResultCode，P4-MSG-G T3）</li>
- *   <li>3009 → {@code RealHead3009} + {@link RequestBusinessHead}（实时单笔）</li>
+ *   <li>3009 → {@code RealHead3009} + {@link RequestBusinessHead}（电子凭证融资结果登记，P5 T4）</li>
  *   <li>3020 → {@code RealHead3020} + {@link RequestResponseHead}（供应链实时业务通用转发，孤儿成员第 5 类目，P4-MSG-G T3）</li>
  *   <li>3101 → {@code BatchHead3101} + {@link ResponseBusinessHead}（含 5 位 ResultCode，仅一个）</li>
  *   <li>3102/3105/3107/3109/3112/3116 → {@code BatchHead{msgNo}} + {@link RequestBusinessHead}</li>
@@ -71,6 +72,9 @@ public class OutboundWireShapeDispatcher {
 
     /** 4 位数字 msgNo 校验正则。 */
     private static final String MSG_NO_PATTERN = "\\d{4}";
+
+    /** 预编译的 {@link #MSG_NO_PATTERN}，避免 describeFor / isRegisteredOutboundMsgNo 热路径每次重编译。 */
+    private static final Pattern MSG_NO_COMPILED = Pattern.compile(MSG_NO_PATTERN);
 
     /** RealHead + {@link RequestBusinessHead} + false 类目 msgNo 集合。 */
     public static final Set<String> REAL_HEAD_REQUEST_MSG_NOS = Set.of(
@@ -108,7 +112,7 @@ public class OutboundWireShapeDispatcher {
      *                              错误码 {@link FepErrorCode#OUTBOUND_5108_MSGNO_INVALID}
      */
     public WireShapeDescriptor describeFor(final String msgNo) {
-        if (msgNo == null || !msgNo.matches(MSG_NO_PATTERN)) {
+        if (msgNo == null || !MSG_NO_COMPILED.matcher(msgNo).matches()) {
             throw new FepBusinessException(
                     FepErrorCode.OUTBOUND_5108_MSGNO_INVALID,
                     "msgNo 必须为 4 位数字: " + msgNo);
@@ -149,7 +153,7 @@ public class OutboundWireShapeDispatcher {
      * @return {@code true} 当且仅当 msgNo 是 {@value #REGISTERED_MSG_NO_COUNT} 上行报文之一
      */
     public boolean isRegisteredOutboundMsgNo(final String msgNo) {
-        if (msgNo == null || !msgNo.matches(MSG_NO_PATTERN)) {
+        if (msgNo == null || !MSG_NO_COMPILED.matcher(msgNo).matches()) {
             return false;
         }
         return REAL_HEAD_REQUEST_MSG_NOS.contains(msgNo)
