@@ -43,6 +43,7 @@ class XsdSchemaRegistryTest {
             MessageType.MSG_3005, MessageType.MSG_3006,
             MessageType.MSG_3008, MessageType.MSG_3020,
             MessageType.MSG_3103, MessageType.MSG_3108,
+            MessageType.MSG_3115, MessageType.MSG_3120,
             MessageType.MSG_9005, MessageType.MSG_9120
     );
 
