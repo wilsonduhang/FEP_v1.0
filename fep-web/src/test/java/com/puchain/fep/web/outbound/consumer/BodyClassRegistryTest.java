@@ -53,9 +53,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * P5 T4 Step 1 — {@link BodyClassRegistry} 单元测试。
  *
- * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，P4-MSG-E T1 起 21 entries，P4-MSG-F T1 起 27 entries，P4-MSG-G T2 起 31 entries，含 3000 + 3007 + 6 BATCH + 1101 + 4 realtime + 6 supplychain query + 4 supplychain query batch2）：</p>
+ * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，P4-MSG-E T1 起 21 entries，P4-MSG-F T1 起 27 entries，P4-MSG-G T2 起 31 entries，P4-MSG-H 起 33 entries，含 3000 + 3007 + 6 BATCH + 1101 + 4 realtime + 6 supplychain query + 4 supplychain query batch2 + 2 supplychain batch3）：</p>
  * <ul>
- *   <li>31 上行报文 msgNo → Body POJO Class 主映射 hits</li>
+ *   <li>33 上行报文 msgNo → Body POJO Class 主映射 hits</li>
  *   <li>未注册 msgNo（"9999" / null）→ {@link FepBusinessException} +
  *       {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}</li>
  * </ul>
