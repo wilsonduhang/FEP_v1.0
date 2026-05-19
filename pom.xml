@@ -407,6 +407,14 @@
                 <configuration>
                     <!-- CVSS >= 7.0 (High) 阻断构建 -->
                     <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <!-- NVD API 2.0 鉴权 key 环境变量名（消除新周冷全量下载匿名 429
+                         死循环）。plugin-native 参数（check-mojo doc: recommended
+                         option to pass the API key in CI builds）；plugin 从环境变量
+                         NVD_API_KEY 读取，值经 GitHub Secret 注入（非 CLI -D，避免
+                         进程列表/日志泄露）；本机未设环境变量退化匿名（仅本机手动
+                         跑，CI 必经 Secret）。ADR §4 修法 #1 / owning Plan:
+                         docs/plans/2026-05-19-nightly-nvd-api-key-systemic-fix.md -->
+                    <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
                     <!-- 抑制不可利用的 CPE 误报（log4j-core CVE 误匹配 log4j-api，
                          FEP 用 Logback，log4j-core 不在 classpath）。每条抑制含
                          理由 + ADR 引用 + muzhou 签字，见 owasp-suppression.xml -->
