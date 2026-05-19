@@ -68,6 +68,16 @@ public interface SubOutputInterfaceRepository extends JpaRepository<SubOutputInt
     long countByInterfaceStatus(EnableDisableStatus status);
 
     /**
+     * 查指定 businessType 集合下处于给定状态的输出接口（回调 fan-out 解析）。
+     *
+     * @param businessTypeIds 业务类型 id 集合，非空
+     * @param interfaceStatus 接口状态过滤
+     * @return 命中接口列表，可能为空
+     */
+    List<SubOutputInterface> findByBusinessTypeIdInAndInterfaceStatus(
+            List<String> businessTypeIds, EnableDisableStatus interfaceStatus);
+
+    /**
      * 合并 total / enabled 为单次聚合查询（用于 Dashboard 概况面板）。
      *
      * <p>避免 Dashboard 页每次连发 {@code count()} + {@code countByInterfaceStatus()}
