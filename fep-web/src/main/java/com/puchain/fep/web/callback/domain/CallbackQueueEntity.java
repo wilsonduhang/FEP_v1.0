@@ -89,7 +89,9 @@ public class CallbackQueueEntity {
         return new CallbackQueueEntity(idempotencyKey, targetInterfaceId, msgNo, payloadJson);
     }
 
-    /** 标记成功。 */
+    /**
+     * 标记推送成功（terminal-success），刷新 {@code updateTime}。
+     */
     public void markDone() {
         this.status = CallbackQueueStatus.DONE;
         this.updateTime = LocalDateTime.now();
@@ -106,6 +108,9 @@ public class CallbackQueueEntity {
                 : error.substring(0, Math.min(error.length(), MAX_ERROR_LENGTH));
         this.updateTime = LocalDateTime.now();
     }
+
+    // Phase 2: add markSending() + @Version optimistic-lock for atomic
+    // PENDING->SENDING claim (multi-instance double-send guard); P1 单实例假设.
 
     /**
      * @return 主键
@@ -147,5 +152,26 @@ public class CallbackQueueEntity {
      */
     public String getStatus() {
         return status;
+    }
+
+    /**
+     * @return 最近一次失败错误摘要（≤500，未失败时为 null）
+     */
+    public String getLastError() {
+        return lastError;
+    }
+
+    /**
+     * @return 入队时间（不可变）
+     */
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    /**
+     * @return 最近状态变更时间
+     */
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
     }
 }
