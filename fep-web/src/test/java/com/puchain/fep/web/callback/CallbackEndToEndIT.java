@@ -154,7 +154,9 @@ class CallbackEndToEndIT {
      */
     @AfterEach
     void cleanupAndStopServer() {
-        mockServer.stop(0);
+        if (mockServer != null) {
+            mockServer.stop(0);
+        }
         // delete seeded rows in safe dependency order
         if (seededInterfaceId != null) {
             subOutputInterfaceRepository.findById(seededInterfaceId)

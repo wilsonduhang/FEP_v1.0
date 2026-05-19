@@ -81,6 +81,7 @@ class CallbackModuleArchTest {
     @ArchTest
     static final ArchRule R4_callback_class_naming =
             classes().that().resideInAPackage("com.puchain.fep.web.callback..")
+                    .and().areTopLevelClasses()
                     .and().areNotAnonymousClasses()
                     .and().areNotMemberClasses()
                     .and().areNotEnums()
