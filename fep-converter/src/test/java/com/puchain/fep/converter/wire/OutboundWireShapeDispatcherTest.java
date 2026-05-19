@@ -242,6 +242,48 @@ class OutboundWireShapeDispatcherTest {
     }
 
     @Test
+    @DisplayName("3115 → BatchHead3115 + RequestResponseHead + no result (P4-MSG-H 第 6 类目)")
+    void describeFor3115_returnsBatchHeadRequestResponseHeadFalse() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("3115");
+
+        assertThat(descriptor.headElementName())
+                .as("3115 head 元素名（资金清算信息指令及回执，与 3115.xsd BatchHead3115 一致）")
+                .isEqualTo("BatchHead3115");
+        assertThat(descriptor.headClass())
+                .as("3115 head 类型（第 6 类目 BatchHead+RequestResponseHead → RequestResponseHead，非 ResponseBusinessHead）")
+                .isEqualTo(RequestResponseHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("3115 Result minOccurs=0，requiresResultCode=false")
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("3120 → BatchHead3120 + RequestBusinessHead + no result (P4-MSG-H 第 2 类目扩展)")
+    void describeFor3120_returnsBatchHeadRequestBusinessHeadFalse() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("3120");
+
+        assertThat(descriptor.headElementName())
+                .as("3120 head 元素名（供应链非实时业务通用转发，与 3120.xsd BatchHead3120 一致）")
+                .isEqualTo("BatchHead3120");
+        assertThat(descriptor.headClass())
+                .as("3120 head 类型（3120.xsd type=RequestHead → RequestBusinessHead，既有第 2 类目约定）")
+                .isEqualTo(RequestBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("3120 转发报文不带 ReturnCode，requiresResultCode=false")
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("3115/3120 → isRegisteredOutboundMsgNo true (P4-MSG-H)")
+    void isRegisteredOutboundMsgNo_returnsTrueFor3115_3120() {
+        for (String msgNo : new String[]{"3115", "3120"}) {
+            assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
+                    .as("msgNo=%s 必须在 isRegisteredOutboundMsgNo true（P4-MSG-H）", msgNo)
+                    .isTrue();
+        }
+    }
+
+    @Test
     @DisplayName("3103 → BatchHead3103 + ResponseBusinessHead + with result (P4-MSG-G T3)")
     void describeFor3103_returnsBatchHeadResponseBusinessHeadTrue() {
         WireShapeDescriptor descriptor = dispatcher.describeFor("3103");
