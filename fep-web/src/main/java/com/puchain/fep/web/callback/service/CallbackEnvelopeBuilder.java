@@ -12,6 +12,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 将 {@link InboundMessageProcessedEvent} 业务体封装为 PRD §7.1 line 2143
@@ -52,6 +53,7 @@ public class CallbackEnvelopeBuilder {
      * @throws FepBusinessException 序列化失败（{@link FepErrorCode#CONV_8001}）
      */
     public String build(final InboundMessageProcessedEvent event) {
+        Objects.requireNonNull(event, "event");
         final Map<String, Object> env = new LinkedHashMap<>();
         env.put("code", SUCCESS_CODE);
         env.put("message", SUCCESS_MSG);

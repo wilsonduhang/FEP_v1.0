@@ -49,5 +49,6 @@ class CallbackEnvelopeBuilderTest {
         assertThat(node.get("message").asText()).isEqualTo("成功");
         assertThat(node.get("traceId").asText()).isEqualTo("SER-9");
         assertThat(node.get("data").isNull()).isTrue();
+        assertThat(node.get("timestamp").asText()).startsWith("2026-05-19T14:30:00");
     }
 }
