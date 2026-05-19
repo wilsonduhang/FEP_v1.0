@@ -53,3 +53,29 @@ Cache not found for input keys: owasp-nvd-Linux-2026-W21, owasp-nvd-Linux-
 
 - Pitest 修复 Plan `2026-05-19-pitest-junit5-plugin-junit512-fix.md` 验收 1/2 已满足（config 生效 + PR CI 绿）；验收 3/4/5/6 标注「待 NVD-429 W21 解封后暖缓存 Nightly 背书」，非本 Plan 失败。
 - owning session 立项后，本 ADR slug 可升格为正式 infra Plan 或并入别会话 `2026-05-18-nightly-owasp-dependency-check-infra-fix.md` 后续。
+
+---
+
+## §finding（2026-05-19）: 修法 #1 已 ship 但不充分 — 实证
+
+> 前序 owning Plan: `docs/plans/2026-05-19-nightly-nvd-api-key-systemic-fix.md`（v3，ship `f728759`）
+
+修法 #1（pom `<nvdApiKeyEnvironmentVariable>NVD_API_KEY` + nightly.yml `NVD_API_KEY` env）
+验证 run `26083645875`（gh run --log 实测）:
+- `grep -c "429|UpdateException"` = **0** → 429 死循环**已打破**（#1 必要且正确）
+- `NVD API has 351,500 records`（08:32:54）→ 授权 API 正常（key 生效）
+- 下载 08:37 3% → 09:32 **34% (120,000/351,501)** → `##[error]The operation was canceled`
+  （60min job timeout 在 34% 时 cancel）；cancelled job 不存 actions/cache
+- 结论: #1 必要不充分。429 消除但冷全量 ~175min >> 60min timeout，
+  cancelled-no-cache → W21 永冷 → 循环换形态（timeout 替代 429）
+
+→ 触发 ADR §4 #2（一次性 long-timeout seed 填稳定 key 缓存）+ #3（去周轮换持久化）。
+互补 owning Plan: `docs/plans/2026-05-19-nightly-nvd-cache-seed-derotate.md`
+（muzhou 2026-05-19 AskUserQuestion 决策「#2+#3」，v1.1 AI 评审 PASS WITH MINOR + muzhou 签字）。
+
+## §closure（待 Task 4 填）
+
+> 待 #2+#3 ship + seed workflow green + Nightly 暖缓存验证后填：commit SHA /
+> seed run-id（cache saved owasp-nvd-Linux-v1）/ Nightly run-id（无 429 + 无
+> timeout + NVD 分析完整 + report）/ tier-B（log4j CVSS gate 通过 → 全绿）/
+> 状态 🟢 OWNED → ✅ RESOLVED。

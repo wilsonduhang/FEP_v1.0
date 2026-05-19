@@ -33,15 +33,15 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Compute NVD cache key (weekly rotation)
-        id: nvd-key
-        run: echo "week=$(date -u +%Y-W%V)" >> "$GITHUB_OUTPUT"
-
       - name: Cache OWASP NVD data
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository/org/owasp/dependency-check-data
-          key: owasp-nvd-${{ runner.os }}-${{ steps.nvd-key.outputs.week }}
+          # 稳定 key（去周轮换 ADR §4 #3）：原 owasp-nvd-${os}-${week} 每周失效致
+          # 冷启动复发；改稳定 v1 后跨周持久（GHA 7 天未用淘汰，Nightly 每日跑保
+          # 持暖；冷则重跑 nvd-cache-seed.yml）。owning Plan:
+          # docs/plans/2026-05-19-nightly-nvd-cache-seed-derotate.md
+          key: owasp-nvd-${{ runner.os }}-v1
           restore-keys: |
             owasp-nvd-${{ runner.os }}-
 

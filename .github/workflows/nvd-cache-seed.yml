@@ -1,0 +1,50 @@
+name: NVD Cache Seed (one-shot)
+
+# 一次性 seed NVD DB 缓存（ADR §4 #2）。手动 workflow_dispatch 触发一次，
+# 用 300min timeout 完整下载 NVD 全量（~175min @ 授权速率，绕过 Nightly 60min
+# 限制），actions/cache post-step 存稳定 key owasp-nvd-${os}-v1；之后 Nightly
+# (去周轮换 #3) restore 该暖缓存做分钟级增量更新。owning Plan:
+# docs/plans/2026-05-19-nightly-nvd-cache-seed-derotate.md
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    name: Seed NVD cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache OWASP NVD data (stable key, save)
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: owasp-nvd-${{ runner.os }}-v1
+          restore-keys: |
+            owasp-nvd-${{ runner.os }}-
+
+      - name: NVD update-only (full DB download, no analysis)
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: >
+          ./mvnw org.owasp:dependency-check-maven:12.2.2:update-only
+          -Dowasp.skip=false
+          --batch-mode --no-transfer-progress
