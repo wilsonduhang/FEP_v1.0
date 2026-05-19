@@ -47,8 +47,9 @@ public class CallbackInboundListener {
      */
     @EventListener
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "all log args wrapped by LogSanitizer.sanitize; "
-                    + "find-sec-bugs cannot detect user-defined sanitizer")
+            justification = "non-literal String log args wrapped by "
+                    + "LogSanitizer.sanitize (find-sec-bugs cannot detect "
+                    + "user-defined sanitizer); int fanOut count is CRLF-safe")
     public void onProcessed(final InboundMessageProcessedEvent event) {
         final String msgNo = event.type().msgNo();
         final List<SubOutputInterface> targets = resolver.resolve(msgNo);

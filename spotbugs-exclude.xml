@@ -1380,8 +1380,8 @@
     <!-- ===== callback 模块 (Phase 1) — Spring DI 注入单例引用，非安全风险 ===== -->
 
     <!-- CallbackInboundListener / CallbackEnqueueService / CallbackEnvelopeBuilder /
-         CallbackTargetResolver: Spring DI 注入的框架管理单例，存储外部引用是标准 Spring DI 模式；
-         CallbackQueueEntity: JPA Entity 可变字段是框架要求。 -->
+         CallbackTargetResolver: Spring DI 注入的框架管理单例，存储外部引用是标准 Spring DI 模式
+         (与 PermissionQueryHelper / LoginVerifier 等既有先例同类，非安全风险)。 -->
     <Match>
         <Or>
             <Class name="com.puchain.fep.web.callback.listener.CallbackInboundListener"/>

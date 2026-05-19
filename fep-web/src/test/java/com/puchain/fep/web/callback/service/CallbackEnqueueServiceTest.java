@@ -2,10 +2,12 @@ package com.puchain.fep.web.callback.service;
 
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.event.InboundMessageProcessedEvent;
+import com.puchain.fep.web.callback.domain.CallbackQueueEntity;
 import com.puchain.fep.web.callback.repository.CallbackQueueRepository;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Propagation;
@@ -50,5 +52,23 @@ class CallbackEnqueueServiceTest {
         when(repository.existsByIdempotencyKey(any())).thenReturn(true);
         new CallbackEnqueueService(repository, envelopeBuilder).enqueue(target, event());
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    void enqueue_newKey_shouldSaveEntityWithDerivedKeyAndInterface() {
+        SubOutputInterface target = new SubOutputInterface();
+        target.setInterfaceId("if-1");
+        when(repository.existsByIdempotencyKey(any())).thenReturn(false);
+        when(envelopeBuilder.build(any())).thenReturn("{\"code\":\"200\"}");
+
+        new CallbackEnqueueService(repository, envelopeBuilder).enqueue(target, event());
+
+        ArgumentCaptor<CallbackQueueEntity> captor =
+                ArgumentCaptor.forClass(CallbackQueueEntity.class);
+        verify(repository).save(captor.capture());
+        assertThat(captor.getValue().getIdempotencyKey()).hasSize(32);
+        assertThat(captor.getValue().getTargetInterfaceId()).isEqualTo("if-1");
+        assertThat(captor.getValue().getMsgNo()).isEqualTo("2103");
+        assertThat(captor.getValue().getPayloadJson()).isEqualTo("{\"code\":\"200\"}");
     }
 }
