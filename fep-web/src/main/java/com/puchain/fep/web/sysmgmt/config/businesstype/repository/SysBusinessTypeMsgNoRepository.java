@@ -4,6 +4,8 @@ import com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessTypeMsg
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
 /**
@@ -12,6 +14,7 @@ import java.util.List;
  * @author FEP Team
  * @since 1.0.0
  */
+@Repository
 public interface SysBusinessTypeMsgNoRepository
         extends JpaRepository<SysBusinessTypeMsgNo, String> {
 

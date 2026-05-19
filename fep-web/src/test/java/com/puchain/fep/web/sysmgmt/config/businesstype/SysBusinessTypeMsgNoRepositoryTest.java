@@ -30,7 +30,7 @@ class SysBusinessTypeMsgNoRepositoryTest {
      * 通过 msgNo 查询关联的 businessType id 列表，应返回所有匹配项。
      */
     @Test
-    void findActiveByMsgNo_shouldReturnOnlyEnabledBusinessTypeIds() {
+    void findBusinessTypeIdsByMsgNo_shouldReturnAllMatchingTypeIds() {
         repository.save(new SysBusinessTypeMsgNo("bt-1", "2103"));
         repository.save(new SysBusinessTypeMsgNo("bt-2", "2103"));
         repository.save(new SysBusinessTypeMsgNo("bt-3", "2103"));

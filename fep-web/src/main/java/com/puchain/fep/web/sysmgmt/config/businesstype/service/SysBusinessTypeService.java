@@ -36,6 +36,9 @@ public class SysBusinessTypeService {
 
     private static final Logger log = LoggerFactory.getLogger(SysBusinessTypeService.class);
 
+    /** msgNo 合法格式：恰好 4 位数字。 */
+    private static final String MSG_NO_PATTERN = "\\d{4}";
+
     private final SysBusinessTypeRepository businessTypeRepository;
     private final SysBusinessTypeMsgNoRepository msgNoRepository;
 
@@ -150,6 +153,7 @@ public class SysBusinessTypeService {
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "业务类型不存在: " + typeId));
 
+        msgNoRepository.deleteByTypeId(typeId);
         businessTypeRepository.delete(entity);
         log.info("BusinessType deleted: code={}", entity.getTypeCode());
     }
@@ -186,9 +190,7 @@ public class SysBusinessTypeService {
         if (msgNos == null || msgNos.isEmpty()) {
             return;
         }
-        for (final String msgNo : msgNos) {
-            validateMsgNo(msgNo);
-        }
+        validateMsgNos(msgNos);
         final List<SysBusinessTypeMsgNo> entities = msgNos.stream()
                 .map(m -> new SysBusinessTypeMsgNo(typeId, m))
                 .toList();
@@ -206,9 +208,7 @@ public class SysBusinessTypeService {
         if (msgNos == null) {
             return;
         }
-        for (final String msgNo : msgNos) {
-            validateMsgNo(msgNo);
-        }
+        validateMsgNos(msgNos);
         msgNoRepository.deleteByTypeId(typeId);
         if (!msgNos.isEmpty()) {
             final List<SysBusinessTypeMsgNo> entities = msgNos.stream()
@@ -219,15 +219,25 @@ public class SysBusinessTypeService {
     }
 
     /**
-     * 验证 msgNo 格式（必须为 4 位数字）。
+     * 验证 msgNo 列表：每项必须为 4 位数字，且不含重复项。
      *
-     * @param msgNo 报文号
-     * @throws FepBusinessException 格式不合规
+     * <p>去重检查前置可避免重复项进入 {@code saveAll} 后触发
+     * {@code uk_sbtm_type_msg} 唯一约束 → {@code DataIntegrityViolationException}
+     * （会暴露为 5xx 而非业务参数错误）。</p>
+     *
+     * @param msgNos 报文号列表，非空
+     * @throws FepBusinessException 任一项格式不合规或存在重复项
      */
-    private void validateMsgNo(final String msgNo) {
-        if (msgNo == null || !msgNo.matches("\\d{4}")) {
+    private void validateMsgNos(final List<String> msgNos) {
+        for (final String msgNo : msgNos) {
+            if (msgNo == null || !msgNo.matches(MSG_NO_PATTERN)) {
+                throw new FepBusinessException(FepErrorCode.PARAM_4002,
+                        "msgNo 必须为 4 位数字: " + msgNo);
+            }
+        }
+        if (msgNos.stream().distinct().count() != msgNos.size()) {
             throw new FepBusinessException(FepErrorCode.PARAM_4002,
-                    "msgNo 必须为 4 位数字: " + msgNo);
+                    "msgNos 包含重复报文号: " + msgNos);
         }
     }
 }
