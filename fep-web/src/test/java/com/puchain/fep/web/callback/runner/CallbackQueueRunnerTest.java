@@ -131,6 +131,32 @@ class CallbackQueueRunnerTest {
     }
 
     @Test
+    void poll_firstRowThrows_secondRowStillProcessed() {
+        final CallbackQueueEntity bad = pendingEntity("q-bad", "if-bad");
+        final CallbackQueueEntity good = pendingEntity("q-good", "if-good");
+        final SubOutputInterface goodIface = makeInterface("if-good");
+
+        when(callbackQueueRepository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING))
+                .thenReturn(List.of(bad, good));
+        // first row: interface lookup blows up with a RuntimeException
+        when(subOutputInterfaceRepository.findById("if-bad"))
+                .thenThrow(new RuntimeException("boom"));
+        // second row: healthy path
+        when(subOutputInterfaceRepository.findById("if-good")).thenReturn(Optional.of(goodIface));
+        when(httpClient.post(any(), any())).thenReturn(new CallbackResult(true, 200, null));
+
+        // poll must not propagate the first row's RuntimeException
+        assertThatCode(() -> runner.poll()).doesNotThrowAnyException();
+
+        // second row was still processed despite first row failure (per-row isolation)
+        verify(httpClient).post(eq(goodIface), any());
+        final ArgumentCaptor<SubOutputInterface> ifaceCaptor =
+                ArgumentCaptor.forClass(SubOutputInterface.class);
+        verify(subOutputInterfaceRepository).save(ifaceCaptor.capture());
+        assertThat(ifaceCaptor.getValue().getCallCount()).isEqualTo(1L);
+    }
+
+    @Test
     void poll_callsRepositoryWithPendingStatus() {
         when(callbackQueueRepository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING))
                 .thenReturn(List.of());

@@ -75,7 +75,8 @@ public class CallbackQueueRunner {
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
             justification = "non-literal String log args wrapped by LogSanitizer.sanitize; "
                     + "find-sec-bugs cannot detect user-defined sanitizer")
-    @Scheduled(fixedDelayString = "${fep.callback.poll-interval-ms:5000}")
+    @Scheduled(fixedDelayString = "${fep.callback.poll-interval-ms:5000}",
+            initialDelayString = "${fep.callback.poll-initial-delay-ms:5000}")
     public void poll() {
         final List<CallbackQueueEntity> pending =
                 callbackQueueRepository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING);
@@ -103,8 +104,9 @@ public class CallbackQueueRunner {
      * @param entity PENDING 队列条目，非空
      */
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "non-literal String log args wrapped by LogSanitizer.sanitize; "
-                    + "find-sec-bugs cannot detect user-defined sanitizer")
+            justification = "non-literal String log args wrapped by LogSanitizer.sanitize "
+                    + "(find-sec-bugs cannot detect user-defined sanitizer); "
+                    + "int statusCode is primitive and CRLF-safe")
     void processOne(final CallbackQueueEntity entity) {
         final String interfaceId = entity.getTargetInterfaceId();
         final Optional<SubOutputInterface> opt = subOutputInterfaceRepository.findById(interfaceId);
