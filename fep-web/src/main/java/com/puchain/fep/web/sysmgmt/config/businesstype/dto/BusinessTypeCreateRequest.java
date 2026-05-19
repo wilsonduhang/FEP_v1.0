@@ -3,6 +3,7 @@ package com.puchain.fep.web.sysmgmt.config.businesstype.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 /**
  * 业务类型创建/更新请求 DTO。
@@ -24,6 +25,8 @@ public class BusinessTypeCreateRequest {
 
     @NotNull(message = "排序号不能为空")
     private Integer sortOrder;
+
+    private List<String> msgNos;
 
     /**
      * 获取类型名称。
@@ -77,5 +80,23 @@ public class BusinessTypeCreateRequest {
      */
     public void setSortOrder(final Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    /**
+     * 获取关联 inbound 报文号列表（4 位数字，可为空）。
+     *
+     * @return msgNos
+     */
+    public List<String> getMsgNos() {
+        return msgNos;
+    }
+
+    /**
+     * 设置关联 inbound 报文号列表。
+     *
+     * @param msgNos 报文号列表（4 位数字），可为 null 或空
+     */
+    public void setMsgNos(final List<String> msgNos) {
+        this.msgNos = msgNos;
     }
 }

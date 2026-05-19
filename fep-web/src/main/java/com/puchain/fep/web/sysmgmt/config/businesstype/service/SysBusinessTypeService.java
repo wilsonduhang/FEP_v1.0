@@ -8,6 +8,8 @@ import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessType;
 import com.puchain.fep.web.sysmgmt.config.businesstype.dto.BusinessTypeCreateRequest;
 import com.puchain.fep.web.sysmgmt.config.businesstype.dto.BusinessTypeResponse;
+import com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessTypeMsgNo;
+import com.puchain.fep.web.sysmgmt.config.businesstype.repository.SysBusinessTypeMsgNoRepository;
 import com.puchain.fep.web.sysmgmt.config.businesstype.repository.SysBusinessTypeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,14 +37,18 @@ public class SysBusinessTypeService {
     private static final Logger log = LoggerFactory.getLogger(SysBusinessTypeService.class);
 
     private final SysBusinessTypeRepository businessTypeRepository;
+    private final SysBusinessTypeMsgNoRepository msgNoRepository;
 
     /**
      * 构造 SysBusinessTypeService。
      *
      * @param businessTypeRepository 业务类型 Repository
+     * @param msgNoRepository        业务类型 msgNo 成员 Repository
      */
-    public SysBusinessTypeService(final SysBusinessTypeRepository businessTypeRepository) {
+    public SysBusinessTypeService(final SysBusinessTypeRepository businessTypeRepository,
+                                  final SysBusinessTypeMsgNoRepository msgNoRepository) {
         this.businessTypeRepository = businessTypeRepository;
+        this.msgNoRepository = msgNoRepository;
     }
 
     /**
@@ -97,6 +103,7 @@ public class SysBusinessTypeService {
         entity.setTypeStatus(EnableDisableStatus.ENABLED);
 
         SysBusinessType saved = businessTypeRepository.save(entity);
+        saveMsgNos(saved.getTypeId(), request.getMsgNos());
         log.info("BusinessType created: code={}", saved.getTypeCode());
         return BusinessTypeResponse.from(saved);
     }
@@ -126,6 +133,7 @@ public class SysBusinessTypeService {
         entity.setSortOrder(request.getSortOrder());
 
         SysBusinessType saved = businessTypeRepository.save(entity);
+        rebuildMsgNos(typeId, request.getMsgNos());
         log.info("BusinessType updated: code={}", saved.getTypeCode());
         return BusinessTypeResponse.from(saved);
     }
@@ -165,5 +173,61 @@ public class SysBusinessTypeService {
         SysBusinessType saved = businessTypeRepository.save(entity);
         log.info("BusinessType status changed: code={}, status={}", saved.getTypeCode(), status);
         return BusinessTypeResponse.from(saved);
+    }
+
+    /**
+     * 验证并保存 msgNo 成员列表（create 路径，先验证再批量插入）。
+     *
+     * @param typeId 业务类型 ID
+     * @param msgNos inbound 报文号列表，可为 null 或空
+     * @throws FepBusinessException msgNo 格式非 4 位数字
+     */
+    private void saveMsgNos(final String typeId, final List<String> msgNos) {
+        if (msgNos == null || msgNos.isEmpty()) {
+            return;
+        }
+        for (final String msgNo : msgNos) {
+            validateMsgNo(msgNo);
+        }
+        final List<SysBusinessTypeMsgNo> entities = msgNos.stream()
+                .map(m -> new SysBusinessTypeMsgNo(typeId, m))
+                .toList();
+        msgNoRepository.saveAll(entities);
+    }
+
+    /**
+     * 重建 msgNo 成员（update 路径：删旧 insert 新）。
+     *
+     * @param typeId 业务类型 ID
+     * @param msgNos inbound 报文号列表，可为 null（表示不修改，保留原有成员）
+     * @throws FepBusinessException msgNo 格式非 4 位数字
+     */
+    private void rebuildMsgNos(final String typeId, final List<String> msgNos) {
+        if (msgNos == null) {
+            return;
+        }
+        for (final String msgNo : msgNos) {
+            validateMsgNo(msgNo);
+        }
+        msgNoRepository.deleteByTypeId(typeId);
+        if (!msgNos.isEmpty()) {
+            final List<SysBusinessTypeMsgNo> entities = msgNos.stream()
+                    .map(m -> new SysBusinessTypeMsgNo(typeId, m))
+                    .toList();
+            msgNoRepository.saveAll(entities);
+        }
+    }
+
+    /**
+     * 验证 msgNo 格式（必须为 4 位数字）。
+     *
+     * @param msgNo 报文号
+     * @throws FepBusinessException 格式不合规
+     */
+    private void validateMsgNo(final String msgNo) {
+        if (msgNo == null || !msgNo.matches("\\d{4}")) {
+            throw new FepBusinessException(FepErrorCode.PARAM_4002,
+                    "msgNo 必须为 4 位数字: " + msgNo);
+        }
     }
 }
