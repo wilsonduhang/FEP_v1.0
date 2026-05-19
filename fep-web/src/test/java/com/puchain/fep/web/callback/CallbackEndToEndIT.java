@@ -46,13 +46,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * {@code publishEvent(InboundMessageProcessedEvent)} 到 §7.1 JSON POST
  * 再到队列状态 DONE / callCount+1 的完整链路。</p>
  *
- * <p><strong>P1 GAP 已知（已在 Test 2a 断言实际行为）</strong>：
+ * <p>解析链三段状态过滤（criterion 2/3 真 DB 覆盖）：
  * {@link com.puchain.fep.web.callback.service.CallbackTargetResolver#resolve(String)}
- * 第一步仅查 {@code SysBusinessTypeMsgNo}（不 JOIN {@code SysBusinessType.typeStatus}），
- * 因此 DISABLED {@code SysBusinessType} + ENABLED 接口的情况下，
- * P1 代码仍会解析出目标接口。Test 2a 断言此实际 P1 行为（非期望 P2 行为），
- * 并通过 DONE_WITH_CONCERNS 在报告中明示缺口，Phase 2 需在 resolver 中添加
- * BT-status 联表过滤。</p>
+ * 先查 {@code SysBusinessTypeMsgNo} 取 typeId 集合，再经
+ * {@code SysBusinessTypeRepository.findTypeIdsByTypeIdInAndTypeStatus} 仅保留
+ * ENABLED 的 {@code SysBusinessType}（DISABLED 业务类型不解析），最后过滤
+ * ENABLED 的 {@code SubOutputInterface}。Test 2a 断言 DISABLED businessType
+ * → 0 推送（Task 7 IT 暴露的 P1 gap 已在同阶段修复，resolver 现完成 BT-status
+ * 过滤，符合签字 Plan Task 4 criterion 3）。</p>
  *
  * <p>调度器中性化：将 {@code fep.callback.poll-interval-ms} 与
  * {@code fep.callback.poll-initial-delay-ms} 均设为 600000ms（10 分钟），
@@ -268,36 +269,32 @@ class CallbackEndToEndIT {
     }
 
     /**
-     * Criterion 2a (P1 GAP surface): DISABLED SysBusinessType + ENABLED interface.
+     * Criterion 2a/3: DISABLED SysBusinessType + ENABLED interface → resolver excludes it.
      *
-     * <p><strong>P1 KNOWN GAP</strong>: {@code CallbackTargetResolver.resolve()} first step calls
-     * {@code findBusinessTypeIdsByMsgNo(msgNo)} — this query has NO JOIN on
-     * {@code SysBusinessType.typeStatus}. Therefore, a DISABLED SysBusinessType whose
-     * SubOutputInterface is ENABLED will still resolve in P1.
-     *
-     * <p>This test asserts the <em>actual P1 behavior</em> (NOT the aspirational Phase 2 behavior):
-     * the mock WILL receive a call even though the BusinessType is DISABLED. Phase 2 must add
-     * a BT-status filter join in {@code SysBusinessTypeMsgNoRepository.findBusinessTypeIdsByMsgNo}
-     * or {@code CallbackTargetResolver}.</p>
-     *
-     * <p>Surfaced via DONE_WITH_CONCERNS in the task report.</p>
+     * <p>{@code CallbackTargetResolver.resolve()} filters the msgNo-membership typeIds
+     * through {@code SysBusinessTypeRepository.findTypeIdsByTypeIdInAndTypeStatus(ENABLED)}
+     * before resolving interfaces, so a DISABLED {@code SysBusinessType} (even with an
+     * ENABLED interface) resolves to nothing — 0 enqueued, 0 POSTs (signed Plan Task 4
+     * criterion 3). The BT-status filter gap surfaced by this E2E IT was fixed in the
+     * same phase (DONE_WITH_CONCERNS resolution; no Phase 2 deferral).</p>
      */
     @Test
-    @DisplayName("criterion-2a (P1 GAP): DISABLED businessType + ENABLED interface → "
-            + "P1 resolver does NOT filter BT status, mock still receives POST (actual P1 behavior)")
-    void disabledBusinessType_p1GapResolverDoesNotFilterBtStatus() {
+    @DisplayName("criterion-2a/3: DISABLED businessType + ENABLED interface → "
+            + "resolver filters BT status, 0 enqueued, mock receives 0 POSTs")
+    void disabledBusinessType_shouldResolveToNothing() {
         seedConfig(EnableDisableStatus.DISABLED, EnableDisableStatus.ENABLED, mockUrl);
 
         eventPublisher.publishEvent(new InboundMessageProcessedEvent(
                 MessageType.MSG_2103, "T1000002", "SER-E2E-2A", null, Instant.now()));
         callbackQueueRunner.poll();
 
-        // P1 actual behavior: resolver does NOT filter BT status → interface resolved → 1 enqueue
-        // This is a documented P1 GAP to be fixed in Phase 2
         Assertions.assertThat(receivedBodies)
-                .as("P1 GAP: DISABLED BT with ENABLED interface is NOT filtered by P1 resolver "
-                        + "— Phase 2 must add BT-status join in findBusinessTypeIdsByMsgNo")
-                .hasSize(1);
+                .as("DISABLED businessType must be excluded by resolver BT-status filter "
+                        + "— mock must receive 0 POSTs")
+                .isEmpty();
+        Assertions.assertThat(callbackQueueRepository.findAll())
+                .as("0 callback_queue rows when businessType is DISABLED")
+                .isEmpty();
     }
 
     /**

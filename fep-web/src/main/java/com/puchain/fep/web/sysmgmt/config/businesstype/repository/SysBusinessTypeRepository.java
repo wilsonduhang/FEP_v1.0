@@ -1,10 +1,15 @@
 package com.puchain.fep.web.sysmgmt.config.businesstype.repository;
 
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.sysmgmt.config.businesstype.domain.SysBusinessType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * 业务类型 Repository。
@@ -40,4 +45,20 @@ public interface SysBusinessTypeRepository extends JpaRepository<SysBusinessType
      * @return 分页结果
      */
     Page<SysBusinessType> findByTypeNameContaining(String keyword, Pageable pageable);
+
+    /**
+     * 在给定 typeId 集合中筛出指定状态的业务类型 id（回调解析链 BT 状态过滤）。
+     *
+     * <p>{@code CallbackTargetResolver} 用此完成"DISABLED businessType → 不解析"
+     * 语义（{@code SysBusinessTypeMsgNo} 成员表本身不存状态）。</p>
+     *
+     * @param typeIds 候选业务类型 id 集合，非空
+     * @param status  目标状态过滤
+     * @return 命中且状态匹配的业务类型 id 列表，可能为空
+     */
+    @Query("select b.typeId from SysBusinessType b "
+            + "where b.typeId in :typeIds and b.typeStatus = :status")
+    List<String> findTypeIdsByTypeIdInAndTypeStatus(
+            @Param("typeIds") List<String> typeIds,
+            @Param("status") EnableDisableStatus status);
 }
