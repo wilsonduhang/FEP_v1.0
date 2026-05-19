@@ -19,9 +19,11 @@ import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.ContractInfo3101;
 import com.puchain.fep.processor.body.supplychain.DzpzInfo3000;
 import com.puchain.fep.processor.body.supplychain.Forward3020;
+import com.puchain.fep.processor.body.supplychain.Forward3120;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
 import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
+import com.puchain.fep.processor.body.supplychain.PlatPay3115;
 import com.puchain.fep.processor.body.supplychain.ProgressQuery3001;
 import com.puchain.fep.processor.body.supplychain.ProgressQueryReturn3002;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
@@ -103,6 +105,18 @@ class BodyClassRegistryTest {
     @DisplayName("3108 → PzCheckQueryReturn3108.class（平台凭证核对回执，P4-MSG-G T2）")
     void resolve_3108_should_return_PzCheckQueryReturn3108() {
         assertThat(registry.resolve("3108")).isEqualTo(PzCheckQueryReturn3108.class);
+    }
+
+    @Test
+    @DisplayName("3115 → PlatPay3115.class（资金清算信息指令及回执，P4-MSG-H）")
+    void resolve_3115_should_return_PlatPay3115() {
+        assertThat(registry.resolve("3115")).isEqualTo(PlatPay3115.class);
+    }
+
+    @Test
+    @DisplayName("3120 → Forward3120.class（供应链非实时业务通用转发，P4-MSG-H）")
+    void resolve_3120_should_return_Forward3120() {
+        assertThat(registry.resolve("3120")).isEqualTo(Forward3120.class);
     }
 
     @Test
@@ -255,15 +269,15 @@ class BodyClassRegistryTest {
      * P4-MSG-A T2 +6 BATCH（10 → 16）；P4-MSG-D T3 +1101 → {@link DataTransfer1101}（16 → 17）；
      * P4-MSG-E T1 +4 realtime 1001/2001/1004/2004（17 → 21）；P4-MSG-F T1 +6 supplychain query
      * 3001/3002/3003/3004/3005/3006（21 → 27）；P4-MSG-G T2 +4 supplychain query batch2
-     * 3008/3020/3103/3108（27 → 31）。
+     * 3008/3020/3103/3108（27 → 31）；P4-MSG-H +2 supplychain batch3 3115/3120（31 → 33）。
      * source code 必须保持用 {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常
      */
     @Test
-    void registry_shouldUseMapOfEntries_supportingMoreThan31Entries() throws Exception {
-        // 1. entry 数 31（P4-MSG-G T2 +3008/3020/3103/3108 后；后续 Task 继续 append）
-        assertThat(countRegistryEntries()).isEqualTo(31);
+    void registry_shouldUseMapOfEntries_supportingMoreThan33Entries() throws Exception {
+        // 1. entry 数 33（P4-MSG-H +3115/3120 后；后续 Task 继续 append）
+        assertThat(countRegistryEntries()).isEqualTo(33);
 
         // 2. source 含 Map.ofEntries(
         final String source = Files.readString(Paths.get(
