@@ -22,7 +22,7 @@
         ADR: docs/plans/2026-05-15-spring-boot-3.5.14-residual-cve-adr.md §CVE-2026-34478
         muzhou 签字: 2026-05-15 (AskUserQuestion 组合方案 Approved)
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-api@.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|to-slf4j)@.*$</packageUrl>
         <cve>CVE-2026-34478</cve>
     </suppress>
 
@@ -34,7 +34,7 @@
         ADR: docs/plans/2026-05-15-spring-boot-3.5.14-residual-cve-adr.md §CVE-2026-34479
         muzhou 签字: 2026-05-15 (AskUserQuestion 组合方案 Approved)
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-api@.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|to-slf4j)@.*$</packageUrl>
         <cve>CVE-2026-34479</cve>
     </suppress>
 
@@ -47,7 +47,7 @@
         ADR: docs/plans/2026-05-15-spring-boot-3.5.14-residual-cve-adr.md §CVE-2026-34480
         muzhou 签字: 2026-05-15 (AskUserQuestion 组合方案 Approved)
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-api@.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|to-slf4j)@.*$</packageUrl>
         <cve>CVE-2026-34480</cve>
     </suppress>
 
@@ -60,7 +60,7 @@
         ADR: docs/plans/2026-05-15-spring-boot-3.5.14-residual-cve-adr.md §CVE-2026-34481
         muzhou 签字: 2026-05-15 (AskUserQuestion 组合方案 Approved)
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-api@.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|to-slf4j)@.*$</packageUrl>
         <cve>CVE-2026-34481</cve>
     </suppress>
 
