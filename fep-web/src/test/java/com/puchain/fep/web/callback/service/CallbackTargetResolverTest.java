@@ -1,5 +1,6 @@
 package com.puchain.fep.web.callback.service;
 
+import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import com.puchain.fep.web.submission.outputinterface.repository.SubOutputInterfaceRepository;
 import com.puchain.fep.web.sysmgmt.config.businesstype.repository.SysBusinessTypeMsgNoRepository;
@@ -36,7 +37,7 @@ class CallbackTargetResolverTest {
                 .thenReturn(List.of("bt-1", "bt-2"));
         when(interfaceRepo.findByBusinessTypeIdInAndInterfaceStatus(
                 List.of("bt-1", "bt-2"),
-                com.puchain.fep.common.domain.EnableDisableStatus.ENABLED))
+                EnableDisableStatus.ENABLED))
                 .thenReturn(List.of(i1, i2));
         var resolver = new CallbackTargetResolver(msgNoRepo, interfaceRepo);
         assertThat(resolver.resolve("2103")).containsExactly(i1, i2);
