@@ -28,12 +28,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>3107 → {@code <BatchHead3107>}（修复：批量报文头）</li>
  * </ul>
  *
- * <p>同时验证 inbound-only msgNo（如 9000 心跳类通用报文）走 legacy 路径不回归，避免对
- * {@link BatchMessageProcessorServiceIntegrationTest} 已有 IT 产生破坏。</p>
+ * <p>同时验证未登记 outbound msgNo（如 9005 心跳类通用报文，9005.xsd MSG 下无 body
+ * 元素）走 legacy 路径不回归，避免对 {@link BatchMessageProcessorServiceIntegrationTest}
+ * 已有 IT 产生破坏。</p>
  *
- * <p>P4-MSG-F T2 — 原 3003 inbound-only 测试已升级：3003 加入 dispatcher 27 集合后不再
- * 是 inbound-only，本测试改用 9000 心跳类报文保持 legacy fallback 路径覆盖（红线
- * {@code feedback_obsolete_negative_test_cleanup}）。</p>
+ * <p>测试 fixture msgNo 演进史（红线 {@code feedback_obsolete_negative_test_cleanup}
+ * + {@code feedback_cross_task_obsolete_fixture_assumption_when_set_extended} 候选）：</p>
+ * <ul>
+ *   <li>原 P5 T3：用 3003</li>
+ *   <li>P4-MSG-F T2：3003 加入 dispatcher 27 集合不再 inbound-only → 升级用 9000</li>
+ *   <li><b>P4-MSG-I T1：9000 加入 dispatcher 37 集合不再 inbound-only → 升级用 9005</b></li>
+ * </ul>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -98,25 +103,26 @@ class WrapBodyInCfxFixTest {
     }
 
     @Test
-    @DisplayName("Inbound-only msgNo (9000) preserved via legacy path — no OUTBOUND_5108 regression")
-    void wrapBodyInCfx_inboundOnlyMsgNo_should_preserve_legacy_RealHead() {
-        // 9000 是心跳类通用报文，不在 dispatcher 的 27 上行报文集合内。
-        // dispatcher.describeFor("9000") 会抛 OUTBOUND_5108。resolveHeadElementName
-        // 必须 fall back 到 legacy "RealHead{msgNo}" 保持向后兼容
-        // （BatchMessageProcessorServiceIntegrationTest 等 IT 不回归）。
+    @DisplayName("Unregistered outbound msgNo (9005) preserved via legacy path — no OUTBOUND_5108 regression")
+    void wrapBodyInCfx_unregisteredOutboundMsgNo_should_preserve_legacy_RealHead() {
+        // 9005 是心跳类通用报文，9005.xsd MSG 下无 body 元素，不在 dispatcher 的 37 上行
+        // 报文集合内。dispatcher.describeFor("9005") 会抛 OUTBOUND_5108。
+        // resolveHeadElementName 必须 fall back 到 legacy "RealHead{msgNo}" 保持向后
+        // 兼容（BatchMessageProcessorServiceIntegrationTest 等 IT 不回归）。
         //
-        // P4-MSG-F T2: 原测试用 3003（彼时 inbound-only）。3003 加入 dispatcher 27 集合
-        // 后不再是 inbound-only，本测试改用 9000 心跳类报文保持 legacy fallback 覆盖。
-        // body class 任选已注册 JAXB 类（PzInfoQuery3003 仅用于触发 marshal，不影响 head
-        // element name 拼装路径判断）。
-        CommonHead head = head("9000");
+        // fixture msgNo 演进史（详见 class-level Javadoc）：
+        //   3003 (P5 T3) → 9000 (P4-MSG-F T2) → 9005 (P4-MSG-I T1)
+        // P4-MSG-I T1 将 9000 加入 dispatcher 37 集合后不再 inbound-only，本测试升级用
+        // 9005 心跳类报文保持 legacy fallback 覆盖。body class 任选已注册 JAXB 类
+        // （PzInfoQuery3003 仅用于触发 marshal，不影响 head element name 拼装路径判断）。
+        CommonHead head = head("9005");
         PzInfoQuery3003 body = new PzInfoQuery3003();
 
-        String wrapped = service.wrapBodyInCfx(head, "9000", body);
+        String wrapped = service.wrapBodyInCfx(head, "9005", body);
 
         assertThat(wrapped)
-                .as("inbound-only 9000 must use RealHead9000 via legacy fallback")
-                .contains("<RealHead9000");
+                .as("unregistered outbound 9005 must use RealHead9005 via legacy fallback")
+                .contains("<RealHead9005");
     }
 
     private static CommonHead head(final String msgNo) {

@@ -223,7 +223,7 @@ public class BatchMessageProcessorService {
      * <p><b>P5 T3 修复</b>：历史实现 hardcoded {@code "RealHead" + msgNo} 仅 3009 正确
      * （16 上行报文中其余 15 个为 {@code BatchHead{msgNo}}）。改用
      * {@link OutboundWireShapeDispatcher#describeFor} 决定 head 元素名。
-     * 对未登记 outbound msgNo（如 inbound-only 的 3003/3005/9000），保留 legacy
+     * 对未登记 outbound msgNo（如 9005 心跳类、2101 inbound-only 等），保留 legacy
      * 行为避免 inbound 链路回归。</p>
      *
      * <p><b>默认 head 取值策略</b>：service 层无法从 {@link CfxMessage} 模型
@@ -252,7 +252,7 @@ public class BatchMessageProcessorService {
 
         // P5 T3 fix: wire-shape head 元素名按 dispatcher 决定。16 上行报文使用
         // dispatcher.describeFor 派发（3009→RealHead3009，其余 15→BatchHead{msgNo}）；
-        // 未登记 msgNo（inbound-only 如 3003/3005/9000）走 legacy 路径不变以避免回归。
+        // 未登记 msgNo（如 9005 心跳类、2101 inbound-only 等）走 legacy 路径不变以避免回归。
         final String headElementName = resolveHeadElementName(msgNo);
         final JAXBElement<RequestBusinessHead> headElement = new JAXBElement<>(
                 new QName(headElementName), RequestBusinessHead.class, realHead);
@@ -276,10 +276,11 @@ public class BatchMessageProcessorService {
     /**
      * 解析 wire-shape head 元素名：16 上行报文走 dispatcher，其余走 legacy。
      *
-     * <p>P5 T3 — dispatcher 仅登记 16 上行报文。inbound-only msgNo（如 3003/3005/9000）
-     * 直接调用 {@code dispatcher.describeFor} 会抛 OUTBOUND_5108 误伤已有 inbound IT。
-     * 用 {@link OutboundWireShapeDispatcher#isRegisteredOutboundMsgNo} 先判断，未登记
-     * 走 legacy {@code "RealHead" + msgNo} 路径保持向后兼容。</p>
+     * <p>P5 T3 — 历史 dispatcher 仅登记 16 上行报文（现 37，append-only 演进至 P4-MSG-I）。
+     * 未登记 outbound msgNo（如 9005 心跳类、2101 inbound-only 等）直接调用
+     * {@code dispatcher.describeFor} 会抛 OUTBOUND_5108 误伤已有 inbound IT。用
+     * {@link OutboundWireShapeDispatcher#isRegisteredOutboundMsgNo} 先判断，未登记走
+     * legacy {@code "RealHead" + msgNo} 路径保持向后兼容。</p>
      *
      * @param msgNo 4 位数字报文号；{@code null} 退化为 {@code "RealHead"}（与 legacy 行为一致）
      * @return wire-shape head 元素名
@@ -288,7 +289,7 @@ public class BatchMessageProcessorService {
         if (wireShapeDispatcher.isRegisteredOutboundMsgNo(msgNo)) {
             return wireShapeDispatcher.describeFor(msgNo).headElementName();
         }
-        // Legacy fallback for inbound-only msgNo (e.g. 3003 / 3005 / 9000).
+        // Legacy fallback for unregistered outbound msgNo (e.g. 9005 / 2101).
         return "RealHead" + (msgNo != null ? msgNo : "");
     }
 
