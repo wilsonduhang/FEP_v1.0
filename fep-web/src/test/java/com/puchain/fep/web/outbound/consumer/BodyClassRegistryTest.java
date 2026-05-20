@@ -9,6 +9,9 @@ import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
 import com.puchain.fep.processor.body.batch.DataTransfer1101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
+import com.puchain.fep.processor.body.common.Forward9000;
+import com.puchain.fep.processor.body.common.Forward9100;
+import com.puchain.fep.processor.body.common.MsgReturn9120;
 import com.puchain.fep.processor.body.realtime.CompanyAuthFileResponse2004;
 import com.puchain.fep.processor.body.realtime.CompanyAuthFileTransfer1004;
 import com.puchain.fep.processor.body.realtime.CompanyInfoRequest1001;
@@ -21,6 +24,7 @@ import com.puchain.fep.processor.body.supplychain.DzpzInfo3000;
 import com.puchain.fep.processor.body.supplychain.Forward3020;
 import com.puchain.fep.processor.body.supplychain.Forward3120;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
+import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3113;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
 import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
 import com.puchain.fep.processor.body.supplychain.PlatPay3115;
@@ -53,9 +57,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * P5 T4 Step 1 — {@link BodyClassRegistry} 单元测试。
  *
- * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，P4-MSG-E T1 起 21 entries，P4-MSG-F T1 起 27 entries，P4-MSG-G T2 起 31 entries，P4-MSG-H 起 33 entries，含 3000 + 3007 + 6 BATCH + 1101 + 4 realtime + 6 supplychain query + 4 supplychain query batch2 + 2 supplychain batch3）：</p>
+ * <p>覆盖（P4-MSG-B T4 起 10 entries，P4-MSG-A T2 起 16 entries，P4-MSG-D T3 起 17 entries，P4-MSG-E T1 起 21 entries，P4-MSG-F T1 起 27 entries，P4-MSG-G T2 起 31 entries，P4-MSG-H 起 33 entries，P4-MSG-I T2 起 37 entries，含 3000 + 3007 + 6 BATCH + 1101 + 4 realtime + 6 supplychain query + 4 supplychain query batch2 + 2 supplychain batch3 + 4 P4-MSG-I（9000/9100/9120 通用转发+ack + 3113 授信回执））：</p>
  * <ul>
- *   <li>33 上行报文 msgNo → Body POJO Class 主映射 hits</li>
+ *   <li>37 上行报文 msgNo → Body POJO Class 主映射 hits</li>
  *   <li>未注册 msgNo（"9999" / null）→ {@link FepBusinessException} +
  *       {@link FepErrorCode#OUTBOUND_5107_BODY_CLASS_NOT_FOUND}</li>
  * </ul>
@@ -225,6 +229,38 @@ class BodyClassRegistryTest {
         assertThat(registry.resolve("2004")).isEqualTo(CompanyAuthFileResponse2004.class);
     }
 
+    @Test
+    @DisplayName("9000 → Forward9000.class（实时业务通用转发，P4-MSG-I）")
+    void resolve9000_returnsForward9000() {
+        assertThat(registry.resolve("9000"))
+                .as("9000 outbound body class（实时通用转发）")
+                .isEqualTo(Forward9000.class);
+    }
+
+    @Test
+    @DisplayName("9100 → Forward9100.class（非实时业务通用转发，P4-MSG-I）")
+    void resolve9100_returnsForward9100() {
+        assertThat(registry.resolve("9100"))
+                .as("9100 outbound body class（非实时通用转发，模式3）")
+                .isEqualTo(Forward9100.class);
+    }
+
+    @Test
+    @DisplayName("3113 → HxqyCreditAmt3113.class（核心企业授信额度回执，P4-MSG-I）")
+    void resolve3113_returnsHxqyCreditAmt3113() {
+        assertThat(registry.resolve("3113"))
+                .as("3113 outbound body class（银行角色主动发起授信额度回执）")
+                .isEqualTo(HxqyCreditAmt3113.class);
+    }
+
+    @Test
+    @DisplayName("9120 → MsgReturn9120.class（通用应答，2101 模式6 ack，P4-MSG-I）")
+    void resolve9120_returnsMsgReturn9120() {
+        assertThat(registry.resolve("9120"))
+                .as("9120 outbound body class（2101 inbound 模式6 必返 ack）")
+                .isEqualTo(MsgReturn9120.class);
+    }
+
     @ParameterizedTest(name = "[{index}] msgNo={0} → {1}")
     @MethodSource("supplychainQueryWireMatrix")
     @DisplayName("3001-3006 supplychain query body 注册解析（P4-MSG-F T1）")
@@ -262,22 +298,23 @@ class BodyClassRegistryTest {
     }
 
     /**
-     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 + P4-MSG-E T1 + P4-MSG-F T1 + P4-MSG-G T2 — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
+     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 + P4-MSG-E T1 + P4-MSG-F T1 + P4-MSG-G T2 + P4-MSG-H + P4-MSG-I — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
      *
      * <p>P4-MSG-B T0 完成 refactor（Map.of → Map.ofEntries，行为不变 8 entries）；T1 append
      * 3007 → {@link InvoCheckQuery3007}（8 → 9）；T4 append 3000 → {@link DzpzInfo3000}（9 → 10）；
      * P4-MSG-A T2 +6 BATCH（10 → 16）；P4-MSG-D T3 +1101 → {@link DataTransfer1101}（16 → 17）；
      * P4-MSG-E T1 +4 realtime 1001/2001/1004/2004（17 → 21）；P4-MSG-F T1 +6 supplychain query
      * 3001/3002/3003/3004/3005/3006（21 → 27）；P4-MSG-G T2 +4 supplychain query batch2
-     * 3008/3020/3103/3108（27 → 31）；P4-MSG-H +2 supplychain batch3 3115/3120（31 → 33）。
+     * 3008/3020/3103/3108（27 → 31）；P4-MSG-H +2 supplychain batch3 3115/3120（31 → 33）；
+     * P4-MSG-I T2 +4 报文 9000/9100/9120/3113（33 → 37，含首个 {@code body.common.*} 报文 9000/9100/9120）。
      * source code 必须保持用 {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常
      */
     @Test
-    void registry_shouldUseMapOfEntries_supportingMoreThan33Entries() throws Exception {
-        // 1. entry 数 33（P4-MSG-H +3115/3120 后；后续 Task 继续 append）
-        assertThat(countRegistryEntries()).isEqualTo(33);
+    void registry_shouldUseMapOfEntries_supportingMoreThan37Entries() throws Exception {
+        // 1. entry 数 37（P4-MSG-I T2 +9000/9100/9120/3113 后；后续 Task 继续 append）
+        assertThat(countRegistryEntries()).isEqualTo(37);
 
         // 2. source 含 Map.ofEntries(
         final String source = Files.readString(Paths.get(
