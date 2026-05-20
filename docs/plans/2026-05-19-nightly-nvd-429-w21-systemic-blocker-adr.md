@@ -2,7 +2,7 @@
 
 > 类型: 独立 CI infra 阻塞 ADR（非某 Plan 失败 — 由 Pitest minion 修复 Plan Step 5 contingency 升级而来）
 > 生成日期: 2026-05-19 | 升级来源: `2026-05-19-pitest-junit5-plugin-junit512-fix.md` Step 5（muzhou 2026-05-19 AskUserQuestion 决策「确定推断收口 + NVD 升独立 ticket」）
-> 状态: 🟢 OWNED — owning Plan: docs/plans/2026-05-19-nightly-nvd-api-key-systemic-fix.md（muzhou 2026-05-19 指定本会话；修法 #1 NVD API key 实施中）
+> 状态: ✅ RESOLVED（2026-05-19 本会话 NVD #2+#3 Plan Task 3 暖缓存 Nightly 实证 — 详见 §closure；修法链: #1 NVD API key `f728759`（必要不充分）+ #2 seed `3771adf` + #3 去周轮换 `3771adf`（充分））
 
 ## 1. 现象
 
@@ -73,9 +73,68 @@ Cache not found for input keys: owasp-nvd-Linux-2026-W21, owasp-nvd-Linux-
 互补 owning Plan: `docs/plans/2026-05-19-nightly-nvd-cache-seed-derotate.md`
 （muzhou 2026-05-19 AskUserQuestion 决策「#2+#3」，v1.1 AI 评审 PASS WITH MINOR + muzhou 签字）。
 
-## §closure（待 Task 4 填）
+## §closure（2026-05-19）: ✅ RESOLVED — NVD infra 层根因 4 完全消除
 
-> 待 #2+#3 ship + seed workflow green + Nightly 暖缓存验证后填：commit SHA /
-> seed run-id（cache saved owasp-nvd-Linux-v1）/ Nightly run-id（无 429 + 无
-> timeout + NVD 分析完整 + report）/ tier-B（log4j CVSS gate 通过 → 全绿）/
-> 状态 🟢 OWNED → ✅ RESOLVED。
+> 状态: 🟢 OWNED → **✅ RESOLVED**（本会话 2026-05-19 NVD #2+#3 Plan Task 3 暖缓存 Nightly 实证）。
+
+### 修法 ship 实证
+
+- 互补 owning Plan: `docs/plans/2026-05-19-nightly-nvd-cache-seed-derotate.md`（v1.1，AI 评审 PASS WITH MINOR，muzhou 2026-05-19 签字）
+- ship commit: **`3771adf`** (origin/main)
+  - `.github/workflows/nvd-cache-seed.yml` NEW（#2 一次性 seed workflow，timeout-minutes:300 + workflow_dispatch + `dependency-check-maven:12.2.2:update-only` goal + `concurrency: nightly`）
+  - `.github/workflows/nightly.yml` modified（#3 去周轮换 — 移除 `Compute NVD cache key (weekly rotation)` step + cache key 改稳定 `owasp-nvd-${{ runner.os }}-v1`）
+
+### tier-A 实证（本 ADR 范围）
+
+**Seed run `26100940590`**（GHA workflow_dispatch on `chore/nightly-nvd-cache-seed`）:
+- duration: **4h0m19s**（300min timeout 充分，无 cancellation）
+- NVD download: **`Downloaded 351,616/351,616 (100%)`** 全量完整
+- BUILD SUCCESS（dependency-check-maven:12.2.2:update-only 退出 0）
+- `Cache saved with key: owasp-nvd-Linux-v1`（actions/cache post-step 实测落盘）
+- 0 个 429 / 0 个 timeout / 0 个 cancelled
+
+**Nightly verify run `26114517797`**（GHA scheduled→workflow_dispatch on `3771adf` main）:
+- duration: **1m20s**（vs 之前 60min timeout 在 34% 死掉 — 暖缓存命中绕过冷下载）
+- `Cache restored from key: owasp-nvd-Linux-v1` ✅
+- `[INFO] Skipping the NVD API Update as it was completed within the last 240 minutes` ✅（NVD DB 鲜度 30min vs 240min 阈值）
+- `[INFO] Finished NVD CVE Analyzer (0 seconds)` ✅（CVE 分析 ≤ 1s）
+- `[INFO] Writing XML report to: target/dependency-check-report.xml` + `Writing HTML report` ✅（parent + fep-common 两份 report 落盘）
+- `Artifact owasp-dependency-check-reports has been successfully uploaded! Final size is 104521 bytes` ✅（artifact 上传成功）
+- 0 个 429 / 0 个 cancelled / 0 个 NVD timeout
+
+→ **W21 chicken-and-egg 死循环已破除**。NVD infra 层根因 4 = NVD 429 W21 系统性阻塞 → ✅ 解决。
+
+### tier-B 实证（OWASP 层附带验证）
+
+- OWASP `dependency-check:12.2.2:check` BUILD 阶段 SUCCESS（既未 NVD 错误也未触发 CVSS≥7 gate）
+- log4j-to-slf4j suppression（commit `a79574d`，已在 origin/main `7f2b72e` 之前）实证生效 — `vulnerabilityFailOnCVSS=7` 未阻断 OWASP step
+- **OWASP layer 在 Nightly 中首次完整跑通并产出 report** — SB 3.5.14 T1#4「OWASP CVSS≥7=0」warm-cache Nightly 实证终于关闭（衔接 prompt priority #1）
+
+### 出范围 — 新 systemic CI blocker（与本 ADR 正交）
+
+Nightly run `26114517797` 最终 `BUILD FAILURE`（exit 1）但**故障点不在 NVD/OWASP 层**：
+
+```
+[ERROR] Failed to execute goal org.pitest:pitest-maven:1.23.1:mutationCoverage
+  (pitest-mutation-coverage) on project fep-common: Execution
+  pitest-mutation-coverage of goal org.pitest:pitest-maven:1.23.1:mutationCoverage
+  failed: History has been enabled but no history plugin has been
+  installed/activated.
+[ERROR] If you are using https://www.arcmutate.com remember to activate the
+  history plugin with +arcmutate_history
+```
+
+- **判定**：pitest 1.23.x 配置漂移（pom `<historyInputFile>`/`<historyOutputFile>` 配置存在但未装 arcmutate history plugin）。NVD/OWASP 层完全清洁，pitest 是独立 systemic CI blocker。
+- **范围排除依据**：本 ADR 范围严格限于 NVD infra 层根因 4。pitest history plugin 是新的、与 NVD #1/#2/#3 修法正交的独立问题。
+- **follow-up 候选**：升独立 ADR / Plan（候选 owner 待 muzhou 指定），可能复用 pitest minion 修复 Plan 路径或新建专项。
+- **红线适用**：候选新红线 `feedback_systemic_ci_blocker_defers_positive_backing`（本会话 CLAUDE.md 当前状态登记） — Plan A 同型闭环（objective 达成 + ship + 静态验证；正向 Nightly 背书 deferred 出范围系统性 CI 阻塞解决）。
+
+### 同源阻塞群组关系
+
+- 根因 1（OWASP dependency-check 10.0.4 → 12.2.2 H2 schema overflow）：Plan A `9ba7e04` ✅ RESOLVED（别会话）
+- 根因 2（OSS Index 401 anonymous）：Plan B `549a0b2` ✅ RESOLVED（别会话）
+- 根因 3（log4j-to-slf4j suppression 覆盖 gap）：gap Plan `a79574d` ✅ RESOLVED（别会话）
+- 根因 4（本 ADR — NVD 429 W21 chicken-and-egg）：✅ RESOLVED
+  - 修法 #1（NVD API key）：`f728759` 必要不充分（429 消除但 60min timeout）
+  - 修法 #2（一次性 seed）+ #3（去周轮换）：`3771adf` 充分（暖缓存 restore 1m20s 绕过冷下载）
+- 根因 5（pitest history plugin）：🆕 NEW，独立 follow-up，与本 ADR 群组正交
