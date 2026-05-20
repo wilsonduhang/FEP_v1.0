@@ -284,6 +284,76 @@ class OutboundWireShapeDispatcherTest {
     }
 
     @Test
+    @DisplayName("9120 → BatchHead9120 + ResponseBusinessHead + result (P4-MSG-I，2101 模式6 ack)")
+    void describeFor9120_returnsBatchHeadResponseBusinessHeadTrue() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("9120");
+        assertThat(descriptor.headElementName())
+                .as("9120 head 元素名（通用应答，与 9120.xsd:31 BatchHead9120 一致）")
+                .isEqualTo("BatchHead9120");
+        assertThat(descriptor.headClass())
+                .as("9120 head 类型（9120.xsd:31 type=ResponseHead → ResponseBusinessHead）")
+                .isEqualTo(ResponseBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("9120 应答报文带 Result，requiresResultCode=true（既有 BATCH_HEAD_RESPONSE 类目约定）")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("3113 → BatchHead3113 + ResponseBusinessHead + result (P4-MSG-I，银行授信额度回执)")
+    void describeFor3113_returnsBatchHeadResponseBusinessHeadTrue() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("3113");
+        assertThat(descriptor.headElementName())
+                .as("3113 head 元素名（核心企业授信额度回执，与 3113.xsd:31 BatchHead3113 一致）")
+                .isEqualTo("BatchHead3113");
+        assertThat(descriptor.headClass())
+                .as("3113 head 类型（3113.xsd:31 type=ResponseHead → ResponseBusinessHead）")
+                .isEqualTo(ResponseBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("3113 回执报文带 Result，requiresResultCode=true")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("9100 → BatchHead9100 + RequestBusinessHead + no result (P4-MSG-I，非实时通用转发)")
+    void describeFor9100_returnsBatchHeadRequestBusinessHeadFalse() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("9100");
+        assertThat(descriptor.headElementName())
+                .as("9100 head 元素名（非实时业务通用转发，与 9100.xsd:34 BatchHead9100 一致）")
+                .isEqualTo("BatchHead9100");
+        assertThat(descriptor.headClass())
+                .as("9100 head 类型（9100.xsd:34 type=RequestHead → RequestBusinessHead，既有第 2 类目约定）")
+                .isEqualTo(RequestBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("9100 转发报文不带 ReturnCode，requiresResultCode=false")
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("9000 → RealHead9000 + RequestBusinessHead + no result (P4-MSG-I，实时通用转发)")
+    void describeFor9000_returnsRealHeadRequestBusinessHeadFalse() {
+        WireShapeDescriptor descriptor = dispatcher.describeFor("9000");
+        assertThat(descriptor.headElementName())
+                .as("9000 head 元素名（实时业务通用转发，与 9000.xsd:31 RealHead9000 一致）")
+                .isEqualTo("RealHead9000");
+        assertThat(descriptor.headClass())
+                .as("9000 head 类型（9000.xsd:31 type=RequestHead → RequestBusinessHead，既有第 1 类目约定）")
+                .isEqualTo(RequestBusinessHead.class);
+        assertThat(descriptor.requiresResultCode())
+                .as("9000 转发报文不带 ReturnCode，requiresResultCode=false")
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("9120/3113/9100/9000 → isRegisteredOutboundMsgNo true (P4-MSG-I)")
+    void isRegisteredOutboundMsgNo_returnsTrueFor9120_3113_9100_9000() {
+        for (String msgNo : new String[]{"9120", "3113", "9100", "9000"}) {
+            assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
+                    .as("msgNo=%s 必须在 isRegisteredOutboundMsgNo true（P4-MSG-I）", msgNo)
+                    .isTrue();
+        }
+    }
+
+    @Test
     @DisplayName("3103 → BatchHead3103 + ResponseBusinessHead + with result (P4-MSG-G T3)")
     void describeFor3103_returnsBatchHeadResponseBusinessHeadTrue() {
         WireShapeDescriptor descriptor = dispatcher.describeFor("3103");
