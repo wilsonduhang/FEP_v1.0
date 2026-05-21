@@ -1,33 +1,25 @@
 package com.puchain.fep.web.outbound.consumer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.model.ResponseBusinessHead;
-import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
-import com.puchain.fep.converter.wire.WireShapeDescriptor;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchTransfer1104;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchRequest1103;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-
 import java.util.stream.Stream;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.provider.Arguments;
+import org.springframework.boot.test.context.SpringBootTest;
 
 /**
  * P4-MSG-A T3 — 6 BATCH 报文 outbound wire 链路 bean 集成 IT（参数化 × 6 case）。
  *
  * <p>对每个 BATCH msgNo（1102/1103/1104/2102/2103/2104）验证 Spring context 内
- * {@link BodyClassRegistry} + {@link OutboundWireShapeDispatcher} 两个 wire 链路 bean
- * 协调一致：</p>
+ * {@link BodyClassRegistry} +
+ * {@link com.puchain.fep.converter.wire.OutboundWireShapeDispatcher}
+ * 两个 wire 链路 bean 协调一致：</p>
  *
  * <ul>
  *   <li>1102/1103/1104 上行请求 → BatchHead{n} + RequestBusinessHead + no result</li>
@@ -35,9 +27,9 @@ import java.util.stream.Stream;
  *   <li>6 BATCH 全部 isRegisteredOutboundMsgNo=true</li>
  * </ul>
  *
- * <p>与既有 {@code Outbound3000WireTest} / {@code Outbound3007WireTest}（Plan B T1/T4）
- * 共享 {@code @TestPropertySource} 配置（{@code fep.collector.scheduling.enabled=false} +
- * {@code management.health.redis.enabled=false}）以触发 Spring context 缓存复用。</p>
+ * <p>继承自 {@link AbstractOutboundWireMatrixTest}（DEF-Reuse-R1，2026-05-21）—
+ * 4 块共享断言 + Spring/JUnit 集成配置在父类。本类仅声明 {@code wireMatrix()}
+ * 数据源 + 子类业务 Javadoc。</p>
  *
  * <p>本 IT 仅覆盖 BATCH wire 注册路径，不重复 Body POJO 的 JAXB roundtrip / XSD validation
  * 测试（已 ship 于 BATCH-1102-2102-1104-2104 / BATCH-1103 阶段，
@@ -49,19 +41,10 @@ import java.util.stream.Stream;
  * @since 1.0.0
  */
 @SpringBootTest
-@TestPropertySource(properties = {
-        "fep.collector.scheduling.enabled=false",
-        "management.health.redis.enabled=false"
-})
-class OutboundBatchWireTest {
+@DisplayName("6 BATCH outbound wire bean 协调")
+class OutboundBatchWireTest extends AbstractOutboundWireMatrixTest {
 
-    @Autowired
-    private BodyClassRegistry registry;
-
-    @Autowired
-    private OutboundWireShapeDispatcher dispatcher;
-
-    static Stream<Arguments> batchWireMatrix() {
+    static Stream<Arguments> wireMatrix() {
         return Stream.of(
                 Arguments.of("1102", DataTransferCheckBatchRequest1102.class,
                         "BatchHead1102", RequestBusinessHead.class, false),
@@ -76,43 +59,5 @@ class OutboundBatchWireTest {
                 Arguments.of("2104", CompanyAuthFileBatchResponse2104.class,
                         "BatchHead2104", ResponseBusinessHead.class, true)
         );
-    }
-
-    @ParameterizedTest(name = "[{index}] msgNo={0} → body={1}, head={2}({3}), result={4}")
-    @MethodSource("batchWireMatrix")
-    @DisplayName("6 BATCH outbound wire bean 协调")
-    void wire_batch_should_resolve_consistently(
-            final String msgNo,
-            final Class<?> expectedBodyClass,
-            final String expectedHeadElementName,
-            final Class<? extends RequestBusinessHead> expectedHeadClass,
-            final boolean expectedRequiresResultCode) {
-
-        // BodyClassRegistry: msgNo → BATCH POJO Class
-        assertThat(registry.resolve(msgNo))
-                .as("BodyClassRegistry.resolve(\"%s\") 必须返回 %s（P4-MSG-A T2 注册）",
-                        msgNo, expectedBodyClass.getSimpleName())
-                .isEqualTo(expectedBodyClass);
-
-        // OutboundWireShapeDispatcher: msgNo → wire-shape 描述符
-        final WireShapeDescriptor desc = dispatcher.describeFor(msgNo);
-        assertThat(desc.headElementName())
-                .as("msgNo=%s headElementName（与 %s.xsd 一致）", msgNo, msgNo)
-                .isEqualTo(expectedHeadElementName);
-        assertThat(desc.headClass())
-                .as("msgNo=%s headClass（%s 上行%s）", msgNo,
-                        msgNo.startsWith("1") ? "1xxx" : "2xxx",
-                        msgNo.startsWith("1") ? "请求" : "回执")
-                .isEqualTo(expectedHeadClass);
-        assertThat(desc.requiresResultCode())
-                .as("msgNo=%s requiresResultCode（%s）", msgNo,
-                        expectedRequiresResultCode ? "2xxx 回执含 ResultCode" : "1xxx 请求不带 ResultCode")
-                .isEqualTo(expectedRequiresResultCode);
-
-        // BatchMessageProcessorService.resolveHeadElementName 路径：BATCH 走 dispatcher
-        assertThat(dispatcher.isRegisteredOutboundMsgNo(msgNo))
-                .as("msgNo=%s 必须在 isRegisteredOutboundMsgNo true，否则 inbound 路径会走 legacy fallback",
-                        msgNo)
-                .isTrue();
     }
 }
