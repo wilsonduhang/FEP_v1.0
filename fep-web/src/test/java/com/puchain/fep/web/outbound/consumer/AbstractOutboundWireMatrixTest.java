@@ -12,10 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * DEF-Reuse-R1（2026-05-21）— 6 outbound wire test sibling 共享父类。
+ * DEF-Reuse-R1（2026-05-21）— 8 outbound wire test sibling 共享父类。
  *
- * <p>抽取 6 个并行的 {@code Outbound*WireTest} sibling 共有结构（P4-MSG-I T1-T5 Deferred R1
- * HIGH ROI）:</p>
+ * <p>抽取 8 个并行的 {@code Outbound*WireTest} sibling 共有结构（P4-MSG-I T1-T5 Deferred R1
+ * HIGH ROI；T1 spike OutboundBatchWireTest + T2 batch refactor 1101/CommonForward/
+ * EnterpriseQueryRealtime/SupplyChain/SupplychainBatch3/SupplychainQueryBatch2/
+ * SupplychainQuery 7 sibling）:</p>
  *
  * <ul>
  *   <li>{@link BodyClassRegistry} + {@link OutboundWireShapeDispatcher} 双 bean
