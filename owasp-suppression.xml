@@ -64,4 +64,27 @@
         <cve>CVE-2026-34481</cve>
     </suppress>
 
+    <suppress>
+        <notes><![CDATA[
+        CVE-2026-34477 — Apache Log4j 系列新 CVE（NVD DB 2026-05-19→20 期间
+        CVSS 重评 ≥ 7.0，从非阻断升级为阻断）。漏洞代码位于 log4j-core 模块。
+        FEP 使用 Logback (Spring Boot 默认) 作为日志实现，log4j-core 不在 classpath。
+
+        实测证据 (2026-05-21): `mvn -pl fep-common dependency:tree -Dincludes=org.apache.logging.log4j`
+        仅含 log4j-to-slf4j:2.24.3 (桥接到 Logback, via spring-boot-starter-logging) +
+        log4j-api:2.24.3 (API 门面, via poi-ooxml)，grep -c "log4j-core" = 0。
+        漏洞类不可达 → 不可利用。OWASP CPE 误报：CPE cpe:2.3:a:apache:log4j 共享
+        匹配链将 log4j-core 漏洞误匹配到 log4j-api / log4j-to-slf4j 坐标。
+
+        升级链:
+        - run 26064780378 (2026-05-19): 仅 identified 列表，非阻断
+        - run 26183437480 (2026-05-20 HEAD fa751ba): 跳 CVSS≥7 gate, BUILD FAILURE
+
+        ADR: docs/plans/2026-05-15-spring-boot-3.5.14-residual-cve-adr.md §extension-2
+        muzhou 签字: 2026-05-21 (Plan AskUserQuestion 决策门)
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j-(api|to-slf4j)@.*$</packageUrl>
+        <cve>CVE-2026-34477</cve>
+    </suppress>
+
 </suppressions>
