@@ -498,8 +498,6 @@
                             <timeoutConstant>10000</timeoutConstant>
                             <!-- 并行度 -->
                             <threads>4</threads>
-                            <!-- 仅运行变动相关的 mutation（增量模式） -->
-                            <withHistory>true</withHistory>
                             <!-- P0 骨架阶段允许空 mutation（Configuration 被排除后可能为 0） -->
                             <failWhenNoMutations>false</failWhenNoMutations>
                         </configuration>
