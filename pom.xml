@@ -66,6 +66,17 @@
              bump tomcat-embed-* without changing the parent BOM. See
              docs/plans/2026-05-15-spring-boot-3.5.14-residual-cve-adr.md -->
         <tomcat.version>10.1.55</tomcat.version>
+
+        <!-- netty override: SB 3.5.14 BOM pins 4.1.132.Final which carries 12
+             netty CVEs (FEP classpath hits CVE-2026-42583 via netty-codec).
+             Other 11 affect codec-http/dns/http3/redis/mqtt/handler-proxy not
+             in classpath). All 12 fixed in 4.1.133.Final (2026-05-04 security
+             release); 4.1.134.Final (2026-05-20 latest GA) carries those fixes
+             plus bug-fixes. netty arrives transitively via lettuce-core <-
+             spring-boot-starter-data-redis. Spring Boot honors this property to
+             bump netty-* without changing the parent BOM. See
+             docs/plans/2026-05-22-netty-4.1.134-upgrade.md -->
+        <netty.version>4.1.134.Final</netty.version>
     </properties>
 
     <dependencyManagement>
