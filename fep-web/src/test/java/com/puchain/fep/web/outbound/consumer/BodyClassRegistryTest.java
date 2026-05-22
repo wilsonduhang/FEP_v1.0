@@ -312,8 +312,9 @@ class BodyClassRegistryTest {
      * @throws Exception 反射或文件读取异常
      */
     @Test
-    void registry_shouldUseMapOfEntries_supportingMoreThan37Entries() throws Exception {
-        // 1. entry 数 37（P4-MSG-I T2 +9000/9100/9120/3113 后；后续 Task 继续 append）
+    @DisplayName("REGISTRY 使用 Map.ofEntries 破除 Map.of 10-arg 上限以支持任意数量 entry（确切数见方法体断言）")
+    void registry_shouldUseMapOfEntries_supportingUnboundedSize() throws Exception {
+        // 1. entry 数精确断言（growth guard：每次 append message type 更新此处一行；方法名不再随 entry 数变化）
         assertThat(countRegistryEntries()).isEqualTo(37);
 
         // 2. source 含 Map.ofEntries(
