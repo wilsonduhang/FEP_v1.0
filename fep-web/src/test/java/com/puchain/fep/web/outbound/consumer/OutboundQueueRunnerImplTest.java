@@ -11,6 +11,7 @@ import com.puchain.fep.processor.intake.port.OutboundHeadFields;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
 import com.puchain.fep.web.outbound.consumer.OutboundTlqSender.OutboundSendOutcome;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,6 +43,18 @@ class OutboundQueueRunnerImplTest {
     @Mock private OutboundMetrics metrics;
 
     @InjectMocks private OutboundQueueRunnerImpl runner;
+
+    /**
+     * 清理 Mockito inline mock 全局注册，防止本类对 concrete class
+     * {@link OutboundTlqSender} 的 @Mock instrumentation 残留到共享 Surefire JVM
+     * (forkCount=1 reuseForks=true) 中后续 @SpringBootTest（如
+     * {@link P5OutboundEndToEndIntegrationTest}）污染其 real bean 行为
+     * (root cause 7 测试隔离 flaky 修复)。
+     */
+    @AfterEach
+    void clearMockitoInlineState() {
+        org.mockito.Mockito.framework().clearInlineMocks();
+    }
 
     @Test
     void run_whenSendSucceeds_shouldDelegateToStatusWriterRecordSent() {
