@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -70,6 +71,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
         "management.health.redis.enabled=false"
 })
 @Sql("/sql/p5/outbound_queue_8_messages.sql")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class P5OutboundEndToEndIntegrationTest {
 
     @Autowired
