@@ -19,15 +19,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>注册清单源 {@code InboundMessageDispatcher.BODY_TYPE_REGISTRY}（fep-web）：
  * 3001/3002/3003/3004/3005/3006（P4-Plan-C SUPPLY_CHAIN BIDIRECTIONAL）+
- * 3007/3008/3107/3108/3115/3116（P3 Phase 2 + P4-MSG-B-inbound）= 12 个 supplychain 包内 Body。
+ * 3007/3008/3107/3108/3112/3115/3116（P3 Phase 2 + P4-MSG-B-inbound + P4-MSG-J）= 13 个 supplychain 包内 Body。
  * 本测试不能直接 import dispatcher（fep-processor 不依赖 fep-web），改为枚举 Class 字面量。
- * fep-web 端用 {@code InboundRegistryArchTest}（T4）作权威 ArchUnit 强护栏覆盖全 16 entries
+ * fep-web 端用 {@code InboundRegistryArchTest}（T4）作权威 ArchUnit 强护栏覆盖全 17 entries
  * （含 batch 包内 2101/2102/2103/2104）。</p>
  */
 class SerialNoBearingComplianceTest {
 
     /**
-     * 12 个 supplychain 包内 inbound dispatcher 注册顶层 Body class
+     * 13 个 supplychain 包内 inbound dispatcher 注册顶层 Body class
      * （与 BODY_TYPE_REGISTRY 中 supplychain 包内 entries 同步；batch 包内的
      * 2101/2102/2103/2104 由 fep-web 端 InboundRegistryArchTest 覆盖）。
      */
@@ -42,6 +42,7 @@ class SerialNoBearingComplianceTest {
             InvoCheckReturn3008.class,
             PzCheckQuery3107.class,
             PzCheckQueryReturn3108.class,
+            HxqyCreditAmt3112.class,
             PlatPay3115.class,
             BankCheckDay3116.class);
 
@@ -54,7 +55,7 @@ class SerialNoBearingComplianceTest {
         }
     }
 
-    /** 12 类 setter+getter roundtrip 工厂；显式 cast 保留类型安全无反射。 */
+    /** 13 类 setter+getter roundtrip 工厂；显式 cast 保留类型安全无反射。 */
     static Stream<Arguments> bodyFactories() {
         return Stream.of(
                 Arguments.of("3001", (Function<String, SerialNoBearing>) sn -> {
@@ -104,6 +105,11 @@ class SerialNoBearingComplianceTest {
                 }),
                 Arguments.of("3108", (Function<String, SerialNoBearing>) sn -> {
                     PzCheckQueryReturn3108 b = new PzCheckQueryReturn3108();
+                    b.setSerialNo(sn);
+                    return b;
+                }),
+                Arguments.of("3112", (Function<String, SerialNoBearing>) sn -> {
+                    HxqyCreditAmt3112 b = new HxqyCreditAmt3112();
                     b.setSerialNo(sn);
                     return b;
                 }),

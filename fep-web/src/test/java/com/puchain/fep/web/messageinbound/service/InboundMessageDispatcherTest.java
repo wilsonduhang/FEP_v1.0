@@ -9,6 +9,7 @@ import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
 import com.puchain.fep.processor.body.batch.DataTransfer2101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
+import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
 import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
 import com.puchain.fep.processor.body.supplychain.ProgressQuery3001;
@@ -420,6 +421,42 @@ class InboundMessageDispatcherTest {
                     + "</MSG>"
                     + "</CFX>";
 
+    /**
+     * Minimal CFX wrapper carrying a {@code HxqyCreditAmt3112} body with the
+     * leading {@code SerialNo} plus a single {@code hxqyInfo} entry. Bank-side
+     * inbound receive (PRD §4.6:841 mode 5). Root element {@code <hxqyCreditAmt3112>}
+     * per XSD grep (camelCase exception, leading lowercase). Dispatcher unit
+     * test mocks {@link SyncMessageProcessorService} away so XSD validation is
+     * out of scope; only JAXB unmarshal runs against this body.
+     */
+    private static final String VALID_3112_XML_TEMPLATE =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            + "<CFX>"
+            + "<HEAD>"
+            + "<Version>1.0</Version>"
+            + "<SrcNode>" + FepConstants.HNDEMP_NODE_CODE + "</SrcNode>"
+            + "<DesNode>12345678901234</DesNode>"
+            + "<App>HNDEMP</App>"
+            + "<MsgNo>3112</MsgNo>"
+            + "<MsgId>20260524000000000099</MsgId>"
+            + "<CorrMsgId></CorrMsgId>"
+            + "<WorkDate>20260524</WorkDate>"
+            + "</HEAD>"
+            + "<MSG>"
+            + "<hxqyCreditAmt3112>"
+            + "<SerialNo>SN20260524C3112</SerialNo>"
+            + "<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>"
+            + "<DesNodeCode>12345678901234</DesNodeCode>"
+            + "<QueryDate>20260524</QueryDate>"
+            + "<hxqyInfoNum>1</hxqyInfoNum>"
+            + "<hxqyInfo>"
+            + "<hxqyName>核心企业测试</hxqyName>"
+            + "<hxqyCode>91110000100000000X</hxqyCode>"
+            + "</hxqyInfo>"
+            + "</hxqyCreditAmt3112>"
+            + "</MSG>"
+            + "</CFX>";
+
     private SyncMessageProcessorService syncProcessor;
     private ApplicationEventPublisher eventPublisher;
     private InboundMessageDispatcher dispatcher;
@@ -519,19 +556,20 @@ class InboundMessageDispatcherTest {
     }
 
     @Test
-    @DisplayName("body type registry exposes 16 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104 + P4-MSG-D 2101 + P4-Plan-C 3001-3006)")
-    void bodyTypeRegistry_contains16Entries() {
+    @DisplayName("body type registry exposes 17 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104 + P4-MSG-D 2101 + P4-Plan-C 3001-3006 + P4-MSG-J 3112)")
+    void bodyTypeRegistry_contains17Entries() {
         // grep-asserted (feedback_doc_data_grep_first): registry must expose
         // exactly the 4 P3 Phase 2 messageTypes (3107/3108/3115/3116), the
         // 2 P4-MSG-B-inbound InvoCheck messageTypes (3007/3008), the 3
         // P4-MSG-A-inbound BATCH Response messageTypes (2102/2103/2104), the
-        // 1 P4-MSG-D T4 messageType (2101), and the 6 P4-Plan-C SUPPLY_CHAIN
-        // BIDIRECTIONAL messageTypes (3001-3006).
-        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(16);
+        // 1 P4-MSG-D T4 messageType (2101), the 6 P4-Plan-C SUPPLY_CHAIN
+        // BIDIRECTIONAL messageTypes (3001-3006), and the 1 P4-MSG-J
+        // bank-side inbound receive messageType (3112).
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(17);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry())
                 .containsKeys("2101", "2102", "2103", "2104",
                               "3001", "3002", "3003", "3004", "3005", "3006",
-                              "3007", "3008", "3107", "3108", "3115", "3116");
+                              "3007", "3008", "3107", "3108", "3115", "3116", "3112");
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2101"))
                 .isEqualTo(DataTransfer2101.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2102"))
@@ -558,6 +596,8 @@ class InboundMessageDispatcherTest {
                 .isEqualTo(InvoCheckQuery3007.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3008"))
                 .isEqualTo(InvoCheckReturn3008.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("3112"))
+                .isEqualTo(HxqyCreditAmt3112.class);
     }
 
     /**
@@ -957,5 +997,33 @@ class InboundMessageDispatcherTest {
                 .as("dispatcher must publish typed QyAccQueryReturn3006 body (P4-Plan-C T1 wire-in, "
                         + "camelCase root <qyAccQueryReturn3006> per XSD)")
                 .isInstanceOf(QyAccQueryReturn3006.class);
+    }
+
+    @Test
+    @DisplayName("dispatch 3112 → publishEvent body is HxqyCreditAmt3112 + serialNo 来自 body (FR-MSG-3112 inbound P4-MSG-J)")
+    void dispatch_3112_shouldPublishEventWithHxqyCreditAmt3112Body() {
+        final byte[] xml = VALID_3112_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-3112abcdef0123456789abcdef0123000",
+                        MessageType.MSG_3112, "20260524", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3112), eq("20260524"), eq(xml)))
+                .thenReturn(completed);
+
+        dispatcher.dispatch("3112", "20260524", xml);
+
+        final ArgumentCaptor<InboundMessageProcessedEvent> captor =
+                ArgumentCaptor.forClass(InboundMessageProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        final InboundMessageProcessedEvent event = captor.getValue();
+        assertThat(event.type()).isEqualTo(MessageType.MSG_3112);
+        assertThat(event.transitionNo()).isEqualTo("20260524");
+        assertThat(event.serialNo())
+                .as("3112 carries business SerialNo, dispatcher must surface it (not transitionNo)")
+                .isEqualTo("SN20260524C3112");
+        assertThat(event.body())
+                .as("dispatcher must publish typed HxqyCreditAmt3112 body (P4-MSG-J wire-in)")
+                .isInstanceOf(HxqyCreditAmt3112.class);
     }
 }
