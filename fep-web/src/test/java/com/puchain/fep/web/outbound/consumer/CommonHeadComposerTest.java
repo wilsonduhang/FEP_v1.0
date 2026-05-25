@@ -50,6 +50,7 @@ class CommonHeadComposerTest {
         assertThat(head.getCorrMsgId()).isEqualTo("00000000000000000000");
         assertThat(head.getWorkDate()).matches("\\d{8}");
         assertThat(head.getVersion()).isEqualTo("1.0");
-        assertThat(head.getApp()).isEqualTo("FEP");
+        // App = "HNDEMP" per PRD v1.3 §3.2.2 (fixed value, XSD App type minLength=4)
+        assertThat(head.getApp()).isEqualTo(CommonHeadComposer.APP_CODE);
     }
 }
