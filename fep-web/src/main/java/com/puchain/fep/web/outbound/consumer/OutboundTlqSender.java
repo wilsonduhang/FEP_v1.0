@@ -16,14 +16,16 @@ import org.springframework.stereotype.Component;
  *
  * <p>职责：</p>
  * <ul>
- *   <li>调 {@link BodyMsgIdGenerator} 生成 20 字符 body msgId（持久化到 outbound_message_queue.msg_id）</li>
+ *   <li>接收已由 {@link OutboundCfxEnvelopeBuilder} 生成的 20 字符 body msgId（持久化到
+ *       outbound_message_queue.msg_id；与 envelope HEAD/MsgId 统一，形成 envelope HEAD/MsgId
+ *       == TLQ 属性 msgId == entity.msg_id 三者一致的幂等关联链）</li>
  *   <li>构造 {@link TlqMessageAttributes#forBatch(String)}（持久化、不过期）的 {@link TlqMessage}，通道 {@link TlqChannel#BATCH_SEND}</li>
  *   <li>调用 {@link TlqProducer#send(TlqMessage)} 并把 {@link SendResult} 折叠为 ≤64 字符的摘要 {@code tlqSendResult}</li>
  * </ul>
  *
  * <p>{@code srcNode/desNode} 不通过 {@link TlqMessage} 入参传递 — 由 fep-transport
  * 内部 {@code QueueNameResolver} 按 channel + 配置解析队列名（HNDEMP 中心节点代码见 {@link com.puchain.fep.common.util.FepConstants#HNDEMP_NODE_CODE}）。
- * 因此 {@link #send(String)} 入参仅 {@code signedXml} 一个；msgNo 已嵌入 envelope head。</p>
+ * 因此 {@link #send(String, String)} 入参为 {@code signedXml} + {@code msgId}；msgNo 已嵌入 envelope head。</p>
  *
  * <p>追溯: PRD v1.3 §3.1 + §3.1.3 / FR-MSG-OUTBOUND-SEND</p>
  *
@@ -38,31 +40,32 @@ public class OutboundTlqSender {
 
     private final TlqProducer producer;
 
-    private final BodyMsgIdGenerator msgIdGenerator;
-
     /**
      * 构造发送适配器。
      *
-     * @param producer       TLQ Producer（fep-transport），不能为 null
-     * @param msgIdGenerator body msgId 生成器，不能为 null
-     * @throws NullPointerException 当任一依赖为 null
+     * @param producer TLQ Producer（fep-transport），不能为 null
+     * @throws NullPointerException 当依赖为 null
      */
-    public OutboundTlqSender(final TlqProducer producer, final BodyMsgIdGenerator msgIdGenerator) {
+    public OutboundTlqSender(final TlqProducer producer) {
         this.producer = Objects.requireNonNull(producer, "producer must not be null");
-        this.msgIdGenerator = Objects.requireNonNull(msgIdGenerator, "msgIdGenerator must not be null");
     }
 
     /**
      * 把已加签 CFX envelope 通过 TLQ BATCH_SEND 通道发送给中心节点。
      *
+     * <p>msgId 由 {@link OutboundCfxEnvelopeBuilder#build} 在 envelope 装配时生成并透传至此，
+     * 实现 envelope HEAD/MsgId == TLQ 属性 msgId == entity.msg_id 三者一致的幂等关联链。</p>
+     *
      * @param signedXml 已嵌入 SM2 签名注释的完整 CFX envelope（UTF-8）；不能为 null
-     * @return outcome：是否成功 / 本地 body msgId（持久化用）/ ≤64 字符的 broker 摘要
-     * @throws NullPointerException 当 {@code signedXml} 为 null
+     * @param msgId     由 runner 透传自 {@link OutboundCfxEnvelopeBuilder.EnvelopeBuildResult#msgId()}
+     *                  的 20 位全数字报文标识号（持久化到 entity.msg_id + TLQ 属性）；不能为 null
+     * @return outcome：是否成功 / body msgId（持久化用）/ ≤64 字符的 broker 摘要
+     * @throws NullPointerException 当 {@code signedXml} 或 {@code msgId} 为 null
      */
-    public OutboundSendOutcome send(final String signedXml) {
+    public OutboundSendOutcome send(final String signedXml, final String msgId) {
         Objects.requireNonNull(signedXml, "signedXml must not be null");
+        Objects.requireNonNull(msgId, "msgId must not be null");
 
-        final String msgId = msgIdGenerator.generate();
         final TlqMessageAttributes attrs = TlqMessageAttributes.forBatch(msgId);
         final TlqMessage message = new TlqMessage(signedXml, attrs, TlqChannel.BATCH_SEND);
 

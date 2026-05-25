@@ -47,14 +47,15 @@ class OutboundQueueRunnerImplTest {
     void run_whenSendSucceeds_shouldDelegateToStatusWriterRecordSent() {
         final OutboundMessageQueueEntity entity = sampleEntity("Q1");
         when(repository.findById("Q1")).thenReturn(Optional.of(entity));
-        when(envelopeBuilder.build(eq(entity), any(OutboundHeadFields.class))).thenReturn("<env/>");
+        when(envelopeBuilder.build(eq(entity), any(OutboundHeadFields.class)))
+                .thenReturn(new OutboundCfxEnvelopeBuilder.EnvelopeBuildResult("<env/>", "20260525060000000001"));
         when(signAdapter.embedSignatureAsComment("<env/>")).thenReturn("<env signed/>");
-        when(tlqSender.send("<env signed/>"))
-                .thenReturn(new OutboundSendOutcome(true, "MSG-OK", "TLQ-OK"));
+        when(tlqSender.send("<env signed/>", "20260525060000000001"))
+                .thenReturn(new OutboundSendOutcome(true, "20260525060000000001", "TLQ-OK"));
 
         runner.run("Q1");
 
-        verify(statusWriter).recordSent(eq("Q1"), eq("MSG-OK"), eq("TLQ-OK"), any());
+        verify(statusWriter).recordSent(eq("Q1"), eq("20260525060000000001"), eq("TLQ-OK"), any());
         verify(statusWriter, never()).recordFailure(any(), any());
         verify(metrics).recordSent(any(Long.class));
     }
@@ -63,9 +64,10 @@ class OutboundQueueRunnerImplTest {
     void run_whenSendReturnsFailure_shouldDelegateToStatusWriterRecordFailure() {
         final OutboundMessageQueueEntity entity = sampleEntity("Q2");
         when(repository.findById("Q2")).thenReturn(Optional.of(entity));
-        when(envelopeBuilder.build(any(), any())).thenReturn("<env/>");
+        when(envelopeBuilder.build(any(), any()))
+                .thenReturn(new OutboundCfxEnvelopeBuilder.EnvelopeBuildResult("<env/>", "20260525060000000002"));
         when(signAdapter.embedSignatureAsComment(any())).thenReturn("<env signed/>");
-        when(tlqSender.send(any()))
+        when(tlqSender.send(any(), any()))
                 .thenReturn(new OutboundSendOutcome(false, null, "TLQ-FAIL"));
 
         runner.run("Q2");

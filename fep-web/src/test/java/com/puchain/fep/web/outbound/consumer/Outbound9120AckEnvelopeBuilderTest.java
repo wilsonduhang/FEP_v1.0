@@ -112,7 +112,7 @@ class Outbound9120AckEnvelopeBuilderTest {
                 .doesNotThrowAnyException();
 
         // 断言 2: envelope 结构含关键元素（装配段产物完整性）
-        final String envelope = builder.build(entity, headFields);
+        final String envelope = builder.build(entity, headFields).envelope();
         assertThat(envelope)
                 .as("9120 ack envelope 必含 BatchHead9120（dispatcher.describeFor headElementName）")
                 .contains("<BatchHead9120");

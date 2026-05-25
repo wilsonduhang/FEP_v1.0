@@ -111,9 +111,9 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
         final long t0 = System.nanoTime();
         try {
             final OutboundHeadFields headFields = OutboundHeadXmlParser.parse(entity.getMessageHeadXml());
-            final String envelope = envelopeBuilder.build(entity, headFields);
-            final String signedXml = signAdapter.embedSignatureAsComment(envelope);
-            final OutboundSendOutcome outcome = tlqSender.send(signedXml);
+            final OutboundCfxEnvelopeBuilder.EnvelopeBuildResult built = envelopeBuilder.build(entity, headFields);
+            final String signedXml = signAdapter.embedSignatureAsComment(built.envelope());
+            final OutboundSendOutcome outcome = tlqSender.send(signedXml, built.msgId());
 
             if (outcome.success()) {
                 final Instant now = Instant.now();

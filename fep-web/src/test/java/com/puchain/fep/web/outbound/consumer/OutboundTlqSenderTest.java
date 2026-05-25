@@ -19,7 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  *
  * <p>覆盖：</p>
  * <ul>
- *   <li>成功路径：outcome.success=true，msgId 与 generator 一致，tlqSendResult 形如 {@code ok:<broker>}</li>
+ *   <li>成功路径：outcome.success=true，msgId 与传入字面量一致，tlqSendResult 形如 {@code ok:<broker>}</li>
  *   <li>失败路径：outcome.success=false，tlqSendResult 以 {@code fail:} 开头且整体 ≤64 char</li>
  *   <li>边界：超长 error message 被精确截断到 64 char</li>
  * </ul>
@@ -33,19 +33,15 @@ class OutboundTlqSenderTest {
     @Mock
     private TlqProducer producer;
 
-    @Mock
-    private BodyMsgIdGenerator msgIdGen;
-
     @InjectMocks
     private OutboundTlqSender sender;
 
     @Test
     void send_success_should_return_msgId_and_truncated_send_result() {
-        String msgId = "20260504103000000001";
-        when(msgIdGen.generate()).thenReturn(msgId);
+        final String msgId = "20260504103000000001";
         when(producer.send(any(TlqMessage.class))).thenReturn(SendResult.ok("BROKER_MSG_ID_X"));
 
-        OutboundSendOutcome outcome = sender.send("<CFX/>");
+        final OutboundSendOutcome outcome = sender.send("<CFX/>", msgId);
 
         assertThat(outcome.success()).isTrue();
         assertThat(outcome.msgId()).isEqualTo(msgId);
@@ -54,12 +50,11 @@ class OutboundTlqSenderTest {
 
     @Test
     void send_failure_should_return_failure_outcome_with_error_truncated_64() {
-        String msgId = "20260504103000000002";
-        when(msgIdGen.generate()).thenReturn(msgId);
+        final String msgId = "20260504103000000002";
         when(producer.send(any(TlqMessage.class))).thenReturn(
             SendResult.fail(msgId, "connection refused: tcp://1.2.3.4:20002 broker unreachable for 30s"));
 
-        OutboundSendOutcome outcome = sender.send("<CFX/>");
+        final OutboundSendOutcome outcome = sender.send("<CFX/>", msgId);
 
         assertThat(outcome.success()).isFalse();
         assertThat(outcome.msgId()).isEqualTo(msgId);
@@ -69,13 +64,12 @@ class OutboundTlqSenderTest {
 
     @Test
     void send_failure_with_very_long_error_should_be_truncated_to_exactly_64_chars() {
-        String msgId = "20260504103000000003";
+        final String msgId = "20260504103000000003";
         // Construct an error that yields a "fail:" + error string > 64 chars
-        String longError = "x".repeat(200);
-        when(msgIdGen.generate()).thenReturn(msgId);
+        final String longError = "x".repeat(200);
         when(producer.send(any(TlqMessage.class))).thenReturn(SendResult.fail(msgId, longError));
 
-        OutboundSendOutcome outcome = sender.send("<CFX/>");
+        final OutboundSendOutcome outcome = sender.send("<CFX/>", msgId);
 
         assertThat(outcome.success()).isFalse();
         assertThat(outcome.tlqSendResult()).hasSize(64);

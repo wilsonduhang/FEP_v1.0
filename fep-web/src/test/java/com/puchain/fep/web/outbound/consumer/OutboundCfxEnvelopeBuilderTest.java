@@ -11,6 +11,9 @@ import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +63,9 @@ class OutboundCfxEnvelopeBuilderTest {
         composer = new CommonHeadComposer();
         xsdValidator = mock(XsdValidator.class);
         when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
-        builder = new OutboundCfxEnvelopeBuilder(dispatcher, registry, composer, xsdValidator);
+        final BodyMsgIdGenerator msgIdGenerator = new BodyMsgIdGenerator(
+                Clock.fixed(Instant.parse("2026-05-25T06:00:00Z"), ZoneOffset.UTC));
+        builder = new OutboundCfxEnvelopeBuilder(dispatcher, registry, composer, xsdValidator, msgIdGenerator);
     }
 
     @Test
@@ -69,11 +74,11 @@ class OutboundCfxEnvelopeBuilderTest {
         final OutboundHeadFields headFields = new OutboundHeadFields(
                 "BANK0010000001", "20260505", "00000002");
 
-        final String xml = builder.build(entity, headFields);
+        final OutboundCfxEnvelopeBuilder.EnvelopeBuildResult built = builder.build(entity, headFields);
 
-        assertThat(xml).contains("<BatchHead3101");
-        assertThat(xml).contains("<Result>");
-        assertThat(xml).contains("</CFX>");
+        assertThat(built.envelope()).contains("<BatchHead3101");
+        assertThat(built.envelope()).contains("<Result>");
+        assertThat(built.envelope()).contains("</CFX>");
         verify(xsdValidator).validate(eq(MessageType.MSG_3101), any(byte[].class));
     }
 
@@ -83,11 +88,11 @@ class OutboundCfxEnvelopeBuilderTest {
         final OutboundHeadFields headFields = new OutboundHeadFields(
                 "BANK0010000001", "20260505", "00000001");
 
-        final String xml = builder.build(entity, headFields);
+        final OutboundCfxEnvelopeBuilder.EnvelopeBuildResult built = builder.build(entity, headFields);
 
-        assertThat(xml).contains("<RealHead3009");
+        assertThat(built.envelope()).contains("<RealHead3009");
         // 3009 用 RequestBusinessHead 不含 Result 字段
-        assertThat(xml).doesNotContain("<Result>");
+        assertThat(built.envelope()).doesNotContain("<Result>");
         verify(xsdValidator).validate(eq(MessageType.MSG_3009), any(byte[].class));
     }
 

@@ -73,24 +73,28 @@ public class OutboundCfxEnvelopeBuilder {
     private final BodyClassRegistry bodyClassRegistry;
     private final CommonHeadComposer commonHeadComposer;
     private final XsdValidator xsdValidator;
+    private final BodyMsgIdGenerator msgIdGenerator;
 
     /**
-     * 构造 builder，4 依赖均不可 {@code null}。
+     * 构造 builder，5 依赖均不可 {@code null}。
      *
      * @param dispatcher        wire-shape 路由
      * @param bodyClassRegistry msgNo → Body class 注册表
      * @param commonHeadComposer CommonHead 装配器
      * @param xsdValidator      XSD 校验器
+     * @param msgIdGenerator    20 位全数字 MsgId 生成器（在 build 入口生成，透传至 CommonHeadComposer 和 Runner）
      */
     public OutboundCfxEnvelopeBuilder(
             final OutboundWireShapeDispatcher dispatcher,
             final BodyClassRegistry bodyClassRegistry,
             final CommonHeadComposer commonHeadComposer,
-            final XsdValidator xsdValidator) {
+            final XsdValidator xsdValidator,
+            final BodyMsgIdGenerator msgIdGenerator) {
         this.dispatcher = Objects.requireNonNull(dispatcher, "dispatcher");
         this.bodyClassRegistry = Objects.requireNonNull(bodyClassRegistry, "bodyClassRegistry");
         this.commonHeadComposer = Objects.requireNonNull(commonHeadComposer, "commonHeadComposer");
         this.xsdValidator = Objects.requireNonNull(xsdValidator, "xsdValidator");
+        this.msgIdGenerator = Objects.requireNonNull(msgIdGenerator, "msgIdGenerator");
     }
 
     /**
@@ -98,25 +102,27 @@ public class OutboundCfxEnvelopeBuilder {
      *
      * @param entity     消费侧 entity（提供 {@code messageType} + {@code messageBodyXml}），非 {@code null}
      * @param headFields 反序列化自 {@code entity.getMessageHeadXml()} 的 {@link OutboundHeadFields}，非 {@code null}
-     * @return 完整 CFX envelope XML 字符串（UTF-8 字符集承载，{@code <CFX>...</CFX>}）
+     * @return {@link EnvelopeBuildResult}：完整 CFX envelope XML + 其 HEAD/MsgId
+     *         （runner 透传 send，统一 TLQ 属性 + entity.msg_id）
      * @throws FepBusinessException 组装或校验失败（错误码见类 Javadoc 故障路径表）
      */
-    public String build(final OutboundMessageQueueEntity entity, final OutboundHeadFields headFields) {
+    public EnvelopeBuildResult build(final OutboundMessageQueueEntity entity, final OutboundHeadFields headFields) {
         Objects.requireNonNull(entity, "entity");
         Objects.requireNonNull(headFields, "headFields");
         final String msgNo = entity.getMessageType();
         try {
-            // I. 解析 msgNo
+            // I. 解析 msgNo + 生成本次 build 的 msgId（XSD MsgId type = Number + length 20）
             final MessageType type = MessageType.byMsgNo(msgNo)
                     .orElseThrow(() -> new FepBusinessException(
                             FepErrorCode.OUTBOUND_5101_ENVELOPE_BUILD_FAILURE,
                             "未注册 MessageType: " + msgNo));
+            final String msgId = msgIdGenerator.generate();
 
             // II. dispatch wire-shape
             final WireShapeDescriptor desc = dispatcher.describeFor(msgNo);
 
-            // III. 组装 CommonHead
-            final CommonHead commonHead = commonHeadComposer.compose(entity, headFields);
+            // III. 组装 CommonHead（msgId 透传，CorrMsgId 恒 20 位全零）
+            final CommonHead commonHead = commonHeadComposer.compose(entity, headFields, msgId);
 
             // IV. 解析 body class
             final Class<?> bodyClass = bodyClassRegistry.resolve(msgNo);
@@ -154,7 +160,7 @@ public class OutboundCfxEnvelopeBuilder {
                         "XSD 校验失败: " + String.join(";", result.errors()));
             }
 
-            return xml;
+            return new EnvelopeBuildResult(xml, msgId);
         } catch (FepBusinessException e) {
             throw e;
         } catch (Exception e) {
@@ -163,6 +169,9 @@ public class OutboundCfxEnvelopeBuilder {
                     "envelope 组装失败: msgNo=" + msgNo, e);
         }
     }
+
+    /** build 产物：完整 CFX envelope + 其 HEAD/MsgId（runner 透传 send，统一 TLQ 属性 + entity.msg_id）。 */
+    public record EnvelopeBuildResult(String envelope, String msgId) { }
 
     /**
      * 将 {@link OutboundHeadFields} 三字段灌注到 wire-shape head；3101 ResponseBusinessHead
