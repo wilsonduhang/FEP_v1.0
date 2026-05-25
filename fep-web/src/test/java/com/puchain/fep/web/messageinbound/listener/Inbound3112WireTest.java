@@ -73,8 +73,14 @@ class Inbound3112WireTest {
     /** 14-digit msgId datetime prefix (yyyyMMddHHmmss) — fixed for IT determinism. */
     private static final String MSGID_DATETIME_PREFIX = "20260524120000";
 
-    /** Monotonically increasing 6-digit seq for CFX MsgId 末 6 位. */
-    private static final AtomicLong SEQ = new AtomicLong(100000L);
+    /**
+     * Monotonically increasing 6-digit seq for CFX MsgId 末 6 位 — last 8 chars = transitionNo.
+     * Seed 200000L → transitionNo 00200000: disjoint from Inbound2101WireTest (00100000) and
+     * InboundAck9120BatchWireTest (00300000+) so co-resident wire ITs in the same Surefire fork
+     * never collide on SyncMessageProcessorService's "duplicate transitionNo" dedup guard
+     * (which rerunFailingTestsCount=1 can only recover once).
+     */
+    private static final AtomicLong SEQ = new AtomicLong(200000L);
 
     /** SHA-256 truncation length matching listener IDEMPOTENCY_KEY_HEX_LEN. */
     private static final int IDEMPOTENCY_KEY_HEX_LEN = 32;

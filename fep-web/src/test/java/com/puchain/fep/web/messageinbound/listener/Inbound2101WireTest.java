@@ -94,7 +94,7 @@ class Inbound2101WireTest {
     /** Monotonically increasing 6-digit seq for CFX MsgId 末 6 位 — last 8 chars = transitionNo. */
     private static final AtomicLong SEQ = new AtomicLong(100000L);
 
-    /** SHA-256 truncation length matching {@code BizMessage2101InboundListener.IDEMPOTENCY_KEY_HEX_LEN}. */
+    /** SHA-256 truncation length matching {@link AckIdempotencyKeys#derive} output (32 hex chars). */
     private static final int IDEMPOTENCY_KEY_HEX_LEN = 32;
 
     @Autowired
