@@ -11,8 +11,10 @@ import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
 import com.puchain.fep.processor.body.batch.DataTransfer2101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
+import com.puchain.fep.processor.body.supplychain.ArchiveReturnInfo3103;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
+import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3113;
 import com.puchain.fep.processor.body.supplychain.InvoCheckQuery3007;
 import com.puchain.fep.processor.body.supplychain.InvoCheckReturn3008;
 import com.puchain.fep.processor.body.supplychain.PlatPay3115;
@@ -24,6 +26,8 @@ import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
 import com.puchain.fep.processor.body.supplychain.PzInfoReturn3004;
 import com.puchain.fep.processor.body.supplychain.QyAccQuery3005;
 import com.puchain.fep.processor.body.supplychain.QyAccQueryReturn3006;
+import com.puchain.fep.processor.body.supplychain.RzApplyInfo3105;
+import com.puchain.fep.processor.body.supplychain.RzReturnInfo3009;
 import com.puchain.fep.processor.event.InboundMessageProcessedEvent;
 import com.puchain.fep.processor.pipeline.SyncMessageProcessorService;
 import com.puchain.fep.processor.state.MessageProcessRecord;
@@ -60,7 +64,7 @@ import java.util.Objects;
  * </ol>
  *
  * <p>Body POJO 解析使用本地 JAXBContext 缓存（per body class），按 P3 Phase 2
- * + P4-MSG-B-inbound + P4-MSG-A-inbound + P4-MSG-D + P4-Plan-C + P4-MSG-J 范围登记 17 种业务 body。
+ * + P4-MSG-B-inbound + P4-MSG-A-inbound + P4-MSG-D + P4-Plan-C + P4-MSG-J + P4-MSG-K 范围登记 21 种业务 body。
  * 其他 messageType 不解析 body，事件 {@code body} 字段留 null（listener 自行降级处理）。</p>
  *
  * <p>Inbound BODY_TYPE_REGISTRY 注册项（按 msgNo 升序，{@link Map#ofEntries} 不限 entry 数）:</p>
@@ -77,9 +81,13 @@ import java.util.Objects;
  *   <li>3006 → {@link QyAccQueryReturn3006}（对公客户状态查询回执，P4-Plan-C T1）</li>
  *   <li>3007 → {@link InvoCheckQuery3007}（发票核验请求，P4-MSG-B-inbound v1）</li>
  *   <li>3008 → {@link InvoCheckReturn3008}（发票核验回执，P4-MSG-B-inbound v1）</li>
+ *   <li>3009 → {@link RzReturnInfo3009}（融资结果登记，供应链被动接收 模式3，P4-MSG-K）</li>
+ *   <li>3103 → {@link ArchiveReturnInfo3103}（融资企业建档回执，供应链被动接收 模式2，P4-MSG-K）</li>
+ *   <li>3105 → {@link RzApplyInfo3105}（融资申请，银行被动接收 模式2，P4-MSG-K）</li>
  *   <li>3107 → {@link PzCheckQuery3107}（凭证核验查询，P3 Phase 2 wiring）</li>
  *   <li>3108 → {@link PzCheckQueryReturn3108}（凭证核验查询回执，P3 Phase 2 wiring）</li>
  *   <li>3112 → {@link HxqyCreditAmt3112}（核心企业授信查询请求，银行被动接收 模式5，P4-MSG-J）</li>
+ *   <li>3113 → {@link HxqyCreditAmt3113}（核心企业授信查询回执，供应链被动接收 模式5，P4-MSG-K）</li>
  *   <li>3115 → {@link PlatPay3115}（资金清算指令，P3 Phase 2 wiring）</li>
  *   <li>3116 → {@link BankCheckDay3116}（资金日对账，P3 Phase 2 wiring）</li>
  * </ul>
@@ -95,11 +103,13 @@ public class InboundMessageDispatcher {
     private static final Logger LOG = LoggerFactory.getLogger(InboundMessageDispatcher.class);
 
     /**
-     * P3 Phase 2 + P4-MSG-B-inbound + P4-MSG-A-inbound + P4-MSG-D + P4-Plan-C 注册的 body POJO 反查表：
+     * P3 Phase 2 + P4-MSG-B-inbound + P4-MSG-A-inbound + P4-MSG-D + P4-Plan-C
+     * + P4-MSG-J + P4-MSG-K 注册的 body POJO 反查表：
      * messageType.msgNo → body class。仅用于 dispatcher 解析 body POJO；listener
      * 各自再做安全 cast。顺序：按 msgNo 升序（2101 P4-MSG-D T4 → 2102/2103/2104 P4-MSG-A-inbound →
-     * 3001/3002/3003/3004/3005/3006 P4-Plan-C T1 → 3007/3008 P4-MSG-B-inbound → 3107/3108/3115/3116 P3 Phase 2
-     * + P4-MSG-J 3112）。
+     * 3001/3002/3003/3004/3005/3006 P4-Plan-C T1 → 3007/3008 P4-MSG-B-inbound →
+     * 3009/3103/3105 P4-MSG-K → 3107/3108 P3 Phase 2 → 3112 P4-MSG-J → 3113 P4-MSG-K
+     * → 3115/3116 P3 Phase 2）。
      *
      * <p>详细注册项见包级 Javadoc {@code <ul>} 列表（与本字段 1:1 对齐）。</p>
      *
@@ -121,9 +131,13 @@ public class InboundMessageDispatcher {
             Map.entry(MessageType.MSG_3006.msgNo(), QyAccQueryReturn3006.class),
             Map.entry(MessageType.MSG_3007.msgNo(), InvoCheckQuery3007.class),
             Map.entry(MessageType.MSG_3008.msgNo(), InvoCheckReturn3008.class),
+            Map.entry(MessageType.MSG_3009.msgNo(), RzReturnInfo3009.class),
+            Map.entry(MessageType.MSG_3103.msgNo(), ArchiveReturnInfo3103.class),
+            Map.entry(MessageType.MSG_3105.msgNo(), RzApplyInfo3105.class),
             Map.entry(MessageType.MSG_3107.msgNo(), PzCheckQuery3107.class),
             Map.entry(MessageType.MSG_3108.msgNo(), PzCheckQueryReturn3108.class),
             Map.entry(MessageType.MSG_3112.msgNo(), HxqyCreditAmt3112.class),
+            Map.entry(MessageType.MSG_3113.msgNo(), HxqyCreditAmt3113.class),
             Map.entry(MessageType.MSG_3115.msgNo(), PlatPay3115.class),
             Map.entry(MessageType.MSG_3116.msgNo(), BankCheckDay3116.class));
 
@@ -304,10 +318,10 @@ public class InboundMessageDispatcher {
      * 暴露给单测验证 body 反查表内容（避免单测做反射读取私有静态字段）。
      * 返回值是显式 {@link Map#copyOf} 副本，确保调用方无法改写内部静态注册表。
      *
-     * @return 17 种 body POJO 注册表的不可变副本
+     * @return 21 种 body POJO 注册表的不可变副本
      *         （2101 P4-MSG-D T4 + 2102/2103/2104 P4-MSG-A-inbound + 3001/3002/3003/3004/3005/3006
      *         P4-Plan-C T1 + 3007/3008 P4-MSG-B-inbound + 3107/3108/3115/3116 P3 Phase 2
-     *         + 3112 P4-MSG-J）。
+     *         + 3112 P4-MSG-J + 3009/3103/3105/3113 P4-MSG-K）。
      *         底层使用 {@link Map#ofEntries} 不限 entry 数（P4-MSG-D T0 refactor）。
      */
     public static Map<String, Class<?>> bodyTypeRegistry() {
