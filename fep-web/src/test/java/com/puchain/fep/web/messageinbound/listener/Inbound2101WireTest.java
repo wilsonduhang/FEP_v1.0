@@ -53,7 +53,7 @@ import static org.mockito.Mockito.when;
  * SerialNo（其 {@code getSerialNo()} 返回 {@code null}），dispatcher 的
  * {@code extractSerialNo} fallback 到 {@code transitionNo}（CFX HEAD &lt;MsgId&gt;
  * 末 8 位）。因此 IT 用 {@code transitionNo} 既做 record 查找键，也做 9120 ack
- * idempotencyKey 派生输入（{@code SHA-256("ACK-9120-" + transitionNo)} 前 32 位 hex）。
+ * idempotencyKey 派生输入（{@code SHA-256("ACK-9120-2101-" + transitionNo)} 前 32 位 hex）。
  * 测试输入端的 TLQ {@code msgId} 与持久层 serialNo 不同 — 此为
  * {@link com.puchain.fep.web.messageinbound.service.InboundMessageDispatcher#extractSerialNo}
  * 设计契约（Plan v2.1 §SerialNo 派生说明 + DataTransfer2101.getSerialNo 实测）。</p>
@@ -141,7 +141,7 @@ class Inbound2101WireTest {
                     .isPresent();
             assertThat(outboundRepo.findByIdempotencyKey(ackIdempotencyKey))
                     .as("9120 ack envelope must be enqueued with "
-                            + "idempotencyKey=SHA-256(ACK-9120-%s)[0:32]=%s (AC-3)",
+                            + "idempotencyKey=SHA-256(ACK-9120-2101-%s)[0:32]=%s (AC-3)",
                             serialNo, ackIdempotencyKey)
                     .isPresent();
         });
@@ -206,8 +206,8 @@ class Inbound2101WireTest {
 
     /**
      * Deterministic 32-hex idempotency key — must match
-     * {@code BizMessage2101InboundListener.deriveAckIdempotencyKey} verbatim
-     * (prefix {@code ACK-9120-}, UTF-8 bytes, SHA-256, first 32 hex chars).
+     * {@code AckIdempotencyKeys.derive("2101", serialNo)} verbatim
+     * (prefix {@code ACK-9120-2101-}, UTF-8 bytes, SHA-256, first 32 hex chars).
      *
      * @param serialNo the 2101 business serial number passed to the listener
      * @return 32-char hex string matching the outbound envelope's idempotencyKey
@@ -216,7 +216,7 @@ class Inbound2101WireTest {
     private static String deriveAckIdempotencyKey(final String serialNo) throws Exception {
         final MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
         final byte[] hash = sha256.digest(
-                ("ACK-9120-" + serialNo).getBytes(StandardCharsets.UTF_8));
+                ("ACK-9120-2101-" + serialNo).getBytes(StandardCharsets.UTF_8));
         return HexFormat.of().formatHex(hash).substring(0, IDEMPOTENCY_KEY_HEX_LEN);
     }
 }
