@@ -1,6 +1,7 @@
 package com.puchain.fep.processor.body.supplychain;
 
 import com.puchain.fep.converter.model.CfxBody;
+import com.puchain.fep.converter.model.SerialNoBearing;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import com.puchain.fep.processor.body.common.FileInfo;
 import com.puchain.fep.processor.body.common.PzInfo;
@@ -52,6 +53,8 @@ import java.util.List;
  * / {@link ContractInfo3101} 等高字段数 POJO 风格保持一致（避免触发 checkstyle FileLength
  * 上限）。</p>
  *
+ * <p><b>SerialNoBearing</b>：实现该接口使本类可注册进 inbound dispatcher BODY_TYPE_REGISTRY（PRD §4.6 受理侧，P4-MSG-K）。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
@@ -69,7 +72,7 @@ import java.util.List;
         "invoInfo", "contractInfo", "attachFileInfo",
         "extInfo"
 })
-public class RzApplyInfo3105 extends CfxBody {
+public class RzApplyInfo3105 extends CfxBody implements SerialNoBearing {
 
     @XmlElement(name = "SerialNo", required = true)
     private String serialNo;

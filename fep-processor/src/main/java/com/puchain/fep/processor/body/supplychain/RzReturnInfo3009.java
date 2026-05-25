@@ -1,6 +1,7 @@
 package com.puchain.fep.processor.body.supplychain;
 
 import com.puchain.fep.converter.model.CfxBody;
+import com.puchain.fep.converter.model.SerialNoBearing;
 import com.puchain.fep.processor.body.common.ExtInfo;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -22,6 +23,8 @@ import jakarta.xml.bind.annotation.XmlType;
  * <p>所有文本字段 Java 类型统一为 {@link String}；XSD 长度/格式约束由
  * {@link com.puchain.fep.processor.validation.XsdValidator} 强制，不在 POJO 内重复校验。</p>
  *
+ * <p><b>SerialNoBearing</b>：实现该接口使本类可注册进 inbound dispatcher BODY_TYPE_REGISTRY（PRD §4.6 受理侧，P4-MSG-K）。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
@@ -33,7 +36,7 @@ import jakarta.xml.bind.annotation.XmlType;
         "rzPhaseCode", "rzPhaseInfo",
         "rzAmtInfo", "dbInfo", "extInfo"
 })
-public class RzReturnInfo3009 extends CfxBody {
+public class RzReturnInfo3009 extends CfxBody implements SerialNoBearing {
 
     @XmlElement(name = "SerialNo", required = true)
     private String serialNo;
