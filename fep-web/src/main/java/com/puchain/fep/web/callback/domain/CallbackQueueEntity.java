@@ -1,5 +1,6 @@
 package com.puchain.fep.web.callback.domain;
 
+import com.puchain.fep.common.util.TextUtil;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -113,7 +114,7 @@ public class CallbackQueueEntity {
      */
     public void markFailed(final String error) {
         this.status = CallbackQueueStatus.FAILED;
-        this.lastError = truncateError(error);
+        this.lastError = TextUtil.truncate(error, MAX_ERROR_LENGTH);
         this.updateTime = LocalDateTime.now();
     }
 
@@ -137,7 +138,7 @@ public class CallbackQueueEntity {
         this.status = CallbackQueueStatus.RETRY;
         this.retryCount = newRetryCount;
         this.nextRetryAt = nextRetry;
-        this.lastError = truncateError(error);
+        this.lastError = TextUtil.truncate(error, MAX_ERROR_LENGTH);
         this.updateTime = LocalDateTime.now();
     }
 
@@ -151,13 +152,8 @@ public class CallbackQueueEntity {
         this.status = CallbackQueueStatus.DEAD_LETTER;
         this.retryCount = newRetryCount;
         this.nextRetryAt = null;
-        this.lastError = truncateError(error);
+        this.lastError = TextUtil.truncate(error, MAX_ERROR_LENGTH);
         this.updateTime = LocalDateTime.now();
-    }
-
-    private static String truncateError(final String error) {
-        return error == null ? null
-                : error.substring(0, Math.min(error.length(), MAX_ERROR_LENGTH));
     }
 
     /**
