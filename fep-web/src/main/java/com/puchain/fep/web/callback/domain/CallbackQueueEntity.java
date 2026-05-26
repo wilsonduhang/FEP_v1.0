@@ -49,6 +49,15 @@ public class CallbackQueueEntity {
     @Column(name = "last_error", length = 500)
     private String lastError;
 
+    @Column(name = "retry_count", nullable = false)
+    private int retryCount;
+
+    @Column(name = "next_retry_at")
+    private LocalDateTime nextRetryAt;
+
+    @Column(name = "claimed_at")
+    private LocalDateTime claimedAt;
+
     @Column(name = "create_time", nullable = false, updatable = false)
     private LocalDateTime createTime;
 
@@ -104,13 +113,73 @@ public class CallbackQueueEntity {
      */
     public void markFailed(final String error) {
         this.status = CallbackQueueStatus.FAILED;
-        this.lastError = error == null ? null
-                : error.substring(0, Math.min(error.length(), MAX_ERROR_LENGTH));
+        this.lastError = truncateError(error);
         this.updateTime = LocalDateTime.now();
     }
 
-    // Phase 2: add markSending() + @Version optimistic-lock for atomic
-    // PENDING->SENDING claim (multi-instance double-send guard); P1 单实例假设.
+    /**
+     * 声领标记：PENDING/RETRY → SENDING + 记 claimedAt（防双发，claimBatch 不再重选）。
+     */
+    public void markSending() {
+        this.status = CallbackQueueStatus.SENDING;
+        this.claimedAt = LocalDateTime.now();
+        this.updateTime = this.claimedAt;
+    }
+
+    /**
+     * 标记待重试：累加后的 retryCount + 下次调度时间。
+     *
+     * @param newRetryCount 累加后的重试计数
+     * @param nextRetry     下次可声领时间（now + 指数退避）
+     * @param error         错误摘要，截断至 ≤500
+     */
+    public void markRetry(final int newRetryCount, final LocalDateTime nextRetry, final String error) {
+        this.status = CallbackQueueStatus.RETRY;
+        this.retryCount = newRetryCount;
+        this.nextRetryAt = nextRetry;
+        this.lastError = truncateError(error);
+        this.updateTime = LocalDateTime.now();
+    }
+
+    /**
+     * 标记死信：重试耗尽或 4xx 不可重试，清空 nextRetryAt 停止调度。
+     *
+     * @param newRetryCount 累加后的重试计数
+     * @param error         错误摘要，截断至 ≤500
+     */
+    public void markDeadLetter(final int newRetryCount, final String error) {
+        this.status = CallbackQueueStatus.DEAD_LETTER;
+        this.retryCount = newRetryCount;
+        this.nextRetryAt = null;
+        this.lastError = truncateError(error);
+        this.updateTime = LocalDateTime.now();
+    }
+
+    private static String truncateError(final String error) {
+        return error == null ? null
+                : error.substring(0, Math.min(error.length(), MAX_ERROR_LENGTH));
+    }
+
+    /**
+     * @return 重试计数
+     */
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    /**
+     * @return 下次可声领时间（RETRY 时非空，DEAD_LETTER/终态为 null）
+     */
+    public LocalDateTime getNextRetryAt() {
+        return nextRetryAt;
+    }
+
+    /**
+     * @return 声领时间（markSending 后非空）
+     */
+    public LocalDateTime getClaimedAt() {
+        return claimedAt;
+    }
 
     /**
      * @return 主键
