@@ -5,6 +5,7 @@ import com.puchain.fep.web.callback.config.CallbackQueueProperties;
 import com.puchain.fep.web.callback.domain.CallbackQueueEntity;
 import com.puchain.fep.web.callback.http.CallbackHttpClient;
 import com.puchain.fep.web.callback.http.CallbackResult;
+import com.puchain.fep.web.callback.metrics.CallbackMetrics;
 import com.puchain.fep.web.callback.repository.CallbackQueueRepository;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import com.puchain.fep.web.submission.outputinterface.repository.SubOutputInterfaceRepository;
@@ -51,26 +52,30 @@ public class CallbackQueueRunner {
     private final SubOutputInterfaceRepository subOutputInterfaceRepository;
     private final CallbackQueueProperties props;
     private final CallbackRetryHandler retryHandler;
+    private final CallbackMetrics metrics;
 
     /**
-     * Constructor 注入五项依赖（避免字段注入，便于测试）。
+     * Constructor 注入六项依赖（避免字段注入，便于测试）。
      *
      * @param callbackQueueRepository      回调队列 Repository，非空
      * @param httpClient                   HTTP 推送客户端，非空
      * @param subOutputInterfaceRepository 输出接口 Repository，非空
      * @param props                        队列配置（batchSize 等），非空
      * @param retryHandler                 投递失败处理器，非空
+     * @param metrics                      推送 telemetry 门面，非空
      */
     public CallbackQueueRunner(final CallbackQueueRepository callbackQueueRepository,
                                final CallbackHttpClient httpClient,
                                final SubOutputInterfaceRepository subOutputInterfaceRepository,
                                final CallbackQueueProperties props,
-                               final CallbackRetryHandler retryHandler) {
+                               final CallbackRetryHandler retryHandler,
+                               final CallbackMetrics metrics) {
         this.callbackQueueRepository = callbackQueueRepository;
         this.httpClient = httpClient;
         this.subOutputInterfaceRepository = subOutputInterfaceRepository;
         this.props = props;
         this.retryHandler = retryHandler;
+        this.metrics = metrics;
     }
 
     /**
@@ -132,6 +137,7 @@ public class CallbackQueueRunner {
         }
 
         final SubOutputInterface target = opt.get();
+        final long start = System.nanoTime();
         final CallbackResult result = httpClient.post(target, entity.getPayloadJson());
 
         if (result.success()) {
@@ -143,8 +149,15 @@ public class CallbackQueueRunner {
             LOG.info("callback sent queueId={} interfaceId={} status={}",
                     LogSanitizer.sanitize(entity.getQueueId()),
                     LogSanitizer.sanitize(interfaceId), result.statusCode());
+            metrics.recordSent(System.nanoTime() - start);
         } else {
-            retryHandler.handleDeliveryFailure(entity, target.getRetryCount(), result);
+            final CallbackFailureOutcome outcome =
+                    retryHandler.handleDeliveryFailure(entity, target.getRetryCount(), result);
+            if (outcome == CallbackFailureOutcome.RETRY) {
+                metrics.recordRetry();
+            } else {
+                metrics.recordDeadLetter();
+            }
             LOG.warn("callback delivery failed queueId={} interfaceId={} error={}",
                     LogSanitizer.sanitize(entity.getQueueId()),
                     LogSanitizer.sanitize(interfaceId), LogSanitizer.sanitize(result.error()));

@@ -5,6 +5,7 @@ import com.puchain.fep.web.callback.domain.CallbackQueueEntity;
 import com.puchain.fep.web.callback.domain.CallbackQueueStatus;
 import com.puchain.fep.web.callback.http.CallbackHttpClient;
 import com.puchain.fep.web.callback.http.CallbackResult;
+import com.puchain.fep.web.callback.metrics.CallbackMetrics;
 import com.puchain.fep.web.callback.repository.CallbackQueueRepository;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.inOrder;
@@ -54,6 +56,9 @@ class CallbackQueueRunnerTest {
     @Mock
     private CallbackRetryHandler retryHandler;
 
+    @Mock
+    private CallbackMetrics metrics;
+
     private CallbackQueueProperties props;
     private CallbackQueueRunner runner;
 
@@ -62,7 +67,7 @@ class CallbackQueueRunnerTest {
         props = new CallbackQueueProperties(50, 5000L,
                 new CallbackQueueProperties.Retry(30000L, 1800000L, 3));
         runner = new CallbackQueueRunner(callbackQueueRepository, httpClient,
-                subOutputInterfaceRepository, props, retryHandler);
+                subOutputInterfaceRepository, props, retryHandler, metrics);
     }
 
     private CallbackQueueEntity pendingEntity(final String queueId, final String interfaceId) {
@@ -111,6 +116,11 @@ class CallbackQueueRunnerTest {
         verify(subOutputInterfaceRepository).save(ifaceCaptor.capture());
         assertThat(ifaceCaptor.getValue().getCallCount()).isEqualTo(1L);
         assertThat(ifaceCaptor.getValue().getLastCallTime()).isNotNull();
+
+        // Verify metrics: recordSent called with a non-negative nanos value
+        verify(metrics).recordSent(anyLong());
+        verify(metrics, never()).recordRetry();
+        verify(metrics, never()).recordDeadLetter();
     }
 
     @Test
@@ -123,6 +133,8 @@ class CallbackQueueRunnerTest {
         when(callbackQueueRepository.findById(entity.getQueueId())).thenReturn(Optional.of(entity));
         when(subOutputInterfaceRepository.findById("if-002")).thenReturn(Optional.of(iface));
         when(httpClient.post(any(), any())).thenReturn(result);
+        when(retryHandler.handleDeliveryFailure(any(), anyInt(), any()))
+                .thenReturn(CallbackFailureOutcome.RETRY);
 
         runner.poll();
 
@@ -130,6 +142,30 @@ class CallbackQueueRunnerTest {
         verify(retryHandler).handleDeliveryFailure(eq(entity), eq(iface.getRetryCount()), eq(result));
         // subOutputInterfaceRepository.save should NOT be called (no callCount writeback on failure)
         verify(subOutputInterfaceRepository, never()).save(any(SubOutputInterface.class));
+        // Metrics: RETRY outcome → recordRetry, no recordSent/recordDeadLetter
+        verify(metrics).recordRetry();
+        verify(metrics, never()).recordSent(anyLong());
+        verify(metrics, never()).recordDeadLetter();
+    }
+
+    @Test
+    void poll_pendingEntity_httpFailure_deadLetterOutcome_shouldRecordDeadLetter() {
+        final CallbackQueueEntity entity = pendingEntity("q004", "if-004");
+        final SubOutputInterface iface = makeInterface("if-004");
+        final CallbackResult result = new CallbackResult(false, 400, "bad request");
+
+        when(callbackQueueRepository.claimBatch(anyInt())).thenReturn(List.of(entity.getQueueId()));
+        when(callbackQueueRepository.findById(entity.getQueueId())).thenReturn(Optional.of(entity));
+        when(subOutputInterfaceRepository.findById("if-004")).thenReturn(Optional.of(iface));
+        when(httpClient.post(any(), any())).thenReturn(result);
+        when(retryHandler.handleDeliveryFailure(any(), anyInt(), any()))
+                .thenReturn(CallbackFailureOutcome.DEAD_LETTER);
+
+        runner.poll();
+
+        verify(metrics).recordDeadLetter();
+        verify(metrics, never()).recordSent(anyLong());
+        verify(metrics, never()).recordRetry();
     }
 
     @Test
@@ -153,6 +189,10 @@ class CallbackQueueRunnerTest {
         assertThat(last.getLastError()).containsIgnoringCase("interface not found");
         // httpClient must NOT be called
         verify(httpClient, never()).post(any(), any());
+        // Config error: no delivery telemetry recorded
+        verify(metrics, never()).recordSent(anyLong());
+        verify(metrics, never()).recordRetry();
+        verify(metrics, never()).recordDeadLetter();
     }
 
     @Test
