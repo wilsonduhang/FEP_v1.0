@@ -1,5 +1,6 @@
 package com.puchain.fep.web.callback.runner;
 
+import com.puchain.fep.web.callback.config.CallbackQueueProperties;
 import com.puchain.fep.web.callback.domain.CallbackQueueEntity;
 import com.puchain.fep.web.callback.domain.CallbackQueueStatus;
 import com.puchain.fep.web.callback.http.CallbackHttpClient;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -21,15 +23,18 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * {@link CallbackQueueRunner} 单元测试 — Mockito 驱动，验证 5 项验收标准：
- * DONE writeback、FAILED 记录、interface not found、批量 ≤50、per-row 隔离。
+ * {@link CallbackQueueRunner} 单元测试 — Mockito 驱动，验证 Phase 2 行为：
+ * claimBatch 声领、markSending 先于 http、DONE writeback、retryHandler 委托、
+ * interface not found FAILED、per-row 异常隔离。
  *
  * @author FEP Team
  * @since 1.0.0
@@ -46,11 +51,18 @@ class CallbackQueueRunnerTest {
     @Mock
     private SubOutputInterfaceRepository subOutputInterfaceRepository;
 
+    @Mock
+    private CallbackRetryHandler retryHandler;
+
+    private CallbackQueueProperties props;
     private CallbackQueueRunner runner;
 
     @BeforeEach
     void setUp() {
-        runner = new CallbackQueueRunner(callbackQueueRepository, httpClient, subOutputInterfaceRepository);
+        props = new CallbackQueueProperties(50, 5000L,
+                new CallbackQueueProperties.Retry(30000L, 1800000L, 3));
+        runner = new CallbackQueueRunner(callbackQueueRepository, httpClient,
+                subOutputInterfaceRepository, props, retryHandler);
     }
 
     private CallbackQueueEntity pendingEntity(final String queueId, final String interfaceId) {
@@ -69,44 +81,53 @@ class CallbackQueueRunnerTest {
     }
 
     @Test
-    void poll_pendingEntity_httpSuccess_shouldMarkDoneAndIncrementCallCount() {
+    void poll_pendingEntity_httpSuccess_shouldMarkSendingThenDoneAndIncrementCallCount() {
         final CallbackQueueEntity entity = pendingEntity("q001", "if-001");
         final SubOutputInterface iface = makeInterface("if-001");
 
-        when(callbackQueueRepository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING))
-                .thenReturn(List.of(entity));
+        when(callbackQueueRepository.claimBatch(anyInt())).thenReturn(List.of(entity.getQueueId()));
+        when(callbackQueueRepository.findById(entity.getQueueId())).thenReturn(Optional.of(entity));
         when(subOutputInterfaceRepository.findById("if-001")).thenReturn(Optional.of(iface));
         when(httpClient.post(any(), any())).thenReturn(new CallbackResult(true, 200, null));
 
         runner.poll();
 
-        // Verify entity saved with DONE status
-        final ArgumentCaptor<CallbackQueueEntity> entityCaptor = ArgumentCaptor.forClass(CallbackQueueEntity.class);
+        // markSending save must happen BEFORE httpClient.post (InOrder)
+        // save(SENDING) → post → save(DONE): verify first save is before post
+        final InOrder order = inOrder(callbackQueueRepository, httpClient);
+        order.verify(callbackQueueRepository).save(any(CallbackQueueEntity.class)); // markSending save
+        order.verify(httpClient).post(any(), any());
+
+        // Verify entity saved with DONE status (second save, after post)
+        final ArgumentCaptor<CallbackQueueEntity> entityCaptor =
+                ArgumentCaptor.forClass(CallbackQueueEntity.class);
         verify(callbackQueueRepository, atLeastOnce()).save(entityCaptor.capture());
-        assertThat(entityCaptor.getValue().getStatus()).isEqualTo(CallbackQueueStatus.DONE);
+        assertThat(entityCaptor.getAllValues())
+                .anyMatch(e -> CallbackQueueStatus.DONE.equals(e.getStatus()));
 
         // Verify interface callCount incremented and saved
-        final ArgumentCaptor<SubOutputInterface> ifaceCaptor = ArgumentCaptor.forClass(SubOutputInterface.class);
+        final ArgumentCaptor<SubOutputInterface> ifaceCaptor =
+                ArgumentCaptor.forClass(SubOutputInterface.class);
         verify(subOutputInterfaceRepository).save(ifaceCaptor.capture());
         assertThat(ifaceCaptor.getValue().getCallCount()).isEqualTo(1L);
         assertThat(ifaceCaptor.getValue().getLastCallTime()).isNotNull();
     }
 
     @Test
-    void poll_pendingEntity_httpNon2xx_shouldMarkFailed() {
+    void poll_pendingEntity_httpNon2xx_shouldDelegateToRetryHandler() {
         final CallbackQueueEntity entity = pendingEntity("q002", "if-002");
         final SubOutputInterface iface = makeInterface("if-002");
+        final CallbackResult result = new CallbackResult(false, 503, "http 503");
 
-        when(callbackQueueRepository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING))
-                .thenReturn(List.of(entity));
+        when(callbackQueueRepository.claimBatch(anyInt())).thenReturn(List.of(entity.getQueueId()));
+        when(callbackQueueRepository.findById(entity.getQueueId())).thenReturn(Optional.of(entity));
         when(subOutputInterfaceRepository.findById("if-002")).thenReturn(Optional.of(iface));
-        when(httpClient.post(any(), any())).thenReturn(new CallbackResult(false, 503, "http 503"));
+        when(httpClient.post(any(), any())).thenReturn(result);
 
         runner.poll();
 
-        final ArgumentCaptor<CallbackQueueEntity> entityCaptor = ArgumentCaptor.forClass(CallbackQueueEntity.class);
-        verify(callbackQueueRepository, atLeastOnce()).save(entityCaptor.capture());
-        assertThat(entityCaptor.getValue().getStatus()).isEqualTo(CallbackQueueStatus.FAILED);
+        // Delivery failure must be delegated to retryHandler (not directly markFailed)
+        verify(retryHandler).handleDeliveryFailure(eq(entity), eq(iface.getRetryCount()), eq(result));
         // subOutputInterfaceRepository.save should NOT be called (no callCount writeback on failure)
         verify(subOutputInterfaceRepository, never()).save(any(SubOutputInterface.class));
     }
@@ -115,17 +136,21 @@ class CallbackQueueRunnerTest {
     void poll_interfaceNotFound_shouldMarkFailedWithNotFoundMessage_andNotThrow() {
         final CallbackQueueEntity entity = pendingEntity("q003", "if-missing");
 
-        when(callbackQueueRepository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING))
-                .thenReturn(List.of(entity));
+        when(callbackQueueRepository.claimBatch(anyInt())).thenReturn(List.of(entity.getQueueId()));
+        when(callbackQueueRepository.findById(entity.getQueueId())).thenReturn(Optional.of(entity));
         when(subOutputInterfaceRepository.findById("if-missing")).thenReturn(Optional.empty());
 
         // Must NOT throw
         assertThatCode(() -> runner.poll()).doesNotThrowAnyException();
 
-        final ArgumentCaptor<CallbackQueueEntity> entityCaptor = ArgumentCaptor.forClass(CallbackQueueEntity.class);
+        final ArgumentCaptor<CallbackQueueEntity> entityCaptor =
+                ArgumentCaptor.forClass(CallbackQueueEntity.class);
         verify(callbackQueueRepository, atLeastOnce()).save(entityCaptor.capture());
-        assertThat(entityCaptor.getValue().getStatus()).isEqualTo(CallbackQueueStatus.FAILED);
-        assertThat(entityCaptor.getValue().getLastError()).containsIgnoringCase("interface not found");
+        // Last save must be FAILED (after markFailed)
+        final CallbackQueueEntity last = entityCaptor.getAllValues()
+                .get(entityCaptor.getAllValues().size() - 1);
+        assertThat(last.getStatus()).isEqualTo(CallbackQueueStatus.FAILED);
+        assertThat(last.getLastError()).containsIgnoringCase("interface not found");
         // httpClient must NOT be called
         verify(httpClient, never()).post(any(), any());
     }
@@ -136,9 +161,11 @@ class CallbackQueueRunnerTest {
         final CallbackQueueEntity good = pendingEntity("q-good", "if-good");
         final SubOutputInterface goodIface = makeInterface("if-good");
 
-        when(callbackQueueRepository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING))
-                .thenReturn(List.of(bad, good));
-        // first row: interface lookup blows up with a RuntimeException
+        when(callbackQueueRepository.claimBatch(anyInt()))
+                .thenReturn(List.of(bad.getQueueId(), good.getQueueId()));
+        // first row: findById returns entity but interface lookup blows up
+        when(callbackQueueRepository.findById(bad.getQueueId())).thenReturn(Optional.of(bad));
+        when(callbackQueueRepository.findById(good.getQueueId())).thenReturn(Optional.of(good));
         when(subOutputInterfaceRepository.findById("if-bad"))
                 .thenThrow(new RuntimeException("boom"));
         // second row: healthy path
@@ -157,13 +184,26 @@ class CallbackQueueRunnerTest {
     }
 
     @Test
-    void poll_callsRepositoryWithPendingStatus() {
-        when(callbackQueueRepository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING))
-                .thenReturn(List.of());
+    void poll_callsClaimBatchWithConfiguredBatchSize() {
+        when(callbackQueueRepository.claimBatch(anyInt())).thenReturn(List.of());
 
         runner.poll();
 
-        // Criterion 4: findTop50 guarantees batch ≤50; verify correct status arg passed
-        verify(callbackQueueRepository).findTop50ByStatusOrderByCreateTimeAsc(eq(CallbackQueueStatus.PENDING));
+        // claimBatch must be called with the configured batchSize
+        verify(callbackQueueRepository).claimBatch(props.batchSize());
+    }
+
+    @Test
+    void poll_entityNotFoundById_shouldSkipSilently() {
+        // Simulate race: another instance already processed this id
+        when(callbackQueueRepository.claimBatch(anyInt())).thenReturn(List.of("ghost-id"));
+        when(callbackQueueRepository.findById("ghost-id")).thenReturn(Optional.empty());
+
+        assertThatCode(() -> runner.poll()).doesNotThrowAnyException();
+
+        // No http call, no interface lookup, no save (nothing to process)
+        verify(httpClient, never()).post(any(), any());
+        verify(subOutputInterfaceRepository, never()).findById(any());
+        verify(callbackQueueRepository, never()).save(any());
     }
 }

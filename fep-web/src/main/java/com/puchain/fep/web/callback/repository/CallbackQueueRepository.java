@@ -2,6 +2,8 @@ package com.puchain.fep.web.callback.repository;
 
 import com.puchain.fep.web.callback.domain.CallbackQueueEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,10 +24,22 @@ public interface CallbackQueueRepository extends JpaRepository<CallbackQueueEnti
     boolean existsByIdempotencyKey(String idempotencyKey);
 
     /**
-     * 取最早的 ≤50 条指定状态条目（runner 批轮询）。
+     * 批量声领 ≤ {@code batchSize} 条待发送/到期重试的 queue_id（多实例安全）。
      *
-     * @param status {@code CallbackQueueStatus} 常量值
-     * @return 按 createTime 升序，≤50 条
+     * <p>过滤 {@code status='PENDING'} 或（{@code status='RETRY'} 且
+     * {@code next_retry_at<=CURRENT_TIMESTAMP}）；{@code FOR UPDATE SKIP LOCKED}
+     * 让多实例并行声领互不阻塞（镜像 {@code OutboundQueueRepository.claimBatch}）。</p>
+     *
+     * @param batchSize 单轮声领上限（{@code CallbackQueueProperties.batchSize}）
+     * @return 已持锁的 queue_id 列表，可能为空
      */
-    List<CallbackQueueEntity> findTop50ByStatusOrderByCreateTimeAsc(String status);
+    @Query(value = """
+        SELECT queue_id FROM callback_queue
+        WHERE status = 'PENDING'
+           OR (status = 'RETRY' AND next_retry_at <= CURRENT_TIMESTAMP)
+        ORDER BY next_retry_at NULLS FIRST, queue_id ASC
+        LIMIT :batchSize
+        FOR UPDATE SKIP LOCKED
+        """, nativeQuery = true)
+    List<String> claimBatch(@Param("batchSize") int batchSize);
 }
