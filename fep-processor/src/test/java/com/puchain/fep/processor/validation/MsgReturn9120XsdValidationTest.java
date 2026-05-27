@@ -31,9 +31,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class MsgReturn9120XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "9120",
-            "91200000000000000001", "30000000000000000001", "20260519", """
+    /**
+     * 9120-specific CFX envelope wrapper — 固定 SrcNode=A1000143000104 (HNDEMP) →
+     * DesNode=A1000142000001 (FEP), App=HNDEMP, MsgNo=9120, WorkDate=20260519.
+     *
+     * @param msgIdSeq 20-digit MsgId (caller 提供, e.g. {@code "91200000000000000001"})
+     * @param corrMsgIdSeq 20-digit CorrMsgId
+     * @param msgInnerXml MSG 内层 XML（{@code BatchHead9120} + {@code MsgReturn9120}）
+     * @return 完整 CFX envelope
+     */
+    private static String wrap(String msgIdSeq, String corrMsgIdSeq, String msgInnerXml) {
+        return wrapCfxTemplate(
+                "A1000143000104", "A1000142000001", "HNDEMP", "9120",
+                msgIdSeq, corrMsgIdSeq, "20260519",
+                msgInnerXml);
+    }
+
+    private static final String VALID_FULL_FIELDS_XML = wrap(
+            "91200000000000000001", "30000000000000000001", """
                 <BatchHead9120>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
@@ -46,9 +61,8 @@ class MsgReturn9120XsdValidationTest extends AbstractXsdValidationTest {
                   <Debug>processed at node A1000143000104</Debug>
                 </MsgReturn9120>""");
 
-    private static final String INVALID_MISSING_ORI_MSG_NO_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "9120",
-            "91200000000000000002", "30000000000000000002", "20260519", """
+    private static final String INVALID_MISSING_ORI_MSG_NO_XML = wrap(
+            "91200000000000000002", "30000000000000000002", """
                 <BatchHead9120>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>

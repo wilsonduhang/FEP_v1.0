@@ -45,9 +45,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3113",
-            "31130000000000000001", "31120000000000000001", "20260519", """
+    /**
+     * 3113-specific CFX envelope wrapper — 固定 SrcNode=A1000143000104 (HNDEMP) →
+     * DesNode=A1000142000001 (FEP), App=HNDEMP, MsgNo=3113, WorkDate=20260519.
+     *
+     * @param msgIdSeq 20-digit MsgId (caller 提供, e.g. {@code "31130000000000000001"})
+     * @param corrMsgIdSeq 20-digit CorrMsgId
+     * @param msgInnerXml MSG 内层 XML（{@code BatchHead3113} + optional {@code hxqyCreditAmt3113}）
+     * @return 完整 CFX envelope
+     */
+    private static String wrap(String msgIdSeq, String corrMsgIdSeq, String msgInnerXml) {
+        return wrapCfxTemplate(
+                "A1000143000104", "A1000142000001", "HNDEMP", "3113",
+                msgIdSeq, corrMsgIdSeq, "20260519",
+                msgInnerXml);
+    }
+
+    private static final String VALID_FULL_FIELDS_XML = wrap(
+            "31130000000000000001", "31120000000000000001", """
                 <BatchHead3113>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
@@ -79,9 +94,8 @@ class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
                   </ExtInfo>
                 </hxqyCreditAmt3113>""");
 
-    private static final String VALID_BODY_OMITTED_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3113",
-            "31130000000000000002", "31120000000000000002", "20260519", """
+    private static final String VALID_BODY_OMITTED_XML = wrap(
+            "31130000000000000002", "31120000000000000002", """
                 <BatchHead3113>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
@@ -90,9 +104,8 @@ class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
                   <AddWord>无授信信息</AddWord>
                 </BatchHead3113>""");
 
-    private static final String INVALID_MISSING_SERIAL_NO_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3113",
-            "31130000000000000003", "31120000000000000003", "20260519", """
+    private static final String INVALID_MISSING_SERIAL_NO_XML = wrap(
+            "31130000000000000003", "31120000000000000003", """
                 <BatchHead3113>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
