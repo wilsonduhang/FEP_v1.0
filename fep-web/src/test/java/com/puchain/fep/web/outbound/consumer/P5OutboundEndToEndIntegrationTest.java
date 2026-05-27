@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import com.puchain.fep.processor.validation.ValidationResult;
-import com.puchain.fep.processor.validation.XsdValidator;
 import com.puchain.fep.transport.api.SendResult;
 import com.puchain.fep.transport.api.TlqProducer;
 import java.time.Instant;
@@ -41,9 +39,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * 加载 {@code MockSignService} / {@code MockKeyService}（{@code @Profile("dev")}），E2E 才能完成
  * 加签步骤；改成 test profile 会让 SignAdapter 找不到 SignService bean，启动失败。</p>
  *
- * <p><b>@MockBean XsdValidator</b>：fixture 中 body POJO 是 self-closing 空标签
- * （{@code <RzReturnInfo3009/>} 等），不满足真实 XSD 必填字段；mock validator 返回 ok 让
- * envelope build 通过，专注验证 runner 流水接通。真 XSD 校验已在 fep-processor XsdValidatorTest 覆盖。</p>
+ * <p><b>真 XsdValidator（R-NEW-1 起）</b>：自 2026-05-26 R-NEW-1 起，本测试不再
+ * {@code @MockBean XsdValidator}。SQL fixture
+ * {@code /sql/p5/outbound_queue_8_messages.sql} 8 行 body XML 按各
+ * {@code <msgNo>.xsd} 实测约束填（SerialNo length=30 pad、所有 minOccurs=1
+ * element 填齐、DataType.xsd facet 满足）。envelope HEAD 由 builder
+ * BodyMsgIdGenerator 注入 / BatchHead<code> 由 dispatcher 按 msgNo 装配。
+ * {@code @MockBean TlqProducer} 保留（控制 SENT/DEAD_LETTER 路径）。</p>
  *
  * <p><b>@MockBean TlqProducer</b>：默认 mock provider 不向真 TLQ broker 发送；本测试显式 mock
  * 控制 SendResult 返回值，区分 SENT 路径（ok）与 DEAD_LETTER 路径（fail）。</p>
@@ -84,19 +86,11 @@ class P5OutboundEndToEndIntegrationTest {
     private TlqProducer mockProducer;
 
     /**
-     * MockBean — fixture body POJO 是 self-closing 空标签，不满足 XSD 必填字段；mock validator
-     * 返回 ok 专注验证 runner 流水接通。真 XSD 校验由 fep-processor XsdValidatorTest 覆盖。
-     */
-    @MockBean
-    private XsdValidator xsdValidator;
-
-    /**
      * AC1 + AC4(冒烟) + AC5 + AC6: 8 报文全部走完 build → sign → send → SENT，
      * msg_id 匹配 14 datetime + 6 seq numeric (PRD §3.1.3)，sent_at 在最近 30s 时间窗内。
      */
     @Test
     void e2e_8_messages_should_all_reach_SENT_with_valid_msg_id() {
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
         when(mockProducer.send(any())).thenReturn(SendResult.ok("BROKER_X"));
 
         consumer.poll();
@@ -125,7 +119,6 @@ class P5OutboundEndToEndIntegrationTest {
      */
     @Test
     void e2e_5_consecutive_failures_should_reach_DEAD_LETTER() {
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
         when(mockProducer.send(any())).thenReturn(SendResult.fail("MSG_FAIL_X", "boom"));
 
         for (int i = 0; i < 6; i++) {
@@ -153,7 +146,6 @@ class P5OutboundEndToEndIntegrationTest {
      */
     @Test
     void e2e_metrics_endpoint_should_expose_outbound_send_total() {
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
         when(mockProducer.send(any())).thenReturn(SendResult.ok("BROKER_X"));
 
         consumer.poll();
@@ -179,7 +171,6 @@ class P5OutboundEndToEndIntegrationTest {
     @Test
     @DisplayName("B1: TLQ send 调用时无活跃 Tx — 验证 IO 不阻塞 DB 连接")
     void send_shouldExecuteOutsideTransaction() {
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
         final AtomicBoolean txActiveDuringSend = new AtomicBoolean(true);
         when(mockProducer.send(any())).thenAnswer(invocation -> {
             txActiveDuringSend.set(TransactionSynchronizationManager.isActualTransactionActive());
