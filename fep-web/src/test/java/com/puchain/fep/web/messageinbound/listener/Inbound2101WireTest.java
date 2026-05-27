@@ -1,8 +1,6 @@
 package com.puchain.fep.web.messageinbound.listener;
 
 import com.puchain.fep.common.util.FepConstants;
-import com.puchain.fep.processor.validation.ValidationResult;
-import com.puchain.fep.processor.validation.XsdValidator;
 import com.puchain.fep.transport.api.TlqProducer;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
@@ -16,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
@@ -28,8 +25,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * 2101 inbound listener wire IT — TLQ producer→broker→TlqInboundListener
@@ -63,11 +58,15 @@ import static org.mockito.Mockito.when;
  * 会让 SignAdapter 找不到 SignService bean 启动失败（参考
  * {@code P5OutboundEndToEndIntegrationTest} 设计）。</p>
  *
- * <p><b>@MockBean XsdValidator</b>：CFX 报文 fixture 用最小 DataTransfer2101 body
- * 满足 XSD minLength/maxLength（红线 {@code feedback_fixture_data_must_satisfy_xsd_constraints}），
- * 但 BatchHead2101 envelope 校验不在本 IT 范围；mock validator 返回 ok 让
- * SyncMessageProcessorService.processInbound 流水线直达 COMPLETED。真 XSD 校验已在
- * fep-processor XsdValidatorTest + P4-MSG-D T1 单测覆盖。</p>
+ * <p><b>真 XsdValidator（R-NEW-1 起）</b>：自 2026-05-26 R-NEW-1 起，本测试不再
+ * {@code @MockBean XsdValidator}，由 Spring context 注入真实 bean。fixture
+ * {@code buildCfxEnvelope2101} 字段值满足 2101.xsd + Base.xsd 完整约束：
+ * HEAD CorrMsgId 20 零（MsgId length=20）、BatchHead2101 RequestHead 含
+ * SendOrgCode/EntrustDate/TransitionNo、DataTransfer2101 含 MainClass Token
+ * "FINANCE"（2-16）、SecondClass Token "LOAN001"（2-16 / 无下划线）、Period/Type
+ * Number 1-2、FileDate Date yyyyMMdd。与 sibling
+ * {@link Inbound3112WireTest}/{@link InboundAck9120BatchWireTest} 同 cache key
+ * （R-NEW-1 统一 cache）。</p>
  *
  * <p>Real broker E2E（TongTech profile）走独立 ADR sub-Plan
  * {@code docs/plans/2026-05-11-2101-e2e-real-broker-blocked-adr.md}（🚫 BLOCKED）。</p>
@@ -106,19 +105,9 @@ class Inbound2101WireTest {
     @Autowired
     private OutboundMessageQueueRepository outboundRepo;
 
-    /**
-     * fixture 使用最小 DataTransfer2101 body — XSD MainClass/SecondClass minLength=2
-     * 已满足，但 BatchHead2101 envelope 不在 fixture 内；mock validator 让 processor
-     * pipeline 通过，专注验证 wire 路径。
-     */
-    @MockBean
-    private XsdValidator xsdValidator;
-
     @Test
     @DisplayName("AC-1..4: 发 2101 CFX → record 持久化 + 9120 ack 入队 (mock TLQ provider)")
     void inbound2101_shouldPersistAndEnqueue9120() throws Exception {
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
-
         final String msgIdSeq = String.format("%06d", SEQ.getAndIncrement());
         final String cfxMsgId = MSGID_DATETIME_PREFIX + msgIdSeq;
         // transitionNo = last 8 chars of CFX HEAD <MsgId> per TlqInboundListener.deriveTransitionNo
@@ -189,13 +178,18 @@ class Inbound2101WireTest {
                 + "<App>HNDEMP</App>"
                 + "<MsgNo>2101</MsgNo>"
                 + "<MsgId>" + cfxMsgId + "</MsgId>"
-                + "<CorrMsgId></CorrMsgId>"
+                + "<CorrMsgId>00000000000000000000</CorrMsgId>"
                 + "<WorkDate>20260511</WorkDate>"
                 + "</HEAD>"
                 + "<MSG>"
+                + "<BatchHead2101>"
+                + "<SendOrgCode>BANK0010000001</SendOrgCode>"
+                + "<EntrustDate>20260511</EntrustDate>"
+                + "<TransitionNo>" + cfxMsgId.substring(cfxMsgId.length() - 8) + "</TransitionNo>"
+                + "</BatchHead2101>"
                 + "<DataTransfer2101>"
                 + "<MainClass>FINANCE</MainClass>"
-                + "<SecondClass>LOAN_REPORT</SecondClass>"
+                + "<SecondClass>LOAN001</SecondClass>"
                 + "<Period>1</Period>"
                 + "<Type>1</Type>"
                 + "<FileDate>20260511</FileDate>"
