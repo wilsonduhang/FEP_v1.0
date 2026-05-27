@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *   <li>2001/2004/3002/3004/3006/3008 → RealHead{msgNo} + ResponseBusinessHead + true（P4-MSG-E/F/G）</li>
  *   <li>3020 → RealHead3020 + RequestResponseHead + false（P4-MSG-G T3 第 5 类目，孤儿成员）</li>
  *   <li>3115 → BatchHead3115 + RequestResponseHead + false（P4-MSG-H 第 6 类目）</li>
- *   <li>3101/3103/3108/3113/9120 → BatchHead{msgNo} + ResponseBusinessHead + true（3103/3108 P4-MSG-G T3 扩展；3113/9120 P4-MSG-I 扩展）</li>
+ *   <li>2102/2103/2104/3101/3103/3108/3113/9120 → BatchHead{msgNo} + ResponseBusinessHead + true（P4-MSG-A T1 扩展 2102/2103/2104；3103/3108 P4-MSG-G T3 扩展；3113/9120 P4-MSG-I 扩展）</li>
  *   <li>1101/1102/1103/1104/3102/3105/3107/3109/3112/3116/3120/9100 → BatchHead{msgNo} + RequestBusinessHead + false（3120 P4-MSG-H 扩展，9100 P4-MSG-I 扩展）</li>
  *   <li>非法 msgNo（null / 非数字 / 长度错 / 不在 37 集合）→ OUTBOUND_5108_MSGNO_INVALID</li>
  * </ul>
