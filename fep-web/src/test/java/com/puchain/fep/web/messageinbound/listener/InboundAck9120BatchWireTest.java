@@ -1,8 +1,6 @@
 package com.puchain.fep.web.messageinbound.listener;
 
 import com.puchain.fep.common.util.FepConstants;
-import com.puchain.fep.processor.validation.ValidationResult;
-import com.puchain.fep.processor.validation.XsdValidator;
 import com.puchain.fep.transport.api.TlqProducer;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
@@ -18,7 +16,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
@@ -28,8 +25,6 @@ import java.util.stream.Stream;
 import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * P4-MSG-K inbound 受理批处理 wire IT — 4 报文（3105/3009/3103/3113）参数化端到端
@@ -59,12 +54,12 @@ import static org.mockito.Mockito.when;
  * 仅能救一次），故跨 IT seed 必须 disjoint。各参数另用唯一 body serialNo（{@code SNK<code><seq>}）
  * 防跨参数 record/ack bleed。</p>
  *
- * <p><b>profile / @MockBean</b>：默认 dev profile（MockSignService/MockKeyService 让
- * 9120 outbound 加签通过）+ @MockBean XsdValidator 返回 ok（CFX fixture 专注 wire 路径，
- * 真 XSD 校验已在 fep-processor + dispatch 单测覆盖）。与 {@link Inbound3112WireTest}
- * 同款配置。fixture 仅含 HEAD + root element + SerialNo + 必填标量字段；嵌套列表/复杂
- * 元素（如 3113 CreditInfo / 3105 InvoInfo）省略，JAXB 留 null（XsdValidator mocked
- * 故结构完整即可 unmarshal）。3103 根元素 PascalCase {@code ArchiveReturnInfo3103}。</p>
+ * <p><b>真 XsdValidator（R-NEW-1 起）/ profile</b>：自 2026-05-26 R-NEW-1 起，本测试
+ * 不再 {@code @MockBean XsdValidator}，fixture 4 body + wrapCfx 满足各 XSD 完整约束
+ * （HEAD CorrMsgId 20 零、BatchHead&lt;code&gt;/RealHead3009 RequestHead/ResponseHead 按
+ * code 路由、body SerialNo length=30 pad）。默认 dev profile
+ * （MockSignService/MockKeyService 让 9120 outbound 加签通过）。与 sibling
+ * {@link Inbound2101WireTest}/{@link Inbound3112WireTest} 同 cache key（R-NEW-1 统一）。</p>
  *
  * <p>PRD 依据: v1.3 §4.6:833/836/837/842（受理闭环）+ §4.7 muzhou Q1。</p>
  *
@@ -103,9 +98,6 @@ class InboundAck9120BatchWireTest {
     @Autowired
     private OutboundMessageQueueRepository outboundRepo;
 
-    @MockBean
-    private XsdValidator xsdValidator;
-
     /**
      * 4 报文测试矩阵: msgNo + CFX body 模板（{SERIAL} 占位）。HEAD 由 {@code wrapCfx}
      * 统一封装（含 {MSGID} 占位）。
@@ -122,12 +114,12 @@ class InboundAck9120BatchWireTest {
     @MethodSource("inboundMatrix")
     @DisplayName("AC-1..3: 发 <code> CFX → record 持久化 + 9120 ack 入队 (mock TLQ provider)")
     void inboundReport_shouldPersistAndEnqueue9120(final String code, final String bodyTemplate) {
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
-
         final String msgIdSeq = String.format("%06d", SEQ.getAndIncrement());
         final String cfxMsgId = MSGID_DATETIME_PREFIX + msgIdSeq;
         // Each report carries a real business SerialNo → dispatcher surfaces it (not transitionNo).
-        final String serialNo = "SNK" + code + msgIdSeq;
+        // SerialNo per DataType.xsd length=30 → pad raw "SNK<code><seq>" (13 chars) to 30.
+        final String rawSerial = "SNK" + code + msgIdSeq;
+        final String serialNo = pad30(rawSerial);
 
         final String cfxXml = wrapCfx(code, cfxMsgId, bodyTemplate.replace("{SERIAL}", serialNo));
         final TlqMessageAttributes attrs = TlqMessageAttributes.forBatch(cfxMsgId);
@@ -163,7 +155,8 @@ class InboundAck9120BatchWireTest {
     }
 
     /**
-     * Wrap a body fragment in a full CFX envelope with HEAD routing via {@code <MsgNo>}.
+     * Wrap a body fragment in a full CFX envelope with HEAD routing via {@code <MsgNo>}
+     * and code-routed BatchHead/RealHead between HEAD and body.
      *
      * @param code     4-digit message code placed in CFX HEAD MsgNo
      * @param cfxMsgId 20-digit CFX HEAD MsgId; last 8 chars become dispatcher transitionNo
@@ -171,6 +164,7 @@ class InboundAck9120BatchWireTest {
      * @return CFX envelope XML
      */
     private static String wrapCfx(final String code, final String cfxMsgId, final String body) {
+        final String batchHead = buildBatchHeadByCode(code, cfxMsgId);
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 + "<CFX>"
                 + "<HEAD>"
@@ -180,13 +174,51 @@ class InboundAck9120BatchWireTest {
                 + "<App>HNDEMP</App>"
                 + "<MsgNo>" + code + "</MsgNo>"
                 + "<MsgId>" + cfxMsgId + "</MsgId>"
-                + "<CorrMsgId></CorrMsgId>"
+                + "<CorrMsgId>00000000000000000000</CorrMsgId>"
                 + "<WorkDate>20260526</WorkDate>"
                 + "</HEAD>"
                 + "<MSG>"
+                + batchHead
                 + body
                 + "</MSG>"
                 + "</CFX>";
+    }
+
+    /**
+     * Build the BatchHead/RealHead element per the message code:
+     * <ul>
+     *   <li>3105: BatchHead3105 (RequestHead)</li>
+     *   <li>3009: RealHead3009 (RequestHead, special naming)</li>
+     *   <li>3103/3113: BatchHead&lt;code&gt; (ResponseHead, includes Result)</li>
+     * </ul>
+     *
+     * @param code      4-digit message code
+     * @param cfxMsgId  20-digit CFX HEAD MsgId; last 8 chars = TransitionNo
+     * @return BatchHead/RealHead XML fragment
+     */
+    private static String buildBatchHeadByCode(final String code, final String cfxMsgId) {
+        final String transitionNo = cfxMsgId.substring(cfxMsgId.length() - 8);
+        final String elementName = switch (code) {
+            case "3009" -> "RealHead3009";
+            default -> "BatchHead" + code;
+        };
+        final boolean responseHead = "3103".equals(code) || "3113".equals(code);
+        final String resultElement = responseHead ? "<Result>00000</Result>" : "";
+        return "<" + elementName + ">"
+                + "<SendOrgCode>12345678901234</SendOrgCode>"
+                + "<EntrustDate>20260526</EntrustDate>"
+                + "<TransitionNo>" + transitionNo + "</TransitionNo>"
+                + resultElement
+                + "</" + elementName + ">";
+    }
+
+    /** Pad to 30 chars with '0' suffix to satisfy DataType.xsd SerialNo length=30. */
+    private static String pad30(final String raw) {
+        final int pad = 30 - raw.length();
+        if (pad <= 0) {
+            return raw.substring(0, 30);
+        }
+        return raw + "0".repeat(pad);
     }
 
     /** 3105 融资申请 body — root {@code rzApplyInfo3105}; required scalars only (no nested blocks). */
@@ -224,14 +256,14 @@ class InboundAck9120BatchWireTest {
                     + "<SerialNo>{SERIAL}</SerialNo>"
                     + "<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>"
                     + "<DesNodeCode>12345678901234</DesNodeCode>"
-                    + "<CreationRetCode>00000</CreationRetCode>"
+                    + "<CreationRetCode>01</CreationRetCode>"
                     + "<hxqyName>核心企业测试</hxqyName>"
                     + "<hxqyCode>91110000100000000X</hxqyCode>"
                     + "<rzqyName>融资企业测试</rzqyName>"
                     + "<rzqyCode>91110000200000000Y</rzqyCode>"
                     + "</ArchiveReturnInfo3103>";
 
-    /** 3113 核心企业授信查询回执 body — root {@code hxqyCreditAmt3113}; required scalars (no CreditInfo list). */
+    /** 3113 核心企业授信查询回执 body — root {@code hxqyCreditAmt3113}; required scalars + 1 CreditInfo. */
     private static final String BODY_3113_TEMPLATE =
             "<hxqyCreditAmt3113>"
                     + "<SerialNo>{SERIAL}</SerialNo>"
@@ -239,5 +271,10 @@ class InboundAck9120BatchWireTest {
                     + "<DesNodeCode>12345678901234</DesNodeCode>"
                     + "<QueryDate>20260526</QueryDate>"
                     + "<CreditInfoNum>1</CreditInfoNum>"
+                    + "<CreditInfo>"
+                    + "<hxqyName>核心企业测试</hxqyName>"
+                    + "<hxqyCode>91110000100000000X</hxqyCode>"
+                    + "<RetCode>00000</RetCode>"
+                    + "</CreditInfo>"
                     + "</hxqyCreditAmt3113>";
 }
