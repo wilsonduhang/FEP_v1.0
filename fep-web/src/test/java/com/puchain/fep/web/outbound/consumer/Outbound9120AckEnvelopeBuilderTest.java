@@ -2,18 +2,13 @@ package com.puchain.fep.web.outbound.consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
-import com.puchain.fep.processor.validation.ValidationResult;
-import com.puchain.fep.processor.validation.XsdValidator;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 
 /**
@@ -47,15 +42,14 @@ import org.springframework.test.context.TestPropertySource;
  *       <b>回归基准</b>。T1+T2 已 ship，本 IT 直接 PASS 证明装配段已通。</li>
  * </ol></p>
  *
- * <p><b>@MockBean {@link XsdValidator}</b>：CFX 报文 fixture 使用最小
- * {@code MsgReturn9120} body（含 {@code OriMsgNo=2101}，{@code Debug=mode-6-ack}），
- * head 字段（{@code SrcNode}/{@code SendOrgCode}/{@code EntrustDate}/{@code TransitionNo}）
- * 实测满足 {@code DataType.xsd} 约束（OrgCode length=14 / Date yyyyMMdd /
- * TransitionNo length=8），但 marshal 产物的 {@code MsgId} 等 CommonHead 占位字段
- * 不完全满足 9120.xsd 严格校验。XSD 校验路径由 fep-processor
- * {@code MsgReturn9120XsdValidationTest}（T3 落盘）专责覆盖，本 IT 聚焦装配段
- * 行为（与 sibling {@code Inbound2101WireTest} / {@code OutboundCfxEnvelopeBuilderTest}
- * 既定 mock XsdValidator 策略一致）。</p>
+ * <p><b>真 XsdValidator（R-NEW-1 起）</b>：自 2026-05-26 R-NEW-1 起，本测试不再
+ * {@code @MockBean XsdValidator}，由 Spring context 注入真实 bean。fixture
+ * {@code BODY_XML_9120_ACK} 字段值满足 9120.xsd MsgReturn9120 sequence：
+ * OriMsgNo MsgNo {@code length=4} numeric + Debug Text optional。envelope HEAD 由
+ * 5-25 P0 fix 的 {@code BodyMsgIdGenerator} 注入 20 数字 MsgId + {@code CommonHeadComposer}
+ * 注入 CorrMsgId 20 零 + App=HNDEMP；BatchHead9120 ResponseHead 含 Result="00000"
+ * placeholder（{@code OutboundCfxEnvelopeBuilder} 装配段）。与 sibling
+ * {@link OutboundEnvelopeXsdComplianceTest} 同 cache key（统一 ApplicationContext 复用）。</p>
  *
  * <p><b>命名沿用 sibling {@code Outbound1101WireTest} / {@code OutboundCommonForwardWireTest}
  * （{@code Test} 后缀以纳入 Surefire 默认 include {@code *Test.java}，
@@ -92,15 +86,9 @@ class Outbound9120AckEnvelopeBuilderTest {
     @Autowired
     private OutboundCfxEnvelopeBuilder builder;
 
-    @MockBean
-    private XsdValidator xsdValidator;
-
     @Test
     @DisplayName("build 9120 ack envelope — P0 闭合 2101 模式 6 ack 装配段缺口（registry+dispatcher 双查通过）")
     void build9120AckEnvelope_shouldSucceedAfterT1T2Registration() {
-        // mock XsdValidator 返回 ok — 装配段行为聚焦，XSD 严格校验由 fep-processor 单测覆盖
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
-
         final OutboundMessageQueueEntity entity = givenAck9120Entity();
         final OutboundHeadFields headFields = new OutboundHeadFields(
                 SEND_ORG_CODE, ENTRUST_DATE, TRANSITION_NO);
