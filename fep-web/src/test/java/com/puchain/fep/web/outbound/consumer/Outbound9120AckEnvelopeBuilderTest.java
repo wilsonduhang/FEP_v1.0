@@ -1,7 +1,6 @@
 package com.puchain.fep.web.outbound.consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
@@ -93,14 +92,18 @@ class Outbound9120AckEnvelopeBuilderTest {
         final OutboundHeadFields headFields = new OutboundHeadFields(
                 SEND_ORG_CODE, ENTRUST_DATE, TRANSITION_NO);
 
-        // 断言 1: build 不抛 FepBusinessException（registry/dispatcher 含 9120 后无 5107/5108）
-        assertThatCode(() -> builder.build(entity, headFields))
+        // 单次 build — 不抛即继续走 envelope 结构断言（throw → JUnit FAIL，等价
+        // assertThatCode().doesNotThrowAnyException() 语义。assertion message 通过
+        // method @DisplayName 显式说明回归基准角色）
+        final String envelope = builder.build(entity, headFields).envelope();
+
+        // 断言 1: envelope 必须存在（build 成功的 P0 闭合证明 — 不抛 5107/5108）
+        assertThat(envelope)
                 .as("build 9120 ack 应成功（T1+T2 注册后无 OUTBOUND_5107/5108）—— "
                         + "本 IT 在 T1+T2 之前会 FAIL，作为 2101 模式 6 ack 装配段缺口闭合的回归基准")
-                .doesNotThrowAnyException();
+                .isNotNull();
 
-        // 断言 2: envelope 结构含关键元素（装配段产物完整性）
-        final String envelope = builder.build(entity, headFields).envelope();
+        // 断言 2-7: envelope 结构含关键元素（装配段产物完整性，6 项保留 0 改动）
         assertThat(envelope)
                 .as("9120 ack envelope 必含 BatchHead9120（dispatcher.describeFor headElementName）")
                 .contains("<BatchHead9120");
