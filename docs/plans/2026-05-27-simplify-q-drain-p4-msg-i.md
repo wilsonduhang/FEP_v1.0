@@ -201,17 +201,14 @@ EOF
 
 ---
 
-### Task 2 — 🚫 BLOCKED (v0.3) — DEF-Q-NEW-6 `Outbound9120AckEnvelopeBuilderTest` builder.build() 共享调用 `模式 A`
+### Task 2 — DEF-Q-NEW-6 `Outbound9120AckEnvelopeBuilderTest` builder.build() 共享调用 `模式 A`
 
-> **🚫 v0.3 BLOCKED**（muzhou 2026-05-28 签字决策 — 串行等待路径）:
-> - **冲突**: `wt-r-new-1-real-xsd` 别会话 v0.3 Plan §范围内 #1 同文件，正在删 `@MockBean XsdValidator` + when stub
-> - **冲突类型**: 同文件非重叠行（r-new-1 删 line 95-96 @MockBean + line 102 when stub；本 T2 改 line 109+115 build calls）。git auto-merge 理论可行但 muzhou 选 **串行等待** 避免风险
-> - **处置**: T2 移到 r-new-1 ship 后的 **follow-up Plan**（届时 Outbound9120AckEnvelopeBuilderTest 无 @MockBean 注入，T2 是否仍需评估在新语境下；可能 single-build 重构更自然）
-> - **本轮影响**: 本 Plan 实际 drain 3 项 (T1/T3/T4)，T2 计入 DEF-Q-NEW backlog "follow-up after r-new-1"
-> - 红线 `feedback_plan_gate_must_handle_blocked_state` — 用 🚫 替换 [ ] 让下游 gate 跳过
-> - 原 Step 1-5 实施细节保留在下方供 follow-up Plan 复用
-
-**【以下原 Step 1-5 仅供 follow-up 时参考，本轮不执行】**
+> **v0.4 unblock** (2026-05-28 T0 实施时实测发现):
+> - v0.3 串行等待路径执行时 (Task 0 rebase) 发现 r-new-1 已 ship 5 commits 到 main (`0ce17be`/`25acd55`/`c8585e2`/`04e8041`/`2e103fa` + `4fcac99` Plan doc) — Outbound9120AckEnvelopeBuilderTest 已删 @MockBean XsdValidator + when stub
+> - r-new-1 ship 与本 Plan v0.3 签字几乎同时，T2 BLOCKED 状态解除
+> - 与 muzhou v0.3 签字意图一致："串行等待 r-new-1 ship 后 rebase 加上 T2"
+> - **v0.4 调整**: T2 re-included 本轮 drain（4 项 again），post-rebase build calls 行号 109→97 + 115→103 (r-new-1 删除 ~12 行 @MockBean/when context)，等价性论证 + T2 改造方案不变
+> - Step 1 grep 行号区间 98-135 → **86-122**（自动适应 post-rebase 状态）；其他 Step 不变
 
 
 
@@ -227,13 +224,13 @@ EOF
 **Files:**
 - Modify: `fep-web/src/test/java/com/puchain/fep/web/outbound/consumer/Outbound9120AckEnvelopeBuilderTest.java`
 
-- [ ] **Step 1: grep 实测当前 build 调用 + assertion 结构**
+- [ ] **Step 1: grep 实测当前 build 调用 + assertion 结构（v0.4 post-rebase 行号）**
 
 ```bash
 cd /Users/muzhou/FEP_v1.0_wt-simplify-q-drain
-sed -n '98,135p' fep-web/src/test/java/com/puchain/fep/web/outbound/consumer/Outbound9120AckEnvelopeBuilderTest.java
+sed -n '86,122p' fep-web/src/test/java/com/puchain/fep/web/outbound/consumer/Outbound9120AckEnvelopeBuilderTest.java
 ```
-期望 (line 109 + line 115):
+期望 (post-r-new-1 ship line 97 + line 103):
 ```
         assertThatCode(() -> builder.build(entity, headFields))
                 .as("build 9120 ack 应成功（T1+T2 注册后无 OUTBOUND_5107/5108）...")
@@ -243,16 +240,15 @@ sed -n '98,135p' fep-web/src/test/java/com/puchain/fep/web/outbound/consumer/Out
         final String envelope = builder.build(entity, headFields).envelope();
 ```
 
-- [ ] **Step 2: 重构为单次 build + 双语义断言**
+- [ ] **Step 2: 重构为单次 build + 双语义断言**（v0.4 post-rebase：r-new-1 已删 @MockBean / when stub，本 Step 进一步简化）
 
-将 line 98-134 既有 method body 改为下方实现。**等价性论证**: AssertJ `assertThatCode(ThrowingCallable).doesNotThrowAnyException()` 接受的是 `() -> void` callable，**无法**返回值；强行单次 build 须改用直接调用方式 — 任何 Throwable 直接传播给 JUnit → FAIL（语义等价 + JUnit stack trace 比 AssertJ 更详细）。在直接调用基础上加 `assertThat(envelope).isNotNull()` 补 "build 成功" 硬语义断言 + 保留原 `.as(...)` 回归基准说明。
+将 line 86-122 既有 method body 改为下方实现。**等价性论证**: AssertJ `assertThatCode(ThrowingCallable).doesNotThrowAnyException()` 接受的是 `() -> void` callable，**无法**返回值；强行单次 build 须改用直接调用方式 — 任何 Throwable 直接传播给 JUnit → FAIL（语义等价 + JUnit stack trace 比 AssertJ 更详细）。在直接调用基础上加 `assertThat(envelope).isNotNull()` 补 "build 成功" 硬语义断言 + 保留原 `.as(...)` 回归基准说明。
 
 ```java
     @Test
     @DisplayName("build 9120 ack envelope — P0 闭合 2101 模式 6 ack 装配段缺口（registry+dispatcher 双查通过）")
     void build9120AckEnvelope_shouldSucceedAfterT1T2Registration() {
-        // mock XsdValidator 返回 ok — 装配段行为聚焦，XSD 严格校验由 fep-processor 单测覆盖
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
+        // r-new-1 ship 后真 XsdValidator 已注入 Spring context，无需 mock setup
 
         final OutboundMessageQueueEntity entity = givenAck9120Entity();
         final OutboundHeadFields headFields = new OutboundHeadFields(
