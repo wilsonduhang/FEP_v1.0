@@ -1,8 +1,6 @@
 package com.puchain.fep.web.messageinbound.listener;
 
 import com.puchain.fep.common.util.FepConstants;
-import com.puchain.fep.processor.validation.ValidationResult;
-import com.puchain.fep.processor.validation.XsdValidator;
 import com.puchain.fep.transport.api.TlqProducer;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
@@ -16,7 +14,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
@@ -28,8 +25,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static java.time.Duration.ofSeconds;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * 3112 inbound listener wire IT — TLQ producer→broker→TlqInboundListener
@@ -49,10 +44,14 @@ import static org.mockito.Mockito.when;
  * 内 {@code <SerialNo>} 值（非 transitionNo fallback）。故 record 查找键 + ack
  * idempotencyKey 派生输入均为 body serialNo。</p>
  *
- * <p><b>profile / @MockBean</b>：默认 dev profile（MockSignService/MockKeyService 让
- * 9120 outbound 加签通过）+ @MockBean XsdValidator 返回 ok（CFX fixture 专注 wire 路径，
- * 真 XSD 校验已在 fep-processor + Task 2 dispatch 单测覆盖）。与 {@link Inbound2101WireTest}
- * 同款配置。</p>
+ * <p><b>真 XsdValidator（R-NEW-1 起）/ profile</b>：自 2026-05-26 R-NEW-1 起，本测试
+ * 不再 {@code @MockBean XsdValidator}，fixture {@code buildCfxEnvelope3112} 满足
+ * 3112.xsd 完整约束（HEAD CorrMsgId 20 零、BatchHead3112 RequestHead、
+ * hxqyCreditAmt3112 SerialNo length=30 pad、SendNodeCode/DesNodeCode NodeCode
+ * length=14、QueryDate Date、hxqyInfoNum + hxqyInfo nested）。默认 dev profile
+ * （MockSignService/MockKeyService 让 9120 outbound 加签通过）。与 sibling
+ * {@link Inbound2101WireTest}/{@link InboundAck9120BatchWireTest} 同 cache key
+ * （R-NEW-1 统一 cache）。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -94,18 +93,13 @@ class Inbound3112WireTest {
     @Autowired
     private OutboundMessageQueueRepository outboundRepo;
 
-    @MockBean
-    private XsdValidator xsdValidator;
-
     @Test
     @DisplayName("AC-1..3: 发 3112 CFX → record 持久化 + 9120 ack 入队 (mock TLQ provider)")
     void inbound3112_shouldPersistAndEnqueue9120() {
-        when(xsdValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
-
         final String msgIdSeq = String.format("%06d", SEQ.getAndIncrement());
         final String cfxMsgId = MSGID_DATETIME_PREFIX + msgIdSeq;
         // HxqyCreditAmt3112 carries a real SerialNo → dispatcher surfaces it (not transitionNo).
-        final String serialNo = "SN3112" + msgIdSeq;
+        final String serialNo = pad30("SN3112" + msgIdSeq);
 
         final String cfxXml = buildCfxEnvelope3112(cfxMsgId, serialNo);
         final TlqMessageAttributes attrs = TlqMessageAttributes.forBatch(cfxMsgId);
@@ -138,13 +132,17 @@ class Inbound3112WireTest {
     }
 
     /**
-     * Build a full CFX envelope for 3112 — single body (no BatchHead), so
-     * dispatcher's getBodies()::isInstance picks HxqyCreditAmt3112. Body fields
-     * mirror HxqyInfo (hxqyName + hxqyCode). XsdValidator mocked, so structural
-     * validity for JAXB unmarshal is sufficient.
+     * Build a full CFX envelope for 3112 satisfying 3112.xsd + Base.xsd + DataType.xsd
+     * — HEAD CorrMsgId 20 zeros (DataType MsgId length=20), MSG section contains
+     * BatchHead3112 (RequestHead: SendOrgCode/EntrustDate/TransitionNo) +
+     * hxqyCreditAmt3112 (SerialNo length=30 via pad30, SendNodeCode/DesNodeCode
+     * NodeCode length=14, QueryDate yyyyMMdd, hxqyInfoNum + nested hxqyInfo).
+     * Dispatcher's getBodies()::isInstance picks HxqyCreditAmt3112 (the body bearing
+     * SerialNo); BatchHead3112 satisfies XSD sequence ordering.
      *
      * @param cfxMsgId 20-digit CFX HEAD MsgId; last 8 chars become transitionNo
-     * @param serialNo business SerialNo placed in body (surfaced by dispatcher)
+     * @param serialNo 30-char (pad30-applied) business SerialNo placed in body
+     *                 (surfaced by dispatcher)
      * @return CFX envelope XML
      */
     private static String buildCfxEnvelope3112(final String cfxMsgId, final String serialNo) {
@@ -157,10 +155,15 @@ class Inbound3112WireTest {
                 + "<App>HNDEMP</App>"
                 + "<MsgNo>3112</MsgNo>"
                 + "<MsgId>" + cfxMsgId + "</MsgId>"
-                + "<CorrMsgId></CorrMsgId>"
+                + "<CorrMsgId>00000000000000000000</CorrMsgId>"
                 + "<WorkDate>20260524</WorkDate>"
                 + "</HEAD>"
                 + "<MSG>"
+                + "<BatchHead3112>"
+                + "<SendOrgCode>12345678901234</SendOrgCode>"
+                + "<EntrustDate>20260524</EntrustDate>"
+                + "<TransitionNo>" + cfxMsgId.substring(cfxMsgId.length() - 8) + "</TransitionNo>"
+                + "</BatchHead3112>"
                 + "<hxqyCreditAmt3112>"
                 + "<SerialNo>" + serialNo + "</SerialNo>"
                 + "<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>"
@@ -174,6 +177,15 @@ class Inbound3112WireTest {
                 + "</hxqyCreditAmt3112>"
                 + "</MSG>"
                 + "</CFX>";
+    }
+
+    /** Pad to 30 chars with '0' suffix to satisfy DataType.xsd SerialNo length=30. */
+    private static String pad30(final String raw) {
+        final int pad = 30 - raw.length();
+        if (pad <= 0) {
+            return raw.substring(0, 30);
+        }
+        return raw + "0".repeat(pad);
     }
 
     /** Mirror of {@code BizMessage3112InboundListener.deriveAckIdempotencyKey} (prefix ACK-9120-3112-). */
