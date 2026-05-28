@@ -119,7 +119,7 @@ class InboundAck9120BatchWireTest {
         // Each report carries a real business SerialNo → dispatcher surfaces it (not transitionNo).
         // SerialNo per DataType.xsd length=30 → pad raw "SNK<code><seq>" (13 chars) to 30.
         final String rawSerial = "SNK" + code + msgIdSeq;
-        final String serialNo = pad30(rawSerial);
+        final String serialNo = XsdTestSupport.pad30(rawSerial);
 
         final String cfxXml = wrapCfx(code, cfxMsgId, bodyTemplate.replace("{SERIAL}", serialNo));
         final TlqMessageAttributes attrs = TlqMessageAttributes.forBatch(cfxMsgId);
@@ -210,15 +210,6 @@ class InboundAck9120BatchWireTest {
                 + "<TransitionNo>" + transitionNo + "</TransitionNo>"
                 + resultElement
                 + "</" + elementName + ">";
-    }
-
-    /** Pad to 30 chars with '0' suffix to satisfy DataType.xsd SerialNo length=30. */
-    private static String pad30(final String raw) {
-        final int pad = 30 - raw.length();
-        if (pad <= 0) {
-            return raw.substring(0, 30);
-        }
-        return raw + "0".repeat(pad);
     }
 
     /** 3105 融资申请 body — root {@code rzApplyInfo3105}; required scalars only (no nested blocks). */

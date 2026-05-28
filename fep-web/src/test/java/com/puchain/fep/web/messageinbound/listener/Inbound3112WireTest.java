@@ -99,7 +99,7 @@ class Inbound3112WireTest {
         final String msgIdSeq = String.format("%06d", SEQ.getAndIncrement());
         final String cfxMsgId = MSGID_DATETIME_PREFIX + msgIdSeq;
         // HxqyCreditAmt3112 carries a real SerialNo → dispatcher surfaces it (not transitionNo).
-        final String serialNo = pad30("SN3112" + msgIdSeq);
+        final String serialNo = XsdTestSupport.pad30("SN3112" + msgIdSeq);
 
         final String cfxXml = buildCfxEnvelope3112(cfxMsgId, serialNo);
         final TlqMessageAttributes attrs = TlqMessageAttributes.forBatch(cfxMsgId);
@@ -177,15 +177,6 @@ class Inbound3112WireTest {
                 + "</hxqyCreditAmt3112>"
                 + "</MSG>"
                 + "</CFX>";
-    }
-
-    /** Pad to 30 chars with '0' suffix to satisfy DataType.xsd SerialNo length=30. */
-    private static String pad30(final String raw) {
-        final int pad = 30 - raw.length();
-        if (pad <= 0) {
-            return raw.substring(0, 30);
-        }
-        return raw + "0".repeat(pad);
     }
 
     /** Mirror of {@code BizMessage3112InboundListener.deriveAckIdempotencyKey} (prefix ACK-9120-3112-). */
