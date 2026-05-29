@@ -102,6 +102,18 @@ class BankCheckDay3116FieldMapperTest {
     }
 
     @Test
+    void detailMissingAmt_shouldThrow() {
+        Map<String, Object> raw = baseRequiredTop();
+        Map<String, Object> detail = baseRequiredDetail();
+        detail.remove("amt");
+        raw.put("check_detail_info", List.of(detail));
+        assertThatThrownBy(() -> mapper.toMessageBody(raw))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("missing required field for 3116")
+                .hasMessageContaining("amt");
+    }
+
+    @Test
     void listSizeExceeds200_shouldThrow() {
         Map<String, Object> raw = baseRequiredTop();
         List<Map<String, Object>> big = new ArrayList<>();
