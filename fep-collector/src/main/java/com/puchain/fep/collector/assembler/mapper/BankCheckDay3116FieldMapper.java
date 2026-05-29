@@ -1,18 +1,38 @@
 package com.puchain.fep.collector.assembler.mapper;
 
 import com.puchain.fep.collector.CollectorProperties;
+import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.LogSanitizer;
+import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
+import com.puchain.fep.processor.body.supplychain.CheckDetailInfo;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
- * 3116 银行资金日对账 FieldMapper — stub pending Task A4 implementation.
+ * 3116 银行资金日对账 FieldMapper (Plan §A4, 7 String 必填 + CheckDetailInfo nested list)。
+ *
+ * <p>PRD §2.2.3 ✅ 数仓推荐场景；PRD §841 模式 3 信息发送。
+ *
+ * <p><b>CheckDetailInfo nested list</b>：raw["check_detail_info"] 期望类型为
+ * {@code List<Map<String, Object>>}，每个 Map 含 10 必填 + 7 可选字段。
+ * 列表大小须 1-200（XSD maxOccurs="200"，minOccurs=1）。
+ *
+ * <p><b>ExtInfo（顶层 optional）</b>：Javadoc stub，minOccurs="0"，待后续业务深化 Plan 补全。
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @Component
 public class BankCheckDay3116FieldMapper extends AbstractFieldMapper {
+
+    /** XSD 3116.xsd CheckDetailInfo maxOccurs="200"。 */
+    private static final int CHECK_DETAIL_MAX_SIZE = 200;
 
     /**
      * 构造 3116 mapper。
@@ -25,7 +45,78 @@ public class BankCheckDay3116FieldMapper extends AbstractFieldMapper {
 
     @Override
     public Object toMessageBody(final Map<String, Object> rawData) {
-        throw new UnsupportedOperationException(
-                "mapper not implemented, see Plan §A4 (3116)");
+        Objects.requireNonNull(rawData, "rawData");
+
+        final BankCheckDay3116 body = new BankCheckDay3116();
+
+        body.setSerialNo(serialNoOrFallback(rawData));
+        body.setSendNodeCode(requireInstitutionCode());
+        body.setDesNodeCode(DES_NODE_CODE_HNDEMP_CENTER);
+        body.setHxqyName(requireString(rawData, "hxqy_name", "hxqyName"));
+        body.setHxqyCode(requireString(rawData, "hxqy_code", "hxqyCode"));
+        body.setCheckDate(requireString(rawData, "check_date", "checkDate"));
+        body.setCheckDetailNum(requireString(rawData, "check_detail_num", "checkDetailNum"));
+        body.setCheckDetailInfo(requireCheckDetailInfoList(rawData));
+
+        return body;
+    }
+
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "异常 message 已 LogSanitizer wrap")
+    private List<CheckDetailInfo> requireCheckDetailInfoList(final Map<String, Object> rawData) {
+        final Object raw = rawData.get("check_detail_info");
+        if (!(raw instanceof List<?> list) || list.isEmpty()) {
+            throw new FepBusinessException(
+                    FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
+                    "missing required field for 3116: checkDetailInfo "
+                            + "(expected non-empty List, got "
+                            + LogSanitizer.sanitize(raw == null ? "null"
+                                    : raw.getClass().getSimpleName()) + ")");
+        }
+        if (list.size() > CHECK_DETAIL_MAX_SIZE) {
+            throw new FepBusinessException(
+                    FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
+                    "checkDetailInfo size " + list.size()
+                            + " exceeds max " + CHECK_DETAIL_MAX_SIZE);
+        }
+        final List<CheckDetailInfo> result = new ArrayList<>(list.size());
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> rawDetail)) {
+                throw new FepBusinessException(
+                        FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
+                        "checkDetailInfo item must be Map, got "
+                                + LogSanitizer.sanitize(
+                                        item == null ? "null" : item.getClass().getSimpleName()));
+            }
+            @SuppressWarnings("unchecked")
+            final Map<String, Object> typed = (Map<String, Object>) rawDetail;
+            result.add(mapDetail(typed));
+        }
+        return result;
+    }
+
+    private CheckDetailInfo mapDetail(final Map<String, Object> rawDetail) {
+        final CheckDetailInfo d = new CheckDetailInfo();
+
+        d.setSid(requireString(rawDetail, "sid", "sid"));
+        d.setPlatNodeCode(requireString(rawDetail, "plat_node_code", "platNodeCode"));
+        d.setBizType(requireString(rawDetail, "biz_type", "bizType"));
+        d.setRzqyName(requireString(rawDetail, "rzqy_name", "rzqyName"));
+        d.setRzqyCode(requireString(rawDetail, "rzqy_code", "rzqyCode"));
+        d.setRzAmt(requireString(rawDetail, "rz_amt", "rzAmt"));
+        d.setRzRate(requireString(rawDetail, "rz_rate", "rzRate"));
+        d.setRzStartDate(requireString(rawDetail, "rz_start_date", "rzStartDate"));
+        d.setRzEndDate(requireString(rawDetail, "rz_end_date", "rzEndDate"));
+        d.setAmt(requireString(rawDetail, "amt", "amt"));
+
+        applyOptional(rawDetail, "pz_no", d::setPzNo);
+        applyOptional(rawDetail, "bill_no", d::setBillNo);
+        applyOptional(rawDetail, "repay_style", d::setRepayStyle);
+        applyOptional(rawDetail, "lx_amt", d::setLxAmt);
+        applyOptional(rawDetail, "db_amt", d::setDbAmt);
+        applyOptional(rawDetail, "plat_service_amt", d::setPlatServiceAmt);
+        applyOptional(rawDetail, "check_memo", d::setCheckMemo);
+
+        return d;
     }
 }
