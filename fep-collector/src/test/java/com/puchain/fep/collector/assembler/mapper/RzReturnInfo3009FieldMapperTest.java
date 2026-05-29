@@ -36,7 +36,7 @@ class RzReturnInfo3009FieldMapperTest {
 
         RzReturnInfo3009 body = (RzReturnInfo3009) mapper.toMessageBody(raw);
 
-        assertThat(body.getSerialNo()).isNotBlank();
+        assertThat(body.getSerialNo()).isNotBlank().hasSize(30);
         assertThat(body.getSendNodeCode()).isEqualTo(VALID_INSTITUTION_CODE);
         assertThat(body.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(body.getPlatApplyNo()).isEqualTo("PLAT202611280001");
