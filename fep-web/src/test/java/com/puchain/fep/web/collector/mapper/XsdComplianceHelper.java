@@ -43,6 +43,9 @@ public class XsdComplianceHelper {
     /** 固定 MsgId/CorrMsgId fixture — Number length=20（DataType.xsd）。 */
     private static final String MSG_ID = "20260501120000000001";
 
+    /** 固定 WorkDate fixture — Date pattern yyyyMMdd。 */
+    private static final String WORK_DATE = "20260501";
+
     /** RequestHead 字段集（无 Result）— 3102/3109/3116/3009 适用。 */
     private static final String REQUEST_HEAD_FIELDS =
             "<SendOrgCode>" + SEND_ORG_CODE + "</SendOrgCode>"
@@ -108,6 +111,9 @@ public class XsdComplianceHelper {
                 .isTrue();
     }
 
+    /** Envelope config: head element name + head fields XML fragment. */
+    private record EnvelopeConfig(String headElement, String headFields) { }
+
     /**
      * 构造 msgNo 对应的完整 CFX envelope XML（HEAD + MSG wrapper + body fragment）。
      *
@@ -125,32 +131,15 @@ public class XsdComplianceHelper {
      * @return complete CFX XML string
      */
     private static String buildCfxEnvelope(final String msgNo, final String bodyFragment) {
-        final String headElement;
-        final String headFields;
-        switch (msgNo) {
-            case "3101":
-                headElement = "BatchHead3101";
-                headFields = RESPONSE_HEAD_FIELDS;
-                break;
-            case "3102":
-                headElement = "BatchHead3102";
-                headFields = REQUEST_HEAD_FIELDS;
-                break;
-            case "3109":
-                headElement = "BatchHead3109";
-                headFields = REQUEST_HEAD_FIELDS;
-                break;
-            case "3116":
-                headElement = "BatchHead3116";
-                headFields = REQUEST_HEAD_FIELDS;
-                break;
-            case "3009":
-                headElement = "RealHead3009";
-                headFields = REQUEST_HEAD_FIELDS;
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported msgNo for XsdComplianceHelper: " + msgNo);
-        }
+        final EnvelopeConfig cfg = switch (msgNo) {
+            case "3101" -> new EnvelopeConfig("BatchHead3101", RESPONSE_HEAD_FIELDS);
+            case "3102" -> new EnvelopeConfig("BatchHead3102", REQUEST_HEAD_FIELDS);
+            case "3109" -> new EnvelopeConfig("BatchHead3109", REQUEST_HEAD_FIELDS);
+            case "3116" -> new EnvelopeConfig("BatchHead3116", REQUEST_HEAD_FIELDS);
+            case "3009" -> new EnvelopeConfig("RealHead3009", REQUEST_HEAD_FIELDS);
+            default -> throw new IllegalArgumentException(
+                    "Unsupported msgNo for XsdComplianceHelper: " + msgNo);
+        };
 
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 + "<CFX>"
@@ -162,10 +151,10 @@ public class XsdComplianceHelper {
                 + "<MsgNo>" + msgNo + "</MsgNo>"
                 + "<MsgId>" + MSG_ID + "</MsgId>"
                 + "<CorrMsgId>" + MSG_ID + "</CorrMsgId>"
-                + "<WorkDate>20260501</WorkDate>"
+                + "<WorkDate>" + WORK_DATE + "</WorkDate>"
                 + "</HEAD>"
                 + "<MSG>"
-                + "<" + headElement + ">" + headFields + "</" + headElement + ">"
+                + "<" + cfg.headElement() + ">" + cfg.headFields() + "</" + cfg.headElement() + ">"
                 + bodyFragment
                 + "</MSG>"
                 + "</CFX>";
