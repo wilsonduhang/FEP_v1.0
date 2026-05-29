@@ -173,7 +173,7 @@ public abstract class AbstractFieldMapper implements FieldMapper {
                                        final Consumer<String> setter) {
         final String value = optString(rawData, rawKey);
         if (value != null && !value.isBlank()) {
-            setter.accept(value);
+            setter.accept(value.trim());
         }
     }
 
