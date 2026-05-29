@@ -59,6 +59,16 @@
             <artifactId>spring-web</artifactId>
         </dependency>
 
+        <!-- Static analysis annotations: SpotBugs @SuppressFBWarnings (A2 boil-lake — find-sec-bugs
+             CRLF_INJECTION_LOGS 检测器不识别 LogSanitizer.sanitize，需 inline annotation 标记已知已处理点)。
+             scope=provided：编译期可见，runtime 不打包（注解 retention=CLASS）。 -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>4.8.6</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

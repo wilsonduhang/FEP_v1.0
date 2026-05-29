@@ -52,17 +52,18 @@ class DefaultPayloadAssemblerTest {
 
         appContext = new GenericApplicationContext();
         appContext.registerBean(CollectorProperties.class, () -> props);
-        // 2 full mappers
+        // 8 mappers (uniform props injection per AbstractFieldMapper refactor)
         appContext.registerBean(ContractInfo3101FieldMapper.class,
                 () -> new ContractInfo3101FieldMapper(props));
         appContext.registerBean(ArchiveInfo3102FieldMapper.class,
                 () -> new ArchiveInfo3102FieldMapper(props));
-        // 6 stub mappers
-        appContext.registerBean(QyRegister3109FieldMapper.class, QyRegister3109FieldMapper::new);
+        appContext.registerBean(QyRegister3109FieldMapper.class,
+                () -> new QyRegister3109FieldMapper(props));
         appContext.registerBean(BankCheckDay3116FieldMapper.class,
-                BankCheckDay3116FieldMapper::new);
+                () -> new BankCheckDay3116FieldMapper(props));
         appContext.registerBean(RzReturnInfo3009FieldMapper.class,
-                RzReturnInfo3009FieldMapper::new);
+                () -> new RzReturnInfo3009FieldMapper(props));
+        // Mode2 stub mappers keep no-arg constructor until Plan B
         appContext.registerBean(RzApplyInfo3105FieldMapper.class, RzApplyInfo3105FieldMapper::new);
         appContext.registerBean(PzCheckQuery3107FieldMapper.class,
                 PzCheckQuery3107FieldMapper::new);
@@ -142,8 +143,8 @@ class DefaultPayloadAssemblerTest {
         assertThat(body.getHxqyName()).isEqualTo("核心企业A");
         assertThat(body.getRzqyCode()).isEqualTo("913201000000000002");
         assertThat(body.getSerialNo())
-                .as("serialNo fallback is 32-char uuid32")
-                .hasSize(32);
+                .as("serialNo fallback is 30-char uuid32 truncated (XSD SerialNo length=30)")
+                .hasSize(30);
         assertThat(body.getSendNodeCode()).isEqualTo(INSTITUTION_CODE);
         assertThat(body.getDesNodeCode())
                 .isEqualTo(ArchiveInfo3102FieldMapper.DES_NODE_CODE_HNDEMP_CENTER);
@@ -176,16 +177,6 @@ class DefaultPayloadAssemblerTest {
                 .hasMessageContaining("no route for payloadDataType=UNKNOWN_TYPE")
                 .extracting(e -> ((FepBusinessException) e).getErrorCode())
                 .isEqualTo(FepErrorCode.COLLECT_ASSEMBLE_FAILURE);
-    }
-
-    /** Plan §6 acceptance: deferred mapper invocation → UnsupportedOperationException. */
-    @Test
-    void assemble_deferredMapper3109_throwsUnsupportedOperation() {
-        assertThatThrownBy(() -> assembler.assemble(record(
-                Mode3Routes.PAYLOAD_TYPE_QY_REGISTER_3109, Map.of())))
-                .isInstanceOf(UnsupportedOperationException.class)
-                .hasMessageContaining("mapper not implemented")
-                .hasMessageContaining("3109");
     }
 
     /** institutionCode 缺失 → COLLECT_ASSEMBLE_FAILURE（HeadFieldsBuilder 校验）。 */

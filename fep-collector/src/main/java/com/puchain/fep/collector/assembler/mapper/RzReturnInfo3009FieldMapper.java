@@ -1,31 +1,31 @@
 package com.puchain.fep.collector.assembler.mapper;
 
-import com.puchain.fep.collector.assembler.FieldMapper;
+import com.puchain.fep.collector.CollectorProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 /**
- * 3009 融资结果登记 FieldMapper —— Plan T7b 阶段为 stub。
- *
- * <p>正式实现登记在 Plan §T7b Deferred D8 ticket pool。
+ * 3009 融资结果登记 FieldMapper — stub pending Task A5 implementation.
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @Component
-public class RzReturnInfo3009FieldMapper implements FieldMapper {
+public class RzReturnInfo3009FieldMapper extends AbstractFieldMapper {
 
     /**
-     * 当前 stub 实现：抛 {@link UnsupportedOperationException}。
+     * 构造 3009 mapper。
      *
-     * @param rawData 原始字段集
-     * @return 永不返回
-     * @throws UnsupportedOperationException 始终抛
+     * @param props 数据采集配置（用于读取 institutionCode）
      */
+    public RzReturnInfo3009FieldMapper(final CollectorProperties props) {
+        super(props, "3009");
+    }
+
     @Override
     public Object toMessageBody(final Map<String, Object> rawData) {
         throw new UnsupportedOperationException(
-                "mapper not implemented, see Plan §T7b Deferred D8 (3009)");
+                "mapper not implemented, see Plan §A5 (3009)");
     }
 }

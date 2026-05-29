@@ -1,31 +1,31 @@
 package com.puchain.fep.collector.assembler.mapper;
 
-import com.puchain.fep.collector.assembler.FieldMapper;
+import com.puchain.fep.collector.CollectorProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
 /**
- * 3116 银行资金日对账 FieldMapper —— Plan T7b 阶段为 stub。
- *
- * <p>正式实现登记在 Plan §T7b Deferred D8 ticket pool。
+ * 3116 银行资金日对账 FieldMapper — stub pending Task A4 implementation.
  *
  * @author FEP Team
  * @since 1.0.0
  */
 @Component
-public class BankCheckDay3116FieldMapper implements FieldMapper {
+public class BankCheckDay3116FieldMapper extends AbstractFieldMapper {
 
     /**
-     * 当前 stub 实现：抛 {@link UnsupportedOperationException}。
+     * 构造 3116 mapper。
      *
-     * @param rawData 原始字段集
-     * @return 永不返回
-     * @throws UnsupportedOperationException 始终抛
+     * @param props 数据采集配置（用于读取 institutionCode）
      */
+    public BankCheckDay3116FieldMapper(final CollectorProperties props) {
+        super(props, "3116");
+    }
+
     @Override
     public Object toMessageBody(final Map<String, Object> rawData) {
         throw new UnsupportedOperationException(
-                "mapper not implemented, see Plan §T7b Deferred D8 (3116)");
+                "mapper not implemented, see Plan §A4 (3116)");
     }
 }
