@@ -118,7 +118,7 @@ public abstract class AbstractFieldMapper implements FieldMapper {
                     "missing required field for " + msgNo + ": "
                             + LogSanitizer.sanitize(logicalField));
         }
-        return value;
+        return value.trim();
     }
 
     /**
@@ -155,7 +155,7 @@ public abstract class AbstractFieldMapper implements FieldMapper {
         }
         throw new FepBusinessException(
                 FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
-                "missing required field for " + msgNo + ": "
+                "invalid field value for " + msgNo + ": "
                         + LogSanitizer.sanitize(logicalField)
                         + " (expected 0/1/true/false, got "
                         + LogSanitizer.sanitize(s) + ")");

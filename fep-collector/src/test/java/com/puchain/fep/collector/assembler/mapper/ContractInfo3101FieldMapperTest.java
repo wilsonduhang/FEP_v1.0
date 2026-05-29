@@ -147,6 +147,7 @@ class ContractInfo3101FieldMapperTest {
         raw.put("digital_seal", "yes");
         assertThatThrownBy(() -> mapper.toMessageBody(raw))
                 .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("invalid field value for 3101")
                 .hasMessageContaining("digitalSeal");
     }
 

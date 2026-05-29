@@ -124,6 +124,7 @@ class AbstractFieldMapperTest {
         Map<String, Object> raw = Map.of("key", "yes");
         assertThatThrownBy(() -> mapper.callRequireBooleanString(raw, "key", "logical"))
                 .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("invalid field value for TEST")
                 .hasMessageContaining("logical");
     }
 
