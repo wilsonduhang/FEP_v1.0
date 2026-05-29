@@ -206,6 +206,67 @@ class DefaultPayloadAssemblerTest {
                 .isEqualTo(FepErrorCode.COLLECT_ASSEMBLE_FAILURE);
     }
 
+    /** Plan A §A6: 3109 QyRegister mapper 已实装，验证集成 happy path。 */
+    @Test
+    void assemble_qyRegister3109_happyPath() {
+        final Map<String, Object> raw = new HashMap<>();
+        raw.put("qy_flag", "1");
+        final Object body = assembler.assemble(record(
+                Mode3Routes.PAYLOAD_TYPE_QY_REGISTER_3109, raw)).messageBody();
+        assertThat(body).isInstanceOf(
+                com.puchain.fep.processor.body.supplychain.QyRegister3109.class);
+        final com.puchain.fep.processor.body.supplychain.QyRegister3109 qy =
+                (com.puchain.fep.processor.body.supplychain.QyRegister3109) body;
+        assertThat(qy.getQyFlag()).isEqualTo("1");
+        assertThat(qy.getSendNodeCode()).isEqualTo(props.getInstitutionCode());
+    }
+
+    /** Plan A §A6: 3116 BankCheckDay mapper 已实装，含 CheckDetailInfo nested list。 */
+    @Test
+    void assemble_bankCheckDay3116_happyPath() {
+        final Map<String, Object> detail = new HashMap<>();
+        detail.put("sid", "1");
+        detail.put("plat_node_code", "A1000143000888");
+        detail.put("biz_type", "01");
+        detail.put("rzqy_name", "融资企业 A");
+        detail.put("rzqy_code", "91110000222222222Y");
+        detail.put("rz_amt", "100000.00");
+        detail.put("rz_rate", "0.0480");
+        detail.put("rz_start_date", "20261101");
+        detail.put("rz_end_date", "20261130");
+        detail.put("amt", "100000.00");
+
+        final Map<String, Object> raw = new HashMap<>();
+        raw.put("hxqy_name", "核心企业 A");
+        raw.put("hxqy_code", "91110000111111111X");
+        raw.put("check_date", "20261128");
+        raw.put("check_detail_num", "1");
+        raw.put("check_detail_info", List.of(detail));
+
+        final Object body = assembler.assemble(record(
+                Mode3Routes.PAYLOAD_TYPE_BANK_CHECK_DAY_3116, raw)).messageBody();
+        assertThat(body).isInstanceOf(
+                com.puchain.fep.processor.body.supplychain.BankCheckDay3116.class);
+        final com.puchain.fep.processor.body.supplychain.BankCheckDay3116 b =
+                (com.puchain.fep.processor.body.supplychain.BankCheckDay3116) body;
+        assertThat(b.getCheckDetailInfo()).hasSize(1);
+    }
+
+    /** Plan A §A6: 3009 RzReturnInfo mapper 已实装。 */
+    @Test
+    void assemble_rzReturnInfo3009_happyPath() {
+        final Map<String, Object> raw = new HashMap<>();
+        raw.put("plat_apply_no", "PLAT202611280001");
+        raw.put("hxqy_name", "核心企业 A");
+        raw.put("rzpz_no", "PZ202611280001");
+        raw.put("rz_phase_code", "99");
+
+        final Object body = assembler.assemble(record(
+                Mode3Routes.PAYLOAD_TYPE_RZ_RETURN_3009, raw)).messageBody();
+        assertThat(body).isInstanceOf(
+                com.puchain.fep.processor.body.supplychain.RzReturnInfo3009.class);
+    }
+
     private static CollectionRecord record(final String payloadDataType,
                                            final Map<String, Object> rawData) {
         return CollectionRecord.builder()
