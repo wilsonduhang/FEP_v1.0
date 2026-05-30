@@ -53,7 +53,7 @@ class BankCheckDay3116FieldMapperTest {
         assertThat(detail.getRzAmt()).isEqualTo("100000.00");
         assertThat(detail.getRzRate()).isEqualTo("0.0480");
         assertThat(detail.getRzStartDate()).isEqualTo("20261101");
-        assertThat(detail.getRzEndDate()).isEqualTo("20261131");
+        assertThat(detail.getRzEndDate()).isEqualTo("20261130");
         assertThat(detail.getAmt()).isEqualTo("100000.00");
         assertThat(detail.getPzNo()).isNull();
         assertThat(detail.getBillNo()).isNull();
@@ -157,7 +157,7 @@ class BankCheckDay3116FieldMapperTest {
         d.put("rz_amt", "100000.00");
         d.put("rz_rate", "0.0480");
         d.put("rz_start_date", "20261101");
-        d.put("rz_end_date", "20261131");
+        d.put("rz_end_date", "20261130");
         d.put("amt", "100000.00");
         return d;
     }
