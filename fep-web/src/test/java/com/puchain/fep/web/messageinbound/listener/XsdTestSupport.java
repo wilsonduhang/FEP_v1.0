@@ -14,7 +14,7 @@ package com.puchain.fep.web.messageinbound.listener;
  * 2026-05-28 to avoid a 3rd copy when future inbound wire tests (Inbound3105/3009/3103/3113
  * mirror-expansion) reproduce the same fixed-length SerialNo requirement.
  */
-public final class XsdTestSupport {
+final class XsdTestSupport {
 
     private XsdTestSupport() {
         // utility class, no instantiation
