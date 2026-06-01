@@ -36,9 +36,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class Forward9000XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "9000",
-            "90000000000000000001", "00000000000000000000", "20260519", """
+    /**
+     * 9000-specific CFX envelope wrapper — 固定 SrcNode=A1000142000001 (FEP) →
+     * DesNode=A1000143000104 (HNDEMP), App=FEPx, MsgNo=9000, WorkDate=20260519,
+     * CorrMsgId 全 0 (9000 是 FEP-initiated 转发，无 correlation).
+     *
+     * @param msgIdSeq 20-digit MsgId (caller 提供, e.g. {@code "90000000000000000001"})
+     * @param msgInnerXml MSG 内层 XML（{@code RealHead9000} + {@code Forward9000}）
+     * @return 完整 CFX envelope
+     */
+    private static String wrap(String msgIdSeq, String msgInnerXml) {
+        return wrapCfxTemplate(
+                "A1000142000001", "A1000143000104", "FEPx", "9000",
+                msgIdSeq, "00000000000000000000", "20260519",
+                msgInnerXml);
+    }
+
+    private static final String VALID_FULL_FIELDS_XML = wrap(
+            "90000000000000000001", """
                 <RealHead9000>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
@@ -53,9 +68,8 @@ class Forward9000XsdValidationTest extends AbstractXsdValidationTest {
                   <Content>realtime-forward-payload-9000</Content>
                 </Forward9000>""");
 
-    private static final String INVALID_MISSING_DES_ORG_CODE_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "9000",
-            "90000000000000000002", "00000000000000000000", "20260519", """
+    private static final String INVALID_MISSING_DES_ORG_CODE_XML = wrap(
+            "90000000000000000002", """
                 <RealHead9000>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>

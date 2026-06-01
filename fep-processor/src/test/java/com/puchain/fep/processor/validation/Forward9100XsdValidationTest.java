@@ -32,9 +32,24 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class Forward9100XsdValidationTest extends AbstractXsdValidationTest {
 
-    private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "9100",
-            "91000000000000000001", "00000000000000000000", "20260519", """
+    /**
+     * 9100-specific CFX envelope wrapper — 固定 SrcNode=A1000142000001 (FEP) →
+     * DesNode=A1000143000104 (HNDEMP), App=FEPx, MsgNo=9100, WorkDate=20260519,
+     * CorrMsgId 全 0 (9100 是 FEP-initiated 转发，无 correlation).
+     *
+     * @param msgIdSeq 20-digit MsgId (caller 提供, e.g. {@code "91000000000000000001"})
+     * @param msgInnerXml MSG 内层 XML（{@code BatchHead9100} + {@code Forward9100}）
+     * @return 完整 CFX envelope
+     */
+    private static String wrap(String msgIdSeq, String msgInnerXml) {
+        return wrapCfxTemplate(
+                "A1000142000001", "A1000143000104", "FEPx", "9100",
+                msgIdSeq, "00000000000000000000", "20260519",
+                msgInnerXml);
+    }
+
+    private static final String VALID_FULL_FIELDS_XML = wrap(
+            "91000000000000000001", """
                 <BatchHead9100>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
@@ -49,9 +64,8 @@ class Forward9100XsdValidationTest extends AbstractXsdValidationTest {
                   <Content>universal-forward-payload-9100</Content>
                 </Forward9100>""");
 
-    private static final String INVALID_MISSING_CONTENT_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "9100",
-            "91000000000000000002", "00000000000000000000", "20260519", """
+    private static final String INVALID_MISSING_CONTENT_XML = wrap(
+            "91000000000000000002", """
                 <BatchHead9100>
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
