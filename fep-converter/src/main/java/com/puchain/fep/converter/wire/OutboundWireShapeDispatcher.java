@@ -46,6 +46,8 @@ import org.springframework.stereotype.Component;
  *   <li>3115 → {@code BatchHead3115} + {@link RequestResponseHead}（资金清算信息指令及回执，第 6 类目，P4-MSG-H）</li>
  *   <li>3120 → {@code BatchHead3120} + {@link RequestBusinessHead}（供应链非实时业务通用转发，第 2 类目扩展，P4-MSG-H）</li>
  *   <li>9000 → {@code RealHead9000} + {@link RequestBusinessHead}（实时业务通用转发，P4-MSG-I）</li>
+ *   <li>9006 → {@code RealHead9006} + {@link RequestBusinessHead}（节点登录请求，P4-MSG-L）</li>
+ *   <li>9008 → {@code RealHead9008} + {@link RequestBusinessHead}（节点登出请求，P4-MSG-L）</li>
  *   <li>9100 → {@code BatchHead9100} + {@link RequestBusinessHead}（非实时业务通用转发，模式3，P4-MSG-I）</li>
  *   <li>3113 → {@code BatchHead3113} + {@link ResponseBusinessHead}（核心企业授信额度回执，含 ResultCode，P4-MSG-I）</li>
  *   <li>9120 → {@code BatchHead9120} + {@link ResponseBusinessHead}（通用应答，2101 模式6 ack，含 ResultCode，P4-MSG-I）</li>
@@ -56,7 +58,8 @@ import org.springframework.stereotype.Component;
  * P4-MSG-G T3 起新增第 5 类 RealHead + RequestResponseHead + false 孤儿类目，并扩展类目 3/4；
  * P4-MSG-H 起新增第 6 类 BatchHead + RequestResponseHead + false，并扩展类目 3)：</p>
  * <ul>
- *   <li>RealHead + RequestBusinessHead + false: 1001/1004/3000/3001/3003/3005/3007/3009/9000（P4-MSG-I 扩展 9000）</li>
+ *   <li>RealHead + RequestBusinessHead + false: 1001/1004/3000/3001/3003/3005/3007/3009/9000/9006/9008
+ *       （P4-MSG-I 扩展 9000，P4-MSG-L 扩展 9006/9008）</li>
  *   <li>RealHead + ResponseBusinessHead + true: 2001/2004/3002/3004/3006/3008（P4-MSG-E T2 新类目，P4-MSG-F/G 扩展）</li>
  *   <li>BatchHead + RequestBusinessHead + false: 1101/1102/1103/1104/3102/3105/3107/3109/3112/3116/3120/9100
  *       （P4-MSG-H 扩展 3120，P4-MSG-I 扩展 9100）</li>
@@ -86,9 +89,10 @@ public class OutboundWireShapeDispatcher {
     /** 预编译的 {@link #MSG_NO_PATTERN}，避免 describeFor / isRegisteredOutboundMsgNo 热路径每次重编译。 */
     private static final Pattern MSG_NO_COMPILED = Pattern.compile(MSG_NO_PATTERN);
 
-    /** RealHead + {@link RequestBusinessHead} + false 类目 msgNo 集合（P4-MSG-I 扩展 9000）。 */
+    /** RealHead + {@link RequestBusinessHead} + false 类目 msgNo 集合（P4-MSG-I 扩展 9000；P4-MSG-L 扩展 9006/9008）。 */
     public static final Set<String> REAL_HEAD_REQUEST_MSG_NOS = Set.of(
-            "1001", "1004", "3000", "3001", "3003", "3005", "3007", "3009", "9000");
+            "1001", "1004", "3000", "3001", "3003", "3005", "3007", "3009", "9000",
+            "9006", "9008");
 
     /** BatchHead + {@link RequestBusinessHead} + false 类目 msgNo 集合（P4-MSG-H 扩展 3120；P4-MSG-I 扩展 9100）。 */
     public static final Set<String> BATCH_HEAD_REQUEST_MSG_NOS = Set.of(
@@ -120,7 +124,7 @@ public class OutboundWireShapeDispatcher {
             "3115");
 
     /** 已登记上行报文总数（Javadoc {@value} 自更新引用）. */
-    public static final int REGISTERED_MSG_NO_COUNT = 37;
+    public static final int REGISTERED_MSG_NO_COUNT = 39;
 
     /**
      * 路由 msgNo → {@link WireShapeDescriptor}。
