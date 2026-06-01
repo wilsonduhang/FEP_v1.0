@@ -1,5 +1,7 @@
 package com.puchain.fep.web.messageinbound.listener;
 
+import com.puchain.fep.common.util.FepConstants;
+
 /**
  * Shared XSD-related test fixture helpers for inbound wire integration tests.
  *
@@ -19,6 +21,41 @@ final class XsdTestSupport {
     private XsdTestSupport() {
         // utility class, no instantiation
     }
+
+    /**
+     * R3 反占位证伪 fixture：3115 报文，业务头 {@code BatchHead3115.TransitionNo = 88888888}
+     * 故意 ≠ {@code MsgId} 末 8 位 {@code 00000111}，用于验证 transitionNo 取业务头真值而非
+     * msgId 末 8 位派生。
+     *
+     * <p>Rule-of-Three 抽取（2026-06-02 R3 Simplify Q-2）：原在
+     * {@code InboundTransitionNoExtractorTest}（1 处）+ {@code TlqInboundListenerTest}（1 处）
+     * byte-identical 重复，且前者曾硬编码 SrcNode；统一引用 {@link FepConstants#HNDEMP_NODE_CODE}。</p>
+     */
+    static final String INDEPENDENT_3115_XML =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>" + FepConstants.HNDEMP_NODE_CODE + "</SrcNode>"
+                    + "<DesNode>B43010104B0001</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3115</MsgNo>"
+                    + "<MsgId>20260424105000000111</MsgId>"
+                    + "<CorrMsgId></CorrMsgId>"
+                    + "<WorkDate>20260424</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<BatchHead3115>"
+                    + "<SendOrgCode>A1000143000104</SendOrgCode>"
+                    + "<EntrustDate>20260424</EntrustDate>"
+                    + "<TransitionNo>88888888</TransitionNo>"
+                    + "<Result>00000</Result>"
+                    + "</BatchHead3115>"
+                    + "<PlatPay3115>"
+                    + "<SerialNo>SN2026042410500000000000000111</SerialNo>"
+                    + "</PlatPay3115>"
+                    + "</MSG>"
+                    + "</CFX>";
 
     /**
      * Pads the input to exactly 30 characters by appending {@code '0'} on the right;

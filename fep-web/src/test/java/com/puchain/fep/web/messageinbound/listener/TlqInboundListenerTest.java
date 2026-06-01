@@ -27,11 +27,12 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for {@link TlqInboundListener}.
  *
- * <p>Covers 3 paths (P3 Task 3 v1a verification):</p>
+ * <p>Covers 4 paths (P3 Task 3 v1a + R3 transitionNo upgrade):</p>
  * <ol>
- *   <li>valid 3116 payload → dispatcher invoked once with derived msgNo + transitionNo.</li>
  *   <li>malformed XML → dispatcher untouched, error logged silently (broker ack).</li>
  *   <li>dispatcher raises FepBusinessException (unknown msgNo) → swallowed, no rethrow.</li>
+ *   <li>R3: business-head TransitionNo present → dispatch uses it over msgId-derived.</li>
+ *   <li>R3: no business-head TransitionNo → fallback to msgId last-8 derived value.</li>
  * </ol>
  *
  * @author FEP Team
@@ -62,6 +63,9 @@ class TlqInboundListenerTest {
                     + "</MSG>"
                     + "</CFX>";
 
+    // 反占位证伪 fixture 抽取到 XsdTestSupport.INDEPENDENT_3115_XML
+    // （Rule-of-Three，2026-06-02 R3 Simplify Q-2）。
+
     private InboundMessageDispatcher dispatcher;
     private TlqInboundListener listener;
 
@@ -69,18 +73,6 @@ class TlqInboundListenerTest {
     void setUp() {
         dispatcher = mock(InboundMessageDispatcher.class);
         listener = new TlqInboundListener(dispatcher, new XmlCodec());
-    }
-
-    @Test
-    @DisplayName("valid 3116 payload → dispatcher.dispatch invoked exactly once")
-    void onMessage_valid3116_dispatchesOnce() {
-        final TlqMessage message = newMessage(VALID_3116_XML);
-        when(dispatcher.dispatch(eq("3116"), eq("00000001"), any(byte[].class)))
-                .thenReturn(new InboundMessageResponse("rec-001", "COMPLETED", true));
-
-        listener.onMessage(message);
-
-        verify(dispatcher).dispatch(eq("3116"), eq("00000001"), any(byte[].class));
     }
 
     @Test
@@ -102,6 +94,30 @@ class TlqInboundListenerTest {
                         "test-exception"));
 
         // Listener must not rethrow — broker should treat delivery as ack'd
+        listener.onMessage(message);
+
+        verify(dispatcher).dispatch(eq("3116"), eq("00000001"), any(byte[].class));
+    }
+
+    @Test
+    @DisplayName("业务头 TransitionNo 覆盖 msgId 末 8 位派生 → dispatch 用业务头真值 88888888")
+    void onMessage_bodyTransitionNo_overridesDerived() {
+        final TlqMessage message = newMessage(XsdTestSupport.INDEPENDENT_3115_XML);
+        when(dispatcher.dispatch(eq("3115"), eq("88888888"), any(byte[].class)))
+                .thenReturn(new InboundMessageResponse("rec-115", "COMPLETED", true));
+
+        listener.onMessage(message);
+
+        verify(dispatcher).dispatch(eq("3115"), eq("88888888"), any(byte[].class));
+    }
+
+    @Test
+    @DisplayName("无业务头 TransitionNo → fallback msgId 末 8 位 00000001（向后兼容）")
+    void onMessage_noBodyTransitionNo_fallsBackToDerived() {
+        final TlqMessage message = newMessage(VALID_3116_XML);
+        when(dispatcher.dispatch(eq("3116"), eq("00000001"), any(byte[].class)))
+                .thenReturn(new InboundMessageResponse("rec-116", "COMPLETED", true));
+
         listener.onMessage(message);
 
         verify(dispatcher).dispatch(eq("3116"), eq("00000001"), any(byte[].class));
