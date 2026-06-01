@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3004",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3004",
             "30040000000000000001", "30030000000000000001", "20260513", """
                 <RealHead3004>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -64,7 +64,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                 </pzInfoReturn3004>""");
 
     private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3004",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3004",
             "30040000000000000002", "30030000000000000002", "20260513", """
                 <RealHead3004>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -89,7 +89,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                 </pzInfoReturn3004>""");
 
     private static final String INVALID_MISSING_PZSTATE_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3004",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3004",
             "30040000000000000003", "30030000000000000003", "20260513", """
                 <RealHead3004>
                   <SendOrgCode>30500000000000</SendOrgCode>

@@ -50,7 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PzCheckQueryReturn3108XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3108",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "3108",
             "31080000000000000001", "31070000000000000001", "20260514", """
                 <BatchHead3108>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -80,7 +80,7 @@ class PzCheckQueryReturn3108XsdValidationTest extends AbstractXsdValidationTest 
                 </pzCheckQueryReturn3108>""");
 
     private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3108",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "3108",
             "31080000000000000002", "31070000000000000002", "20260514", """
                 <BatchHead3108>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -97,7 +97,7 @@ class PzCheckQueryReturn3108XsdValidationTest extends AbstractXsdValidationTest 
                 </pzCheckQueryReturn3108>""");
 
     private static final String INVALID_MISSING_CHECKDATE_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3108",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "3108",
             "31080000000000000003", "31070000000000000003", "20260514", """
                 <BatchHead3108>
                   <SendOrgCode>30500000000000</SendOrgCode>

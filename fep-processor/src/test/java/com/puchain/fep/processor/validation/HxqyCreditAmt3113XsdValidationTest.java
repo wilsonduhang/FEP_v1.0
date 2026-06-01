@@ -56,7 +56,7 @@ class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
      */
     private static String wrap(String msgIdSeq, String corrMsgIdSeq, String msgInnerXml) {
         return wrapCfxTemplate(
-                "A1000143000104", "A1000142000001", "HNDEMP", "3113",
+                HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "3113",
                 msgIdSeq, corrMsgIdSeq, "20260519",
                 msgInnerXml);
     }

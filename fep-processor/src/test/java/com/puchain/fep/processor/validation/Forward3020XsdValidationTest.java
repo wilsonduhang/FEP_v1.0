@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class Forward3020XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_RESULT_NULL_ADDWORD_NULL_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "3020",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "3020",
             "30200000000000000001", "00000000000000000000", "20260514", """
                 <RealHead3020>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -64,7 +64,7 @@ class Forward3020XsdValidationTest extends AbstractXsdValidationTest {
                 </Forward3020>""");
 
     private static final String VALID_RESULT_FILLED_ADDWORD_NULL_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "3020",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "3020",
             "30200000000000000002", "00000000000000000000", "20260514", """
                 <RealHead3020>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -79,7 +79,7 @@ class Forward3020XsdValidationTest extends AbstractXsdValidationTest {
                 </Forward3020>""");
 
     private static final String VALID_RESULT_NULL_ADDWORD_FILLED_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "3020",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "3020",
             "30200000000000000003", "00000000000000000000", "20260514", """
                 <RealHead3020>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -94,7 +94,7 @@ class Forward3020XsdValidationTest extends AbstractXsdValidationTest {
                 </Forward3020>""");
 
     private static final String INVALID_MISSING_SERIALNO_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "3020",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "3020",
             "30200000000000000004", "00000000000000000000", "20260514", """
                 <RealHead3020>
                   <SendOrgCode>30500000000000</SendOrgCode>

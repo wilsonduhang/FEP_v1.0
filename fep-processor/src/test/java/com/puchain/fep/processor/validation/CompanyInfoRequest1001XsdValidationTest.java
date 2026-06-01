@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "1001",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "1001",
             "10010000000000000001", "00000000000000000000", "20260511", """
                 <RealHead1001>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -53,7 +53,7 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
                 </CompanyInfoRequest1001>""");
 
     private static final String INVALID_MISSING_COMPANY_NAME_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "1001",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "1001",
             "10010000000000000003", "00000000000000000000", "20260511", """
                 <RealHead1001>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -69,7 +69,7 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
                 </CompanyInfoRequest1001>""");
 
     private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "1001",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "1001",
             "10010000000000000002", "00000000000000000000", "20260511", """
                 <RealHead1001>
                   <SendOrgCode>30500000000000</SendOrgCode>

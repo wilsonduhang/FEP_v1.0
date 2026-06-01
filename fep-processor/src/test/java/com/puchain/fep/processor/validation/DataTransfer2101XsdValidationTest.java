@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_2101_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "2101",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "2101",
             "21010000000000000001", "00000000000000000000", "20260509", """
                 <BatchHead2101>
                   <SendOrgCode>00000000000000</SendOrgCode>
@@ -48,7 +48,7 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
                 </DataTransfer2101>""");
 
     private static final String INVALID_MISSING_FILEDATE_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "2101",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "2101",
             "21010000000000000002", "00000000000000000000", "20260509", """
                 <BatchHead2101>
                   <SendOrgCode>00000000000000</SendOrgCode>

@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CompanyAuthFileTransfer1004XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "1004",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "1004",
             "10040000000000000001", "00000000000000000000", "20260511", """
                 <RealHead1004>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -51,7 +51,7 @@ class CompanyAuthFileTransfer1004XsdValidationTest extends AbstractXsdValidation
                 </CompanyAuthFileTransfer1004>""");
 
     private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "1004",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "1004",
             "10040000000000000002", "00000000000000000000", "20260511", """
                 <RealHead1004>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -68,7 +68,7 @@ class CompanyAuthFileTransfer1004XsdValidationTest extends AbstractXsdValidation
                 </CompanyAuthFileTransfer1004>""");
 
     private static final String INVALID_MISSING_AUTH_BEGIN_DATE_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "1004",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "1004",
             "10040000000000000003", "00000000000000000000", "20260511", """
                 <RealHead1004>
                   <SendOrgCode>30500000000000</SendOrgCode>

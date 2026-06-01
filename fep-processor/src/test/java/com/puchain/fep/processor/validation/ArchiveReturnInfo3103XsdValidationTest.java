@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ArchiveReturnInfo3103XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3103",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "3103",
             "31030000000000000001", "31010000000000000001", "20260514", """
                 <BatchHead3103>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -68,7 +68,7 @@ class ArchiveReturnInfo3103XsdValidationTest extends AbstractXsdValidationTest {
                 </ArchiveReturnInfo3103>""");
 
     private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3103",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "3103",
             "31030000000000000002", "31010000000000000002", "20260514", """
                 <BatchHead3103>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -88,7 +88,7 @@ class ArchiveReturnInfo3103XsdValidationTest extends AbstractXsdValidationTest {
                 </ArchiveReturnInfo3103>""");
 
     private static final String INVALID_MISSING_RZQYCODE_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "HNDEMP", "3103",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_HNDEMP, "3103",
             "31030000000000000003", "31010000000000000003", "20260514", """
                 <BatchHead3103>
                   <SendOrgCode>30500000000000</SendOrgCode>
