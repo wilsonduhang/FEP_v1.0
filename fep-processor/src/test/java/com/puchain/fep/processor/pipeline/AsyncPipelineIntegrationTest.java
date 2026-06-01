@@ -12,6 +12,8 @@ import com.puchain.fep.processor.validation.XsdValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -268,8 +270,29 @@ class AsyncPipelineIntegrationTest {
      * the arithmetic mean over 5ms even though the steady-state path stayed
      * fast. P95 absorbs single outliers while still catching real
      * degradations (e.g. uncached JAXBContext, lost XSD cache).</p>
+     *
+     * @implNote 2026-05-27: skipped on macOS via {@link DisabledOnOs}. Root
+     * cause: macOS host scheduler / GC pause / system load (spotlight,
+     * TimeMachine, concurrent mvn fork JVMs) drive per-call latency outliers
+     * into the top 5% of the 100-sample distribution, pushing P95 well over
+     * 15ms (observed 17.94 - 122ms across daily reports; 2026-05-27 RED runs
+     * captured P95=77.26ms / mean=26.51ms / max=140.59ms in baseline).
+     * GHA Ubuntu CI runs stable at P95 = 1.14 - 3.14ms (max=5.02ms) across 4
+     * cross-validation runs — 13x safety margin. See investigate report at
+     * {@code /Users/muzhou/FEP/docs/daily_reports/2026-05-26-async-pipeline-p95-investigate-report.md}
+     * (local-only, non-git-tracked — muzhou private workspace).
+     *
+     * <p>macOS developers who need to force-run this test locally:</p>
+     * <ol>
+     *   <li>IDE: right-click method → Run (IDE overrides condition evaluation)</li>
+     *   <li>Temporarily comment out {@code @DisabledOnOs} annotation</li>
+     *   <li>Run inside a Linux Docker container</li>
+     * </ol>
      */
     @Test
+    @DisabledOnOs(value = OS.MAC, disabledReason =
+            "Wall-clock perf gate is sensitive to macOS host scheduler/GC variance "
+                    + "(see @implNote). GHA Ubuntu CI provides the steady baseline.")
     void performanceBaseline_100AsyncInbound_shouldHaveP95LessThan15ms() {
         byte[] validXml = toBytes(cfx("3001", """
                 <RealHead3001>
