@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "2001",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "2001",
             "20010000000000000001", "10010000000000000001", "20260511", """
                 <RealHead2001>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -54,7 +54,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                 </CompanyInfoResponse2001>""");
 
     private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "2001",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "2001",
             "20010000000000000002", "10010000000000000002", "20260511", """
                 <RealHead2001>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -75,7 +75,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
      * (XSD 2001.xsd:36 CompanyInfoResponse2001 minOccurs="0" 允许)。
      */
     private static final String VALID_EMPTY_BODY_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "2001",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "2001",
             "20010000000000000003", "10010000000000000003", "20260511", """
                 <RealHead2001>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -86,7 +86,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                 </RealHead2001>""");
 
     private static final String INVALID_MISSING_QUERY_RESULT_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "2001",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "2001",
             "20010000000000000004", "10010000000000000004", "20260511", """
                 <RealHead2001>
                   <SendOrgCode>30500000000000</SendOrgCode>

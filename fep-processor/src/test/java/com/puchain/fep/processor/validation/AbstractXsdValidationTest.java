@@ -42,6 +42,18 @@ public abstract class AbstractXsdValidationTest {
      */
     public static final XsdValidator SHARED_VALIDATOR = new XsdValidator(SHARED_REGISTRY);
 
+    /** 平台/中心侧节点代码（HNDEMP 数据交换中心，{@code HEAD/DesNode} 上行 / {@code SrcNode} 下行）。 */
+    public static final String HNDEMP_NODE = "A1000143000104";
+
+    /** 接入机构侧节点代码（银行/供应链信息服务机构，{@code HEAD/SrcNode} 上行 / {@code DesNode} 下行）。 */
+    public static final String INSTITUTION_NODE = "A1000142000001";
+
+    /** 平台侧应用代码（{@code HEAD/App}，下行报文）。 */
+    public static final String APP_HNDEMP = "HNDEMP";
+
+    /** 机构侧应用代码（{@code HEAD/App}，上行报文；注意小写 x）。 */
+    public static final String APP_FEPX = "FEPx";
+
     /**
      * Legacy mutable field preserved for source-compat with 12 existing
      * subclasses (DataTransfer1101/2101, Batch{1102,1103,1104,2102,2103,2104},

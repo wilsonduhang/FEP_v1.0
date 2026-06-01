@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ProgressQuery3001XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "3001",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "3001",
             "30010000000000000001", "00000000000000000000", "20260513", """
                 <RealHead3001>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -53,7 +53,7 @@ class ProgressQuery3001XsdValidationTest extends AbstractXsdValidationTest {
                 </ProgressQuery3001>""");
 
     private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "3001",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "3001",
             "30010000000000000002", "00000000000000000000", "20260513", """
                 <RealHead3001>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -71,7 +71,7 @@ class ProgressQuery3001XsdValidationTest extends AbstractXsdValidationTest {
                 </ProgressQuery3001>""");
 
     private static final String INVALID_MISSING_HXQYCODE_XML = wrapCfxTemplate(
-            "A1000142000001", "A1000143000104", "FEPx", "3001",
+            INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "3001",
             "30010000000000000003", "00000000000000000000", "20260513", """
                 <RealHead3001>
                   <SendOrgCode>30500000000000</SendOrgCode>

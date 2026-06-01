@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InvoCheckReturn3008XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3008",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3008",
             "30080000000000000001", "30070000000000000001", "20260514", """
                 <RealHead3008>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -64,7 +64,7 @@ class InvoCheckReturn3008XsdValidationTest extends AbstractXsdValidationTest {
                 </InvoCheckReturn3008>""");
 
     private static final String VALID_ADDWORD_OMITTED_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3008",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3008",
             "30080000000000000002", "30070000000000000002", "20260514", """
                 <RealHead3008>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -83,7 +83,7 @@ class InvoCheckReturn3008XsdValidationTest extends AbstractXsdValidationTest {
                 </InvoCheckReturn3008>""");
 
     private static final String INVALID_MISSING_RESULT_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3008",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3008",
             "30080000000000000003", "30070000000000000003", "20260514", """
                 <RealHead3008>
                   <SendOrgCode>30500000000000</SendOrgCode>

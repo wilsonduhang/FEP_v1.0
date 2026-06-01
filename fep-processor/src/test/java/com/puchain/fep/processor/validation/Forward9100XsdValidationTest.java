@@ -43,7 +43,7 @@ class Forward9100XsdValidationTest extends AbstractXsdValidationTest {
      */
     private static String wrap(String msgIdSeq, String msgInnerXml) {
         return wrapCfxTemplate(
-                "A1000142000001", "A1000143000104", "FEPx", "9100",
+                INSTITUTION_NODE, HNDEMP_NODE, APP_FEPX, "9100",
                 msgIdSeq, "00000000000000000000", "20260519",
                 msgInnerXml);
     }

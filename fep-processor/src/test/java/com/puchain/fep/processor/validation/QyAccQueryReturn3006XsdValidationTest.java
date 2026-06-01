@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class QyAccQueryReturn3006XsdValidationTest extends AbstractXsdValidationTest {
 
     private static final String VALID_FULL_FIELDS_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3006",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3006",
             "30060000000000000001", "30050000000000000001", "20260513", """
                 <RealHead3006>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -56,7 +56,7 @@ class QyAccQueryReturn3006XsdValidationTest extends AbstractXsdValidationTest {
                 </qyAccQueryReturn3006>""");
 
     private static final String VALID_OPTIONAL_OMITTED_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3006",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3006",
             "30060000000000000002", "30050000000000000002", "20260513", """
                 <RealHead3006>
                   <SendOrgCode>30500000000000</SendOrgCode>
@@ -74,7 +74,7 @@ class QyAccQueryReturn3006XsdValidationTest extends AbstractXsdValidationTest {
                 </qyAccQueryReturn3006>""");
 
     private static final String INVALID_MISSING_ACCRETURNCODE_XML = wrapCfxTemplate(
-            "A1000143000104", "A1000142000001", "FEPx", "3006",
+            HNDEMP_NODE, INSTITUTION_NODE, APP_FEPX, "3006",
             "30060000000000000003", "30050000000000000003", "20260513", """
                 <RealHead3006>
                   <SendOrgCode>30500000000000</SendOrgCode>
