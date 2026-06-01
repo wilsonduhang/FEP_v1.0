@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,16 +34,35 @@ class CallbackQueueRepositoryTest {
     private EntityManager entityManager;
 
     @Test
-    void enqueueAndQueryPending_shouldPersistAndReturnByCreateOrder() {
-        CallbackQueueEntity e = CallbackQueueEntity.pending(
+    void enqueueAndIdempotencyCheck_shouldPersist() {
+        final CallbackQueueEntity e = CallbackQueueEntity.pending(
                 "key-1", "if-1", "2103", "{\"code\":\"200\"}");
         repository.save(e);
 
         assertThat(repository.existsByIdempotencyKey("key-1")).isTrue();
-        List<CallbackQueueEntity> pending =
-                repository.findTop50ByStatusOrderByCreateTimeAsc(CallbackQueueStatus.PENDING);
-        assertThat(pending).hasSize(1);
-        assertThat(pending.get(0).getIdempotencyKey()).isEqualTo("key-1");
+        assertThat(repository.existsByIdempotencyKey("no-such-key")).isFalse();
+    }
+
+    @Test
+    void claimBatch_shouldSelectPendingAndDueRetry_skipFutureAndTerminal() {
+        final LocalDateTime past = LocalDateTime.now().minusMinutes(1);
+        final LocalDateTime future = LocalDateTime.now().plusMinutes(10);
+        repository.save(CallbackQueueEntity.pending("k-pending", "i", "3001", "{}"));
+        final CallbackQueueEntity dueRetry = CallbackQueueEntity.pending("k-due", "i", "3001", "{}");
+        dueRetry.markRetry(1, past, "e");
+        repository.save(dueRetry);
+        final CallbackQueueEntity futureRetry = CallbackQueueEntity.pending("k-future", "i", "3001", "{}");
+        futureRetry.markRetry(1, future, "e");
+        repository.save(futureRetry);
+        final CallbackQueueEntity done = CallbackQueueEntity.pending("k-done", "i", "3001", "{}");
+        done.markDone();
+        repository.save(done);
+        entityManager.flush();
+
+        final List<String> ids = repository.claimBatch(50);
+
+        assertThat(ids).hasSize(2);
+        // 排序 next_retry_at NULLS FIRST → PENDING(null) 在 due-retry(past) 之前
     }
 
     @Test

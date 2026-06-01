@@ -54,6 +54,7 @@ management:
       # 客户端 percentile 不支持跨实例聚合，单机 FEP 部署足以覆盖。
       percentiles:
         fep_outbound_send_latency_seconds: 0.5,0.95,0.99
+        fep_callback_send_latency_seconds: 0.5,0.95,0.99
 
 logging:
   level:
