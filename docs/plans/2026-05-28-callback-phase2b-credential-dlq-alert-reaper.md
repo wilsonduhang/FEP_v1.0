@@ -18,13 +18,13 @@
 |---|---|
 | 作者 | Claude Code（mode A） |
 | 起草日期 | 2026-05-28 |
-| Plan version | v0.3（Round 2 NEEDS REVISION 修订: B5 PR 拓扑编译序 + N4 Checker Framework + N5 mock helper 注，待 muzhou 签字） |
+| Plan version | v0.4（v0.3 已 muzhou 签字 ship PR #31 `8613568`；v0.4 = DEF-Plan-Callback-v04-optimization 4 MINOR boil-lake 加固: A PRD 追溯 + B.5 可读性 + C.3 T5 OAuth2 Mode 标注 + E baseline currency，Round 3 santa 复审后待 muzhou 重签） |
 | **执行 Worktree** | `/Users/muzhou/FEP_v1.0_wt-callback-p2b`（分支 `feat/callback-phase2b-credential-dlq-alert-reaper`，AI 后端 Task — 触发条件 ② + ③）+ `/Users/muzhou/FEP_v1.0_wt-callback-p2b-sec`（分支 `feat/callback-phase2b-security-credential-key`，⛔ Mode E ③ 安全专家独立 — 触发条件 ③） |
-| **PR 拓扑**（M3 修订 + B5 修订 v0.3） | **双 PR + 编译序闸**: ① ⛔ Mode E PR 先 ship — `wt-callback-p2b-sec` 含 **T1（fep-security-api KeyService 接口加 `getSm4CredentialMasterKey` + SecurityApiConfiguration mock impl）+ T2（fep-security-impl KeyServiceImpl SM4 主密钥实现）**，独立 PR (`feat/callback-phase2b-security-credential-key`) muzhou + ③ 双签后 merge to main；② AI 后端 PR 后 ship — `wt-callback-p2b` rebase main（pull T1+T2 commit）ship **T3-T14+T16+T17**，主 PR (`feat/callback-phase2b-credential-dlq-alert-reaper`) merge to main；③ T15 (fep-admin-ui) 由独立子 Plan `2026-05-28-callback-phase2b-ui.md` 处理（第 3 个 PR）。**B5 修订理由**: T1 接口归 ⛔ Mode E PR 因 `getSm4CredentialMasterKey` 触及 CLAUDE.md "密钥管理" 禁区（接口设计 + 语义本身 ③ 安全专家拍板，AI 起草仅作 reviewer aid），且 T2 `@Override` 需要 T1 interface 在 baseline 上存在（避免独立 PR compile fail） |
-| Baseline | **假设 PR #27 b26f4a8 (`feat/callback-module-phase2`) 已 merge** 到 origin/main；起草日 origin/main HEAD = `4fcac99`，Round 1 评审日 drift 到 `3300533`（R-NEW-1 follow-on XsdTestSupport.pad30 ship，与本 Plan 无冲突）；实施前必重 grep（红线 `feedback_baseline_drift_during_long_review_cycle`） |
+| **PR 拓扑**（M3 修订 + B5 修订 v0.3） | **双 PR + 编译序闸**: ① ⛔ Mode E PR 先 ship — `wt-callback-p2b-sec` 含 **T1（fep-security-api KeyService 接口加 `getSm4CredentialMasterKey` + SecurityApiConfiguration mock impl）+ T2（fep-security-impl KeyServiceImpl SM4 主密钥实现）**，独立 PR (`feat/callback-phase2b-security-credential-key`) muzhou + ③ 双签后 merge to main；② AI 后端 PR 后 ship — `wt-callback-p2b` rebase main（pull T1+T2 commit）ship **T3-T14（12 个）+T16+T17（共 14 AI Task）**，主 PR (`feat/callback-phase2b-credential-dlq-alert-reaper`) merge to main；③ T15 (fep-admin-ui) 由独立子 Plan `2026-05-28-callback-phase2b-ui.md` 处理（第 3 个 PR）。**B5 修订理由**: T1 接口归 ⛔ Mode E PR 因 `getSm4CredentialMasterKey` 触及 CLAUDE.md "密钥管理" 禁区（接口设计 + 语义本身 ③ 安全专家拍板，AI 起草仅作 reviewer aid），且 T2 `@Override` 需要 T1 interface 在 baseline 上存在（避免独立 PR compile fail） |
+| Baseline | **假设 PR #27 b26f4a8 (`feat/callback-module-phase2`) 已 merge** 到 origin/main；起草日 origin/main HEAD = `4fcac99`，Round 1+2 评审日 drift 到 `3300533`（R-NEW-1 follow-on XsdTestSupport.pad30 ship，与本 Plan 无冲突）；**v0.4 加固评审日 (2026-06-01) baseline HEAD = `f89fe38`（origin/main = main 同步 ahead/behind 0；v0.3 已 PR #31 `8613568` squash merge to origin/main，原 `ca8ffb8` 已被取代不在 origin/main；c8ea968/0ce43fa/collector mapper PR #30 已 merge，与本 Plan 范围无交集）**；实施前必重 grep（红线 `feedback_baseline_drift_during_long_review_cycle` + `feedback_dependency_plan_currency_recheck` 签字-实施跨 ≥24h 重测） |
 | Flyway V_N | 预占 V30 / V31 / V32（起草日 main 最大 V28，PR #27 占 V29；实施前重 grep `ls FEP_v1.0/fep-web/src/main/resources/db/migration/`） |
 | 依赖 | **强依赖**: PR #27 `b26f4a8` merge 到 origin/main（T8 ALTER + T10 RetryHandler publish event 都基于 PR #27 引入的 `retry_count/next_retry_at/claimed_at` + `markDeadLetter()` API） |
-| FR-ID | FR-INFRA-CALLBACK-CREDENTIAL / FR-INFRA-CALLBACK-DLQ-REPLAY / FR-INFRA-CALLBACK-IN-APP-ALERT / FR-INFRA-CALLBACK-STALE-REAPER（prd-traceability-matrix 实施时 4 行新建） |
+| FR-ID | FR-INFRA-CALLBACK-CREDENTIAL / FR-INFRA-CALLBACK-DLQ-REPLAY / FR-INFRA-CALLBACK-IN-APP-ALERT / FR-INFRA-CALLBACK-STALE-REAPER（prd-traceability-matrix 实施时 4 行新建）。**全 `FR-INFRA-*` 基础设施类，依 CLAUDE.md "Plan 治理 — 每个 Task 必须引用 PRD 章节 + FR-ID（基础设施/元流程 Plan 除外）" 豁免单 Task 内联 FR-ID，采用 §4.3 group-level 追溯** |
 | AI 评审 | Round 1 (2026-05-28) NEEDS REVISION (BLOCKER × 4 + MAJOR × 4)；Round 2 待重派（修订 v0.2 后）（红线 `secondary-ai-review`） |
 | muzhou 签字 | 一票否决（7 项 plan-review-checklist），Round 2 PASS 后签字 |
 | ③ 安全专家 | T2 KeyServiceImpl 单独签字（`Security-Reviewed-By` footer，不含 `AI-Generated`） |
@@ -734,7 +734,9 @@ Reviewed-By: pending"
 
 ---
 
-### Task T5 — OAuth2TokenCache (Caffeine) + Client (AI / Mode A)
+### Task T5 — OAuth2TokenCache (Caffeine) + Client (AI / Mode B — ③ 安全专家 review)
+
+> **v0.4 加固（C.3 finding）**: Mode A → **Mode B**。access_token 是 RFC 6749 短期运行时凭证（盗用即冒充行内系统调用 FEP），Caffeine in-memory cache 持明文 token（TTL=expires_in-30s）。虽不在 CLAUDE.md ⛔ "密钥管理"禁区（非密钥派生材料，无需 ③ 人工编写），但属敏感凭证缓存 → AI 起草 + ③ 安全专家 review 缓存命名/TTL 上限/log 泄漏/JVM heap dump 风险（见 Step 5.5 安全审计）。
 
 **Files**:
 - Create: `fep-web/src/main/java/com/puchain/fep/web/callback/credential/oauth/OAuth2TokenCache.java`
@@ -991,6 +993,14 @@ public class OAuth2InvalidCredentialException extends RuntimeException {
     public OAuth2InvalidCredentialException(String m) { super(m); }
 }
 ```
+
+- [ ] **Step 5.5: access_token cache 安全审计（③ 安全专家 review — C.3 加固）**
+
+confirm 以下 4 项（implementer 自检 + ③ 安全专家 review）：
+- [ ] cache key/value 不入 logger（grep `LOG\.|log\.` 在 oauth/ 包内确认无 `accessToken()` / token 明文打印；如有则 `LogSanitizer.sanitize` + `@SuppressFBWarnings(CRLF_INJECTION_LOGS)`）
+- [ ] `OAuth2TokenResponse` / cache entry 不在 `toString()` 回显 access_token（record 默认 toString 含字段 → 显式 override 屏蔽 token 或确认不被日志/异常消息引用）
+- [ ] TTL 上限封顶 ≤ 1h（即使 IDP 返回 `expires_in` 很大，`Math.min(expiresIn - 30, 3600)` 防长寿命 token 滞留 heap）
+- [ ] JVM heap dump 暴露风险 acknowledged（in-memory 明文 token 不可避免，记录在安全文档；不引入持久化）
 
 - [ ] **Step 6: 运行测试通过 + 全 fep-web test**
 
@@ -2897,11 +2907,13 @@ git worktree list  # 验证清理
 
 ### 4.3 PRD 追溯
 
+> **v0.4 加固（A finding）**: 全 4 FR-ID 属 `FR-INFRA-*` 基础设施类，依 CLAUDE.md "Plan 治理"豁免单 Task 内联 FR-ID，采用 group-level 追溯（下表）；T 粒度展开到单 Task 以便 session-end 实施时回填 `prd-traceability-matrix.md`（CREDENTIAL 行原 `T1-T7` group 不便逐行回填）。PRD § 列补全 `§2.1.2`（凭证架构）+ `§5.5.3`（TOKEN/OAUTH2），与 §0 Goal/Architecture line 7+9 OAuth2 access_token 描述对齐。
+
 | FR-ID | PRD § | Task |
 |---|---|---|
-| FR-INFRA-CALLBACK-CREDENTIAL | §5.5.2 + §2.2.1 | T1-T7（**T15 UI 见子 Plan**） |
-| FR-INFRA-CALLBACK-DLQ-REPLAY | §2.2.1 | T8-T9（**T15 UI 见子 Plan**） |
-| FR-INFRA-CALLBACK-IN-APP-ALERT | §5.10.7.2d + 决策门 6 | T10-T12（**T15 UI 见子 Plan**） |
+| FR-INFRA-CALLBACK-CREDENTIAL | §2.1.2 + §5.5.2 + §5.5.3 + §2.2.1 | T1/T2/T3/T4/T5/T6/T7（**T15 UI 见子 Plan**） |
+| FR-INFRA-CALLBACK-DLQ-REPLAY | §2.2.1 | T8/T9（**T15 UI 见子 Plan**） |
+| FR-INFRA-CALLBACK-IN-APP-ALERT | §5.10.7.2d + 决策门 6 | T10/T11/T12（**T15 UI 见子 Plan**） |
 | FR-INFRA-CALLBACK-STALE-REAPER | §2.2.1 | T13 |
 
 ---
@@ -3052,7 +3064,27 @@ Recommended changes 落实情况（v0.2 修订记录）:
 - [x] N4 — T5 Step 3 删 `@NonNegative` import + 两处注解（行 798 / 832 / 837 → 仅签名变化）
 - [x] N5 — T12 Step 1 test class 末加 3 个 inline mock helper (mockSysRole / mockSysUserRole / mockSysUser)
 
-**Round 3 评审**: 不需要 — B5 + N4 + N5 是局部修订（PR 拓扑 + 注解删除 + helper 加），无新业务逻辑或架构变化；muzhou 在 v0.3 直接 7 项 plan-review-checklist 签字。
+**Round 3 评审（v0.3 当时判定）**: 不需要 — B5 + N4 + N5 是局部修订（PR 拓扑 + 注解删除 + helper 加），无新业务逻辑或架构变化；muzhou 在 v0.3 直接 7 项 plan-review-checklist 签字 ship PR #31 `8613568`。
+
+### Round 3 — 2026-06-01（v0.4 DEF-Plan-Callback-v04-optimization boil-lake 加固）
+
+> 来源: v0.3 签字 ship 后，别会话越界评审（报告 `2026-05-28-callback-phase2b-plan-v03-ai-review-round1-overrun-graceful.md`）产出 5 项 finding（4 MINOR + 1 已识别），graceful 退出转 deferred ticket pool `DEF-Plan-Callback-v04-optimization`。
+> muzhou 2026-06-01 AskUserQuestion 拍板 **(a) 加固后重签**（红线 `feedback_concern_boil_lake_when_cheap_and_safe` 三条件命中: PASS WITH MINOR + ≤20 LOC inline + 纯防御文档元数据，无业务逻辑）。
+> baseline HEAD 实测: `f89fe38`（origin/main = main 同步）。
+
+**4 MINOR 加固落实（v0.4）**:
+- [x] **A** — §4.3 PRD § 列补 `§2.1.2` + `§5.5.3`（CREDENTIAL 行）+ T 粒度展开单 Task（便于 prd-traceability-matrix 回填）+ §0 line 27 FR-ID 行加 `FR-INFRA-*` group-level 追溯豁免明示 + §4.3 加 backfill note
+- [x] **B.5** — §0 line 23 PR 拓扑 `T3-T14+T16+T17` → `T3-T14（12 个）+T16+T17（共 14 AI Task）` 可读性（消除心算 12+1+1）
+- [x] **C.3** — T5 heading `Mode A` → `Mode B（③ 安全专家 review）` + 加 Step 5.5 access_token cache 安全审计（4 项 confirm: logger/toString/TTL≤1h/heap dump）。access_token 属短期运行时凭证（非 ⛔ 密钥派生材料 → 仍 AI 起草，但 ③ 安全 review 缓存风险）
+- [x] **E** — §0 line 24 Baseline 补 v0.4 评审日 entry（`f89fe38` + v0.3 已 PR #31 squash merge + c8ea968 取代说明）+ §8.1 加 Step 4.5 Maven currency（caffeine/wiremock）+ 3 Repository method 签名 grep（SysRoleRepository/SysUserRoleRepository/SysUserRepository，防 T7/T12 baseline drift）
+
+**boil-lake 触发条件检查**（红线 `feedback_concern_boil_lake_when_cheap_and_safe`）:
+- ① 越界评审输出 PASS WITH 🟡 CONCERN（A + 部分 E）+ PASS WITH MINOR（B + C）— **是**（BLOCKER/MAJOR = 0）✅
+- ② 加固 ≤20 LOC inline（9 处 §0/§4.3/T5/§6/§8.1 文档修订）✅
+- ③ 纯防御不引入新业务逻辑（全是 Plan 文档元数据/PRD 矩阵补全/grep 命令/安全审计 checklist）✅
+- → 三条件全命中 → boil-lake 全加固后 Round 3 santa 复审 → muzhou 重签
+
+**Round 3 santa 复审**: 待派发（复核 4 项加固到位 + 加固本身无新 bug，红线要求加固后必跑 Round N+1 评审）。
 
 ---
 
@@ -3071,6 +3103,18 @@ Recommended changes 落实情况（v0.2 修订记录）:
 > 签字人: muzhou
 > 备注: AI 起草 + Round 1 santa (BLOCKER × 4) + v0.2 修订 + Round 2 santa (BLOCKER × 1 新生 B5 PR 拓扑) + v0.3 修订 + muzhou 直接 7 项签字（reviewer 明示"不需 Round 3"）。T1+T2 在 ⛔ Mode E PR (`feat/callback-phase2b-security-credential-key`) 先 merge；AI 主 PR (`feat/callback-phase2b-credential-dlq-alert-reaper`) rebase 后 ship；T15 UI 子 Plan stub 待 v1.0 起草+评审+签字+实施。
 > v0.3 候选新红线（待后续拍板）: `feedback_pr_topology_interface_impl_split_compile_order` (PR 拆分时 interface+impl 编译序 + Mode E ownership 范围)。
+
+### v0.4 重签（DEF-Plan-Callback-v04-optimization 4 MINOR boil-lake 加固）
+
+> v0.3 已签字 ship（PR #31 `8613568`），v0.4 = 越界评审 4 MINOR boil-lake 加固（A/B.5/C.3/E，详见 §6 Round 3）。纯文档元数据修订，无业务逻辑/架构变化；T1-T17 实施步骤、PR 拓扑、worktree 治理、TDD 节奏均不变。
+> C.3 是 4 项中唯一影响实施的项（T5 Mode A → Mode B 新增 ③ 安全专家 review 义务 + Step 5.5 安全审计）。
+>
+> - [x] Round 3 santa-method 复审通过（复核 4 项加固到位 + 无新 bug + 无断链 + 无越界 + grep 命令 exit 0；agentId `a10d09a977428ad55` PASS）
+> - [x] 7 项 plan-review-checklist 复核（A 加固后 PRD 对齐/FR-ID 引用增强；C.3 加固后安全分层增强 T5 Mode B + ③ 安全 review step；B.5/E 文档质量增强；T1-T17 实施步骤/PR 拓扑/业务逻辑不变）
+>
+> 重签日期: 2026-06-01
+> 重签人: muzhou
+> 备注: v0.3 已签字 ship PR #31 `8613568`。v0.4 = DEF-Plan-Callback-v04-optimization 4 MINOR boil-lake 加固（A/B.5/C.3/E，纯文档元数据 +60/-9），Round 3 santa 复审 PASS 后 muzhou 重签。C.3 是唯一影响实施项（T5 Mode A → Mode B 新增 ③ 安全专家 review 义务 + Step 5.5 安全审计），实施时 T5 须经 ③ 安全 review。Plan v0.4 就绪供 P4 实施。
 
 ---
 
@@ -3104,6 +3148,13 @@ grep -rn 'retry_count\|retryCount' fep-web/src/main/java/com/puchain/fep/web/cal
 # 4) Flyway 最大 V（红线 feedback_plan_flyway_v_collision_check + feedback_dependency_plan_currency_recheck）
 ls fep-web/src/main/resources/db/migration/ | sort -V | tail -3
 # 期望: V28 / V29 (PR #27) 最大；如出现 V30+ 表示别会话已占用，Plan V30/V31/V32 须重新规划
+
+# 4.5) Maven 依赖 currency + Repository method 签名 baseline（v0.4 加固 E finding — 红线 feedback_dependency_plan_currency_recheck）
+# Maven currency 范围：本 Plan 仅引 Caffeine + WireMock（均 root pom 已锁），实施前确认未被别 Plan 升级
+grep -n 'caffeine\|wiremock' pom.xml */pom.xml 2>/dev/null | head
+# 3 Repository method 签名（T7 admin Service + T12 InApp Notification 依赖，防别会话重构改返回类型/签名）
+grep -rn 'findByRoleCode\|findByRoleId\|findAllById' fep-web/src/main/java --include="SysRoleRepository.java" --include="SysUserRoleRepository.java" --include="SysUserRepository.java"
+# 期望: SysRoleRepository.findByRoleCode + SysUserRoleRepository.findByRoleId 签名与 §6 Round 1 B2 实测一致（不一致 → T12 两步查询路径须重核）；findAllById 为 Spring Data CrudRepository 继承内置（不在子接口声明，grep 不命中属正常，始终可用）
 
 # 5) worktree list
 git worktree list
