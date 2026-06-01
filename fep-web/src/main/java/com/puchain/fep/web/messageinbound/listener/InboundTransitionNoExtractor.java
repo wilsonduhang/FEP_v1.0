@@ -49,6 +49,9 @@ final class InboundTransitionNoExtractor {
      */
     private static final DocumentBuilderFactory DBF = createHardenedFactory();
 
+    /** Shared factory — SPI lookup once. {@link XPath} itself is not thread-safe → new per call. */
+    private static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
+
     private InboundTransitionNoExtractor() {
         // utility class — no instances
     }
@@ -80,7 +83,7 @@ final class InboundTransitionNoExtractor {
             final Document doc = DBF.newDocumentBuilder()
                     .parse(new ByteArrayInputStream(
                             payloadXml.getBytes(StandardCharsets.UTF_8)));
-            final XPath xpath = XPathFactory.newInstance().newXPath();
+            final XPath xpath = XPATH_FACTORY.newXPath();
             final String value = (String) xpath.evaluate(
                     TRANSITION_NO_XPATH, doc, XPathConstants.STRING);
             if (value == null || value.isBlank()) {

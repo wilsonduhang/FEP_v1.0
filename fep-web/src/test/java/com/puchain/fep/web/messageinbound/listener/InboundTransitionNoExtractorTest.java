@@ -90,9 +90,16 @@ class InboundTransitionNoExtractorTest {
     }
 
     @Test
-    @DisplayName("畸形 XML → empty（不抛异常）")
-    void extract_malformedXml_returnsEmpty() {
+    @DisplayName("合法但非 CFX 结构的 XML → empty")
+    void extract_nonCfxWellFormedXml_returnsEmpty() {
         assertThat(InboundTransitionNoExtractor.extract("<not-cfx>broken</not-cfx>")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("真畸形 XML（未闭合标签）→ empty（解析异常被吞，不抛）")
+    void extract_trulyMalformedXml_returnsEmpty() {
+        assertThat(InboundTransitionNoExtractor.extract(
+                "<CFX><MSG><BatchHead3115><TransitionNo>00000111")).isEmpty();
     }
 
     @Test
