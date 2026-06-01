@@ -62,6 +62,35 @@ class TlqInboundListenerTest {
                     + "</MSG>"
                     + "</CFX>";
 
+    /**
+     * BatchHead3115 TransitionNo=88888888 故意 ≠ MsgId 末 8 位 00000111（反占位证伪）。
+     */
+    private static final String INDEPENDENT_3115_XML =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                    + "<CFX>"
+                    + "<HEAD>"
+                    + "<Version>1.0</Version>"
+                    + "<SrcNode>" + FepConstants.HNDEMP_NODE_CODE + "</SrcNode>"
+                    + "<DesNode>B43010104B0001</DesNode>"
+                    + "<App>HNDEMP</App>"
+                    + "<MsgNo>3115</MsgNo>"
+                    + "<MsgId>20260424105000000111</MsgId>"
+                    + "<CorrMsgId></CorrMsgId>"
+                    + "<WorkDate>20260424</WorkDate>"
+                    + "</HEAD>"
+                    + "<MSG>"
+                    + "<BatchHead3115>"
+                    + "<SendOrgCode>A1000143000104</SendOrgCode>"
+                    + "<EntrustDate>20260424</EntrustDate>"
+                    + "<TransitionNo>88888888</TransitionNo>"
+                    + "<Result>00000</Result>"
+                    + "</BatchHead3115>"
+                    + "<PlatPay3115>"
+                    + "<SerialNo>SN2026042410500000000000000111</SerialNo>"
+                    + "</PlatPay3115>"
+                    + "</MSG>"
+                    + "</CFX>";
+
     private InboundMessageDispatcher dispatcher;
     private TlqInboundListener listener;
 
@@ -102,6 +131,30 @@ class TlqInboundListenerTest {
                         "test-exception"));
 
         // Listener must not rethrow — broker should treat delivery as ack'd
+        listener.onMessage(message);
+
+        verify(dispatcher).dispatch(eq("3116"), eq("00000001"), any(byte[].class));
+    }
+
+    @Test
+    @DisplayName("业务头 TransitionNo 覆盖 msgId 末 8 位派生 → dispatch 用业务头真值 88888888")
+    void onMessage_bodyTransitionNo_overridesDerived() {
+        final TlqMessage message = newMessage(INDEPENDENT_3115_XML);
+        when(dispatcher.dispatch(eq("3115"), eq("88888888"), any(byte[].class)))
+                .thenReturn(new InboundMessageResponse("rec-115", "COMPLETED", true));
+
+        listener.onMessage(message);
+
+        verify(dispatcher).dispatch(eq("3115"), eq("88888888"), any(byte[].class));
+    }
+
+    @Test
+    @DisplayName("无业务头 TransitionNo → fallback msgId 末 8 位 00000001（向后兼容）")
+    void onMessage_noBodyTransitionNo_fallsBackToDerived() {
+        final TlqMessage message = newMessage(VALID_3116_XML);
+        when(dispatcher.dispatch(eq("3116"), eq("00000001"), any(byte[].class)))
+                .thenReturn(new InboundMessageResponse("rec-116", "COMPLETED", true));
+
         listener.onMessage(message);
 
         verify(dispatcher).dispatch(eq("3116"), eq("00000001"), any(byte[].class));
