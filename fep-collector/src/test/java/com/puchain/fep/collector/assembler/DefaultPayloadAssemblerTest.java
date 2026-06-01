@@ -67,7 +67,7 @@ class DefaultPayloadAssemblerTest {
         appContext.registerBean(RzApplyInfo3105FieldMapper.class,
                 () -> new RzApplyInfo3105FieldMapper(props));
         appContext.registerBean(PzCheckQuery3107FieldMapper.class,
-                PzCheckQuery3107FieldMapper::new);
+                () -> new PzCheckQuery3107FieldMapper(props));
         appContext.registerBean(HxqyCreditAmt3112FieldMapper.class,
                 HxqyCreditAmt3112FieldMapper::new);
         appContext.refresh();
