@@ -22,8 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 3007/3008/3107/3108/3112/3115/3116（P3 Phase 2 + P4-MSG-B-inbound + P4-MSG-J）+
  * 3009/3103/3105/3113（P4-MSG-K inbound 受理）= 17 个 supplychain 包内 Body。
  * 本测试不能直接 import dispatcher（fep-processor 不依赖 fep-web），改为枚举 Class 字面量。
- * fep-web 端用 {@code InboundRegistryArchTest}（T4）作权威 ArchUnit 强护栏覆盖全 21 entries
- * （含 batch 包内 2101/2102/2103/2104）。</p>
+ * fep-web 端用 {@code InboundRegistryArchTest}（T4）作权威 ArchUnit 强护栏覆盖全 23 entries
+ * （含 batch 包内 2101/2102/2103/2104 + common 包内 9007/9009 P4-MSG-L 节点登录/登出回执，
+ * 后者无业务 SerialNo 字段 implements SerialNoBearing 返回 null）。</p>
  */
 class SerialNoBearingComplianceTest {
 
