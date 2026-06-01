@@ -63,12 +63,12 @@ class DefaultPayloadAssemblerTest {
                 () -> new BankCheckDay3116FieldMapper(props));
         appContext.registerBean(RzReturnInfo3009FieldMapper.class,
                 () -> new RzReturnInfo3009FieldMapper(props));
-        // Mode2 stub mappers keep no-arg constructor until Plan B
-        appContext.registerBean(RzApplyInfo3105FieldMapper.class, RzApplyInfo3105FieldMapper::new);
+        appContext.registerBean(RzApplyInfo3105FieldMapper.class,
+                () -> new RzApplyInfo3105FieldMapper(props));
         appContext.registerBean(PzCheckQuery3107FieldMapper.class,
-                PzCheckQuery3107FieldMapper::new);
+                () -> new PzCheckQuery3107FieldMapper(props));
         appContext.registerBean(HxqyCreditAmt3112FieldMapper.class,
-                HxqyCreditAmt3112FieldMapper::new);
+                () -> new HxqyCreditAmt3112FieldMapper(props));
         appContext.refresh();
 
         final RouteRegistry registry = new RouteRegistry(
