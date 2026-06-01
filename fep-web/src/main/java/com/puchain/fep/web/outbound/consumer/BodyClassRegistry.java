@@ -97,7 +97,9 @@ import java.util.Map;
  * P4-MSG-G T2 注册 3008/3020/3103/3108 供应链查询 batch2 4 报文（发票核验回执/通用转发/建档回执/凭证核对回执）；
  * P4-MSG-H 注册 3115/3120 供应链 batch3 2 报文（资金清算指令及回执 / 非实时业务通用转发）；
  * P4-MSG-I T2 注册 9000/9100/9120/3113 共 4 报文（实时通用转发 + 非实时通用转发 + 2101 模式6 ack + 核心企业授信回执）；
- * 37 entries / 后续 9XXX 通用报文（9005/9006/9007/9008/9009）独立 Plan 处理。
+ * 共 {@link com.puchain.fep.converter.wire.OutboundWireShapeDispatcher#REGISTERED_MSG_NO_COUNT}
+ * 份已登记上行报文（与 dispatcher 单一真相源一致，消除双数字硬编码漂移）；
+ * 后续 9XXX 通用报文（9005/9006/9007/9008/9009）独立 Plan 处理。
  * 1001/2001/1004/2004 于 P4-MSG-E T1 注册；1101 于 P4-MSG-D T3 注册；
  * 1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册；3000 已于 Plan B T4 注册。</p>
  *
