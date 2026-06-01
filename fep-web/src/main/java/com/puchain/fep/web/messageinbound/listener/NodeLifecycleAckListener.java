@@ -45,8 +45,6 @@ public class NodeLifecycleAckListener {
      * @param event 入站处理完成事件，非空（Spring 发布保证）；{@code body} 可空
      */
     @EventListener
-    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "All log params wrapped via LogSanitizer.sanitize()")
     public void handle(final InboundMessageProcessedEvent event) {
         final MessageType type = event.type();
         if (type == MessageType.MSG_9007) {
@@ -57,6 +55,8 @@ public class NodeLifecycleAckListener {
         // 非 9007/9009 早返回，不干扰其他 listener
     }
 
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "All log params wrapped via LogSanitizer.sanitize()")
     private void handleLoginAck(final InboundMessageProcessedEvent event) {
         if (event.body() instanceof LoginResponse9007 body) {
             LOG.info("[NODE_LOGIN_ACK] 登录成功 transitionNo={} status={}",
@@ -69,6 +69,8 @@ public class NodeLifecycleAckListener {
         }
     }
 
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "All log params wrapped via LogSanitizer.sanitize()")
     private void handleLogoutAck(final InboundMessageProcessedEvent event) {
         if (event.body() instanceof LogoutResponse9009 body) {
             LOG.info("[NODE_LOGOUT_ACK] 登出成功 transitionNo={} status={}",
