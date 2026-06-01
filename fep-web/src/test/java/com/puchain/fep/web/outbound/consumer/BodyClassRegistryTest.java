@@ -130,7 +130,7 @@ class BodyClassRegistryTest {
                 Arguments.of("9100", Forward9100.class),
                 Arguments.of("9120", MsgReturn9120.class),
                 Arguments.of("3113", HxqyCreditAmt3113.class),
-                // 数仓 collector mapper（3009/3101/3102/3105/3107/3109/3112/3116）
+                // 供应链融资 body（3009 融资回执 + 3101/3102/3105/3107/3109/3112/3116）
                 Arguments.of("3009", RzReturnInfo3009.class),
                 Arguments.of("3101", ContractInfo3101.class),
                 Arguments.of("3102", ArchiveInfo3102.class),
