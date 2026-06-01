@@ -2,12 +2,14 @@ package com.puchain.fep.web.callback.runner;
 
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.callback.config.CallbackQueueProperties;
+import com.puchain.fep.web.callback.dlq.event.CallbackDeadLetterEvent;
 import com.puchain.fep.web.callback.domain.CallbackQueueEntity;
 import com.puchain.fep.web.callback.http.CallbackResult;
 import com.puchain.fep.web.callback.repository.CallbackQueueRepository;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -53,20 +55,25 @@ public class CallbackRetryHandler {
     private final CallbackQueueRepository repo;
     private final CallbackQueueProperties props;
     private final Clock clock;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * 构造注入 3 项依赖。
+     * 构造注入 4 项依赖。
      *
-     * @param repo  回调队列 Repository，非空
-     * @param props 退避配置（base/max/maxAttempts 默认），非空
-     * @param clock 全局唯一 Clock bean（测试可注 fixed clock），非空
+     * @param repo           回调队列 Repository，非空
+     * @param props          退避配置（base/max/maxAttempts 默认），非空
+     * @param clock          全局唯一 Clock bean（测试可注 fixed clock），非空
+     * @param eventPublisher Spring 事件发布器，DEAD_LETTER 时发布
+     *                       {@link CallbackDeadLetterEvent}（T10 事件解耦），非空
      */
     public CallbackRetryHandler(final CallbackQueueRepository repo,
                                 final CallbackQueueProperties props,
-                                final Clock clock) {
+                                final Clock clock,
+                                final ApplicationEventPublisher eventPublisher) {
         this.repo = Objects.requireNonNull(repo, "repo");
         this.props = Objects.requireNonNull(props, "props");
         this.clock = Objects.requireNonNull(clock, "clock");
+        this.eventPublisher = Objects.requireNonNull(eventPublisher, "eventPublisher");
     }
 
     /**
@@ -95,6 +102,7 @@ public class CallbackRetryHandler {
         if (isNonRetryable(result)) {
             entity.markDeadLetter(newRetryCount, error);
             repo.save(entity);
+            publishDeadLetterEvent(entity, newRetryCount, error);
             LOG.warn("callback DEAD_LETTER (4xx non-retryable) queueId={} statusCode={}",
                     LogSanitizer.sanitize(entity.getQueueId()),
                     result.statusCode());
@@ -108,6 +116,7 @@ public class CallbackRetryHandler {
         if (newRetryCount >= maxAttempts) {
             entity.markDeadLetter(newRetryCount, error);
             repo.save(entity);
+            publishDeadLetterEvent(entity, newRetryCount, error);
             LOG.warn("callback DEAD_LETTER (retries exhausted) queueId={} retryCount={}",
                     LogSanitizer.sanitize(entity.getQueueId()), newRetryCount);
             return CallbackFailureOutcome.DEAD_LETTER;
@@ -132,5 +141,25 @@ public class CallbackRetryHandler {
         return result != null
                 && result.statusCode() >= HTTP_CLIENT_ERROR_MIN
                 && result.statusCode() <= HTTP_CLIENT_ERROR_MAX;
+    }
+
+    /**
+     * 发布 {@link CallbackDeadLetterEvent}（T10 事件解耦）。两处 DEAD_LETTER 路径
+     * （4xx 不可重试 / 重试耗尽）落库后调用，订阅方 {@code InAppNotificationListener}
+     * （T12）异步写站内信，不影响 runner 批处理推进。
+     *
+     * @param entity        已落库的死信行
+     * @param newRetryCount 进入死信时的累计重试次数
+     * @param error         最后错误摘要
+     */
+    private void publishDeadLetterEvent(final CallbackQueueEntity entity,
+                                        final int newRetryCount, final String error) {
+        eventPublisher.publishEvent(new CallbackDeadLetterEvent(
+                entity.getQueueId(),
+                entity.getTargetInterfaceId(),
+                entity.getMsgNo(),
+                newRetryCount,
+                error,
+                LocalDateTime.now(clock)));
     }
 }
