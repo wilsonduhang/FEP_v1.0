@@ -59,6 +59,15 @@ public class CallbackQueueEntity {
     @Column(name = "claimed_at")
     private LocalDateTime claimedAt;
 
+    @Column(name = "original_dlq_id", length = 64)
+    private String originalDlqId;
+
+    @Column(name = "replayed_by", length = 64)
+    private String replayedBy;
+
+    @Column(name = "replayed_at")
+    private LocalDateTime replayedAt;
+
     @Column(name = "create_time", nullable = false, updatable = false)
     private LocalDateTime createTime;
 
@@ -97,6 +106,55 @@ public class CallbackQueueEntity {
                                               final String msgNo,
                                               final String payloadJson) {
         return new CallbackQueueEntity(idempotencyKey, targetInterfaceId, msgNo, payloadJson);
+    }
+
+    /**
+     * 复制重放：以原 {@code DEAD_LETTER} 行为模板创建新 {@code PENDING} 行，关联
+     * {@code original_dlq_id} 形成审计回溯链（金融审计要求，FR-INFRA-CALLBACK-DLQ-REPLAY）。
+     *
+     * <p>幂等键派生为 {@code original.idempotencyKey + "-RPL-" + currentTimeMillis}，避免与
+     * 原死信行的唯一约束冲突且允许多次重放。payloadJson / targetInterfaceId / msgNo 原样复制。</p>
+     *
+     * <p>B4 修订（v0.2）: 内部使用 {@link #initializeReplayState} transition method 而非直接
+     * 私有字段写，与 entity 既有 {@code markDone / markSending / markDeadLetter} 等 transition
+     * method 设计风格一致。</p>
+     *
+     * @param original    源死信行，状态必须为 {@code DEAD_LETTER}
+     * @param adminUserId 触发重放的 admin 用户 id（审计），非空
+     * @return 新建的 {@code PENDING} 重放行
+     * @throws IllegalStateException 当 {@code original} 状态非 {@code DEAD_LETTER}
+     */
+    public static CallbackQueueEntity copyForReplay(final CallbackQueueEntity original,
+                                                    final String adminUserId) {
+        if (!CallbackQueueStatus.DEAD_LETTER.equals(original.getStatus())) {
+            throw new IllegalStateException(
+                    "only DEAD_LETTER rows replayable, actual status=" + original.getStatus());
+        }
+        final CallbackQueueEntity copy = new CallbackQueueEntity(
+                original.getIdempotencyKey() + "-RPL-" + System.currentTimeMillis(),
+                original.getTargetInterfaceId(), original.getMsgNo(), original.getPayloadJson());
+        copy.initializeReplayState(original.getQueueId(), adminUserId);
+        return copy;
+    }
+
+    /**
+     * Replay 初始化 transition method（package-private，仅由 {@link #copyForReplay} 调用）。
+     *
+     * <p>B4 修订（v0.2）: 集中处理 status / retryCount / 3 个 replay 字段初始化 + create/update
+     * time，替代原 v0.1 在 static factory 内直接私有字段写，保持 entity "transition method only"
+     * 设计哲学。</p>
+     *
+     * @param originalDlqId 源死信行 queue_id（审计回溯链）
+     * @param adminUserId   触发重放的 admin 用户 id
+     */
+    void initializeReplayState(final String originalDlqId, final String adminUserId) {
+        this.status = CallbackQueueStatus.PENDING;
+        this.retryCount = 0;
+        this.originalDlqId = originalDlqId;
+        this.replayedBy = adminUserId;
+        this.replayedAt = LocalDateTime.now();
+        this.createTime = this.replayedAt;
+        this.updateTime = this.replayedAt;
     }
 
     /**
@@ -157,6 +215,20 @@ public class CallbackQueueEntity {
     }
 
     /**
+     * 回收滞留声领：{@code SENDING} → {@code PENDING} + retryCount++ + 清空 claimedAt，
+     * 由 {@code CallbackStaleReaper}（T13）对超过 lease 阈值仍未推进的行调用，使其重新可声领。
+     *
+     * <p>retryCount++ 防止崩溃实例反复声领同一行造成无限重发；claimedAt 置空使其重回
+     * {@code claimBatch} 候选集（next_retry_at 不设，立即可重选）。</p>
+     */
+    public void markAsStaleReclaim() {
+        this.status = CallbackQueueStatus.PENDING;
+        this.retryCount = this.retryCount + 1;
+        this.claimedAt = null;
+        this.updateTime = LocalDateTime.now();
+    }
+
+    /**
      * @return 重试计数
      */
     public int getRetryCount() {
@@ -175,6 +247,27 @@ public class CallbackQueueEntity {
      */
     public LocalDateTime getClaimedAt() {
         return claimedAt;
+    }
+
+    /**
+     * @return 重放来源死信行 queue_id（非重放行为 null，审计回溯链）
+     */
+    public String getOriginalDlqId() {
+        return originalDlqId;
+    }
+
+    /**
+     * @return 触发重放的 admin 用户 id（非重放行为 null）
+     */
+    public String getReplayedBy() {
+        return replayedBy;
+    }
+
+    /**
+     * @return 重放时间（非重放行为 null）
+     */
+    public LocalDateTime getReplayedAt() {
+        return replayedAt;
     }
 
     /**

@@ -1,11 +1,13 @@
 package com.puchain.fep.web.callback.repository;
 
 import com.puchain.fep.web.callback.domain.CallbackQueueEntity;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -42,4 +44,36 @@ public interface CallbackQueueRepository extends JpaRepository<CallbackQueueEnti
         FOR UPDATE SKIP LOCKED
         """, nativeQuery = true)
     List<String> claimBatch(@Param("batchSize") int batchSize);
+
+    /**
+     * 查询滞留声领行：{@code SENDING} 且 {@code claimedAt} 早于 {@code threshold}，由
+     * {@code CallbackStaleReaper}（T13）回收（声领实例崩溃后行卡在 SENDING 永不推进）。
+     *
+     * @param threshold 声领时效阈值（now - leaseSeconds）；早于此即视为滞留
+     * @return 滞留 SENDING 行，可能为空
+     */
+    @Query("""
+        SELECT q FROM CallbackQueueEntity q
+        WHERE q.status = 'SENDING' AND q.claimedAt < :threshold
+        """)
+    List<CallbackQueueEntity> findStaleSending(@Param("threshold") LocalDateTime threshold);
+
+    /**
+     * 分页查询死信行（管理 Web DLQ 查看），按 {@code updateTime} 降序（最新死信在前）。
+     *
+     * @param pageable 分页参数（page/size，排序已在 JPQL 固定）
+     * @return 死信行页，可能为空
+     */
+    @Query("""
+        SELECT q FROM CallbackQueueEntity q
+        WHERE q.status = 'DEAD_LETTER'
+        ORDER BY q.updateTime DESC
+        """)
+    List<CallbackQueueEntity> findDeadLetter(Pageable pageable);
+
+    /**
+     * @param originalDlqId 源死信行 queue_id
+     * @return 由该死信行重放派生的所有行（审计回溯，可能为空或多条）
+     */
+    List<CallbackQueueEntity> findByOriginalDlqId(String originalDlqId);
 }
