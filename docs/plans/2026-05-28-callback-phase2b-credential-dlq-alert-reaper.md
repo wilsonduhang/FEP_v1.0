@@ -3109,12 +3109,12 @@ Recommended changes 落实情况（v0.2 修订记录）:
 > v0.3 已签字 ship（PR #31 `8613568`），v0.4 = 越界评审 4 MINOR boil-lake 加固（A/B.5/C.3/E，详见 §6 Round 3）。纯文档元数据修订，无业务逻辑/架构变化；T1-T17 实施步骤、PR 拓扑、worktree 治理、TDD 节奏均不变。
 > C.3 是 4 项中唯一影响实施的项（T5 Mode A → Mode B 新增 ③ 安全专家 review 义务 + Step 5.5 安全审计）。
 >
-> - [ ] Round 3 santa-method 复审通过（复核 4 项加固到位 + 无新 bug）
-> - [ ] 7 项 plan-review-checklist 复核（A 加固后 PRD 对齐/FR-ID 引用增强；C.3 加固后安全分层增强）
+> - [x] Round 3 santa-method 复审通过（复核 4 项加固到位 + 无新 bug + 无断链 + 无越界 + grep 命令 exit 0；agentId `a10d09a977428ad55` PASS）
+> - [x] 7 项 plan-review-checklist 复核（A 加固后 PRD 对齐/FR-ID 引用增强；C.3 加固后安全分层增强 T5 Mode B + ③ 安全 review step；B.5/E 文档质量增强；T1-T17 实施步骤/PR 拓扑/业务逻辑不变）
 >
-> 重签日期: 待签
+> 重签日期: 2026-06-01
 > 重签人: muzhou
-> 备注: 待 Round 3 santa 复审 PASS 后 muzhou 重签。
+> 备注: v0.3 已签字 ship PR #31 `8613568`。v0.4 = DEF-Plan-Callback-v04-optimization 4 MINOR boil-lake 加固（A/B.5/C.3/E，纯文档元数据 +60/-9），Round 3 santa 复审 PASS 后 muzhou 重签。C.3 是唯一影响实施项（T5 Mode A → Mode B 新增 ③ 安全专家 review 义务 + Step 5.5 安全审计），实施时 T5 须经 ③ 安全 review。Plan v0.4 就绪供 P4 实施。
 
 ---
 
