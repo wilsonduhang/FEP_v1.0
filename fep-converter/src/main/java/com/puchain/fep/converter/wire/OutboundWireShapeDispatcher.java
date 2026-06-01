@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>实测自 {@value #REGISTERED_MSG_NO_COUNT} 份 XSD（{@code fep-processor/src/main/resources/xsd/{1001,1004,1101,1102,1103,1104,
  * 2001,2004,2102,2103,2104,3000,3001,3002,3003,3004,3005,3006,3007,3008,3009,3020,3101,3102,3103,3105,
- * 3107,3108,3109,3112,3116}.xsd}）：</p>
+ * 3107,3108,3109,3112,3113,3115,3116,3120,9000,9006,9008,9100,9120}.xsd}）：</p>
  * <ul>
  *   <li>1001 → {@code RealHead1001} + {@link RequestBusinessHead}（企业信息实时查询请求，P4-MSG-E T2）</li>
  *   <li>1004 → {@code RealHead1004} + {@link RequestBusinessHead}（授权书实时发送请求，P4-MSG-E T2）</li>
