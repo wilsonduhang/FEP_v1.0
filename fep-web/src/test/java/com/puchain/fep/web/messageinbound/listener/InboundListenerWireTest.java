@@ -80,12 +80,12 @@ import java.util.stream.Stream;
  *       {@code 2026-05-05-inbound-realhead-extraction-blocked.md}。</li>
  * </ul>
  *
- * <p><b>transitionNo 派生约定</b>: per {@code TlqInboundListener.deriveTransitionNo}，
- * transitionNo = msgId 末 8 字符（占位策略，由 ADR
- * {@code 2026-05-05-inbound-realhead-extraction-blocked.md} R3 锁定）。本 IT 断言
- * 末 8 位字符串值，不断言 BatchHead{n}.TransitionNo 业务字段。隐性耦合：mock
- * when() 用 expectedTransitionNo 同值依赖 listener deriveTransitionNo 末 8 位
- * 计算正确（实施时若 listener 算法变更需同步更新 expectedTransitionNo 矩阵）。</p>
+ * <p><b>transitionNo 提取约定</b>（R3 升级后）: {@code TlqInboundListener} 优先经
+ * {@code InboundTransitionNoExtractor} 从业务头 {@code BatchHead{n}.TransitionNo}
+ * 提取真值（PRD §3.2.3/§3.2.4「按原值回填」），msgId 末 8 位仅为提取失败时的兜底
+ * （ADR {@code 2026-05-05-inbound-realhead-extraction-blocked.md} §R3 Addendum）。本 IT
+ * 断言业务头 TransitionNo 值（本矩阵 3 fixture 均 = "00000003"），mock when() 与
+ * verify() 用同一 expectedTransitionNo（= 业务头真值）。</p>
  *
  * <p>PRD 依据: v1.3 §3.1.1（四通道）+ §4.6（双角色）+ §4.7（处理模式：非实时）。</p>
  *
@@ -100,7 +100,8 @@ import java.util.stream.Stream;
 class InboundListenerWireTest {
 
     /**
-     * BATCH 2102 数据报送核对回执 — msgId 末 8 位 = "00000001"。
+     * BATCH 2102 数据报送核对回执 — BatchHead2102.TransitionNo = "00000003"
+     * （R3 后 dispatch 取此业务头真值；msgId 末 8 位 "00000001" 仅兜底）。
      */
     private static final String VALID_2102_XML = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -137,7 +138,8 @@ class InboundListenerWireTest {
             """;
 
     /**
-     * BATCH 2103 企业信息批量查询回执 — msgId 末 8 位 = "00000003"。
+     * BATCH 2103 企业信息批量查询回执 — BatchHead2103.TransitionNo = "00000003"
+     * （= msgId 末 8 位，巧合一致）。
      */
     private static final String VALID_2103_XML = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -175,7 +177,8 @@ class InboundListenerWireTest {
             """;
 
     /**
-     * BATCH 2104 授权书批量回执 — msgId 末 8 位 = "00000001"。
+     * BATCH 2104 授权书批量回执 — BatchHead2104.TransitionNo = "00000003"
+     * （R3 后 dispatch 取此业务头真值；msgId 末 8 位 "00000001" 仅兜底）。
      */
     private static final String VALID_2104_XML = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -245,16 +248,17 @@ class InboundListenerWireTest {
     }
 
     /**
-     * 提供 3 BATCH 测试矩阵: msgNo / xml / expected body class / expected transitionNo (msgId 末 8 位).
+     * 提供 3 BATCH 测试矩阵: msgNo / xml / expected body class / expected transitionNo
+     * （R3 后 = 业务头 BatchHead{n}.TransitionNo 真值；本矩阵 3 fixture TransitionNo 均 = "00000003"）.
      */
     static Stream<Arguments> batchInboundMatrix() {
         return Stream.of(
                 Arguments.of("2102", VALID_2102_XML,
-                        DataTransferCheckBatchResponse2102.class, "00000001"),
+                        DataTransferCheckBatchResponse2102.class, "00000003"),
                 Arguments.of("2103", VALID_2103_XML,
                         CompanyInfoBatchResponse2103.class, "00000003"),
                 Arguments.of("2104", VALID_2104_XML,
-                        CompanyAuthFileBatchResponse2104.class, "00000001")
+                        CompanyAuthFileBatchResponse2104.class, "00000003")
         );
     }
 
