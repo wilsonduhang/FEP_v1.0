@@ -76,6 +76,15 @@ class HxqyCreditAmt3112FieldMapperTest {
     }
 
     @Test
+    void toMessageBody_emptyHxqyInfo_throws() {
+        final Map<String, Object> raw = requiredRaw();
+        raw.put("hxqy_info", List.of());
+        assertThatThrownBy(() -> mapper.toMessageBody(raw))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("missing required field for 3112: hxqyInfo");
+    }
+
+    @Test
     void toMessageBody_hxqyInfoExceeds200_throws() {
         final Map<String, Object> raw = requiredRaw();
         final List<Map<String, Object>> list = new ArrayList<>();
