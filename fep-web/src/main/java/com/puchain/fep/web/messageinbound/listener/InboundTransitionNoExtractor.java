@@ -89,6 +89,9 @@ final class InboundTransitionNoExtractor {
             if (value == null || value.isBlank()) {
                 return Optional.empty();
             }
+            // trim() is defensive: text() normally carries no boundary whitespace, but a
+            // pretty-printed/mixed-content TransitionNo element could; isBlank already
+            // guaranteed non-empty content above.
             return Optional.of(value.trim());
         } catch (ParserConfigurationException | org.xml.sax.SAXException
                 | java.io.IOException | javax.xml.xpath.XPathExpressionException e) {

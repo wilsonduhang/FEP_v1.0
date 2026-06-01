@@ -21,32 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class InboundTransitionNoExtractorTest {
 
-    /** TransitionNo=88888888 故意 ≠ MsgId 末 8 位 00000111（反占位证伪）。 */
-    private static final String INDEPENDENT_3115_XML =
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                    + "<CFX>"
-                    + "<HEAD>"
-                    + "<Version>1.0</Version>"
-                    + "<SrcNode>A1000143000104</SrcNode>"
-                    + "<DesNode>B43010104B0001</DesNode>"
-                    + "<App>HNDEMP</App>"
-                    + "<MsgNo>3115</MsgNo>"
-                    + "<MsgId>20260424105000000111</MsgId>"
-                    + "<CorrMsgId></CorrMsgId>"
-                    + "<WorkDate>20260424</WorkDate>"
-                    + "</HEAD>"
-                    + "<MSG>"
-                    + "<BatchHead3115>"
-                    + "<SendOrgCode>A1000143000104</SendOrgCode>"
-                    + "<EntrustDate>20260424</EntrustDate>"
-                    + "<TransitionNo>88888888</TransitionNo>"
-                    + "<Result>00000</Result>"
-                    + "</BatchHead3115>"
-                    + "<PlatPay3115>"
-                    + "<SerialNo>SN2026042410500000000000000111</SerialNo>"
-                    + "</PlatPay3115>"
-                    + "</MSG>"
-                    + "</CFX>";
+    // 反占位证伪 fixture（TransitionNo=88888888 ≠ MsgId 末 8 位 00000111）抽取到
+    // XsdTestSupport.INDEPENDENT_3115_XML（Rule-of-Three，2026-06-02 R3 Simplify Q-2）。
 
     private static final String NO_TRANSITION_NO_XML =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -66,7 +42,7 @@ class InboundTransitionNoExtractorTest {
     @Test
     @DisplayName("业务头 TransitionNo 与 msgId 末 8 位独立 → 提取业务头值（反占位证伪）")
     void extract_bodyTransitionNo_independentOfMsgId() {
-        assertThat(InboundTransitionNoExtractor.extract(INDEPENDENT_3115_XML))
+        assertThat(InboundTransitionNoExtractor.extract(XsdTestSupport.INDEPENDENT_3115_XML))
                 .contains("88888888");
     }
 
