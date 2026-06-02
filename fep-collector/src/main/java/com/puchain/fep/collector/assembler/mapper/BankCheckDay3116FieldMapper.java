@@ -1,16 +1,10 @@
 package com.puchain.fep.collector.assembler.mapper;
 
 import com.puchain.fep.collector.CollectorProperties;
-import com.puchain.fep.common.domain.FepErrorCode;
-import com.puchain.fep.common.exception.FepBusinessException;
-import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.CheckDetailInfo;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -56,43 +50,11 @@ public class BankCheckDay3116FieldMapper extends AbstractFieldMapper {
         body.setHxqyCode(requireString(rawData, "hxqy_code", "hxqyCode"));
         body.setCheckDate(requireString(rawData, "check_date", "checkDate"));
         body.setCheckDetailNum(requireString(rawData, "check_detail_num", "checkDetailNum"));
-        body.setCheckDetailInfo(requireCheckDetailInfoList(rawData));
+        body.setCheckDetailInfo(requireNestedList(
+                rawData, "check_detail_info", "checkDetailInfo",
+                CHECK_DETAIL_MAX_SIZE, this::mapDetail));
 
         return body;
-    }
-
-    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "异常 message 已 LogSanitizer wrap")
-    private List<CheckDetailInfo> requireCheckDetailInfoList(final Map<String, Object> rawData) {
-        final Object raw = rawData.get("check_detail_info");
-        if (!(raw instanceof List<?> list) || list.isEmpty()) {
-            throw new FepBusinessException(
-                    FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
-                    "missing required field for 3116: checkDetailInfo "
-                            + "(expected non-empty List, got "
-                            + LogSanitizer.sanitize(raw == null ? "null"
-                                    : raw.getClass().getSimpleName()) + ")");
-        }
-        if (list.size() > CHECK_DETAIL_MAX_SIZE) {
-            throw new FepBusinessException(
-                    FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
-                    "checkDetailInfo size " + list.size()
-                            + " exceeds max " + CHECK_DETAIL_MAX_SIZE);
-        }
-        final List<CheckDetailInfo> result = new ArrayList<>(list.size());
-        for (Object item : list) {
-            if (!(item instanceof Map<?, ?> rawDetail)) {
-                throw new FepBusinessException(
-                        FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
-                        "checkDetailInfo item must be Map, got "
-                                + LogSanitizer.sanitize(
-                                        item == null ? "null" : item.getClass().getSimpleName()));
-            }
-            @SuppressWarnings("unchecked")
-            final Map<String, Object> typed = (Map<String, Object>) rawDetail;
-            result.add(mapDetail(typed));
-        }
-        return result;
     }
 
     private CheckDetailInfo mapDetail(final Map<String, Object> rawDetail) {
