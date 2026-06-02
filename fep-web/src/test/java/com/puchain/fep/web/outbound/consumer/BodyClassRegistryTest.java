@@ -158,7 +158,7 @@ class BodyClassRegistryTest {
     }
 
     /**
-     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 + P4-MSG-E T1 + P4-MSG-F T1 + P4-MSG-G T2 + P4-MSG-H + P4-MSG-I — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
+     * P4-MSG-B T0/T1/T4 + P4-MSG-A T2 + P4-MSG-D T3 + P4-MSG-E T1 + P4-MSG-F T1 + P4-MSG-G T2 + P4-MSG-H + P4-MSG-I + P4-MSG-M — 验证 REGISTRY 改用 {@link Map#ofEntries} 以破除 10 entry 上限。
      *
      * <p>P4-MSG-B T0 完成 refactor（Map.of → Map.ofEntries，行为不变 8 entries）；T1 append
      * 3007 → {@link InvoCheckQuery3007}（8 → 9）；T4 append 3000 → {@link DzpzInfo3000}（9 → 10）；
@@ -166,7 +166,10 @@ class BodyClassRegistryTest {
      * P4-MSG-E T1 +4 realtime 1001/2001/1004/2004（17 → 21）；P4-MSG-F T1 +6 supplychain query
      * 3001/3002/3003/3004/3005/3006（21 → 27）；P4-MSG-G T2 +4 supplychain query batch2
      * 3008/3020/3103/3108（27 → 31）；P4-MSG-H +2 supplychain batch3 3115/3120（31 → 33）；
-     * P4-MSG-I T2 +4 报文 9000/9100/9120/3113（33 → 37，含首个 {@code body.common.*} 报文 9000/9100/9120）。
+     * P4-MSG-I T2 +4 报文 9000/9100/9120/3113（33 → 37，含首个 {@code body.common.*} 报文 9000/9100/9120）；
+     * P4-MSG-M +1 报文 9020 → {@link com.puchain.fep.processor.body.common.MsgReturn9020}（37 → 38，
+     * 实时业务通用应答 outbound body 解析；注：9006/9008 走 TlqNodeLoginService 直接 MessageEncoder 路径
+     * 未入本 REGISTRY，故本 REGISTRY size 38 ≠ OutboundWireShapeDispatcher REGISTERED_MSG_NO_COUNT 40）。
      * source code 必须保持用 {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常
@@ -175,7 +178,7 @@ class BodyClassRegistryTest {
     @DisplayName("REGISTRY 使用 Map.ofEntries 破除 Map.of 10-arg 上限以支持任意数量 entry（确切数见方法体断言）")
     void registry_shouldUseMapOfEntries_supportingUnboundedSize() throws Exception {
         // 1. entry 数精确断言（growth guard：每次 append message type 更新此处一行；方法名不再随 entry 数变化）
-        assertThat(countRegistryEntries()).isEqualTo(37);
+        assertThat(countRegistryEntries()).isEqualTo(38);
 
         // 2. source 含 Map.ofEntries(
         final String source = Files.readString(Paths.get(

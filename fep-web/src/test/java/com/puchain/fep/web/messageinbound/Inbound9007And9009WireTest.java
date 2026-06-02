@@ -97,9 +97,9 @@ class Inbound9007And9009WireTest {
     }
 
     @Test
-    @DisplayName("BODY_TYPE_REGISTRY 含 9007/9009 共 23 entry")
-    void bodyTypeRegistryShouldBe23Entries() {
-        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(23);
+    @DisplayName("BODY_TYPE_REGISTRY 含 9007/9009 共 24 entry（P4-MSG-M 扩展 9020 后）")
+    void bodyTypeRegistryShouldBe24Entries() {
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(24);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry())
                 .containsEntry("9007", LoginResponse9007.class)
                 .containsEntry("9009", LogoutResponse9009.class);

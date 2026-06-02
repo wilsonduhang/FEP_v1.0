@@ -1,6 +1,7 @@
 package com.puchain.fep.processor.body.common;
 
 import com.puchain.fep.converter.model.CfxBody;
+import com.puchain.fep.converter.model.SerialNoBearing;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -24,7 +25,7 @@ import jakarta.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "MsgReturn9020")
 @XmlType(propOrder = {"oriMsgNo", "debug"})
-public class MsgReturn9020 extends CfxBody {
+public class MsgReturn9020 extends CfxBody implements SerialNoBearing {
 
     @XmlElement(name = "OriMsgNo", required = true)
     private String oriMsgNo;
@@ -66,5 +67,20 @@ public class MsgReturn9020 extends CfxBody {
      */
     public void setDebug(final String v) {
         this.debug = v;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>9020 实时业务通用应答无业务 SerialNo 字段（仅 OriMsgNo 原报文号 + Debug），
+     * 恒返回 {@code null} → {@code InboundMessageDispatcher} fallback 到 RealHead.transitionNo，
+     * 与 2101/2102/2103/2104 BATCH 回执 + 9007/9009 节点回执的 null-fallback 策略一致（红线
+     * {@code feedback_registered_inbound_body_must_implement_serialnobearing}）。</p>
+     *
+     * @return 恒 {@code null}（OriMsgNo 非业务流水号）
+     */
+    @Override
+    public String getSerialNo() {
+        return null;
     }
 }

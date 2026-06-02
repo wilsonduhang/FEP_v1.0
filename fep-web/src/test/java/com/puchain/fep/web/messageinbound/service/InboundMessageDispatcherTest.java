@@ -10,6 +10,7 @@ import com.puchain.fep.processor.body.batch.DataTransfer2101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.common.LoginResponse9007;
 import com.puchain.fep.processor.body.common.LogoutResponse9009;
+import com.puchain.fep.processor.body.common.MsgReturn9020;
 import com.puchain.fep.processor.body.supplychain.ArchiveReturnInfo3103;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
@@ -659,8 +660,8 @@ class InboundMessageDispatcherTest {
     }
 
     @Test
-    @DisplayName("body type registry exposes 23 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104 + P4-MSG-D 2101 + P4-Plan-C 3001-3006 + P4-MSG-J 3112 + P4-MSG-K 3009/3103/3105/3113 + P4-MSG-L 9007/9009)")
-    void bodyTypeRegistry_contains23Entries() {
+    @DisplayName("body type registry exposes 24 entries (P3 Phase 2 + P4-MSG-B-inbound 3007/3008 + P4-MSG-A-inbound 2102/2103/2104 + P4-MSG-D 2101 + P4-Plan-C 3001-3006 + P4-MSG-J 3112 + P4-MSG-K 3009/3103/3105/3113 + P4-MSG-L 9007/9009 + P4-MSG-M 9020)")
+    void bodyTypeRegistry_contains24Entries() {
         // grep-asserted (feedback_doc_data_grep_first): registry must expose
         // exactly the 4 P3 Phase 2 messageTypes (3107/3108/3115/3116), the
         // 2 P4-MSG-B-inbound InvoCheck messageTypes (3007/3008), the 3
@@ -669,13 +670,14 @@ class InboundMessageDispatcherTest {
         // BIDIRECTIONAL messageTypes (3001-3006), the 1 P4-MSG-J bank-side
         // inbound receive messageType (3112), the 4 P4-MSG-K inbound
         // acceptance messageTypes (3009/3103/3105/3113), and the 2 P4-MSG-L
-        // node lifecycle ack messageTypes (9007/9009).
-        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(23);
+        // node lifecycle ack messageTypes (9007/9009), and the 1 P4-MSG-M
+        // realtime general response messageType (9020).
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry()).hasSize(24);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry())
                 .containsKeys("2101", "2102", "2103", "2104",
                               "3001", "3002", "3003", "3004", "3005", "3006",
                               "3007", "3008", "3107", "3108", "3115", "3116", "3112",
-                              "3009", "3103", "3105", "3113", "9007", "9009");
+                              "3009", "3103", "3105", "3113", "9007", "9009", "9020");
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2101"))
                 .isEqualTo(DataTransfer2101.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("2102"))
@@ -716,6 +718,8 @@ class InboundMessageDispatcherTest {
                 .isEqualTo(LoginResponse9007.class);
         assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("9009"))
                 .isEqualTo(LogoutResponse9009.class);
+        assertThat(InboundMessageDispatcher.bodyTypeRegistry().get("9020"))
+                .isEqualTo(MsgReturn9020.class);
     }
 
     /**

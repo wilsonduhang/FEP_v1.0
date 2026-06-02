@@ -11,6 +11,7 @@ import com.puchain.fep.processor.body.batch.DataTransferCheckBatchRequest1102;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.common.Forward9000;
 import com.puchain.fep.processor.body.common.Forward9100;
+import com.puchain.fep.processor.body.common.MsgReturn9020;
 import com.puchain.fep.processor.body.common.MsgReturn9120;
 import com.puchain.fep.processor.body.realtime.CompanyAuthFileResponse2004;
 import com.puchain.fep.processor.body.realtime.CompanyAuthFileTransfer1004;
@@ -87,6 +88,7 @@ import java.util.Map;
  *   <li>9000 → {@link Forward9000}（实时业务通用转发，P4-MSG-I）</li>
  *   <li>9100 → {@link Forward9100}（非实时业务通用转发，模式3，P4-MSG-I）</li>
  *   <li>9120 → {@link MsgReturn9120}（通用应答，2101 模式6 ack，P4-MSG-I）</li>
+ *   <li>9020 → {@link MsgReturn9020}（实时业务通用应答，P4-MSG-M）</li>
  * </ul>
  *
  * <p>3009 / 3105 / 3109 各自存在备用 POJO（{@code RzAmtInfo3009} / {@code RzAmtInfo3105} /
@@ -97,6 +99,7 @@ import java.util.Map;
  * P4-MSG-G T2 注册 3008/3020/3103/3108 供应链查询 batch2 4 报文（发票核验回执/通用转发/建档回执/凭证核对回执）；
  * P4-MSG-H 注册 3115/3120 供应链 batch3 2 报文（资金清算指令及回执 / 非实时业务通用转发）；
  * P4-MSG-I T2 注册 9000/9100/9120/3113 共 4 报文（实时通用转发 + 非实时通用转发 + 2101 模式6 ack + 核心企业授信回执）；
+ * P4-MSG-M 注册 9020（实时业务通用应答）；
  * 共 {@link com.puchain.fep.converter.wire.OutboundWireShapeDispatcher#REGISTERED_MSG_NO_COUNT}
  * 份已登记上行报文（与 dispatcher 单一真相源一致，消除双数字硬编码漂移）；
  * 后续 9XXX 通用报文（9005/9006/9007/9008/9009）独立 Plan 处理。
@@ -150,7 +153,8 @@ public class BodyClassRegistry {
             Map.entry("3120", Forward3120.class),
             Map.entry("9000", Forward9000.class),
             Map.entry("9100", Forward9100.class),
-            Map.entry("9120", MsgReturn9120.class));
+            Map.entry("9120", MsgReturn9120.class),
+            Map.entry("9020", MsgReturn9020.class));
 
     /**
      * 解析 msgNo 对应的 Body POJO Class。

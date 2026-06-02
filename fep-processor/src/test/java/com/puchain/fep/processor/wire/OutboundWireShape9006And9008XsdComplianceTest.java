@@ -77,8 +77,9 @@ class OutboundWireShape9006And9008XsdComplianceTest {
     }
 
     @Test
-    void registeredMsgNoCountShouldBe39() {
-        assertThat(OutboundWireShapeDispatcher.REGISTERED_MSG_NO_COUNT).isEqualTo(39);
+    void registeredMsgNoCountShouldBe40() {
+        // P4-MSG-M 扩展 9020 后 39 → 40（单一真相源，feedback_cross_task_obsolete_fixture_assumption_when_set_extended）
+        assertThat(OutboundWireShapeDispatcher.REGISTERED_MSG_NO_COUNT).isEqualTo(40);
     }
 
     @Test

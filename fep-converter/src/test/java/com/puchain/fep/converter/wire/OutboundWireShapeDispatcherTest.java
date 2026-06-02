@@ -23,10 +23,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * P4-MSG-E T2 起 21 含 4 realtime 1001/2001/1004/2004，P4-MSG-F T2 起 27 含 6 supplychain query
  * 3001/3002/3003/3004/3005/3006，P4-MSG-G T3 起 31 含 3008/3020/3103/3108，
  * P4-MSG-H 起 33 含 3115/3120 第 5/6 类目，P4-MSG-I 起 37 含 9000/9100/3113/9120 batch4 + 9120 ack,
- * P4-MSG-L 起 39 含 9006/9008 节点登录登出）：</p>
+ * P4-MSG-L 起 39 含 9006/9008 节点登录登出，
+ * P4-MSG-M 起 40 含 9020 实时业务通用应答 — 9020 的 wire-shape 矩阵断言见
+ * {@code OutboundWireShape9020XsdComplianceTest}）：</p>
  * <ul>
  *   <li>1001/1004/3000/3001/3003/3005/3007/3009/9000/9006/9008 → RealHead{msgNo} + RequestBusinessHead + false（P4-MSG-I 扩展 9000，P4-MSG-L 扩展 9006/9008）</li>
- *   <li>2001/2004/3002/3004/3006/3008 → RealHead{msgNo} + ResponseBusinessHead + true（P4-MSG-E/F/G）</li>
+ *   <li>2001/2004/3002/3004/3006/3008/9020 → RealHead{msgNo} + ResponseBusinessHead + true（P4-MSG-E/F/G，P4-MSG-M 扩展 9020）</li>
  *   <li>3020 → RealHead3020 + RequestResponseHead + false（P4-MSG-G T3 第 5 类目，孤儿成员）</li>
  *   <li>3115 → BatchHead3115 + RequestResponseHead + false（P4-MSG-H 第 6 类目）</li>
  *   <li>2102/2103/2104/3101/3103/3108/3113/9120 → BatchHead{msgNo} + ResponseBusinessHead + true（P4-MSG-A T1 扩展 2102/2103/2104；3103/3108 P4-MSG-G T3 扩展；3113/9120 P4-MSG-I 扩展）</li>
