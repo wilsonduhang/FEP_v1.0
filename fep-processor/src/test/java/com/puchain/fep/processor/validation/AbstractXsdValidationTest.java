@@ -48,10 +48,10 @@ public abstract class AbstractXsdValidationTest {
     /** 接入机构侧节点代码（银行/供应链信息服务机构，{@code HEAD/SrcNode} 上行 / {@code DesNode} 下行）。 */
     public static final String INSTITUTION_NODE = "A1000142000001";
 
-    /** 平台侧应用代码（{@code HEAD/App}，下行报文）。 */
+    /** 平台侧应用代码（{@code HEAD/App}）；标识 HNDEMP 平台应用（应用身份，非报文方向）。 */
     public static final String APP_HNDEMP = "HNDEMP";
 
-    /** 机构侧应用代码（{@code HEAD/App}，上行报文；注意小写 x）。 */
+    /** 机构侧应用代码（{@code HEAD/App}）；标识接入机构应用，上行请求与平台回执流均用（应用身份，非报文方向）；注意小写 x。 */
     public static final String APP_FEPX = "FEPx";
 
     /**
