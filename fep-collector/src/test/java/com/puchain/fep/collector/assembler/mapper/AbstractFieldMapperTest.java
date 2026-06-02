@@ -193,6 +193,53 @@ class AbstractFieldMapperTest {
                 .hasMessageContaining("got 10");
     }
 
+    @Test
+    void requireNestedList_happyPath_mapsEachItem() {
+        Map<String, Object> item1 = Map.of("v", "a");
+        Map<String, Object> item2 = Map.of("v", "b");
+        Map<String, Object> raw = Map.of("items", java.util.List.of(item1, item2));
+        java.util.List<String> result = mapper.callRequireNestedList(
+                raw, "items", "itemList", 200, m -> (String) m.get("v"));
+        assertThat(result).containsExactly("a", "b");
+    }
+
+    @Test
+    void requireNestedList_missingOrEmpty_shouldThrow() {
+        Map<String, Object> rawMissing = new HashMap<>();
+        assertThatThrownBy(() -> mapper.callRequireNestedList(
+                rawMissing, "items", "itemList", 200, m -> "x"))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("missing required field for TEST: itemList");
+
+        Map<String, Object> rawEmpty = Map.of("items", java.util.List.of());
+        assertThatThrownBy(() -> mapper.callRequireNestedList(
+                rawEmpty, "items", "itemList", 200, m -> "x"))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("missing required field for TEST: itemList");
+    }
+
+    @Test
+    void requireNestedList_exceedsMax_shouldThrow() {
+        java.util.List<Map<String, Object>> big = new java.util.ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            big.add(Map.of("v", "x"));
+        }
+        Map<String, Object> raw = Map.of("items", big);
+        assertThatThrownBy(() -> mapper.callRequireNestedList(
+                raw, "items", "itemList", 2, m -> "x"))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("itemList size 3 exceeds max 2");
+    }
+
+    @Test
+    void requireNestedList_itemNotMap_shouldThrow() {
+        Map<String, Object> raw = Map.of("items", java.util.List.of("notAMap"));
+        assertThatThrownBy(() -> mapper.callRequireNestedList(
+                raw, "items", "itemList", 200, m -> "x"))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("itemList item must be Map, got String");
+    }
+
     /** 测试用匿名子类（msgNo="TEST"，暴露 protected helper 调用入口）。 */
     private static final class TestHarness extends AbstractFieldMapper {
         TestHarness(final CollectorProperties props) {
@@ -216,6 +263,11 @@ class AbstractFieldMapperTest {
         }
         String callSerialNoOrFallback(Map<String, Object> r) {
             return serialNoOrFallback(r);
+        }
+        java.util.List<String> callRequireNestedList(
+                Map<String, Object> r, String key, String logical, int maxSize,
+                java.util.function.Function<Map<String, Object>, String> itemMapper) {
+            return requireNestedList(r, key, logical, maxSize, itemMapper);
         }
     }
 }

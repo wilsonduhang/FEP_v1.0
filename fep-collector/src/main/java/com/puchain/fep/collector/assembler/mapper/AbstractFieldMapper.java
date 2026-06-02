@@ -9,10 +9,13 @@ import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * fep-collector FieldMapper 共用抽象基类（Plan 2026-05-28-collector-mapper-mode3-boil-lake §A2）。
@@ -222,5 +225,79 @@ public abstract class AbstractFieldMapper implements FieldMapper {
                             + ": XSD requires length=30, got " + raw.length());
         }
         return raw;
+    }
+
+    /**
+     * 读取必填 nested-list 字段（XSD complexType {@code maxOccurs > 1}），校验非空 + 上限
+     * + 每项 Map 类型，逐项经 {@code itemMapper} 映射为元素 POJO。
+     *
+     * <p>抽取自 3107 {@code requireHxqyInfoList} / 3112 {@code requireHxqyInfoList}
+     * / 3116 {@code requireCheckDetailInfoList} 三处近重复脚手架（Rule-of-Three，红线
+     * {@code feedback_concern_boil_lake_when_cheap_and_safe}）。元素映射逻辑（业务专属）
+     * 由调用方以 {@code itemMapper} method reference 注入。
+     *
+     * <p><b>语义</b>:
+     * <ul>
+     *   <li>raw[rawKey] 缺失/非 List/空 List → {@link FepBusinessException}
+     *       ({@link FepErrorCode#COLLECT_ASSEMBLE_FAILURE})
+     *       message {@code "missing required field for <msgNo>: <logicalField> (...)"}</li>
+     *   <li>list.size() > maxSize → 抛 {@code "<logicalField> size N exceeds max M"}</li>
+     *   <li>某项非 Map → 抛 {@code "<logicalField> item must be Map, got <type>"}</li>
+     *   <li>每项 Map → {@code itemMapper.apply(typed)} 映射为 T</li>
+     * </ul>
+     *
+     * <p><b>对称性</b>（红线 {@code feedback_mapper_helper_trim_consistency_redline}）:
+     * 本 helper 是单一 required-list helper，无 optional-list 配对；元素字段 trim 由
+     * {@code itemMapper} 内 {@link #requireString} 负责。若未来新增 optional nested-list helper，
+     * 须镜像本 helper 的 list 非空/size/Map 类型校验。
+     *
+     * @param rawData      原始字段（非 null）
+     * @param rawKey       rawData 的 key（如 "hxqy_info"）
+     * @param logicalField 逻辑字段名（异常 message 使用，如 "hxqyInfo"）
+     * @param maxSize      XSD maxOccurs 上限（如 200）
+     * @param itemMapper   单项 Map → 元素 POJO 映射函数（非 null）
+     * @param <T>          元素 POJO 类型
+     * @return 非空元素列表（size 1..maxSize）
+     * @throws FepBusinessException 缺失/空/超限/项非 Map
+     */
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "logicalField + raw class name 均经 LogSanitizer.sanitize() wrap；"
+                    + "find-sec-bugs 默认 sink 列表未识别 LogSanitizer，需显式抑制。")
+    protected final <T> List<T> requireNestedList(
+            final Map<String, Object> rawData,
+            final String rawKey,
+            final String logicalField,
+            final int maxSize,
+            final Function<Map<String, Object>, T> itemMapper) {
+        final Object raw = rawData.get(rawKey);
+        if (!(raw instanceof List<?> list) || list.isEmpty()) {
+            throw new FepBusinessException(
+                    FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
+                    "missing required field for " + msgNo + ": "
+                            + LogSanitizer.sanitize(logicalField)
+                            + " (expected non-empty List, got "
+                            + LogSanitizer.sanitize(raw == null ? "null"
+                                    : raw.getClass().getSimpleName()) + ")");
+        }
+        if (list.size() > maxSize) {
+            throw new FepBusinessException(
+                    FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
+                    LogSanitizer.sanitize(logicalField) + " size " + list.size()
+                            + " exceeds max " + maxSize);
+        }
+        final List<T> result = new ArrayList<>(list.size());
+        for (final Object item : list) {
+            if (!(item instanceof Map<?, ?> rawItem)) {
+                throw new FepBusinessException(
+                        FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
+                        LogSanitizer.sanitize(logicalField) + " item must be Map, got "
+                                + LogSanitizer.sanitize(
+                                        item == null ? "null" : item.getClass().getSimpleName()));
+            }
+            @SuppressWarnings("unchecked")
+            final Map<String, Object> typed = (Map<String, Object>) rawItem;
+            result.add(itemMapper.apply(typed));
+        }
+        return result;
     }
 }
