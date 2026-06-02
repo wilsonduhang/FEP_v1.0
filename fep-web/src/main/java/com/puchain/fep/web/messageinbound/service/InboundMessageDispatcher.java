@@ -13,6 +13,7 @@ import com.puchain.fep.processor.body.batch.DataTransfer2101;
 import com.puchain.fep.processor.body.batch.DataTransferCheckBatchResponse2102;
 import com.puchain.fep.processor.body.common.LoginResponse9007;
 import com.puchain.fep.processor.body.common.LogoutResponse9009;
+import com.puchain.fep.processor.body.common.MsgReturn9020;
 import com.puchain.fep.processor.body.supplychain.ArchiveReturnInfo3103;
 import com.puchain.fep.processor.body.supplychain.BankCheckDay3116;
 import com.puchain.fep.processor.body.supplychain.HxqyCreditAmt3112;
@@ -67,7 +68,7 @@ import java.util.Objects;
  *
  * <p>Body POJO 解析使用本地 JAXBContext 缓存（per body class），按 P3 Phase 2
  * + P4-MSG-B-inbound + P4-MSG-A-inbound + P4-MSG-D + P4-Plan-C + P4-MSG-J + P4-MSG-K
- * + P4-MSG-L 范围登记 23 种业务 body。
+ * + P4-MSG-L + P4-MSG-M 范围登记 24 种业务 body。
  * 其他 messageType 不解析 body，事件 {@code body} 字段留 null（listener 自行降级处理）。</p>
  *
  * <p>Inbound BODY_TYPE_REGISTRY 注册项（按 msgNo 升序，{@link Map#ofEntries} 不限 entry 数）:</p>
@@ -95,6 +96,7 @@ import java.util.Objects;
  *   <li>3116 → {@link BankCheckDay3116}（资金日对账，P3 Phase 2 wiring）</li>
  *   <li>9007 → {@link LoginResponse9007}（节点登录回执，P4-MSG-L）</li>
  *   <li>9009 → {@link LogoutResponse9009}（节点登出回执，P4-MSG-L）</li>
+ *   <li>9020 → {@link MsgReturn9020}（实时业务通用应答，P4-MSG-M）</li>
  * </ul>
  *
  * <p>所有日志参数走 {@link LogSanitizer#sanitize}，防御 CRLF 日志注入。</p>
@@ -109,12 +111,12 @@ public class InboundMessageDispatcher {
 
     /**
      * P3 Phase 2 + P4-MSG-B-inbound + P4-MSG-A-inbound + P4-MSG-D + P4-Plan-C
-     * + P4-MSG-J + P4-MSG-K + P4-MSG-L 注册的 body POJO 反查表：
+     * + P4-MSG-J + P4-MSG-K + P4-MSG-L + P4-MSG-M 注册的 body POJO 反查表：
      * messageType.msgNo → body class。仅用于 dispatcher 解析 body POJO；listener
      * 各自再做安全 cast。顺序：按 msgNo 升序（2101 P4-MSG-D T4 → 2102/2103/2104 P4-MSG-A-inbound →
      * 3001/3002/3003/3004/3005/3006 P4-Plan-C T1 → 3007/3008 P4-MSG-B-inbound →
      * 3009/3103/3105 P4-MSG-K → 3107/3108 P3 Phase 2 → 3112 P4-MSG-J → 3113 P4-MSG-K
-     * → 3115/3116 P3 Phase 2 → 9007/9009 P4-MSG-L）。
+     * → 3115/3116 P3 Phase 2 → 9007/9009 P4-MSG-L → 9020 P4-MSG-M）。
      *
      * <p>详细注册项见包级 Javadoc {@code <ul>} 列表（与本字段 1:1 对齐）。</p>
      *
@@ -146,7 +148,8 @@ public class InboundMessageDispatcher {
             Map.entry(MessageType.MSG_3115.msgNo(), PlatPay3115.class),
             Map.entry(MessageType.MSG_3116.msgNo(), BankCheckDay3116.class),
             Map.entry(MessageType.MSG_9007.msgNo(), LoginResponse9007.class),
-            Map.entry(MessageType.MSG_9009.msgNo(), LogoutResponse9009.class));
+            Map.entry(MessageType.MSG_9009.msgNo(), LogoutResponse9009.class),
+            Map.entry(MessageType.MSG_9020.msgNo(), MsgReturn9020.class));
 
     private final SyncMessageProcessorService syncProcessor;
     private final ApplicationEventPublisher eventPublisher;
