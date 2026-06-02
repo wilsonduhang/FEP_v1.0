@@ -1,16 +1,10 @@
 package com.puchain.fep.collector.assembler.mapper;
 
 import com.puchain.fep.collector.CollectorProperties;
-import com.puchain.fep.common.domain.FepErrorCode;
-import com.puchain.fep.common.exception.FepBusinessException;
-import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.processor.body.supplychain.HxqyInfo;
 import com.puchain.fep.processor.body.supplychain.PzCheckQuery3107;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -54,42 +48,10 @@ public class PzCheckQuery3107FieldMapper extends AbstractFieldMapper {
         body.setDesNodeCode(DES_NODE_CODE_HNDEMP_CENTER);
         body.setCheckDate(requireString(rawData, "check_date", "checkDate"));
         body.setHxqyNum(requireString(rawData, "hxqy_num", "hxqyNum"));
-        body.setHxqyInfo(requireHxqyInfoList(rawData));
+        body.setHxqyInfo(requireNestedList(
+                rawData, "hxqy_info", "hxqyInfo", HXQY_INFO_MAX_SIZE, this::mapHxqyInfo));
 
         return body;
-    }
-
-    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
-            justification = "异常 message 已 LogSanitizer wrap")
-    private List<HxqyInfo> requireHxqyInfoList(final Map<String, Object> rawData) {
-        final Object raw = rawData.get("hxqy_info");
-        if (!(raw instanceof List<?> list) || list.isEmpty()) {
-            throw new FepBusinessException(
-                    FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
-                    "missing required field for " + msgNo + ": hxqyInfo "
-                            + "(expected non-empty List, got "
-                            + LogSanitizer.sanitize(raw == null ? "null"
-                                    : raw.getClass().getSimpleName()) + ")");
-        }
-        if (list.size() > HXQY_INFO_MAX_SIZE) {
-            throw new FepBusinessException(
-                    FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
-                    "hxqyInfo size " + list.size() + " exceeds max " + HXQY_INFO_MAX_SIZE);
-        }
-        final List<HxqyInfo> result = new ArrayList<>(list.size());
-        for (Object item : list) {
-            if (!(item instanceof Map<?, ?> rawItem)) {
-                throw new FepBusinessException(
-                        FepErrorCode.COLLECT_ASSEMBLE_FAILURE,
-                        "hxqyInfo item must be Map, got "
-                                + LogSanitizer.sanitize(
-                                        item == null ? "null" : item.getClass().getSimpleName()));
-            }
-            @SuppressWarnings("unchecked")
-            final Map<String, Object> typed = (Map<String, Object>) rawItem;
-            result.add(mapHxqyInfo(typed));
-        }
-        return result;
     }
 
     private HxqyInfo mapHxqyInfo(final Map<String, Object> rawItem) {
