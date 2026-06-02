@@ -18,5 +18,19 @@ P3 完成 — 详见 `../FEP/docs/plans/PHASE_HISTORY.md`
 ./mvnw verify --batch-mode --no-transfer-progress
 ```
 
+## 微 Plan verify 策略（避免全 reactor 长跑）
+全 reactor `./mvnw verify` 实测约 8m43s（P4-MSG-I 基线）。**单模块 / 跨少数模块的微 Plan** 推荐缩窄范围，待 PR 触发 GHA CI 跑全量门禁兜底：
+
+```bash
+# 仅改某模块（如 fep-web）的测试/小改动 —— 最快，依赖上次已构建产物
+./mvnw test -pl fep-web -o -Dtest=XxxTest -Dsurefire.failIfNoSpecifiedTests=false
+# 跨模块（如 fep-converter + fep-web）或上游产物未构建 —— -am 连带构建依赖模块
+./mvnw test -pl fep-converter,fep-web -am
+```
+注意：
+- `-o`（offline）依赖本地 `~/.m2` 已有上游产物；首次或上游变更后去掉 `-o` 或加 `-am`。
+- `-Dtest=` 精确目标时配 `-Dsurefire.failIfNoSpecifiedTests=false`（Surefire 3.x，见 `../FEP/CLAUDE.md` 红线索引 `feedback_surefire3_failifno_specified_tests_param_rename`）。
+- 缩窄 verify 仅本机自检提速；**合并前仍以 PR 触发的 GHA CI 全量门禁为准**（Checkstyle/SpotBugs/JaCoCo/ArchUnit）。
+
 ## 常用快速命令
 见 `../FEP/CLAUDE.md` "快速命令"段（后端 verify / Redis / 前端 / E2E / Flyway）。
