@@ -113,7 +113,8 @@ public class CallbackCredentialEntity {
         e.credentialId = UUID.randomUUID().toString().replace("-", "");
         e.interfaceId = Objects.requireNonNull(interfaceId, "interfaceId");
         e.authType = InterfaceAuthType.TOKEN;
-        e.tokenCiphertext = Objects.requireNonNull(tokenCipher, "tokenCipher");
+        // 防御性 clone：避免外部修改污染 entity 内部密文引用（EI_EXPOSE_REP2）
+        e.tokenCiphertext = Objects.requireNonNull(tokenCipher, "tokenCipher").clone();
         e.tokenHeader = tokenHeader != null ? tokenHeader : "Authorization";
         e.keyId = Objects.requireNonNull(keyId, "keyId");
         e.createTime = LocalDateTime.now();
@@ -139,8 +140,10 @@ public class CallbackCredentialEntity {
         e.credentialId = UUID.randomUUID().toString().replace("-", "");
         e.interfaceId = Objects.requireNonNull(interfaceId, "interfaceId");
         e.authType = InterfaceAuthType.OAUTH2;
-        e.oauthClientIdCiphertext = Objects.requireNonNull(clientIdCipher, "clientIdCipher");
-        e.oauthClientSecretCiphertext = Objects.requireNonNull(clientSecretCipher, "clientSecretCipher");
+        // 防御性 clone：避免外部修改污染 entity 内部密文引用（EI_EXPOSE_REP2）
+        e.oauthClientIdCiphertext = Objects.requireNonNull(clientIdCipher, "clientIdCipher").clone();
+        e.oauthClientSecretCiphertext =
+                Objects.requireNonNull(clientSecretCipher, "clientSecretCipher").clone();
         e.oauthTokenEndpoint = Objects.requireNonNull(tokenEndpoint, "tokenEndpoint");
         e.oauthScope = scope;
         e.keyId = Objects.requireNonNull(keyId, "keyId");
@@ -167,14 +170,14 @@ public class CallbackCredentialEntity {
                        final byte[] newClientSecretCipher, final String newKeyId) {
         Objects.requireNonNull(newKeyId, "newKeyId");
         if (this.authType == InterfaceAuthType.TOKEN && newTokenCipher != null) {
-            this.tokenCiphertext = newTokenCipher;
+            this.tokenCiphertext = newTokenCipher.clone();
         }
         if (this.authType == InterfaceAuthType.OAUTH2) {
             if (newClientIdCipher != null) {
-                this.oauthClientIdCiphertext = newClientIdCipher;
+                this.oauthClientIdCiphertext = newClientIdCipher.clone();
             }
             if (newClientSecretCipher != null) {
-                this.oauthClientSecretCiphertext = newClientSecretCipher;
+                this.oauthClientSecretCiphertext = newClientSecretCipher.clone();
             }
         }
         this.keyId = newKeyId;
@@ -214,10 +217,10 @@ public class CallbackCredentialEntity {
     /**
      * 获取 TOKEN 密文（OAUTH2 类型返回 null）。
      *
-     * @return token 密文字节
+     * @return token 密文字节（防御性 copy，TOKEN 类型外为 null）
      */
     public byte[] getTokenCiphertext() {
-        return tokenCiphertext;
+        return tokenCiphertext == null ? null : tokenCiphertext.clone();
     }
 
     /**
@@ -232,19 +235,19 @@ public class CallbackCredentialEntity {
     /**
      * 获取 OAUTH2 client_id 密文（TOKEN 类型返回 null）。
      *
-     * @return client_id 密文字节
+     * @return client_id 密文字节（防御性 copy，OAUTH2 类型外为 null）
      */
     public byte[] getOauthClientIdCiphertext() {
-        return oauthClientIdCiphertext;
+        return oauthClientIdCiphertext == null ? null : oauthClientIdCiphertext.clone();
     }
 
     /**
      * 获取 OAUTH2 client_secret 密文（TOKEN 类型返回 null）。
      *
-     * @return client_secret 密文字节
+     * @return client_secret 密文字节（防御性 copy，OAUTH2 类型外为 null）
      */
     public byte[] getOauthClientSecretCiphertext() {
-        return oauthClientSecretCiphertext;
+        return oauthClientSecretCiphertext == null ? null : oauthClientSecretCiphertext.clone();
     }
 
     /**
