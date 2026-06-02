@@ -104,4 +104,77 @@ class CallbackQueueRepositoryTest {
         assertThat(reloaded.getStatus()).isEqualTo(CallbackQueueStatus.FAILED);
         assertThat(reloaded.getLastError()).hasSize(500);
     }
+
+    @Test
+    void findStaleSending_shouldFilterByClaimedAtThreshold() {
+        // markSending() 写 claimedAt=now（entity 无法注入过去时间），故用阈值跨越 now 来区分命中。
+        final CallbackQueueEntity sending1 = CallbackQueueEntity.pending("k-s1", "if-1", "3001", "{}");
+        sending1.markSending();
+        repository.save(sending1);
+        final CallbackQueueEntity sending2 = CallbackQueueEntity.pending("k-s2", "if-2", "3001", "{}");
+        sending2.markSending();
+        repository.save(sending2);
+        final CallbackQueueEntity pending = CallbackQueueEntity.pending("k-pending2", "if-3", "3001", "{}");
+        repository.save(pending);
+        entityManager.flush();
+
+        // 阈值取 now+1min → 两 SENDING（claimedAt<now+1min）命中；PENDING 被状态过滤排除
+        final List<CallbackQueueEntity> found =
+                repository.findStaleSending(LocalDateTime.now().plusMinutes(1));
+        assertThat(found).hasSize(2);
+        assertThat(found).allMatch(q -> CallbackQueueStatus.SENDING.equals(q.getStatus()));
+
+        // 阈值取 now-1min → 无 SENDING 行的 claimedAt 早于该阈值，验证 claimedAt 过滤生效
+        final List<CallbackQueueEntity> none =
+                repository.findStaleSending(LocalDateTime.now().minusMinutes(1));
+        assertThat(none).isEmpty();
+    }
+
+    @Test
+    void copyForReplay_shouldPersistNewRowLinkedToOriginalDeadLetter() {
+        final CallbackQueueEntity dead = CallbackQueueEntity.pending("k-dlq", "if-1", "3009", "{\"p\":1}");
+        dead.markRetry(4, LocalDateTime.now(), "prev");
+        dead.markDeadLetter(5, "fatal");
+        repository.save(dead);
+        final String deadId = dead.getQueueId();
+        entityManager.flush();
+        entityManager.clear();
+
+        final CallbackQueueEntity loadedDead = repository.findById(deadId).orElseThrow();
+        final CallbackQueueEntity replay = CallbackQueueEntity.copyForReplay(loadedDead, "admin-7");
+        repository.save(replay);
+        final String replayId = replay.getQueueId();
+        entityManager.flush();
+        entityManager.clear();
+
+        final CallbackQueueEntity reloaded = repository.findById(replayId).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(CallbackQueueStatus.PENDING);
+        assertThat(reloaded.getRetryCount()).isZero();
+        assertThat(reloaded.getOriginalDlqId()).isEqualTo(deadId);
+        assertThat(reloaded.getReplayedBy()).isEqualTo("admin-7");
+        assertThat(reloaded.getReplayedAt()).isNotNull();
+
+        final List<CallbackQueueEntity> derived = repository.findByOriginalDlqId(deadId);
+        assertThat(derived).hasSize(1);
+        assertThat(derived.get(0).getQueueId()).isEqualTo(replayId);
+    }
+
+    @Test
+    void findDeadLetter_shouldReturnOnlyDeadLetterRowsNewestFirst() {
+        final CallbackQueueEntity dlq1 = CallbackQueueEntity.pending("k-d1", "if-1", "3001", "{}");
+        dlq1.markDeadLetter(5, "e1");
+        repository.save(dlq1);
+        final CallbackQueueEntity dlq2 = CallbackQueueEntity.pending("k-d2", "if-2", "3001", "{}");
+        dlq2.markDeadLetter(5, "e2");
+        repository.save(dlq2);
+        final CallbackQueueEntity pending = CallbackQueueEntity.pending("k-p", "if-3", "3001", "{}");
+        repository.save(pending);
+        entityManager.flush();
+
+        final List<CallbackQueueEntity> found =
+                repository.findDeadLetter(org.springframework.data.domain.PageRequest.of(0, 10));
+
+        assertThat(found).hasSize(2);
+        assertThat(found).allMatch(q -> CallbackQueueStatus.DEAD_LETTER.equals(q.getStatus()));
+    }
 }

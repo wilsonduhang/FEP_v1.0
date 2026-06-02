@@ -1,6 +1,7 @@
 package com.puchain.fep.web.callback.runner;
 
 import com.puchain.fep.web.callback.config.CallbackQueueProperties;
+import com.puchain.fep.web.callback.dlq.event.CallbackDeadLetterEvent;
 import com.puchain.fep.web.callback.domain.CallbackQueueEntity;
 import com.puchain.fep.web.callback.domain.CallbackQueueStatus;
 import com.puchain.fep.web.callback.http.CallbackResult;
@@ -8,6 +9,7 @@ import com.puchain.fep.web.callback.repository.CallbackQueueRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -15,6 +17,7 @@ import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -30,6 +33,7 @@ class CallbackRetryHandlerTest {
     private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 5, 26, 10, 0, 0);
 
     private CallbackQueueRepository repo;
+    private ApplicationEventPublisher eventPublisher;
     private CallbackRetryHandler handler;
 
     /**
@@ -59,8 +63,9 @@ class CallbackRetryHandlerTest {
     @BeforeEach
     void setUp() {
         repo = mock(CallbackQueueRepository.class);
+        eventPublisher = mock(ApplicationEventPublisher.class);
         final Clock clock = Clock.fixed(FIXED_NOW.atZone(ZONE).toInstant(), ZONE);
-        handler = new CallbackRetryHandler(repo, defaultProps(), clock);
+        handler = new CallbackRetryHandler(repo, defaultProps(), clock, eventPublisher);
     }
 
     /**
@@ -146,5 +151,36 @@ class CallbackRetryHandlerTest {
         verify(repo).save(cap.capture());
         // shift=min(10,30)=10; 30000<<10=30720000 > 1800000 → cap 1800000ms=30min
         assertThat(cap.getValue().getNextRetryAt()).isEqualTo(FIXED_NOW.plusSeconds(1800));
+    }
+
+    /**
+     * DEAD_LETTER (T10) must publish CallbackDeadLetterEvent carrying queue identity +
+     * retryCount + error for CallbackNotificationListener (T12) to consume.
+     */
+    @Test
+    void deadLetter_shouldPublishDeadLetterEvent() {
+        final CallbackQueueEntity e = pendingWithRetryCount(0);
+        handler.handleDeliveryFailure(e, 5, new CallbackResult(false, 403, "http 403"));
+
+        final ArgumentCaptor<CallbackDeadLetterEvent> cap =
+                ArgumentCaptor.forClass(CallbackDeadLetterEvent.class);
+        verify(eventPublisher).publishEvent(cap.capture());
+        final CallbackDeadLetterEvent ev = cap.getValue();
+        assertThat(ev.queueId()).isEqualTo(e.getQueueId());
+        assertThat(ev.targetInterfaceId()).isEqualTo("iface-1");
+        assertThat(ev.msgNo()).isEqualTo("3001");
+        assertThat(ev.retryCount()).isEqualTo(1);
+        assertThat(ev.lastError()).isEqualTo("http 403");
+        assertThat(ev.occurredAt()).isEqualTo(FIXED_NOW);
+    }
+
+    /**
+     * RETRY path must NOT publish any DEAD_LETTER event (event only on terminal DLQ).
+     */
+    @Test
+    void retry_shouldNotPublishDeadLetterEvent() {
+        final CallbackQueueEntity e = pendingWithRetryCount(0);
+        handler.handleDeliveryFailure(e, 5, new CallbackResult(false, 500, "http 500"));
+        verify(eventPublisher, never()).publishEvent(org.mockito.ArgumentMatchers.any());
     }
 }
