@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 /**
  * 回调死信事件：当一条回调队列条目进入 {@code DEAD_LETTER} 终态时由
  * {@code CallbackRetryHandler} 发布（Spring {@code ApplicationEventPublisher}），
- * 由 {@code InAppNotificationListener}（T12）订阅写站内信。
+ * 由 {@code CallbackNotificationListener}（T12）订阅写站内信。
  *
  * <p>事件解耦设计（决策门 6）：RetryHandler 不直接依赖通知模块，仅 publishEvent；
  * 订阅方按需扩展（IN_APP / 未来 EMAIL / SMS）而不改 RetryHandler。</p>

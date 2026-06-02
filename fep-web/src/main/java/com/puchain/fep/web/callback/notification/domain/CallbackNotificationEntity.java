@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * 站内信通知实体（通用，{@code category} 区分来源）。
  *
- * <p>首个使用方 {@code CALLBACK_DLQ}（回调死信告警，T12 {@code InAppNotificationListener}
+ * <p>首个使用方 {@code CALLBACK_DLQ}（回调死信告警，T12 {@code CallbackNotificationListener}
  * 订阅 {@code CallbackDeadLetterEvent} 写入）；表设计为通用站内信，未来 EMAIL/SMS 渠道
  * 扩展目标。每条通知归属单个 {@code userId}（admin 角色用户），{@code read}/{@code readAt}
  * 经 {@link #markRead()} 状态机变更。</p>
@@ -24,7 +24,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "in_app_notification")
-public class InAppNotificationEntity {
+public class CallbackNotificationEntity {
 
     /** 通知唯一标识（UUID 32 位无连字符）。 */
     @Id
@@ -74,7 +74,7 @@ public class InAppNotificationEntity {
     /**
      * JPA 要求的无参构造方法。
      */
-    protected InAppNotificationEntity() {
+    protected CallbackNotificationEntity() {
         /* for JPA */
     }
 
@@ -90,10 +90,10 @@ public class InAppNotificationEntity {
      * @param refType  关联业务对象类型（可 null）
      * @return 新建未读通知实体
      */
-    public static InAppNotificationEntity of(final String userId, final String category,
+    public static CallbackNotificationEntity of(final String userId, final String category,
             final String level, final String title, final String message,
             final String refId, final String refType) {
-        final InAppNotificationEntity e = new InAppNotificationEntity();
+        final CallbackNotificationEntity e = new CallbackNotificationEntity();
         e.notificationId = UUID.randomUUID().toString().replace("-", "");
         e.userId = Objects.requireNonNull(userId, "userId");
         e.category = Objects.requireNonNull(category, "category");

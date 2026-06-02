@@ -145,7 +145,7 @@ public class CallbackRetryHandler {
 
     /**
      * 发布 {@link CallbackDeadLetterEvent}（T10 事件解耦）。两处 DEAD_LETTER 路径
-     * （4xx 不可重试 / 重试耗尽）落库后调用，订阅方 {@code InAppNotificationListener}
+     * （4xx 不可重试 / 重试耗尽）落库后调用，订阅方 {@code CallbackNotificationListener}
      * （T12）异步写站内信，不影响 runner 批处理推进。
      *
      * @param entity        已落库的死信行

@@ -155,7 +155,7 @@ class CallbackRetryHandlerTest {
 
     /**
      * DEAD_LETTER (T10) must publish CallbackDeadLetterEvent carrying queue identity +
-     * retryCount + error for InAppNotificationListener (T12) to consume.
+     * retryCount + error for CallbackNotificationListener (T12) to consume.
      */
     @Test
     void deadLetter_shouldPublishDeadLetterEvent() {
