@@ -1415,10 +1415,11 @@
         <Bug pattern="SPRING_ENDPOINT"/>
     </Match>
 
-    <!-- OAuth2TokenCache (Phase 2b T5): Caffeine Expiry 匿名内部类不引用外部实例状态，
-         SIC_INNER_SHOULD_BE_STATIC_ANON 为风格提示非安全/正确性问题，Caffeine 构建器惯用写法 -->
+    <!-- CallbackOAuth2TokenCache (Phase 2b T5; renamed from OAuth2TokenCache per ArchUnit R4):
+         Caffeine Expiry 匿名内部类不引用外部实例状态，SIC_INNER_SHOULD_BE_STATIC_ANON 为风格提示
+         非安全/正确性问题，Caffeine 构建器惯用写法 -->
     <Match>
-        <Class name="com.puchain.fep.web.callback.credential.oauth.OAuth2TokenCache"/>
+        <Class name="com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache"/>
         <Bug pattern="SIC_INNER_SHOULD_BE_STATIC_ANON"/>
     </Match>
 
