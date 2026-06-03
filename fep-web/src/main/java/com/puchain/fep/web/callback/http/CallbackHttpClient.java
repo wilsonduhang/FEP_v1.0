@@ -1,6 +1,7 @@
 package com.puchain.fep.web.callback.http;
 
 import com.puchain.fep.common.util.LogSanitizer;
+import com.puchain.fep.web.callback.credential.service.CallbackCredentialResolver;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -21,15 +22,15 @@ import java.time.Duration;
  *
  * <p>使用 JDK 11+ {@link java.net.http.HttpClient}，单例共享连接池。
  * 每次调用按目标接口配置的 {@link SubOutputInterface#getTimeoutSeconds()} 设置请求超时。
- * 鉴权头逻辑按 {@link InterfaceAuthType} 分支设置：</p>
+ * 鉴权头逻辑委托 {@link CallbackCredentialResolver} 按 {@link InterfaceAuthType} 分支解析：</p>
  * <ul>
- *   <li>{@code TOKEN} — {@code Authorization: <scaffold>}（凭证值来源 Phase 2 §5.5.3）</li>
- *   <li>{@code OAUTH2} — {@code Authorization: Bearer <scaffold>}（同上）</li>
- *   <li>{@code NONE} — 无 {@code Authorization} 头</li>
+ *   <li>{@code TOKEN} — {@code <tokenHeader>: <decrypted-token>}（凭证密文落库，运行时解密）</li>
+ *   <li>{@code OAUTH2} — {@code Authorization: Bearer <access-token>}（缓存优先，未命中现取）</li>
+ *   <li>{@code NONE} — 无鉴权头</li>
  * </ul>
  *
- * <p><strong>P1 限制</strong>：{@code SubOutputInterface} 暂无鉴权凭证字段（Phase 2 §5.5.3 补入），
- * TOKEN/OAUTH2 场景下 P1 仅置空占位头，作为脚手架预留，不含真实凭证。</p>
+ * <p><strong>401 重试</strong>：OAUTH2 场景下若对端返回 401（token 被拒），失效缓存后
+ * 重取 token 并重试一次（Phase 2b §5.5.3）。</p>
  *
  * <p>所有失败均翻译为 {@link CallbackResult}，不向调用方抛出异常（接口契约，
  * 与 P4-MSG-D {@code BizMessage2101InboundListener} 同类文档化契约）。</p>
@@ -45,6 +46,7 @@ public class CallbackHttpClient {
     private static final String CONTENT_TYPE_JSON = "application/json";
     private static final int HTTP_OK_MIN = 200;
     private static final int HTTP_OK_MAX = 299;
+    private static final int HTTP_UNAUTHORIZED = 401;
 
     /**
      * 单例 HttpClient，共享底层连接池，线程安全。
@@ -52,12 +54,20 @@ public class CallbackHttpClient {
     private final HttpClient httpClient;
 
     /**
-     * 无参构造器：初始化 JDK HttpClient 单例。
+     * 鉴权头解析器，按接口 authType 解析实际凭证头。
      */
-    public CallbackHttpClient() {
+    private final CallbackCredentialResolver credentialResolver;
+
+    /**
+     * 构造器：初始化 JDK HttpClient 单例并注入凭证解析器。
+     *
+     * @param credentialResolver 鉴权头解析器，不可为 null
+     */
+    public CallbackHttpClient(final CallbackCredentialResolver credentialResolver) {
         this.httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .build();
+        this.credentialResolver = credentialResolver;
     }
 
     /**
@@ -75,6 +85,28 @@ public class CallbackHttpClient {
             justification = "non-literal String log args wrapped by LogSanitizer.sanitize; "
                     + "find-sec-bugs cannot detect user-defined sanitizer")
     public CallbackResult post(final SubOutputInterface target, final String payloadJson) {
+        CallbackResult result = sendOnce(target, payloadJson);
+        if (result.statusCode() == HTTP_UNAUTHORIZED
+                && target.getAuthType() == InterfaceAuthType.OAUTH2) {
+            LOG.warn("OAuth2 token rejected (401), invalidating cache and retrying once interfaceId={}",
+                    LogSanitizer.sanitize(target.getInterfaceId()));
+            credentialResolver.invalidateOAuthToken(target.getInterfaceId());
+            result = sendOnce(target, payloadJson);
+        }
+        return result;
+    }
+
+    /**
+     * 发送单次 HTTP 请求并翻译结果为 {@link CallbackResult}（不抛出）。
+     *
+     * @param target      目标接口配置
+     * @param payloadJson 请求体
+     * @return 推送结果，永不为 null
+     */
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "non-literal String log args wrapped by LogSanitizer.sanitize; "
+                    + "find-sec-bugs cannot detect user-defined sanitizer")
+    private CallbackResult sendOnce(final SubOutputInterface target, final String payloadJson) {
         final HttpRequest request = buildRequest(target, payloadJson);
         try {
             final HttpResponse<Void> response =
@@ -96,7 +128,7 @@ public class CallbackHttpClient {
     }
 
     /**
-     * 构建 HTTP 请求，按 authType 添加鉴权头。
+     * 构建 HTTP 请求，委托 {@link CallbackCredentialResolver} 解析鉴权头。
      *
      * @param target      目标接口配置
      * @param payloadJson 请求体
@@ -109,17 +141,8 @@ public class CallbackHttpClient {
                 .header("Content-Type", CONTENT_TYPE_JSON)
                 .POST(HttpRequest.BodyPublishers.ofString(payloadJson, StandardCharsets.UTF_8));
 
-        // P1 scaffold: auth header set per authType; credential value source = Phase 2 §5.5.3.
-        // SubOutputInterface has no credential/token field in P1 — header value is placeholder.
-        final InterfaceAuthType authType = target.getAuthType();
-        if (authType == InterfaceAuthType.TOKEN) {
-            // P1: header present as scaffold; actual token injected in Phase 2 §5.5.3
-            builder.header("Authorization", "");
-        } else if (authType == InterfaceAuthType.OAUTH2) {
-            // P1: Bearer scaffold; actual bearer token resolved in Phase 2 §5.5.3
-            builder.header("Authorization", "Bearer ");
-        }
-        // NONE: no Authorization header
+        credentialResolver.resolveAuthHeader(target)
+                .ifPresent(h -> builder.header(h.name(), h.value()));
 
         return builder.build();
     }

@@ -1,5 +1,7 @@
 package com.puchain.fep.web.callback.http;
 
+import com.puchain.fep.web.callback.credential.service.CallbackCredentialResolver;
+import com.puchain.fep.web.callback.credential.service.CallbackCredentialResolver.AuthHeader;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import com.sun.net.httpserver.HttpServer;
@@ -9,10 +11,14 @@ import org.junit.jupiter.api.Test;
 
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * {@link CallbackHttpClient} 单元测试 — 使用 JDK 内置 HttpServer（无依赖）
@@ -26,13 +32,17 @@ class CallbackHttpClientTest {
     private HttpServer server;
     private int port;
     private CallbackHttpClient client;
+    private CallbackCredentialResolver resolver;
 
     @BeforeEach
     void setUp() throws Exception {
         server = HttpServer.create(new InetSocketAddress(0), 0);
         port = server.getAddress().getPort();
         server.start();
-        client = new CallbackHttpClient();
+        resolver = mock(CallbackCredentialResolver.class);
+        // default: NONE-style — no auth header added unless a test stubs otherwise
+        when(resolver.resolveAuthHeader(any())).thenReturn(Optional.empty());
+        client = new CallbackHttpClient(resolver);
     }
 
     @AfterEach
@@ -102,7 +112,7 @@ class CallbackHttpClientTest {
     }
 
     @Test
-    void post_tokenAuth_shouldIncludeAuthorizationHeader() throws Exception {
+    void post_tokenAuth_shouldIncludeResolvedAuthorizationHeader() throws Exception {
         final AtomicReference<String> capturedAuthHeader = new AtomicReference<>();
         final AtomicInteger requestCount = new AtomicInteger(0);
 
@@ -112,13 +122,37 @@ class CallbackHttpClientTest {
             exchange.sendResponseHeaders(200, 0);
             exchange.getResponseBody().close();
         });
+        when(resolver.resolveAuthHeader(any()))
+                .thenReturn(Optional.of(new AuthHeader("Authorization", "tok-plain")));
 
-        final CallbackResult result = client.post(makeInterface("/auth", InterfaceAuthType.TOKEN), "{\"data\":\"x\"}");
+        final CallbackResult result =
+                client.post(makeInterface("/auth", InterfaceAuthType.TOKEN), "{\"data\":\"x\"}");
 
         assertThat(result.success()).isTrue();
         assertThat(requestCount.get()).isEqualTo(1);
-        // P1 scaffold: Authorization header must be present for TOKEN auth type
-        // Actual credential value is Phase 2 §5.5.3; P1 sets a scaffold placeholder
-        assertThat(capturedAuthHeader.get()).isNotNull();
+        // Phase 2b: resolver supplies the real decrypted credential header value.
+        assertThat(capturedAuthHeader.get()).isEqualTo("tok-plain");
+    }
+
+    @Test
+    void post_oauth2_401_shouldInvalidateCacheAndRetryOnce() throws Exception {
+        final AtomicInteger requestCount = new AtomicInteger(0);
+        server.createContext("/oauth", exchange -> {
+            requestCount.incrementAndGet();
+            // Always 401 to drive a single retry then give up.
+            exchange.sendResponseHeaders(401, 0);
+            exchange.getResponseBody().close();
+        });
+        when(resolver.resolveAuthHeader(any()))
+                .thenReturn(Optional.of(new AuthHeader("Authorization", "Bearer t")));
+
+        final CallbackResult result =
+                client.post(makeInterface("/oauth", InterfaceAuthType.OAUTH2), "{}");
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.statusCode()).isEqualTo(401);
+        // initial send + one retry == 2 server hits
+        assertThat(requestCount.get()).isEqualTo(2);
+        org.mockito.Mockito.verify(resolver).invalidateOAuthToken("test-if-01");
     }
 }
