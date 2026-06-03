@@ -102,7 +102,8 @@ import java.util.Map;
  * P4-MSG-M 注册 9020（实时业务通用应答）；
  * 共 {@link com.puchain.fep.converter.wire.OutboundWireShapeDispatcher#REGISTERED_MSG_NO_COUNT}
  * 份已登记上行报文（与 dispatcher 单一真相源一致，消除双数字硬编码漂移）；
- * 后续 9XXX 通用报文（9005/9006/9007/9008/9009）独立 Plan 处理。
+ * 节点心跳/登录/登出（9005/9006/9008）走 TlqNodeLoginService 直接 MessageEncoder 路径未入本 REGISTRY
+ * （9006/9008 P4-MSG-L，9005 P4-MSG-N）；其余 9XXX 通用报文（9007/9009）独立 Plan 处理。
  * 1001/2001/1004/2004 于 P4-MSG-E T1 注册；1101 于 P4-MSG-D T3 注册；
  * 1102/1103/1104/2102/2103/2104 已于 P4-MSG-A T2 注册；3000 已于 Plan B T4 注册。</p>
  *

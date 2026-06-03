@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>实测自 {@value #REGISTERED_MSG_NO_COUNT} 份 XSD（{@code fep-processor/src/main/resources/xsd/{1001,1004,1101,1102,1103,1104,
  * 2001,2004,2102,2103,2104,3000,3001,3002,3003,3004,3005,3006,3007,3008,3009,3020,3101,3102,3103,3105,
- * 3107,3108,3109,3112,3113,3115,3116,3120,9000,9006,9008,9020,9100,9120}.xsd}）：</p>
+ * 3107,3108,3109,3112,3113,3115,3116,3120,9000,9005,9006,9008,9020,9100,9120}.xsd}）：</p>
  * <ul>
  *   <li>1001 → {@code RealHead1001} + {@link RequestBusinessHead}（企业信息实时查询请求，P4-MSG-E T2）</li>
  *   <li>1004 → {@code RealHead1004} + {@link RequestBusinessHead}（授权书实时发送请求，P4-MSG-E T2）</li>
@@ -46,6 +46,7 @@ import org.springframework.stereotype.Component;
  *   <li>3115 → {@code BatchHead3115} + {@link RequestResponseHead}（资金清算信息指令及回执，第 6 类目，P4-MSG-H）</li>
  *   <li>3120 → {@code BatchHead3120} + {@link RequestBusinessHead}（供应链非实时业务通用转发，第 2 类目扩展，P4-MSG-H）</li>
  *   <li>9000 → {@code RealHead9000} + {@link RequestBusinessHead}（实时业务通用转发，P4-MSG-I）</li>
+ *   <li>9005 → {@code RealHead9005} + {@link RequestBusinessHead}（节点心跳，head-only 无 body，P4-MSG-N）</li>
  *   <li>9006 → {@code RealHead9006} + {@link RequestBusinessHead}（节点登录请求，P4-MSG-L）</li>
  *   <li>9008 → {@code RealHead9008} + {@link RequestBusinessHead}（节点登出请求，P4-MSG-L）</li>
  *   <li>9100 → {@code BatchHead9100} + {@link RequestBusinessHead}（非实时业务通用转发，模式3，P4-MSG-I）</li>
@@ -59,8 +60,8 @@ import org.springframework.stereotype.Component;
  * P4-MSG-G T3 起新增第 5 类 RealHead + RequestResponseHead + false 孤儿类目，并扩展类目 3/4；
  * P4-MSG-H 起新增第 6 类 BatchHead + RequestResponseHead + false，并扩展类目 3)：</p>
  * <ul>
- *   <li>RealHead + RequestBusinessHead + false: 1001/1004/3000/3001/3003/3005/3007/3009/9000/9006/9008
- *       （P4-MSG-I 扩展 9000，P4-MSG-L 扩展 9006/9008）</li>
+ *   <li>RealHead + RequestBusinessHead + false: 1001/1004/3000/3001/3003/3005/3007/3009/9000/9005/9006/9008
+ *       （P4-MSG-I 扩展 9000，P4-MSG-L 扩展 9006/9008，P4-MSG-N 扩展 9005 心跳 head-only）</li>
  *   <li>RealHead + ResponseBusinessHead + true: 2001/2004/3002/3004/3006/3008/9020（P4-MSG-E T2 新类目，P4-MSG-F/G 扩展，P4-MSG-M 扩展 9020）</li>
  *   <li>BatchHead + RequestBusinessHead + false: 1101/1102/1103/1104/3102/3105/3107/3109/3112/3116/3120/9100
  *       （P4-MSG-H 扩展 3120，P4-MSG-I 扩展 9100）</li>
@@ -90,10 +91,10 @@ public class OutboundWireShapeDispatcher {
     /** 预编译的 {@link #MSG_NO_PATTERN}，避免 describeFor / isRegisteredOutboundMsgNo 热路径每次重编译。 */
     private static final Pattern MSG_NO_COMPILED = Pattern.compile(MSG_NO_PATTERN);
 
-    /** RealHead + {@link RequestBusinessHead} + false 类目 msgNo 集合（P4-MSG-I 扩展 9000；P4-MSG-L 扩展 9006/9008）。 */
+    /** RealHead + {@link RequestBusinessHead} + false 类目 msgNo 集合（P4-MSG-I 扩展 9000；P4-MSG-L 扩展 9006/9008；P4-MSG-N 扩展 9005 心跳 head-only）。 */
     public static final Set<String> REAL_HEAD_REQUEST_MSG_NOS = Set.of(
             "1001", "1004", "3000", "3001", "3003", "3005", "3007", "3009", "9000",
-            "9006", "9008");
+            "9005", "9006", "9008");
 
     /** BatchHead + {@link RequestBusinessHead} + false 类目 msgNo 集合（P4-MSG-H 扩展 3120；P4-MSG-I 扩展 9100）。 */
     public static final Set<String> BATCH_HEAD_REQUEST_MSG_NOS = Set.of(
@@ -125,7 +126,7 @@ public class OutboundWireShapeDispatcher {
             "3115");
 
     /** 已登记上行报文总数（Javadoc {@value} 自更新引用）. */
-    public static final int REGISTERED_MSG_NO_COUNT = 40;
+    public static final int REGISTERED_MSG_NO_COUNT = 41;
 
     /**
      * 路由 msgNo → {@link WireShapeDescriptor}。
@@ -174,8 +175,8 @@ public class OutboundWireShapeDispatcher {
      * 判断 msgNo 是否在已登记的 {@value #REGISTERED_MSG_NO_COUNT} 上行报文集合内。
      *
      * <p>用于 {@code BatchMessageProcessorService.wrapBodyInCfx} 等 inbound + outbound
-     * 共用方法识别"是否为已登记 outbound msgNo"，未登记的（例如 9005 心跳类
-     * 通用报文，9005.xsd MSG 下无 body 元素）走 legacy 路径，避免对 inbound 链路产生回归。</p>
+     * 共用方法识别"是否为已登记 outbound msgNo"，未登记的 msgNo 走 legacy 路径，
+     * 避免对 inbound 链路产生回归。</p>
      *
      * @param msgNo 4 位数字报文号；{@code null} 或非法格式返回 {@code false}
      * @return {@code true} 当且仅当 msgNo 是 {@value #REGISTERED_MSG_NO_COUNT} 上行报文之一

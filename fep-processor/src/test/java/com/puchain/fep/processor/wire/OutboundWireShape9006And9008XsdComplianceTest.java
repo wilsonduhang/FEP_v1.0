@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ul>
  *   <li>{@link OutboundWireShapeDispatcher#describeFor(String)} 对 9006/9008 返回正确 wire-shape
  *       （{@code RealHead{msgNo}} + {@link RequestBusinessHead} + requiresResultCode=false），以及
- *       已登记上行报文总数 {@code REGISTERED_MSG_NO_COUNT}=39 / {@code REAL_HEAD_REQUEST_MSG_NOS} 含 9006/9008。</li>
+ *       已登记上行报文总数 {@code REGISTERED_MSG_NO_COUNT}=41 / {@code REAL_HEAD_REQUEST_MSG_NOS} 含 9006/9008。</li>
  *   <li>{@code LoginRequest9006} / {@code LogoutRequest9008} body POJO marshal 嵌入完整 CFX envelope 后，
  *       用真 {@link XsdValidator} 跑 SUT 实际产物校验 Password minLength=8 / maxLength=32 facet。</li>
  * </ul>
@@ -77,16 +77,16 @@ class OutboundWireShape9006And9008XsdComplianceTest {
     }
 
     @Test
-    void registeredMsgNoCountShouldBe40() {
-        // P4-MSG-M 扩展 9020 后 39 → 40（单一真相源，feedback_cross_task_obsolete_fixture_assumption_when_set_extended）
-        assertThat(OutboundWireShapeDispatcher.REGISTERED_MSG_NO_COUNT).isEqualTo(40);
+    void registeredMsgNoCountShouldBe41() {
+        // P4-MSG-N 扩展 9005 后 40 → 41（单一真相源，feedback_cross_task_obsolete_fixture_assumption_when_set_extended）
+        assertThat(OutboundWireShapeDispatcher.REGISTERED_MSG_NO_COUNT).isEqualTo(41);
     }
 
     @Test
     void realHeadRequestMsgNosShouldIncludeNodeLifecycleMsgs() {
         assertThat(OutboundWireShapeDispatcher.REAL_HEAD_REQUEST_MSG_NOS)
                 .contains("9006", "9008")
-                .hasSize(11);
+                .hasSize(12);
     }
 
     @Test

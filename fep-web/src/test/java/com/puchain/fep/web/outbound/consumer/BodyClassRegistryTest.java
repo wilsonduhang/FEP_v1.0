@@ -169,7 +169,8 @@ class BodyClassRegistryTest {
      * P4-MSG-I T2 +4 报文 9000/9100/9120/3113（33 → 37，含首个 {@code body.common.*} 报文 9000/9100/9120）；
      * P4-MSG-M +1 报文 9020 → {@link com.puchain.fep.processor.body.common.MsgReturn9020}（37 → 38，
      * 实时业务通用应答 outbound body 解析；注：9006/9008 走 TlqNodeLoginService 直接 MessageEncoder 路径
-     * 未入本 REGISTRY，故本 REGISTRY size 38 ≠ OutboundWireShapeDispatcher REGISTERED_MSG_NO_COUNT 40）。
+     * 未入本 REGISTRY，故本 REGISTRY size 38 ≠ OutboundWireShapeDispatcher REGISTERED_MSG_NO_COUNT 41
+     * （P4-MSG-N +9005 心跳 head-only 同走直接路径未入本 REGISTRY）。
      * source code 必须保持用 {@code Map.ofEntries(...)} 而非 {@code Map.of(...)}。</p>
      *
      * @throws Exception 反射或文件读取异常
