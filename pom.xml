@@ -161,6 +161,15 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <!-- Pin a single reused test JVM to cap CPU pressure on
+                         low-core dev machines. This is the Surefire default,
+                         pinned explicitly as a guardrail: it prevents an
+                         accidental -DforkCount=1C / `mvn -T` from spawning one
+                         test JVM per core (each booting a full @SpringBootTest
+                         ApplicationContext), which on a 4-physical-core box
+                         drives the load average into the hundreds. -->
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
                     <!-- Tolerate transient ApplicationContext load failures
                          (P1c T9 flaky investigation: quality reviewer observed
                          one-shot 10-error context-load failure that did not
