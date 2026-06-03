@@ -1,7 +1,7 @@
 package com.puchain.fep.web.callback.credential.controller;
 
 import com.puchain.fep.common.exception.GlobalExceptionHandler;
-import com.puchain.fep.web.callback.credential.dto.CredentialResponse;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialAdminService;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +49,7 @@ class CallbackCredentialControllerTest {
 
     @Test
     void postCreateReturnsResponseWithoutCiphertext() throws Exception {
-        final CredentialResponse resp = new CredentialResponse();
+        final CallbackCredentialResponse resp = new CallbackCredentialResponse();
         resp.setCredentialId("CRED-001");
         resp.setInterfaceId("IF-001");
         resp.setAuthType(InterfaceAuthType.TOKEN);
@@ -70,7 +70,7 @@ class CallbackCredentialControllerTest {
 
     @Test
     void getReturnsResponseWithoutCiphertext() throws Exception {
-        final CredentialResponse resp = new CredentialResponse();
+        final CallbackCredentialResponse resp = new CallbackCredentialResponse();
         resp.setCredentialId("CRED-002");
         resp.setInterfaceId("IF-001");
         resp.setAuthType(InterfaceAuthType.OAUTH2);

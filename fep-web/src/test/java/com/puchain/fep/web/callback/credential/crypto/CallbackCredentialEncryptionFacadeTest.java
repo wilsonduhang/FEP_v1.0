@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.puchain.fep.security.api.CryptoService;
 import com.puchain.fep.security.api.KeyService;
-import com.puchain.fep.web.callback.credential.crypto.CredentialEncryptionFacade.EncryptedCredential;
+import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade.EncryptedCredential;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Unit tests for {@link CredentialEncryptionFacade}.
+ * Unit tests for {@link CallbackCredentialEncryptionFacade}.
  *
  * <p>Mocks {@link CryptoService} + {@link KeyService} (the SM4 algorithm and key
  * material live in {@code fep-security-impl}, AI-forbidden). Verifies the facade
@@ -25,7 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * the active keyId, plus null/empty input guards and defensive byte[] cloning.</p>
  */
 @ExtendWith(MockitoExtension.class)
-class CredentialEncryptionFacadeTest {
+class CallbackCredentialEncryptionFacadeTest {
 
     @Mock
     private CryptoService cryptoService;
@@ -33,11 +33,11 @@ class CredentialEncryptionFacadeTest {
     @Mock
     private KeyService keyService;
 
-    private CredentialEncryptionFacade facade;
+    private CallbackCredentialEncryptionFacade facade;
 
     @BeforeEach
     void setUp() {
-        facade = new CredentialEncryptionFacade(cryptoService, keyService);
+        facade = new CallbackCredentialEncryptionFacade(cryptoService, keyService);
     }
 
     @Test

@@ -2,13 +2,13 @@ package com.puchain.fep.web.callback.credential.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
-import com.puchain.fep.web.callback.credential.crypto.CredentialEncryptionFacade;
-import com.puchain.fep.web.callback.credential.crypto.CredentialEncryptionFacade.EncryptedCredential;
+import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
+import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade.EncryptedCredential;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
-import com.puchain.fep.web.callback.credential.dto.CredentialCreateRequest;
-import com.puchain.fep.web.callback.credential.dto.CredentialResponse;
-import com.puchain.fep.web.callback.credential.dto.CredentialUpdateRequest;
-import com.puchain.fep.web.callback.credential.oauth.OAuth2TokenCache;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialCreateRequest;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialUpdateRequest;
+import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Service;
@@ -19,10 +19,10 @@ import java.util.List;
 /**
  * 回调凭证管理服务（admin CRUD）。
  *
- * <p>明文凭证经 {@link CredentialEncryptionFacade} SM4 加密后落库为密文列；
+ * <p>明文凭证经 {@link CallbackCredentialEncryptionFacade} SM4 加密后落库为密文列；
  * 更新为 partial（null 字段保留原值，密文字段非空时轮换）；凭证变更后清空
- * {@link OAuth2TokenCache} 强制下次以新凭证重新换取 token。
- * 响应 DTO {@link CredentialResponse} 绝不回显任何密文。
+ * {@link CallbackOAuth2TokenCache} 强制下次以新凭证重新换取 token。
+ * 响应 DTO {@link CallbackCredentialResponse} 绝不回显任何密文。
  * 参见 PRD v1.3 §5.5.3 凭证配置（FR-INFRA-CALLBACK-CREDENTIAL）。</p>
  *
  * @author FEP Team
@@ -33,8 +33,8 @@ import java.util.List;
 public class CallbackCredentialAdminService {
 
     private final CallbackCredentialRepository repo;
-    private final CredentialEncryptionFacade facade;
-    private final OAuth2TokenCache tokenCache;
+    private final CallbackCredentialEncryptionFacade facade;
+    private final CallbackOAuth2TokenCache tokenCache;
 
     /**
      * 构造凭证管理服务。
@@ -46,8 +46,8 @@ public class CallbackCredentialAdminService {
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
             justification = "Spring-managed singletons stored by reference per container contract")
     public CallbackCredentialAdminService(final CallbackCredentialRepository repo,
-                                          final CredentialEncryptionFacade facade,
-                                          final OAuth2TokenCache tokenCache) {
+                                          final CallbackCredentialEncryptionFacade facade,
+                                          final CallbackOAuth2TokenCache tokenCache) {
         this.repo = repo;
         this.facade = facade;
         this.tokenCache = tokenCache;
@@ -60,7 +60,7 @@ public class CallbackCredentialAdminService {
      * @return 不含密文的凭证响应
      * @throws FepBusinessException 接口已存在凭证（BIZ_5002）或 authType 不支持持久化（NONE，BIZ_5002）
      */
-    public CredentialResponse create(final CredentialCreateRequest req) {
+    public CallbackCredentialResponse create(final CallbackCredentialCreateRequest req) {
         if (repo.findByInterfaceId(req.getInterfaceId()).isPresent()) {
             throw new FepBusinessException(FepErrorCode.BIZ_5002,
                     "credential already exists for interfaceId=" + req.getInterfaceId());
@@ -82,7 +82,7 @@ public class CallbackCredentialAdminService {
                     "NONE authType has no credential to persist");
         };
         repo.save(entity);
-        return CredentialResponse.from(entity);
+        return CallbackCredentialResponse.from(entity);
     }
 
     /**
@@ -94,7 +94,7 @@ public class CallbackCredentialAdminService {
      * @return 不含密文的凭证响应
      * @throws FepBusinessException 凭证不存在（BIZ_5001）
      */
-    public CredentialResponse update(final String interfaceId, final CredentialUpdateRequest req) {
+    public CallbackCredentialResponse update(final String interfaceId, final CallbackCredentialUpdateRequest req) {
         final CallbackCredentialEntity e = repo.findByInterfaceId(interfaceId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "credential not found, interfaceId=" + interfaceId));
@@ -125,7 +125,7 @@ public class CallbackCredentialAdminService {
         e.updateNonSecretFields(req.getTokenHeader(), req.getOauthTokenEndpoint(), req.getOauthScope());
 
         tokenCache.invalidate(interfaceId);
-        return CredentialResponse.from(e);
+        return CallbackCredentialResponse.from(e);
     }
 
     /**
@@ -136,8 +136,8 @@ public class CallbackCredentialAdminService {
      * @throws FepBusinessException 凭证不存在（BIZ_5001）
      */
     @Transactional(readOnly = true)
-    public CredentialResponse get(final String interfaceId) {
-        return repo.findByInterfaceId(interfaceId).map(CredentialResponse::from)
+    public CallbackCredentialResponse get(final String interfaceId) {
+        return repo.findByInterfaceId(interfaceId).map(CallbackCredentialResponse::from)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "credential not found, interfaceId=" + interfaceId));
     }
@@ -148,8 +148,8 @@ public class CallbackCredentialAdminService {
      * @return 凭证响应列表
      */
     @Transactional(readOnly = true)
-    public List<CredentialResponse> list() {
-        return repo.findAll().stream().map(CredentialResponse::from).toList();
+    public List<CallbackCredentialResponse> list() {
+        return repo.findAll().stream().map(CallbackCredentialResponse::from).toList();
     }
 
     /**

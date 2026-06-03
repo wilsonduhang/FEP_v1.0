@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
  * @author FEP Team
  * @since 1.0.0
  */
-public class CredentialResponse {
+public class CallbackCredentialResponse {
 
     /** 凭证唯一标识。 */
     private String credentialId;
@@ -61,8 +61,8 @@ public class CredentialResponse {
      * @param e 凭证实体（非 null）
      * @return 不含任何密文的响应 DTO
      */
-    public static CredentialResponse from(final CallbackCredentialEntity e) {
-        final CredentialResponse r = new CredentialResponse();
+    public static CallbackCredentialResponse from(final CallbackCredentialEntity e) {
+        final CallbackCredentialResponse r = new CallbackCredentialResponse();
         r.credentialId = e.getCredentialId();
         r.interfaceId = e.getInterfaceId();
         r.authType = e.getAuthType();

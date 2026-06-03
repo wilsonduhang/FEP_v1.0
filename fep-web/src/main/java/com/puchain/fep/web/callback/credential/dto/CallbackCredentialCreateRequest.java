@@ -14,7 +14,7 @@ import jakarta.validation.constraints.NotNull;
  * @author FEP Team
  * @since 1.0.0
  */
-public class CredentialCreateRequest {
+public class CallbackCredentialCreateRequest {
 
     /** 关联输出接口 ID（非空）。 */
     @NotBlank

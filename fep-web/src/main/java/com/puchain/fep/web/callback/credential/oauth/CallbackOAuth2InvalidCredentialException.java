@@ -8,14 +8,14 @@ package com.puchain.fep.web.callback.credential.oauth;
  * @author FEP Team
  * @since 1.0.0
  */
-public class OAuth2InvalidCredentialException extends RuntimeException {
+public class CallbackOAuth2InvalidCredentialException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * @param message 失败描述
      */
-    public OAuth2InvalidCredentialException(final String message) {
+    public CallbackOAuth2InvalidCredentialException(final String message) {
         super(message);
     }
 }

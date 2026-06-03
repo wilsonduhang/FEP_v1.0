@@ -15,27 +15,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * {@link OAuth2ClientCredentialsClient} 集成测试 — 使用 JDK 内置 {@link HttpServer}（无外部依赖，
+ * {@link CallbackOAuth2ClientCredentialsClient} 集成测试 — 使用 JDK 内置 {@link HttpServer}（无外部依赖，
  * 沿用项目 {@code CallbackHttpClientTest} 既有 stub 栈，不引入 WireMock）。
  *
  * <p>验证 RFC 6749 §4.4 Client Credentials Grant：200 成功解析 + form body / Basic auth 装配，
- * 5xx → {@link OAuth2RetryableException}，401/403 → {@link OAuth2InvalidCredentialException}。</p>
+ * 5xx → {@link CallbackOAuth2RetryableException}，401/403 → {@link CallbackOAuth2InvalidCredentialException}。</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
-class OAuth2ClientCredentialsClientIT {
+class CallbackOAuth2ClientCredentialsClientIT {
 
     private HttpServer server;
     private int port;
-    private OAuth2ClientCredentialsClient client;
+    private CallbackOAuth2ClientCredentialsClient client;
 
     @BeforeEach
     void setUp() throws Exception {
         server = HttpServer.create(new InetSocketAddress(0), 0);
         port = server.getAddress().getPort();
         server.start();
-        client = new OAuth2ClientCredentialsClient(new ObjectMapper());
+        client = new CallbackOAuth2ClientCredentialsClient(new ObjectMapper());
     }
 
     @AfterEach
@@ -66,7 +66,7 @@ class OAuth2ClientCredentialsClientIT {
             }
         });
 
-        final OAuth2TokenResponse response = client.fetchToken(
+        final CallbackOAuth2TokenResponse response = client.fetchToken(
                 tokenUrl("/token"), "client-id", "client-secret", "read");
 
         assertThat(response.accessToken()).isEqualTo("tok-xyz");
@@ -93,7 +93,7 @@ class OAuth2ClientCredentialsClientIT {
             }
         });
 
-        final OAuth2TokenResponse response = client.fetchToken(tokenUrl("/token"), "x", "y", null);
+        final CallbackOAuth2TokenResponse response = client.fetchToken(tokenUrl("/token"), "x", "y", null);
 
         assertThat(response.accessToken()).isEqualTo("t");
         assertThat(capturedBody.get()).doesNotContain("scope=");
@@ -107,7 +107,7 @@ class OAuth2ClientCredentialsClientIT {
         });
 
         assertThatThrownBy(() -> client.fetchToken(tokenUrl("/token"), "x", "y", ""))
-                .isInstanceOf(OAuth2RetryableException.class);
+                .isInstanceOf(CallbackOAuth2RetryableException.class);
     }
 
     @Test
@@ -118,7 +118,7 @@ class OAuth2ClientCredentialsClientIT {
         });
 
         assertThatThrownBy(() -> client.fetchToken(tokenUrl("/token"), "x", "y", ""))
-                .isInstanceOf(OAuth2InvalidCredentialException.class);
+                .isInstanceOf(CallbackOAuth2InvalidCredentialException.class);
     }
 
     @Test
@@ -128,6 +128,6 @@ class OAuth2ClientCredentialsClientIT {
         server = null;
 
         assertThatThrownBy(() -> client.fetchToken(tokenUrl("/token"), "x", "y", ""))
-                .isInstanceOf(OAuth2RetryableException.class);
+                .isInstanceOf(CallbackOAuth2RetryableException.class);
     }
 }

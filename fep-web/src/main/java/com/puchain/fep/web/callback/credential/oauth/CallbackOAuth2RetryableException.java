@@ -8,14 +8,14 @@ package com.puchain.fep.web.callback.credential.oauth;
  * @author FEP Team
  * @since 1.0.0
  */
-public class OAuth2RetryableException extends RuntimeException {
+public class CallbackOAuth2RetryableException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * @param message 失败描述
      */
-    public OAuth2RetryableException(final String message) {
+    public CallbackOAuth2RetryableException(final String message) {
         super(message);
     }
 
@@ -23,7 +23,7 @@ public class OAuth2RetryableException extends RuntimeException {
      * @param message 失败描述
      * @param cause   底层异常
      */
-    public OAuth2RetryableException(final String message, final Throwable cause) {
+    public CallbackOAuth2RetryableException(final String message, final Throwable cause) {
         super(message, cause);
     }
 }

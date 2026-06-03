@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @since 1.0.0
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record OAuth2TokenResponse(
+public record CallbackOAuth2TokenResponse(
         @JsonProperty("access_token") String accessToken,
         @JsonProperty("expires_in") int expiresIn,
         @JsonProperty("token_type") String tokenType) {
@@ -29,7 +29,7 @@ public record OAuth2TokenResponse(
      */
     @Override
     public String toString() {
-        return "OAuth2TokenResponse{accessToken=***, expiresIn=" + expiresIn
+        return "CallbackOAuth2TokenResponse{accessToken=***, expiresIn=" + expiresIn
                 + ", tokenType=" + tokenType + '}';
     }
 }

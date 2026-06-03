@@ -1,9 +1,9 @@
 package com.puchain.fep.web.callback.credential.controller;
 
 import com.puchain.fep.common.domain.ApiResult;
-import com.puchain.fep.web.callback.credential.dto.CredentialCreateRequest;
-import com.puchain.fep.web.callback.credential.dto.CredentialResponse;
-import com.puchain.fep.web.callback.credential.dto.CredentialUpdateRequest;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialCreateRequest;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialUpdateRequest;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialAdminService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,7 +63,7 @@ public class CallbackCredentialController {
     @ApiResponse(responseCode = "200", description = "创建成功")
     @ApiResponse(responseCode = "400", description = "参数校验失败")
     @ApiResponse(responseCode = "409", description = "接口已存在凭证")
-    public ApiResult<CredentialResponse> create(@Valid @RequestBody final CredentialCreateRequest req) {
+    public ApiResult<CallbackCredentialResponse> create(@Valid @RequestBody final CallbackCredentialCreateRequest req) {
         return ApiResult.success(service.create(req));
     }
 
@@ -77,7 +77,7 @@ public class CallbackCredentialController {
     @Operation(summary = "查询凭证", description = "返回元数据 + 配置标记，不回显密文")
     @ApiResponse(responseCode = "200", description = "查询成功")
     @ApiResponse(responseCode = "404", description = "凭证不存在")
-    public ApiResult<CredentialResponse> get(
+    public ApiResult<CallbackCredentialResponse> get(
             @Parameter(description = "输出接口 ID") @PathVariable final String interfaceId) {
         return ApiResult.success(service.get(interfaceId));
     }
@@ -90,7 +90,7 @@ public class CallbackCredentialController {
     @GetMapping
     @Operation(summary = "凭证列表", description = "返回全部凭证元数据，不回显密文")
     @ApiResponse(responseCode = "200", description = "查询成功")
-    public ApiResult<List<CredentialResponse>> list() {
+    public ApiResult<List<CallbackCredentialResponse>> list() {
         return ApiResult.success(service.list());
     }
 
@@ -105,9 +105,9 @@ public class CallbackCredentialController {
     @Operation(summary = "更新凭证", description = "partial — 字段空=保留原值，密文字段非空=轮换，更新后清空 token 缓存")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @ApiResponse(responseCode = "404", description = "凭证不存在")
-    public ApiResult<CredentialResponse> update(
+    public ApiResult<CallbackCredentialResponse> update(
             @Parameter(description = "输出接口 ID") @PathVariable final String interfaceId,
-            @Valid @RequestBody final CredentialUpdateRequest req) {
+            @Valid @RequestBody final CallbackCredentialUpdateRequest req) {
         return ApiResult.success(service.update(interfaceId, req));
     }
 

@@ -1,10 +1,10 @@
 package com.puchain.fep.web.callback.credential.service;
 
-import com.puchain.fep.web.callback.credential.crypto.CredentialEncryptionFacade;
+import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
-import com.puchain.fep.web.callback.credential.oauth.OAuth2ClientCredentialsClient;
-import com.puchain.fep.web.callback.credential.oauth.OAuth2TokenCache;
-import com.puchain.fep.web.callback.credential.oauth.OAuth2TokenResponse;
+import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2ClientCredentialsClient;
+import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
+import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenResponse;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -20,10 +20,10 @@ import java.util.Optional;
  * <p>三分支语义：</p>
  * <ul>
  *   <li>{@code NONE} — 返回 {@link Optional#empty()}，不加鉴权头。</li>
- *   <li>{@code TOKEN} — 查库取 token 密文 → {@link CredentialEncryptionFacade#decrypt} 还原明文 →
+ *   <li>{@code TOKEN} — 查库取 token 密文 → {@link CallbackCredentialEncryptionFacade#decrypt} 还原明文 →
  *       {@code <tokenHeader>: <plaintext>}（tokenHeader 默认 {@code Authorization}）。</li>
- *   <li>{@code OAUTH2} — 先查 {@link OAuth2TokenCache}，命中则 {@code Authorization: Bearer <cached>}；
- *       未命中则查库 → 解密 client_id/secret → {@link OAuth2ClientCredentialsClient#fetchToken}
+ *   <li>{@code OAUTH2} — 先查 {@link CallbackOAuth2TokenCache}，命中则 {@code Authorization: Bearer <cached>}；
+ *       未命中则查库 → 解密 client_id/secret → {@link CallbackOAuth2ClientCredentialsClient#fetchToken}
  *       → 缓存（TTL = {@code expires_in - } {@value #OAUTH_SAFETY_MARGIN_SECONDS} 秒）→
  *       {@code Authorization: Bearer <token>}。</li>
  * </ul>
@@ -49,9 +49,9 @@ public class CallbackCredentialResolver {
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private final CallbackCredentialRepository repo;
-    private final CredentialEncryptionFacade facade;
-    private final OAuth2TokenCache cache;
-    private final OAuth2ClientCredentialsClient oauthClient;
+    private final CallbackCredentialEncryptionFacade facade;
+    private final CallbackOAuth2TokenCache cache;
+    private final CallbackOAuth2ClientCredentialsClient oauthClient;
 
     /**
      * 构造解析器，注入凭证仓储、加解密 facade、OAuth2 token 缓存与 client。
@@ -64,9 +64,9 @@ public class CallbackCredentialResolver {
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
             justification = "Spring-managed singletons stored by reference per container contract")
     public CallbackCredentialResolver(final CallbackCredentialRepository repo,
-                                      final CredentialEncryptionFacade facade,
-                                      final OAuth2TokenCache cache,
-                                      final OAuth2ClientCredentialsClient oauthClient) {
+                                      final CallbackCredentialEncryptionFacade facade,
+                                      final CallbackOAuth2TokenCache cache,
+                                      final CallbackOAuth2ClientCredentialsClient oauthClient) {
         this.repo = repo;
         this.facade = facade;
         this.cache = cache;
@@ -116,7 +116,7 @@ public class CallbackCredentialResolver {
         final String clientId = facade.decrypt(entity.getOauthClientIdCiphertext(), entity.getKeyId());
         final String clientSecret =
                 facade.decrypt(entity.getOauthClientSecretCiphertext(), entity.getKeyId());
-        final OAuth2TokenResponse resp = oauthClient.fetchToken(
+        final CallbackOAuth2TokenResponse resp = oauthClient.fetchToken(
                 entity.getOauthTokenEndpoint(), clientId, clientSecret, entity.getOauthScope());
         cache.put(interfaceId, resp.accessToken(),
                 Duration.ofSeconds((long) resp.expiresIn() - OAUTH_SAFETY_MARGIN_SECONDS));

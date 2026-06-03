@@ -21,8 +21,8 @@ import java.util.Base64;
  * {@code grant_type=client_credentials}（+ 可选 {@code scope}），client_id/client_secret 经
  * HTTP Basic auth 头传递（RFC 6749 §2.3.1），不入 form body 避免凭证泄漏。</p>
  *
- * <p>错误分类：401/403 → {@link OAuth2InvalidCredentialException}（不可重试）；
- * 其余非 200 / IO / 中断 → {@link OAuth2RetryableException}（可重试）。</p>
+ * <p>错误分类：401/403 → {@link CallbackOAuth2InvalidCredentialException}（不可重试）；
+ * 其余非 200 / IO / 中断 → {@link CallbackOAuth2RetryableException}（可重试）。</p>
  *
  * <p>沿用项目既有 JDK {@link HttpClient} 栈（与 {@code CallbackHttpClient} 一致）。</p>
  *
@@ -30,7 +30,7 @@ import java.util.Base64;
  * @since 1.0.0
  */
 @Component
-public class OAuth2ClientCredentialsClient {
+public class CallbackOAuth2ClientCredentialsClient {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
@@ -46,7 +46,7 @@ public class OAuth2ClientCredentialsClient {
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
             justification = "Spring-managed shared ObjectMapper stored by reference per container contract")
-    public OAuth2ClientCredentialsClient(final ObjectMapper mapper) {
+    public CallbackOAuth2ClientCredentialsClient(final ObjectMapper mapper) {
         this.http = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(CONNECT_TIMEOUT)
@@ -62,10 +62,10 @@ public class OAuth2ClientCredentialsClient {
      * @param clientSecret  客户端密钥，非空
      * @param scope         请求的 scope，可空 / 空串则省略
      * @return token endpoint 响应
-     * @throws OAuth2InvalidCredentialException 凭证被拒（401/403），不可重试
-     * @throws OAuth2RetryableException         5xx / 其它非 200 / IO / 中断，可重试
+     * @throws CallbackOAuth2InvalidCredentialException 凭证被拒（401/403），不可重试
+     * @throws CallbackOAuth2RetryableException         5xx / 其它非 200 / IO / 中断，可重试
      */
-    public OAuth2TokenResponse fetchToken(final String tokenEndpoint, final String clientId,
+    public CallbackOAuth2TokenResponse fetchToken(final String tokenEndpoint, final String clientId,
             final String clientSecret, final String scope) {
         final StringBuilder bodyBuilder = new StringBuilder("grant_type=client_credentials");
         if (scope != null && !scope.isEmpty()) {
@@ -88,19 +88,19 @@ public class OAuth2ClientCredentialsClient {
             final HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
             final int status = resp.statusCode();
             if (status == HTTP_OK) {
-                return mapper.readValue(resp.body(), OAuth2TokenResponse.class);
+                return mapper.readValue(resp.body(), CallbackOAuth2TokenResponse.class);
             }
             if (status == HTTP_UNAUTHORIZED || status == HTTP_FORBIDDEN) {
-                throw new OAuth2InvalidCredentialException(
+                throw new CallbackOAuth2InvalidCredentialException(
                         "OAuth2 endpoint rejected credentials, status=" + status);
             }
-            throw new OAuth2RetryableException("OAuth2 endpoint failure, status=" + status);
+            throw new CallbackOAuth2RetryableException("OAuth2 endpoint failure, status=" + status);
         } catch (final IOException e) {
-            throw new OAuth2RetryableException(
+            throw new CallbackOAuth2RetryableException(
                     "OAuth2 IO failure: " + e.getClass().getSimpleName(), e);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new OAuth2RetryableException("OAuth2 interrupted", e);
+            throw new CallbackOAuth2RetryableException("OAuth2 interrupted", e);
         }
     }
 }

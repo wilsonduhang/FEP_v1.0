@@ -11,7 +11,7 @@ package com.puchain.fep.web.callback.credential.dto;
  * @author FEP Team
  * @since 1.0.0
  */
-public class CredentialUpdateRequest {
+public class CallbackCredentialUpdateRequest {
 
     /** TOKEN 鉴权：新 token 明文（null=不变）。 */
     private String token;

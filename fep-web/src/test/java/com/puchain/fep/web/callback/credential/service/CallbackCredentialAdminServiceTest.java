@@ -1,13 +1,13 @@
 package com.puchain.fep.web.callback.credential.service;
 
 import com.puchain.fep.common.exception.FepBusinessException;
-import com.puchain.fep.web.callback.credential.crypto.CredentialEncryptionFacade;
-import com.puchain.fep.web.callback.credential.crypto.CredentialEncryptionFacade.EncryptedCredential;
+import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
+import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade.EncryptedCredential;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
-import com.puchain.fep.web.callback.credential.dto.CredentialCreateRequest;
-import com.puchain.fep.web.callback.credential.dto.CredentialResponse;
-import com.puchain.fep.web.callback.credential.dto.CredentialUpdateRequest;
-import com.puchain.fep.web.callback.credential.oauth.OAuth2TokenCache;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialCreateRequest;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialUpdateRequest;
+import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import org.junit.jupiter.api.Test;
@@ -38,17 +38,17 @@ class CallbackCredentialAdminServiceTest {
     private CallbackCredentialRepository repo;
 
     @Mock
-    private CredentialEncryptionFacade facade;
+    private CallbackCredentialEncryptionFacade facade;
 
     @Mock
-    private OAuth2TokenCache cache;
+    private CallbackOAuth2TokenCache cache;
 
     @InjectMocks
     private CallbackCredentialAdminService svc;
 
     @Test
     void createTokenEncryptsAndPersists() {
-        final CredentialCreateRequest req = new CredentialCreateRequest();
+        final CallbackCredentialCreateRequest req = new CallbackCredentialCreateRequest();
         req.setInterfaceId("IF-001");
         req.setAuthType(InterfaceAuthType.TOKEN);
         req.setToken("plain-tok");
@@ -56,7 +56,7 @@ class CallbackCredentialAdminServiceTest {
         when(facade.encrypt("plain-tok"))
                 .thenReturn(new EncryptedCredential(new byte[]{9}, "KEY-V1"));
 
-        final CredentialResponse resp = svc.create(req);
+        final CallbackCredentialResponse resp = svc.create(req);
 
         final ArgumentCaptor<CallbackCredentialEntity> cap =
                 ArgumentCaptor.forClass(CallbackCredentialEntity.class);
@@ -69,7 +69,7 @@ class CallbackCredentialAdminServiceTest {
 
     @Test
     void createOauth2EncryptsBothIdAndSecret() {
-        final CredentialCreateRequest req = new CredentialCreateRequest();
+        final CallbackCredentialCreateRequest req = new CallbackCredentialCreateRequest();
         req.setInterfaceId("IF-002");
         req.setAuthType(InterfaceAuthType.OAUTH2);
         req.setOauthClientId("clid");
@@ -79,7 +79,7 @@ class CallbackCredentialAdminServiceTest {
         when(facade.encrypt("clid")).thenReturn(new EncryptedCredential(new byte[]{1}, "KEY-V1"));
         when(facade.encrypt("csec")).thenReturn(new EncryptedCredential(new byte[]{2}, "KEY-V1"));
 
-        final CredentialResponse resp = svc.create(req);
+        final CallbackCredentialResponse resp = svc.create(req);
 
         final ArgumentCaptor<CallbackCredentialEntity> cap =
                 ArgumentCaptor.forClass(CallbackCredentialEntity.class);
@@ -93,7 +93,7 @@ class CallbackCredentialAdminServiceTest {
 
     @Test
     void createDuplicateInterfaceThrows() {
-        final CredentialCreateRequest req = new CredentialCreateRequest();
+        final CallbackCredentialCreateRequest req = new CallbackCredentialCreateRequest();
         req.setInterfaceId("IF-001");
         req.setAuthType(InterfaceAuthType.TOKEN);
         req.setToken("x");
@@ -111,7 +111,7 @@ class CallbackCredentialAdminServiceTest {
         final CallbackCredentialEntity existing = CallbackCredentialEntity.newOauth("IF-001",
                 new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1");
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(existing));
-        final CredentialUpdateRequest req = new CredentialUpdateRequest();
+        final CallbackCredentialUpdateRequest req = new CallbackCredentialUpdateRequest();
         req.setOauthClientSecret("new-csec");
         when(facade.encrypt("new-csec"))
                 .thenReturn(new EncryptedCredential(new byte[]{99}, "KEY-V1"));
@@ -129,7 +129,7 @@ class CallbackCredentialAdminServiceTest {
         final CallbackCredentialEntity existing = CallbackCredentialEntity.newOauth("IF-001",
                 new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1");
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(existing));
-        final CredentialUpdateRequest req = new CredentialUpdateRequest();
+        final CallbackCredentialUpdateRequest req = new CallbackCredentialUpdateRequest();
         req.setOauthScope("read write");
 
         svc.update("IF-001", req);
@@ -145,7 +145,7 @@ class CallbackCredentialAdminServiceTest {
     void updateMissingThrows() {
         when(repo.findByInterfaceId("IF-404")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> svc.update("IF-404", new CredentialUpdateRequest()))
+        assertThatThrownBy(() -> svc.update("IF-404", new CallbackCredentialUpdateRequest()))
                 .isInstanceOf(FepBusinessException.class)
                 .hasMessageContaining("not found");
     }
@@ -156,7 +156,7 @@ class CallbackCredentialAdminServiceTest {
                 new byte[]{1, 2, 3}, "Authorization", "KEY-V1");
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
 
-        final CredentialResponse resp = svc.get("IF-001");
+        final CallbackCredentialResponse resp = svc.get("IF-001");
 
         assertThat(resp.getCredentialId()).isEqualTo(entity.getCredentialId());
         assertThat(resp.getTokenHeader()).isEqualTo("Authorization");

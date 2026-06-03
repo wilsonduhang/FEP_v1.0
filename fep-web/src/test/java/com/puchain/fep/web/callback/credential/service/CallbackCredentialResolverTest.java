@@ -1,10 +1,10 @@
 package com.puchain.fep.web.callback.credential.service;
 
-import com.puchain.fep.web.callback.credential.crypto.CredentialEncryptionFacade;
+import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
-import com.puchain.fep.web.callback.credential.oauth.OAuth2ClientCredentialsClient;
-import com.puchain.fep.web.callback.credential.oauth.OAuth2TokenCache;
-import com.puchain.fep.web.callback.credential.oauth.OAuth2TokenResponse;
+import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2ClientCredentialsClient;
+import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
+import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenResponse;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialResolver.AuthHeader;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
@@ -38,11 +38,11 @@ class CallbackCredentialResolverTest {
     @Mock
     private CallbackCredentialRepository repo;
     @Mock
-    private CredentialEncryptionFacade facade;
+    private CallbackCredentialEncryptionFacade facade;
     @Mock
-    private OAuth2TokenCache cache;
+    private CallbackOAuth2TokenCache cache;
     @Mock
-    private OAuth2ClientCredentialsClient oauthClient;
+    private CallbackOAuth2ClientCredentialsClient oauthClient;
 
     private CallbackCredentialResolver resolver;
 
@@ -100,7 +100,7 @@ class CallbackCredentialResolverTest {
         when(facade.decrypt(new byte[]{1}, "KEY-V1")).thenReturn("clid");
         when(facade.decrypt(new byte[]{2}, "KEY-V1")).thenReturn("csec");
         when(oauthClient.fetchToken("https://idp/token", "clid", "csec", "read"))
-                .thenReturn(new OAuth2TokenResponse("new-tok", 3600, "Bearer"));
+                .thenReturn(new CallbackOAuth2TokenResponse("new-tok", 3600, "Bearer"));
 
         final Optional<AuthHeader> h = resolver.resolveAuthHeader(target);
 

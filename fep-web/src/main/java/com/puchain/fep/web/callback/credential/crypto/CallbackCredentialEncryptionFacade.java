@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
  * @since 1.0.0
  */
 @Component
-public class CredentialEncryptionFacade {
+public class CallbackCredentialEncryptionFacade {
 
     private final CryptoService cryptoService;
     private final KeyService keyService;
@@ -35,7 +35,7 @@ public class CredentialEncryptionFacade {
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
             justification = "Spring-managed singletons stored by reference per container contract")
-    public CredentialEncryptionFacade(final CryptoService cryptoService,
+    public CallbackCredentialEncryptionFacade(final CryptoService cryptoService,
                                       final KeyService keyService) {
         this.cryptoService = Objects.requireNonNull(cryptoService, "cryptoService");
         this.keyService = Objects.requireNonNull(keyService, "keyService");

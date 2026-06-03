@@ -24,7 +24,7 @@ import java.util.Optional;
  * @since 1.0.0
  */
 @Component
-public class OAuth2TokenCache {
+public class CallbackOAuth2TokenCache {
 
     /** 缓存条目上限，防止恶意 interfaceId 爆量占用 heap。 */
     private static final long MAX_ENTRIES = 1_000L;
@@ -34,7 +34,7 @@ public class OAuth2TokenCache {
     /**
      * 构造缓存：per-entry 动态 TTL（由 {@link CachedToken#ttlNanos()} 决定），上限 {@value #MAX_ENTRIES} 条。
      */
-    public OAuth2TokenCache() {
+    public CallbackOAuth2TokenCache() {
         this.cache = Caffeine.newBuilder()
                 .maximumSize(MAX_ENTRIES)
                 .expireAfter(new Expiry<String, CachedToken>() {

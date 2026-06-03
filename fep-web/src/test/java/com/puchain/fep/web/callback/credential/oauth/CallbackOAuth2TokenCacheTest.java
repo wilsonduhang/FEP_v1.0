@@ -9,18 +9,18 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * {@link OAuth2TokenCache} 单元测试 — 验证 put/get / per-entry TTL 过期 / invalidate。
+ * {@link CallbackOAuth2TokenCache} 单元测试 — 验证 put/get / per-entry TTL 过期 / invalidate。
  *
  * @author FEP Team
  * @since 1.0.0
  */
-class OAuth2TokenCacheTest {
+class CallbackOAuth2TokenCacheTest {
 
-    private OAuth2TokenCache cache;
+    private CallbackOAuth2TokenCache cache;
 
     @BeforeEach
     void setUp() {
-        cache = new OAuth2TokenCache();
+        cache = new CallbackOAuth2TokenCache();
     }
 
     @Test
