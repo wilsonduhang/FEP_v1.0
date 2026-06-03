@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>{@link OutboundWireShapeDispatcher#describeFor(String)} 对 9020 返回正确 wire-shape
  *       （{@code RealHead9020} + {@link ResponseBusinessHead} + requiresResultCode=true，与 2001/3002
  *       完全同 REAL_HEAD_RESPONSE 类目），以及已登记上行报文总数
- *       {@code REGISTERED_MSG_NO_COUNT}=40 / {@code REAL_HEAD_RESPONSE_MSG_NOS} 含 9020（size 7）。</li>
+ *       {@code REGISTERED_MSG_NO_COUNT}=41 / {@code REAL_HEAD_RESPONSE_MSG_NOS} 含 9020（size 7）。</li>
  *   <li>{@code MsgReturn9020} body POJO marshal 嵌入完整 CFX envelope（RealHead9020 ResponseHead +
  *       Result 5 位占位）后，用真 {@link XsdValidator} 跑 SUT 实际产物校验 OriMsgNo MsgNo length=4 facet。</li>
  * </ul>
@@ -63,8 +63,8 @@ class OutboundWireShape9020XsdComplianceTest {
     }
 
     @Test
-    void registeredMsgNoCountShouldBe40() {
-        assertThat(OutboundWireShapeDispatcher.REGISTERED_MSG_NO_COUNT).isEqualTo(40);
+    void registeredMsgNoCountShouldBe41() {
+        assertThat(OutboundWireShapeDispatcher.REGISTERED_MSG_NO_COUNT).isEqualTo(41);
     }
 
     @Test
