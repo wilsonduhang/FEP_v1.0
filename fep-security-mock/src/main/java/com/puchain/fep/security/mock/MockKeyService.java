@@ -36,6 +36,17 @@ public class MockKeyService implements KeyService {
         0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20
     };
 
+    /**
+     * ⚠️ 仅 dev/CI 用，固定 16 字节 mock SM4 主密钥（占位，非真实国密 SM4 密钥）。
+     * 真实实现由 ③ 安全工程师在 fep-security-impl 编写（⛔ Mode E），密钥来源 HSM /
+     * sealed key store / envelope-encrypted 配置文件。回调凭证加密用。
+     * Callback Phase 2b T1（B5 v0.3 修订：⛔ Mode E ownership，AI 起草作 reviewer aid）。
+     */
+    private static final byte[] MOCK_SM4_CREDENTIAL_MASTER_KEY = {
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+        0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
+    };
+
     @Override
     public String getSm2PublicKeyBase64() {
         return MOCK_PUBLIC_KEY;
@@ -55,5 +66,11 @@ public class MockKeyService implements KeyService {
     public byte[] getSignPrivateKey() {
         // 防御性 clone 避免外部修改污染 mock 常量；⚠️ 仅 dev/CI 用
         return MOCK_SIGN_PRIVATE_KEY.clone();
+    }
+
+    @Override
+    public byte[] getSm4CredentialMasterKey() {
+        // 防御性 clone 避免外部修改污染 mock 常量；⚠️ 仅 dev/CI 用
+        return MOCK_SM4_CREDENTIAL_MASTER_KEY.clone();
     }
 }

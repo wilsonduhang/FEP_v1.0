@@ -56,6 +56,13 @@ public class TestKeyServiceConfiguration {
                 // ⚠️ 仅 test 用 mock 私钥（非真实国密 SM2 私钥）；真实实现 ⛔ Mode E
                 return new byte[32];
             }
+
+            @Override
+            public byte[] getSm4CredentialMasterKey() {
+                // ⚠️ 仅 test 用 mock SM4 主密钥（非真实国密 SM4 密钥）；真实实现 ⛔ Mode E
+                // Callback Phase 2b T1 (B5 v0.3): ⛔ Mode E ownership; 16 bytes for SM4-CBC
+                return new byte[16];
+            }
         };
     }
 }

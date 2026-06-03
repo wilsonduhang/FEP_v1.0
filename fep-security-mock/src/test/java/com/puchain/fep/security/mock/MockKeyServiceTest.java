@@ -45,4 +45,20 @@ class MockKeyServiceTest {
         // P5 T5: pin mock contract — outbound 加签器消费 32 字节 mock 私钥（dev/CI only）
         assertThat(keyService.getSignPrivateKey()).hasSize(32);
     }
+
+    @Test
+    void getSm4CredentialMasterKey_shouldReturn16MockBytes() {
+        // Callback Phase 2b T1 (B5 v0.3): pin mock contract — credential 加密器消费 16 字节 SM4 主密钥
+        // SM4 key length per GB/T 32907-2016 = 128 bits = 16 bytes
+        assertThat(keyService.getSm4CredentialMasterKey()).hasSize(16);
+    }
+
+    @Test
+    void getSm4CredentialMasterKey_shouldReturnDefensiveCopy() {
+        // 防御性 clone 验证：修改返回值不污染 mock 常量
+        byte[] firstCall = keyService.getSm4CredentialMasterKey();
+        firstCall[0] = (byte) 0xFF;
+        byte[] secondCall = keyService.getSm4CredentialMasterKey();
+        assertThat(secondCall[0]).isNotEqualTo((byte) 0xFF);
+    }
 }
