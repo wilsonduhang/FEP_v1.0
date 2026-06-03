@@ -45,6 +45,13 @@
             <artifactId>fep-collector</artifactId>
         </dependency>
 
+        <!-- Caffeine: OAuth2 access_token 内存缓存（OAuth2TokenCache, T5 Callback Phase 2b），
+             per-entry 动态 TTL（Expiry.expireAfterCreate）。版本由 root dependencyManagement 管控。 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- Static analysis annotations: SpotBugs @SuppressFBWarnings (B1 Task 3 — find-sec-bugs CRLF
              检测器不识别用户消毒函数 LogSanitizer.sanitize，需 inline annotation 标记已知已处理点)。
              scope=provided：编译期可见，runtime 不打包（注解 retention=CLASS）。 -->
