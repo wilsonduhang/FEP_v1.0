@@ -137,4 +137,32 @@
         <cve>CVE-2026-42154</cve>
     </suppress>
 
+    <suppress>
+        <notes><![CDATA[
+        CVE-2026-42582 (CVSS 7.5) — Netty HTTP/3 QPACK 解码内存分配 DoS。
+        漏洞代码位于 netty-codec-http3 模块
+        (io.netty.handler.codec.http3.QpackDecoder#decodeHuffmanEncodedLiteral)。
+        fix=4.2.13.Final / 回填 4.1.133.Final。
+
+        双重不可利用研判 (2026-06-03):
+        研判 1 (已修复): FEP 使用 netty 4.1.134.Final (pom.xml:79 BOM override) >=
+          fix 4.1.133.Final，已含修复。
+        研判 2 (漏洞模块缺席): netty-codec-http3 不在 classpath。实测证据
+          `mvn -pl fep-web dependency:tree -Dincludes=io.netty` grep -c
+          "netty-codec-http3" = 0；仅含 netty-transport/common/handler/buffer/
+          resolver/codec/transport-native-unix-common (via lettuce-core <- redis)。
+        漏洞类不可达 -> 不可利用。
+
+        OWASP CPE 误报: 通用产品 CPE cpe:2.3:a:netty:netty 将 http3 codec 漏洞
+        误匹配到 netty-transport 坐标。packageUrl 精确 scope 到 netty-transport
+        (被 ERROR 标记的工件) + 单 pin CVE-2026-42582 —— 未来若引入真实易受攻击的
+        netty-codec-http3 工件，CVE-2026-42582 仍阻断。
+
+        ADR: docs/decisions/2026-06-03-owasp-netty-cve-42582-cpe-fp-adr.md
+        muzhou 签字: 2026-06-03 (Plan AskUserQuestion 决策门)
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.netty/netty-transport@.*$</packageUrl>
+        <cve>CVE-2026-42582</cve>
+    </suppress>
+
 </suppressions>
