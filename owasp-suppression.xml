@@ -137,4 +137,35 @@
         <cve>CVE-2026-42154</cve>
     </suppress>
 
+    <suppress>
+        <notes><![CDATA[
+        CVE-2026-42582 (CVSS 7.5, GHSA-2c5c-chwr-9hqw) — Netty HTTP/3 QPACK
+        literal unbounded allocation DoS 误匹配到 netty-transport。
+        漏洞代码位于 io.netty.handler.codec.http3.QpackDecoder#decodeHuffmanEncodedLiteral
+        (HTTP/3 头块非 Huffman 分支在校验 length<=readableBytes() 前即 new byte[length]，
+        恶意报文声称 ~GB 级 length 触发内存耗尽)，仅影响 io.netty:netty-codec-http3。
+        OWASP 将通用 CPE cpe:2.3:a:netty:netty:4.1.134 误匹配到 netty-transport。
+
+        实测证据 (2026-06-03): `./mvnw dependency:tree -Dincludes="io.netty:*"`
+        全 reactor 仅 7 个 netty artifact (buffer/codec/common/handler/resolver/
+        transport/transport-native-unix-common)，均 4.1.134.Final，经 lettuce-core
+        <- spring-boot-starter-data-redis 引入 (仅 fep-web)。grep -c netty-codec-http3
+        = 0：netty-codec-http3 / codec-http / codec-http2 / handler-proxy 均不在
+        classpath，FEP 不使用 HTTP/3。漏洞代码 QpackDecoder 不可达 -> 不可利用。
+
+        NVD 修复版 4.2.13.Final 属 netty 4.2.x 大版本线 (Spring Boot 3.5.x BOM 锁
+        4.1.x，升级引入 lettuce/BOM 兼容性风险且受影响模块本不在 classpath)，故采纳
+        CPE 误报抑制而非升级。packageUrl 覆盖 netty 族 regex (当前 ERROR 仅
+        netty-transport，但同 cpe:netty:netty 通用 CPE 可对任一 netty-* artifact
+        误匹配同一 http3 CVE，沿用 §extension prometheus-metrics-* 主动扩 regex 同
+        精神，NVD DB 未来扩匹配无需重起 Plan)。仅 CVE-2026-42582 单 CVE pin，其他
+        真 netty CVE 仍阻断。
+
+        ADR: docs/plans/2026-06-03-netty-cve-2026-42582-suppression.md §一
+        muzhou 签字: 2026-06-04 (Plan AskUserQuestion 决策门)
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.netty/netty-.*@.*$</packageUrl>
+        <cve>CVE-2026-42582</cve>
+    </suppress>
+
 </suppressions>
