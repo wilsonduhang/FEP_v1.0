@@ -185,6 +185,38 @@ public class CallbackCredentialEntity {
         this.updateTime = this.rotatedAt;
     }
 
+    /**
+     * 局部更新非密文元数据字段（partial update）。仅当对应入参非 null 时更新，
+     * 与 {@link #rotate} 的密文/keyId 轮换分离。任一字段被更新即刷新 {@code updateTime}。
+     *
+     * <p>遵循本实体"named transition method only，禁 public setter 旁路状态机"设计：
+     * 密文字段经 {@link #rotate}，非密文元数据经本方法。</p>
+     *
+     * @param newTokenHeader        新 token header 名（null=不变）
+     * @param newOauthTokenEndpoint 新 OAUTH2 token 端点 URL（null=不变）
+     * @param newOauthScope         新 OAUTH2 scope（null=不变）
+     */
+    public void updateNonSecretFields(final String newTokenHeader,
+                                      final String newOauthTokenEndpoint,
+                                      final String newOauthScope) {
+        boolean changed = false;
+        if (newTokenHeader != null) {
+            this.tokenHeader = newTokenHeader;
+            changed = true;
+        }
+        if (newOauthTokenEndpoint != null) {
+            this.oauthTokenEndpoint = newOauthTokenEndpoint;
+            changed = true;
+        }
+        if (newOauthScope != null) {
+            this.oauthScope = newOauthScope;
+            changed = true;
+        }
+        if (changed) {
+            this.updateTime = LocalDateTime.now();
+        }
+    }
+
     // ===== Getters =====
 
     /**

@@ -7,6 +7,7 @@ import com.puchain.fep.web.callback.credential.oauth.OAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.oauth.OAuth2TokenResponse;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -60,6 +61,8 @@ public class CallbackCredentialResolver {
      * @param cache       OAuth2 token 缓存，不可为 null
      * @param oauthClient OAuth2 client credentials 客户端，不可为 null
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+            justification = "Spring-managed singletons stored by reference per container contract")
     public CallbackCredentialResolver(final CallbackCredentialRepository repo,
                                       final CredentialEncryptionFacade facade,
                                       final OAuth2TokenCache cache,

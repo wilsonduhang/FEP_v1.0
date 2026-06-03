@@ -1,6 +1,7 @@
 package com.puchain.fep.web.callback.credential.oauth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -43,6 +44,8 @@ public class OAuth2ClientCredentialsClient {
     /**
      * @param mapper 共享 Jackson {@link ObjectMapper}（Spring 注入）
      */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+            justification = "Spring-managed shared ObjectMapper stored by reference per container contract")
     public OAuth2ClientCredentialsClient(final ObjectMapper mapper) {
         this.http = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
