@@ -53,4 +53,24 @@ public interface KeyService {
      * @return PKCS#8-encoded SM2 private key bytes (never {@code null})
      */
     byte[] getSignPrivateKey();
+
+    /**
+     * Returns the SM4 master key used for callback credential ciphertext encryption (16 bytes).
+     *
+     * <p>Consumed by {@code CredentialEncryptionFacade} (Callback Phase 2b T4) to encrypt
+     * outbound interface credentials (TOKEN / OAuth2 client_id+secret) at rest in the
+     * {@code callback_credential} table. Each call returns the current active SM4
+     * master key; rotation is signaled via {@link #getKeyId()} change.</p>
+     *
+     * <p><strong>⛔ Mode E:</strong> The real implementation must be written by the
+     * security specialist in {@code fep-security-impl}. AI agents must NOT generate
+     * the implementation. Key material must come from a HSM, sealed key store, or
+     * envelope-encrypted configuration file; never from plaintext on disk. The
+     * returned byte array must be 16 bytes (SM4 key length per GB/T 32907-2016)
+     * and treated as defensive copy — callers must not retain references beyond
+     * a single encrypt/decrypt operation.</p>
+     *
+     * @return 16-byte SM4 master key (never {@code null})
+     */
+    byte[] getSm4CredentialMasterKey();
 }
