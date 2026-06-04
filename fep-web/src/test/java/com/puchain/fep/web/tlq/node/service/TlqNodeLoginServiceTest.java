@@ -95,6 +95,26 @@ class TlqNodeLoginServiceTest {
             + "</MSG>"
             + "</CFX>";
 
+    /**
+     * Head-only 9005 心跳 payload（无 body / 仅 RealHead9005）— 供 heartbeat 测试断言
+     * {@code .contains("<RealHead9005>")} + {@code .doesNotContain("LoginRequest")}，
+     * 防 head-only 退化为含 body 假绿（P4-MSG-O v0.2 评审 advisory 锚点）。
+     */
+    private static final String FAKE_ENCODED_PAYLOAD_9005 =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+            + "<CFX>"
+            + "<HEAD>"
+            + "<MsgNo>9005</MsgNo>"
+            + "<DesNode>" + HNDEMP_NODE + "</DesNode>"
+            + "<SrcNode>" + TEST_SRC_NODE + "</SrcNode>"
+            + "</HEAD>"
+            + "<MSG>"
+            + "<RealHead9005>"
+            + "<SendOrgCode>" + TEST_SRC_NODE + "</SendOrgCode>"
+            + "</RealHead9005>"
+            + "</MSG>"
+            + "</CFX>";
+
     @BeforeEach
     void setUp() {
         lifecycle = mock(NodeLifecycleManager.class);
@@ -276,5 +296,74 @@ class TlqNodeLoginServiceTest {
                 .isEqualTo(SAMPLE_MSG_ID_DIGITS_20);
 
         verify(bodyMsgIdGenerator, times(1)).generate();
+    }
+
+    // ---------- P4-MSG-O: 9005 心跳发送 (heartbeat head-only) ----------
+
+    @Test
+    @DisplayName("heartbeat: 装配 head-only 9005 → encode(sign=false) → send，return true，不调 lifecycle")
+    void heartbeat_send9005HeadOnly_shouldReturnTrue_withoutLifecycle() {
+        when(nodeRepository.findById(NODE_ID)).thenReturn(Optional.of(existingNode()));
+        when(encoder.encode(any(CfxMessage.class), any(MessagePipelineOptions.class)))
+                .thenReturn(new EncodeResult(FAKE_ENCODED_PAYLOAD_9005, false, false));
+        when(producer.send(any(TlqMessage.class))).thenReturn(SendResult.ok("MSG-9005"));
+
+        boolean result = service.heartbeat(NODE_ID);
+
+        assertThat(result).isTrue();
+
+        // 1) encoder 被以 head-only CfxMessage 调用：MsgNo=9005 + 仅 1 个 MSG 子元素 (RealHead9005，无 body)
+        ArgumentCaptor<CfxMessage> cfxCaptor = ArgumentCaptor.forClass(CfxMessage.class);
+        verify(encoder).encode(cfxCaptor.capture(), any(MessagePipelineOptions.class));
+        CfxMessage cfx = cfxCaptor.getValue();
+        assertThat(cfx.getHead().getMsgNo()).isEqualTo("9005");
+        assertThat(cfx.getHead().getDesNode()).isEqualTo(HNDEMP_NODE);
+        assertThat(cfx.getHead().getSrcNode()).isEqualTo(TEST_SRC_NODE);
+        assertThat(cfx.getBodies())
+                .as("head-only 心跳：MSG 仅 RealHead9005 一个子元素（对比 9006 的 hasSize(2)）")
+                .hasSize(1);
+
+        // 2) producer 拿到 head-only payload + REALTIME_SEND 通道，且不含 body
+        ArgumentCaptor<TlqMessage> msgCaptor = ArgumentCaptor.forClass(TlqMessage.class);
+        verify(producer).send(msgCaptor.capture());
+        TlqMessage sent = msgCaptor.getValue();
+        assertThat(sent.getChannel()).isEqualTo(TlqChannel.REALTIME_SEND);
+        assertThat(sent.getPayload())
+                .contains("<MsgNo>9005</MsgNo>")
+                .contains("<RealHead9005>")
+                .doesNotContain("LoginRequest");
+
+        // 3) 心跳是 keepalive：不调 lifecycle 状态机（区别于 login/logout）
+        verify(lifecycle, never()).login();
+        verify(lifecycle, never()).logout();
+    }
+
+    @Test
+    @DisplayName("heartbeat: producer.send 失败时 return false，仍不调 lifecycle")
+    void heartbeat_sendFails_shouldReturnFalse_withoutLifecycle() {
+        when(nodeRepository.findById(NODE_ID)).thenReturn(Optional.of(existingNode()));
+        when(producer.send(any(TlqMessage.class)))
+                .thenReturn(SendResult.fail("MSG-9005", "broker offline"));
+
+        boolean result = service.heartbeat(NODE_ID);
+
+        assertThat(result).isFalse();
+        verify(lifecycle, never()).login();
+        verify(lifecycle, never()).logout();
+    }
+
+    @Test
+    @DisplayName("heartbeat: 节点不存在抛 BIZ_5015，不发送")
+    void heartbeat_nonExistentNode_throwsBiz5015() {
+        when(nodeRepository.findById("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.heartbeat("ghost"))
+                .isInstanceOf(FepBusinessException.class)
+                .extracting(e -> ((FepBusinessException) e).getErrorCode())
+                .isEqualTo(FepErrorCode.BIZ_5015);
+
+        verify(producer, never()).send(any());
+        verify(lifecycle, never()).login();
+        verify(lifecycle, never()).logout();
     }
 }

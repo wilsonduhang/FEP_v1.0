@@ -7,6 +7,7 @@ import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
+import com.puchain.fep.converter.model.RealHead9005;
 import com.puchain.fep.converter.model.RealHead9006;
 import com.puchain.fep.converter.model.RealHead9008;
 import com.puchain.fep.converter.pipeline.EncodeResult;
@@ -194,6 +195,74 @@ public class TlqNodeLoginService {
                 LogSanitizer.sanitize(nodeId),
                 LogSanitizer.sanitize(result.msgId()));
         return lifecycle.logout();
+    }
+
+    /**
+     * 节点心跳：拼 head-only 9005 → encode(sign=false) → send，fire-and-forget。
+     *
+     * <p>区别于 {@link #login}：心跳是 keepalive，<strong>不调 lifecycle 状态机</strong>
+     * （不改 ONLINE/OFFLINE）。9005 head-only（无 body，仅 {@link RealHead9005}）。</p>
+     *
+     * @param nodeId 目标节点 ID，非空
+     * @return {@code true} 当 9005 发送成功；{@code false} 当发送失败
+     * @throws FepBusinessException 节点不存在（BIZ_5015）
+     */
+    public boolean heartbeat(final String nodeId) {
+        final TlqNode node = nodeRepository.findById(nodeId)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5015,
+                        "TLQ 节点不存在: " + nodeId));
+
+        final CfxMessage cfx = build9005Message(node);
+        final EncodeResult encoded = encoder.encode(cfx, defaultPipelineOpts());
+        final String payload = encoded.getPayload();
+        final TlqMessage msg = new TlqMessage(
+                payload,
+                // TLQ 中间件 corrId, 非 CommonHead.MsgId, 不在 PRD §3.1.3 范围（保留 uuid20）
+                TlqMessageAttributes.forRealtime(IdGenerator.uuid20()),
+                TlqChannel.REALTIME_SEND);
+
+        final SendResult result = producer.send(msg);
+        if (!result.success()) {
+            LOG.warn("9005 heartbeat send failed nodeId={} error={}",
+                    LogSanitizer.sanitize(nodeId),
+                    LogSanitizer.sanitize(result.error()));
+            return false;
+        }
+        LOG.info("9005 heartbeat sent for nodeId={} msgId={}",
+                LogSanitizer.sanitize(nodeId),
+                LogSanitizer.sanitize(result.msgId()));
+        return true;
+    }
+
+    /**
+     * 9005 节点心跳请求报文装配（head-only，结构同 9006 但无 body）。
+     *
+     * <p>仅装配两段：{@link CommonHead}（MsgNo=9005）+ {@link RealHead9005}（3 字段）；
+     * {@link CfxMessage#of(CommonHead, Object...)} 单 body 元素即 head-only 心跳。</p>
+     *
+     * @param node 目标节点（仅校验存在，业务字段不依赖节点属性 — 走 broker 凭证）
+     * @return 装配好的 head-only CfxMessage
+     */
+    private CfxMessage build9005Message(final TlqNode node) {
+        final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式
+        final String workDate = LocalDateTime.now().format(DATE_FMT);
+
+        final CommonHead commonHead = new CommonHead();
+        commonHead.setVersion("1.0");
+        commonHead.setSrcNode(srcNode);
+        commonHead.setDesNode(HNDEMP_DEST_NODE);
+        commonHead.setApp("HNDEMP");
+        commonHead.setMsgNo("9005");
+        commonHead.setMsgId(msgId);
+        commonHead.setCorrMsgId(CORR_MSG_ID_NEW_SESSION);
+        commonHead.setWorkDate(workDate);
+
+        final RealHead9005 realHead = new RealHead9005();
+        realHead.setSendOrgCode(srcNode);
+        realHead.setEntrustDate(workDate);
+        realHead.setTransitionNo(deriveTransitionNo(msgId));
+
+        return CfxMessage.of(commonHead, realHead);   // head-only，无 body
     }
 
     /**
