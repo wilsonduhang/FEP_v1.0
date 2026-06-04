@@ -9,9 +9,13 @@ import com.puchain.fep.processor.intake.port.EnqueueResult;
 import com.puchain.fep.processor.intake.port.OutboundMessageEnqueuePort;
 import com.puchain.fep.processor.intake.port.OutboundMessageEnvelope;
 import com.puchain.fep.web.outbound.xml.OutboundHeadFieldsXml;
+import com.puchain.fep.web.requeststate.RequestStateService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -56,15 +60,23 @@ public class JpaOutboundMessageEnqueueService implements OutboundMessageEnqueueP
      */
     private static final String STATUS_PENDING = "PENDING";
 
+    /** Logger for request_state CREATED hook isolation telemetry. */
+    private static final Logger LOG = LoggerFactory.getLogger(JpaOutboundMessageEnqueueService.class);
+
     private final OutboundMessageQueueRepository repository;
+    private final RequestStateService requestStateService;
 
     /**
      * Spring constructor injection.
      *
-     * @param repository non-null Spring Data repository
+     * @param repository          non-null Spring Data repository
+     * @param requestStateService non-null request-state lifecycle writer (S2 T4 CREATED hook)
      */
-    public JpaOutboundMessageEnqueueService(final OutboundMessageQueueRepository repository) {
+    public JpaOutboundMessageEnqueueService(final OutboundMessageQueueRepository repository,
+                                            final RequestStateService requestStateService) {
         this.repository = Objects.requireNonNull(repository, "repository");
+        this.requestStateService =
+                Objects.requireNonNull(requestStateService, "requestStateService");
     }
 
     @Override
@@ -97,7 +109,39 @@ public class JpaOutboundMessageEnqueueService implements OutboundMessageEnqueueP
                     dive);
         }
 
+        // Stage 4 — S2 T4 CREATED hook: record the request-state lifecycle row keyed by
+        // the 8-digit business transitionNo. The hook joins this REQUIRES_NEW enqueue
+        // transaction (RequestStateService.create is PROPAGATION_REQUIRED); a hook failure
+        // must not block the already-persisted outbound row, so it is isolated + logged.
+        recordCreatedHook(envelope, entity.getQueueId());
+
         return new EnqueueResult(entity.getQueueId(), EnqueueResult.Status.ENQUEUED);
+    }
+
+    /**
+     * Best-effort CREATED hook into request_state. A correlation-tracking failure is
+     * isolated (logged, not rethrown) so the outbound enqueue — the primary side effect —
+     * is never blocked by request-state plumbing.
+     *
+     * @param envelope source envelope (transitionNo + messageType)
+     * @param queueId  persisted outbound queue PK to link the request-state row to
+     */
+    // queueId is a generated UUID PK; transitionNo/messageType pass through LogSanitizer.
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "transitionNo + messageType wrapped by LogSanitizer.sanitize; "
+                    + "queueId is a server-generated UUID with no CRLF risk")
+    private void recordCreatedHook(final OutboundMessageEnvelope envelope, final String queueId) {
+        try {
+            requestStateService.create(
+                    envelope.headFields().transitionNo(),
+                    envelope.messageType(),
+                    queueId);
+        } catch (RuntimeException ex) {
+            LOG.warn("request_state CREATED hook failed (outbound enqueue committed) "
+                            + "for messageType={}, transitionNo={}",
+                    LogSanitizer.sanitize(envelope.messageType()),
+                    LogSanitizer.sanitize(envelope.headFields().transitionNo()), ex);
+        }
     }
 
     private static String marshalBody(final OutboundMessageEnvelope envelope) {
