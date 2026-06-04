@@ -8,6 +8,9 @@ import com.puchain.fep.processor.intake.port.EnqueueResult;
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
 import com.puchain.fep.processor.intake.port.OutboundMessageEnqueuePort;
 import com.puchain.fep.processor.intake.port.OutboundMessageEnvelope;
+import com.puchain.fep.web.requeststate.RequestStateEntity;
+import com.puchain.fep.web.requeststate.RequestStateLifecycle;
+import com.puchain.fep.web.requeststate.RequestStateRepository;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
@@ -61,9 +64,13 @@ class JpaOutboundMessageEnqueueServiceTest {
     @Autowired
     private OutboundMessageQueueRepository repository;
 
+    @Autowired
+    private RequestStateRepository requestStateRepository;
+
     @BeforeEach
     void cleanUpBefore() {
         repository.deleteAll();
+        requestStateRepository.deleteAll();
     }
 
     @AfterEach
@@ -71,6 +78,7 @@ class JpaOutboundMessageEnqueueServiceTest {
         // T7a-fix M1: purge physical rows committed by the Service's REQUIRES_NEW
         // transactions so the next test starts from an empty table.
         repository.deleteAll();
+        requestStateRepository.deleteAll();
     }
 
     @Test
@@ -131,9 +139,12 @@ class JpaOutboundMessageEnqueueServiceTest {
 
     @Test
     void differentIdempotencyKeys_shouldEachEnqueue() {
-        final EnqueueResult r1 = port.submit(sampleEnvelope("k-multi-001",
+        // Distinct transitionNo per message: the S2 T4 CREATED hook keys request_state by
+        // the 8-digit business transitionNo (unique correlation_key), so two genuinely
+        // distinct outbound messages must carry distinct transitionNos (business reality).
+        final EnqueueResult r1 = port.submit(sampleEnvelope("k-multi-001", "3101", "00000011",
                 new SamplePayload("INV-1", "1.00")));
-        final EnqueueResult r2 = port.submit(sampleEnvelope("k-multi-002",
+        final EnqueueResult r2 = port.submit(sampleEnvelope("k-multi-002", "3101", "00000012",
                 new SamplePayload("INV-2", "2.00")));
 
         assertThat(r1.status()).isEqualTo(EnqueueResult.Status.ENQUEUED);
@@ -218,7 +229,8 @@ class JpaOutboundMessageEnqueueServiceTest {
                 .thenThrow(new DataIntegrityViolationException("simulated UNIQUE conflict"));
 
         final JpaOutboundMessageEnqueueService raceService =
-                new JpaOutboundMessageEnqueueService(mockRepo);
+                new JpaOutboundMessageEnqueueService(mockRepo,
+                        mock(com.puchain.fep.web.requeststate.RequestStateService.class));
         final OutboundMessageEnvelope env = sampleEnvelope("RACE_KEY",
                 new SamplePayload("INV-RACE", "0.99"));
 
@@ -232,13 +244,49 @@ class JpaOutboundMessageEnqueueServiceTest {
                 });
     }
 
+    /**
+     * S2 T4: enqueue records a CREATED request_state row keyed by the 8-digit
+     * transitionNo, linked to the outbound queue PK, non-blocked for messageType 3101.
+     */
+    @Test
+    void submit_shouldRecordCreatedRequestStateRow_nonBlocked() {
+        final EnqueueResult result = port.submit(sampleEnvelope("k-rs-001",
+                new SamplePayload("INV-RS", "1.00")));
+
+        final RequestStateEntity rs =
+                requestStateRepository.findByCorrelationKey("00000001").orElseThrow();
+        assertThat(rs.getLifecycleStatus()).isEqualTo(RequestStateLifecycle.CREATED);
+        assertThat(rs.getMessageType()).isEqualTo("3101");
+        assertThat(rs.getOutboundQueueId()).isEqualTo(result.queueId());
+        assertThat(rs.isCorrelationBlocked()).isFalse();
+    }
+
+    /** S2 T4: a structurally-blocked messageType (3115) sets correlation_blocked=true. */
+    @Test
+    void submit_blockedType3115_shouldSetCorrelationBlockedTrue() {
+        port.submit(sampleEnvelope("k-rs-3115", "3115", "00000077",
+                new SamplePayload("INV-3115", "2.00")));
+
+        final RequestStateEntity rs =
+                requestStateRepository.findByCorrelationKey("00000077").orElseThrow();
+        assertThat(rs.getMessageType()).isEqualTo("3115");
+        assertThat(rs.isCorrelationBlocked()).isTrue();
+    }
+
     private static OutboundMessageEnvelope sampleEnvelope(final String idempotencyKey,
                                                           final Object body) {
+        return sampleEnvelope(idempotencyKey, "3101", "00000001", body);
+    }
+
+    private static OutboundMessageEnvelope sampleEnvelope(final String idempotencyKey,
+                                                          final String messageType,
+                                                          final String transitionNo,
+                                                          final Object body) {
         return new OutboundMessageEnvelope(
-                "3101",
+                messageType,
                 Direction.OUTBOUND,
                 idempotencyKey,
-                new OutboundHeadFields(FepConstants.HNDEMP_NODE_CODE, "20260501", "00000001"),
+                new OutboundHeadFields(FepConstants.HNDEMP_NODE_CODE, "20260501", transitionNo),
                 body,
                 "INVOICE_CONTRACT_3101",
                 "ROW-1");

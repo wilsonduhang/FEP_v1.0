@@ -1,6 +1,11 @@
 package com.puchain.fep.web.outbound.consumer;
 
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
+import com.puchain.fep.web.requeststate.RequestStateService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,19 +35,27 @@ import java.util.Objects;
 @Service
 public class OutboundStatusWriterService {
 
+    /** Logger for request_state SENT hook isolation telemetry. */
+    private static final Logger LOG = LoggerFactory.getLogger(OutboundStatusWriterService.class);
+
     private final OutboundQueueRepository repository;
     private final OutboundRetryHandler retryHandler;
+    private final RequestStateService requestStateService;
 
     /**
      * Spring 构造器注入。
      *
-     * @param repository   outbound queue JPA repository（非空）
-     * @param retryHandler 失败路径重试 / DLQ 处理器（非空）
+     * @param repository          outbound queue JPA repository（非空）
+     * @param retryHandler        失败路径重试 / DLQ 处理器（非空）
+     * @param requestStateService request-state 生命周期写者（S2 T4 SENT hook，非空）
      */
     public OutboundStatusWriterService(final OutboundQueueRepository repository,
-                                final OutboundRetryHandler retryHandler) {
+                                final OutboundRetryHandler retryHandler,
+                                final RequestStateService requestStateService) {
         this.repository = Objects.requireNonNull(repository, "repository");
         this.retryHandler = Objects.requireNonNull(retryHandler, "retryHandler");
+        this.requestStateService =
+                Objects.requireNonNull(requestStateService, "requestStateService");
     }
 
     /**
@@ -72,6 +85,29 @@ public class OutboundStatusWriterService {
         entity.setTlqSendResult(tlqSendResult);
         entity.setUpdatedAt(sentAt);
         repository.save(entity);
+
+        // S2 T4 SENT hook: correlate by the 8-digit business transitionNo carried on the
+        // outbound entity (correlationKey, NOT queueId — same key as CREATED + inbound).
+        // unmatched (no request_state row) returns false silently; a hook failure is
+        // isolated + logged so the SENT status write is never blocked.
+        markRequestStateSent(entity.getTransitionNo());
+    }
+
+    /**
+     * Best-effort SENT hook into request_state, keyed by correlationKey (transitionNo).
+     *
+     * @param transitionNo 8-digit business transitionNo carried on the outbound entity
+     */
+    // transitionNo passes through LogSanitizer before logging.
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "transitionNo wrapped by LogSanitizer.sanitize before logging")
+    private void markRequestStateSent(final String transitionNo) {
+        try {
+            requestStateService.markSent(transitionNo);
+        } catch (RuntimeException ex) {
+            LOG.warn("request_state SENT hook failed (outbound SENT status committed) "
+                    + "for transitionNo={}", LogSanitizer.sanitize(transitionNo), ex);
+        }
     }
 
     /**

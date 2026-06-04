@@ -73,3 +73,10 @@ fep:
         backoff-millis: 30000
         max-backoff-millis: 1800000
         max-attempts: 5
+  # S2 request-state tracking: reaper STUCK 检测 TTL + 调度延迟（红线 6 无硬编码超时）
+  request-state:
+    # SENT 行 updatedAt 早于 now-stuck-ttl 即视为滞留（默认 30min）
+    stuck-ttl: PT30M
+    reaper:
+      # @Scheduled fixedDelay（上次执行完成后延迟再触发，毫秒；默认 60s）
+      fixed-delay: 60000
