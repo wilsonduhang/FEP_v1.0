@@ -65,7 +65,8 @@ class CallbackQueueRunnerTest {
     @BeforeEach
     void setUp() {
         props = new CallbackQueueProperties(50, 5000L,
-                new CallbackQueueProperties.Retry(30000L, 1800000L, 3));
+                new CallbackQueueProperties.Retry(30000L, 1800000L, 3),
+                new CallbackQueueProperties.Reaper(true, 60000L, 300L));
         runner = new CallbackQueueRunner(callbackQueueRepository, httpClient,
                 subOutputInterfaceRepository, props, retryHandler, metrics);
     }

@@ -41,7 +41,8 @@ class CallbackRetryHandlerTest {
      */
     private static CallbackQueueProperties defaultProps() {
         return new CallbackQueueProperties(50, 5000L,
-                new CallbackQueueProperties.Retry(30000L, 1800000L, 3));
+                new CallbackQueueProperties.Retry(30000L, 1800000L, 3),
+                new CallbackQueueProperties.Reaper(true, 60000L, 300L));
     }
 
     /**
