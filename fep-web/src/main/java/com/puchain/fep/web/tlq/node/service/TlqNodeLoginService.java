@@ -7,6 +7,8 @@ import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
+import com.puchain.fep.converter.model.RealHead9005;
+import com.puchain.fep.converter.model.AbstractRealHead;
 import com.puchain.fep.converter.model.RealHead9006;
 import com.puchain.fep.converter.model.RealHead9008;
 import com.puchain.fep.converter.pipeline.EncodeResult;
@@ -197,6 +199,103 @@ public class TlqNodeLoginService {
     }
 
     /**
+     * 节点心跳：拼 head-only 9005 → encode(sign=false) → send，fire-and-forget。
+     *
+     * <p>区别于 {@link #login}：心跳是 keepalive，<strong>不调 lifecycle 状态机</strong>
+     * （不改 ONLINE/OFFLINE）。9005 head-only（无 body，仅 {@link RealHead9005}）。</p>
+     *
+     * @param nodeId 目标节点 ID，非空
+     * @return {@code true} 当 9005 发送成功；{@code false} 当发送失败
+     * @throws FepBusinessException 节点不存在（BIZ_5015）
+     */
+    public boolean heartbeat(final String nodeId) {
+        final TlqNode node = nodeRepository.findById(nodeId)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5015,
+                        "TLQ 节点不存在: " + nodeId));
+
+        final CfxMessage cfx = build9005Message(node);
+        final EncodeResult encoded = encoder.encode(cfx, defaultPipelineOpts());
+        final String payload = encoded.getPayload();
+        final TlqMessage msg = new TlqMessage(
+                payload,
+                // TLQ 中间件 corrId, 非 CommonHead.MsgId, 不在 PRD §3.1.3 范围（保留 uuid20）
+                TlqMessageAttributes.forRealtime(IdGenerator.uuid20()),
+                TlqChannel.REALTIME_SEND);
+
+        final SendResult result = producer.send(msg);
+        if (!result.success()) {
+            LOG.warn("9005 heartbeat send failed nodeId={} error={}",
+                    LogSanitizer.sanitize(nodeId),
+                    LogSanitizer.sanitize(result.error()));
+            return false;
+        }
+        LOG.info("9005 heartbeat sent for nodeId={} msgId={}",
+                LogSanitizer.sanitize(nodeId),
+                LogSanitizer.sanitize(result.msgId()));
+        return true;
+    }
+
+    /**
+     * 9005 节点心跳请求报文装配（head-only，结构同 9006 但无 body）。
+     *
+     * <p>仅装配两段：{@link CommonHead}（MsgNo=9005）+ {@link RealHead9005}（3 字段）；
+     * {@link CfxMessage#of(CommonHead, Object...)} 单 body 元素即 head-only 心跳。</p>
+     *
+     * @param node 目标节点（仅校验存在，业务字段不依赖节点属性 — 走 broker 凭证）
+     * @return 装配好的 head-only CfxMessage
+     */
+    private CfxMessage build9005Message(final TlqNode node) {
+        final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式
+        final String workDate = LocalDateTime.now().format(DATE_FMT);
+        final CommonHead commonHead = buildCommonHead("9005", msgId, workDate);
+        final RealHead9005 realHead = populateRealHead(new RealHead9005(), workDate, msgId);
+        return CfxMessage.of(commonHead, realHead);   // head-only，无 body
+    }
+
+    /**
+     * 装配节点报文共享路由头 {@link CommonHead}（9005/9006/9008 仅 MsgNo 差异）。
+     *
+     * <p>P4-MSG-O 抽取：消除 build9005/9006/9008Message 的 8-setter CommonHead 重复
+     * （SonarCloud New Code 重复度 ≤3% 治理）。</p>
+     *
+     * @param msgNo   报文号（"9005"/"9006"/"9008"）
+     * @param msgId   全数字 MsgId（{@link BodyMsgIdGenerator}）
+     * @param workDate 8 位 yyyyMMdd 工作日
+     * @return 装配好的 CommonHead
+     */
+    private CommonHead buildCommonHead(final String msgNo, final String msgId, final String workDate) {
+        final CommonHead commonHead = new CommonHead();
+        commonHead.setVersion("1.0");
+        commonHead.setSrcNode(srcNode);
+        commonHead.setDesNode(HNDEMP_DEST_NODE);
+        commonHead.setApp("HNDEMP");
+        commonHead.setMsgNo(msgNo);
+        commonHead.setMsgId(msgId);
+        commonHead.setCorrMsgId(CORR_MSG_ID_NEW_SESSION);
+        commonHead.setWorkDate(workDate);
+        return commonHead;
+    }
+
+    /**
+     * 灌注节点报文共享业务头 3 字段（{@link AbstractRealHead} 子类 RealHead9005/9006/9008 共用）。
+     *
+     * <p>P4-MSG-O 抽取：消除 3 个 build900X 的 SendOrgCode/EntrustDate/TransitionNo 重复。</p>
+     *
+     * @param realHead 具体 RealHead 实例（{@link AbstractRealHead} 子类）
+     * @param workDate 8 位 yyyyMMdd 工作日
+     * @param msgId    MsgId（{@link #deriveTransitionNo} 派生 TransitionNo）
+     * @param <T>      RealHead 子类型
+     * @return 灌注后的 realHead（链式）
+     */
+    private <T extends AbstractRealHead> T populateRealHead(final T realHead, final String workDate,
+            final String msgId) {
+        realHead.setSendOrgCode(srcNode);
+        realHead.setEntrustDate(workDate);
+        realHead.setTransitionNo(deriveTransitionNo(msgId));
+        return realHead;
+    }
+
+    /**
      * 9006 节点登录请求报文装配。
      *
      * <p>装配三段：</p>
@@ -217,20 +316,8 @@ public class TlqNodeLoginService {
         final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式 (R-1 swap, 2026-05-06)
         final String workDate = LocalDateTime.now().format(DATE_FMT);
 
-        final CommonHead commonHead = new CommonHead();
-        commonHead.setVersion("1.0");
-        commonHead.setSrcNode(srcNode);
-        commonHead.setDesNode(HNDEMP_DEST_NODE);
-        commonHead.setApp("HNDEMP");
-        commonHead.setMsgNo("9006");
-        commonHead.setMsgId(msgId);
-        commonHead.setCorrMsgId(CORR_MSG_ID_NEW_SESSION);
-        commonHead.setWorkDate(workDate);
-
-        final RealHead9006 realHead = new RealHead9006();
-        realHead.setSendOrgCode(srcNode);
-        realHead.setEntrustDate(workDate);
-        realHead.setTransitionNo(deriveTransitionNo(msgId));
+        final CommonHead commonHead = buildCommonHead("9006", msgId, workDate);
+        final RealHead9006 realHead = populateRealHead(new RealHead9006(), workDate, msgId);
 
         final LoginRequest9006 body = new LoginRequest9006();
         body.setPassword(brokerPassword);
@@ -251,20 +338,8 @@ public class TlqNodeLoginService {
         final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式 (R-1 swap, 2026-05-06)
         final String workDate = LocalDateTime.now().format(DATE_FMT);
 
-        final CommonHead commonHead = new CommonHead();
-        commonHead.setVersion("1.0");
-        commonHead.setSrcNode(srcNode);
-        commonHead.setDesNode(HNDEMP_DEST_NODE);
-        commonHead.setApp("HNDEMP");
-        commonHead.setMsgNo("9008");
-        commonHead.setMsgId(msgId);
-        commonHead.setCorrMsgId(CORR_MSG_ID_NEW_SESSION);
-        commonHead.setWorkDate(workDate);
-
-        final RealHead9008 realHead = new RealHead9008();
-        realHead.setSendOrgCode(srcNode);
-        realHead.setEntrustDate(workDate);
-        realHead.setTransitionNo(deriveTransitionNo(msgId));
+        final CommonHead commonHead = buildCommonHead("9008", msgId, workDate);
+        final RealHead9008 realHead = populateRealHead(new RealHead9008(), workDate, msgId);
 
         final LogoutRequest9008 body = new LogoutRequest9008();
         body.setPassword(brokerPassword);
