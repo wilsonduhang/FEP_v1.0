@@ -7,7 +7,6 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +26,8 @@ import java.util.Objects;
  *
  * <p><b>调度</b>：{@code @Scheduled(fixedDelayString)} 上一次执行完成后固定延迟再触发（既有
  * {@code CallbackQueueRunner} / {@code OutboundQueueConsumer} 同款做法），延迟与 TTL 均从配置读取
- * （红线 6 无硬编码超时）。</p>
+ * （红线 6 无硬编码超时）。{@code @EnableScheduling} 不在本类重复声明——fep-web 已全局启用
+ * （见 {@code DownloadTaskCleanupScheduler}），同既有 {@code CallbackQueueRunner} 约定（红线 9 风格一致）。</p>
  *
  * <p><b>单写者纪律</b>：reaper 不直接调用 {@code entity.markStuck()}/{@code repository.save}，而是经
  * {@link RequestStateService}（{@code REQUIRES_NEW} 短事务）逐行标记，保持状态机唯一写入入口
@@ -37,7 +37,6 @@ import java.util.Objects;
  * @since 1.0.0
  */
 @Component
-@EnableScheduling
 public class RequestStateReaper {
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestStateReaper.class);

@@ -75,7 +75,7 @@ class RequestStateReaperTest {
     }
 
     @Test
-    void sweep_doesNotMarkBlockedRow_eveniIfStale() {
+    void sweep_doesNotMarkBlockedRow_evenIfStale() {
         // 3115 is correlation_blocked -> findStuck excludes it -> must stay SENT, counter unchanged
         final double before = stuckCount();
 
