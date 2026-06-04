@@ -8,6 +8,7 @@ import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.converter.model.RealHead9005;
+import com.puchain.fep.converter.model.AbstractRealHead;
 import com.puchain.fep.converter.model.RealHead9006;
 import com.puchain.fep.converter.model.RealHead9008;
 import com.puchain.fep.converter.pipeline.EncodeResult;
@@ -246,23 +247,52 @@ public class TlqNodeLoginService {
     private CfxMessage build9005Message(final TlqNode node) {
         final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式
         final String workDate = LocalDateTime.now().format(DATE_FMT);
+        final CommonHead commonHead = buildCommonHead("9005", msgId, workDate);
+        final RealHead9005 realHead = populateRealHead(new RealHead9005(), workDate, msgId);
+        return CfxMessage.of(commonHead, realHead);   // head-only，无 body
+    }
 
+    /**
+     * 装配节点报文共享路由头 {@link CommonHead}（9005/9006/9008 仅 MsgNo 差异）。
+     *
+     * <p>P4-MSG-O 抽取：消除 build9005/9006/9008Message 的 8-setter CommonHead 重复
+     * （SonarCloud New Code 重复度 ≤3% 治理）。</p>
+     *
+     * @param msgNo   报文号（"9005"/"9006"/"9008"）
+     * @param msgId   全数字 MsgId（{@link BodyMsgIdGenerator}）
+     * @param workDate 8 位 yyyyMMdd 工作日
+     * @return 装配好的 CommonHead
+     */
+    private CommonHead buildCommonHead(final String msgNo, final String msgId, final String workDate) {
         final CommonHead commonHead = new CommonHead();
         commonHead.setVersion("1.0");
         commonHead.setSrcNode(srcNode);
         commonHead.setDesNode(HNDEMP_DEST_NODE);
         commonHead.setApp("HNDEMP");
-        commonHead.setMsgNo("9005");
+        commonHead.setMsgNo(msgNo);
         commonHead.setMsgId(msgId);
         commonHead.setCorrMsgId(CORR_MSG_ID_NEW_SESSION);
         commonHead.setWorkDate(workDate);
+        return commonHead;
+    }
 
-        final RealHead9005 realHead = new RealHead9005();
+    /**
+     * 灌注节点报文共享业务头 3 字段（{@link AbstractRealHead} 子类 RealHead9005/9006/9008 共用）。
+     *
+     * <p>P4-MSG-O 抽取：消除 3 个 build900X 的 SendOrgCode/EntrustDate/TransitionNo 重复。</p>
+     *
+     * @param realHead 具体 RealHead 实例（{@link AbstractRealHead} 子类）
+     * @param workDate 8 位 yyyyMMdd 工作日
+     * @param msgId    MsgId（{@link #deriveTransitionNo} 派生 TransitionNo）
+     * @param <T>      RealHead 子类型
+     * @return 灌注后的 realHead（链式）
+     */
+    private <T extends AbstractRealHead> T populateRealHead(final T realHead, final String workDate,
+            final String msgId) {
         realHead.setSendOrgCode(srcNode);
         realHead.setEntrustDate(workDate);
         realHead.setTransitionNo(deriveTransitionNo(msgId));
-
-        return CfxMessage.of(commonHead, realHead);   // head-only，无 body
+        return realHead;
     }
 
     /**
@@ -286,20 +316,8 @@ public class TlqNodeLoginService {
         final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式 (R-1 swap, 2026-05-06)
         final String workDate = LocalDateTime.now().format(DATE_FMT);
 
-        final CommonHead commonHead = new CommonHead();
-        commonHead.setVersion("1.0");
-        commonHead.setSrcNode(srcNode);
-        commonHead.setDesNode(HNDEMP_DEST_NODE);
-        commonHead.setApp("HNDEMP");
-        commonHead.setMsgNo("9006");
-        commonHead.setMsgId(msgId);
-        commonHead.setCorrMsgId(CORR_MSG_ID_NEW_SESSION);
-        commonHead.setWorkDate(workDate);
-
-        final RealHead9006 realHead = new RealHead9006();
-        realHead.setSendOrgCode(srcNode);
-        realHead.setEntrustDate(workDate);
-        realHead.setTransitionNo(deriveTransitionNo(msgId));
+        final CommonHead commonHead = buildCommonHead("9006", msgId, workDate);
+        final RealHead9006 realHead = populateRealHead(new RealHead9006(), workDate, msgId);
 
         final LoginRequest9006 body = new LoginRequest9006();
         body.setPassword(brokerPassword);
@@ -320,20 +338,8 @@ public class TlqNodeLoginService {
         final String msgId = bodyMsgIdGenerator.generate();   // PRD §3.1.3 全数字格式 (R-1 swap, 2026-05-06)
         final String workDate = LocalDateTime.now().format(DATE_FMT);
 
-        final CommonHead commonHead = new CommonHead();
-        commonHead.setVersion("1.0");
-        commonHead.setSrcNode(srcNode);
-        commonHead.setDesNode(HNDEMP_DEST_NODE);
-        commonHead.setApp("HNDEMP");
-        commonHead.setMsgNo("9008");
-        commonHead.setMsgId(msgId);
-        commonHead.setCorrMsgId(CORR_MSG_ID_NEW_SESSION);
-        commonHead.setWorkDate(workDate);
-
-        final RealHead9008 realHead = new RealHead9008();
-        realHead.setSendOrgCode(srcNode);
-        realHead.setEntrustDate(workDate);
-        realHead.setTransitionNo(deriveTransitionNo(msgId));
+        final CommonHead commonHead = buildCommonHead("9008", msgId, workDate);
+        final RealHead9008 realHead = populateRealHead(new RealHead9008(), workDate, msgId);
 
         final LogoutRequest9008 body = new LogoutRequest9008();
         body.setPassword(brokerPassword);
