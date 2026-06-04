@@ -73,6 +73,15 @@ fep:
         backoff-millis: 30000
         max-backoff-millis: 1800000
         max-attempts: 5
+  # Callback Phase 2b T13: 僵尸 SENDING 行回收 reaper（红线 6 无硬编码超时）
+  callback:
+    reaper:
+      # @ConditionalOnProperty Bean 级开关（false 时 reaper Bean 不创建）
+      enabled: true
+      # @Scheduled fixedDelay 扫描间隔（上次完成后延迟再触发，毫秒；默认 60s）
+      interval-ms: 60000
+      # SENDING 行 claimedAt 早于 now-stale-after-seconds 即视为僵尸（默认 300s/5min）
+      stale-after-seconds: 300
   # S2 request-state tracking: reaper STUCK 检测 TTL + 调度延迟（红线 6 无硬编码超时）
   request-state:
     # SENT 行 updatedAt 早于 now-stuck-ttl 即视为滞留（默认 30min）

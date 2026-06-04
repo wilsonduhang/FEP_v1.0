@@ -17,7 +17,8 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 public record CallbackQueueProperties(
         @DefaultValue("50") int batchSize,
         @DefaultValue("5000") long pollIntervalMs,
-        @DefaultValue Retry retry) {
+        @DefaultValue Retry retry,
+        @DefaultValue Reaper reaper) {
 
     /**
      * 重试退避策略嵌套配置（默认 base=30s / max=30min / maxAttempts=3）。
@@ -31,5 +32,24 @@ public record CallbackQueueProperties(
             @DefaultValue("30000") long backoffMillis,
             @DefaultValue("1800000") long maxBackoffMillis,
             @DefaultValue("3") int maxAttempts) {
+    }
+
+    /**
+     * 僵尸 SENDING 行回收 reaper 配置（T13；默认 enabled / 60s 扫描 / 300s 滞留窗）。
+     *
+     * <p>{@code enabled} 经 {@code CallbackStaleReaper} 的 {@code @ConditionalOnProperty} Bean
+     * 级装配（disabled 时 Bean 不创建，避免 {@code @Scheduled} 空跑噪声）；{@code intervalMs}
+     * 经 reaper 的 {@code @Scheduled} 占位符双绑（注解读占位符，本字段供文档与绑定可见性）；
+     * {@code staleAfterSeconds} 由 reaper 代码读取计算阈值。</p>
+     *
+     * @param enabled           是否启用 reaper（{@code reaper.enabled}，默认 true）
+     * @param intervalMs        {@code @Scheduled fixedDelay} 扫描间隔（{@code reaper.interval-ms}，默认 60s）
+     * @param staleAfterSeconds SENDING 行 {@code claimedAt} 早于 {@code now-staleAfterSeconds} 视为僵尸
+     *                          （{@code reaper.stale-after-seconds}，默认 300s）
+     */
+    public record Reaper(
+            @DefaultValue("true") boolean enabled,
+            @DefaultValue("60000") long intervalMs,
+            @DefaultValue("300") long staleAfterSeconds) {
     }
 }
