@@ -1,11 +1,11 @@
 package com.puchain.fep.web.requeststate;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -17,11 +17,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>使用 {@code @SpringBootTest} 与本包 {@link RequestStateRepositoryTest} 一致（H2 MODE=MySQL DDL
  * 需完整 Flyway + 应用上下文），默认 {@code dev} profile。</p>
  *
+ * <p><b>无 {@code @Transactional}</b>：被测 {@link RequestStateService} 写方法是
+ * {@code REQUIRES_NEW}（best-effort 隔离），会真提交逃逸测试回滚，故不能靠测试事务回滚清理——
+ * 改用物理 {@code @BeforeEach}/{@code @AfterEach deleteAll()} 双端清理（镜像
+ * {@code JpaOutboundMessageEnqueueServiceTest}）。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
 @SpringBootTest
-@Transactional
 @DisplayName("RequestStateService: CREATED→SENT→RESULT_RECEIVED + 幂等 + 非法转换防御 + unmatched 信号")
 class RequestStateServiceTest {
 
@@ -33,6 +37,11 @@ class RequestStateServiceTest {
 
     @BeforeEach
     void cleanUp() {
+        repository.deleteAll();
+    }
+
+    @AfterEach
+    void tearDown() {
         repository.deleteAll();
     }
 

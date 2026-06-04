@@ -110,9 +110,10 @@ public class JpaOutboundMessageEnqueueService implements OutboundMessageEnqueueP
         }
 
         // Stage 4 — S2 T4 CREATED hook: record the request-state lifecycle row keyed by
-        // the 8-digit business transitionNo. The hook joins this REQUIRES_NEW enqueue
-        // transaction (RequestStateService.create is PROPAGATION_REQUIRED); a hook failure
-        // must not block the already-persisted outbound row, so it is isolated + logged.
+        // the 8-digit business transitionNo. RequestStateService.create runs in its own
+        // REQUIRES_NEW transaction (suspended from this enqueue tx), so a hook failure
+        // rolls back only that short tx and is caught + logged — it does NOT mark this
+        // enqueue tx rollback-only nor block the already-persisted outbound row (best-effort).
         recordCreatedHook(envelope, entity.getQueueId());
 
         return new EnqueueResult(entity.getQueueId(), EnqueueResult.Status.ENQUEUED);

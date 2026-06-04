@@ -2,13 +2,13 @@ package com.puchain.fep.web.requeststate;
 
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.event.InboundMessageProcessedEvent;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -27,7 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
  * @since 1.0.0
  */
 @SpringBootTest
-@Transactional
 @DisplayName("RequestStateInboundListener: 匹配标记 RESULT_RECEIVED + unmatched 静默不抛")
 class RequestStateInboundListenerTest {
 
@@ -42,6 +41,11 @@ class RequestStateInboundListenerTest {
 
     @BeforeEach
     void cleanUp() {
+        repository.deleteAll();
+    }
+
+    @AfterEach
+    void tearDown() {
         repository.deleteAll();
     }
 

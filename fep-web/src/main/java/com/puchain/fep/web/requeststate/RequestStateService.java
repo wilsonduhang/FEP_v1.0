@@ -1,6 +1,7 @@
 package com.puchain.fep.web.requeststate;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
@@ -13,9 +14,13 @@ import java.util.Optional;
  * FAILED/STUCK）的<strong>唯一写入入口</strong>。correlation key = 8 位业务 transitionNo，
  * 经 {@link TransitionNoNormalizer#canonical(String)} 归一后比对（两侧同源 8 位，见该类 Javadoc）。</p>
  *
- * <p><b>Tx 边界</b>：镜像 {@code OutboundStatusWriterService} 设计——每个 {@code create}/{@code markXxx}
- * 方法独立 {@code @Transactional}（PROPAGATION_REQUIRED）。caller（outbound enqueue hook /
- * inbound 结果 listener）不持有 Tx，状态变更与 save 在独立短事务内原子完成。</p>
+ * <p><b>Tx 边界（best-effort 隔离）</b>：每个 {@code create}/{@code markXxx} 方法
+ * {@code @Transactional(propagation = REQUIRES_NEW)}——在<strong>独立挂起事务</strong>内完成，
+ * 与 caller（outbound enqueue hook / inbound 结果 listener）事务隔离。如此 request_state 追踪写入
+ * 失败（如 correlation_key UNIQUE 碰撞 / DB 瞬态故障）回滚仅限本短事务，<strong>不标记 caller 事务
+ * rollback-only、不连累 outbound 主发送流程</strong>（retrofit 追踪表 best-effort 设计意图，Plan §架构）。
+ * 反向代价：request_state 行可能在 caller 后续回滚时成为 orphan CREATED 行——但 reaper
+ * {@code findStuck} 仅扫 SENT 态，orphan CREATED 不被误处理（仅 cosmetic drift，可接受）。</p>
  *
  * <p><b>Spring 代理约束</b>：{@code @Transactional} 由外部 Bean 调用方触发 AOP 代理，本类内部不自调用
  * 带 Tx 的方法。</p>
@@ -52,7 +57,7 @@ public class RequestStateService {
      * @param outboundQueueId 关联 outbound 队列主键，可空
      * @throws NullPointerException correlationKey 归一后为空 / messageType 为 null
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void create(final String correlationKey, final String messageType,
                        final String outboundQueueId) {
         final String canonicalKey = Objects.requireNonNull(
@@ -73,7 +78,7 @@ public class RequestStateService {
      * @param correlationKey 8 位业务 transitionNo（归一前）
      * @return {@code true} 命中并更新；{@code false} unmatched（无该 correlation 行 / key 归一后为空）
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean markSent(final String correlationKey) {
         return findByCanonicalKey(correlationKey).map(entity -> {
             entity.markSent();
@@ -91,7 +96,7 @@ public class RequestStateService {
      * @param inboundTransitionNo inbound transitionNo（归一前，存储前再归一），可空
      * @return {@code true} 命中并回填；{@code false} unmatched（无该 correlation 行，正常情况不抛）
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean markResultReceived(final String correlationKey, final String serialNo,
                                       final String inboundTransitionNo) {
         return findByCanonicalKey(correlationKey).map(entity -> {
@@ -109,7 +114,7 @@ public class RequestStateService {
      * @param correlationKey 8 位业务 transitionNo（归一前）
      * @return {@code true} 命中并更新；{@code false} unmatched（无该 correlation 行）
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean markFailed(final String correlationKey) {
         return findByCanonicalKey(correlationKey).map(entity -> {
             entity.markFailed();
