@@ -87,4 +87,60 @@ class CallbackModuleArchTest {
                     .and().areNotEnums()
                     .and().areNotRecords()
                     .should().haveSimpleNameStartingWith("Callback");
+
+    /**
+     * R5: {@code credential.crypto}（凭证 SM4 加解密门面）不依赖 {@code security.impl}。
+     *
+     * <p>Phase 2b 凭证子系统经 {@code CallbackCredentialEncryptionFacade} 仅调用
+     * {@code security.api}（{@code CryptoService}/{@code KeyService} 接口），严守 CLAUDE.md
+     * ⛔ 安全分层隔离：{@code security.impl}（国密实现，③ 安全专家人工编写）对应用层不可见。
+     * 当前 {@code security.impl} 尚未引入，本规则为前向守护，引入时立即生效。</p>
+     */
+    @ArchTest
+    static final ArchRule R5_credential_crypto_must_not_depend_on_security_impl =
+            noClasses().that().resideInAPackage("com.puchain.fep.web.callback.credential.crypto..")
+                    .should().dependOnClassesThat()
+                    .resideInAPackage("com.puchain.fep.security.impl..");
+
+    /**
+     * R6: {@code callback.notification}（告警监听 + 站内通知）不依赖 {@code callback.credential}
+     * 或 {@code callback.reaper}。
+     *
+     * <p>通知子系统经事件解耦（{@code @EventListener CallbackDeadLetterEvent}），与凭证子系统、
+     * reaper 回收子系统功能正交，不得引入横向耦合，保持各子域可独立演进。</p>
+     */
+    @ArchTest
+    static final ArchRule R6_notification_must_not_depend_on_credential_or_reaper =
+            noClasses().that().resideInAPackage("com.puchain.fep.web.callback.notification..")
+                    .should().dependOnClassesThat()
+                    .resideInAnyPackage("com.puchain.fep.web.callback.credential..",
+                            "com.puchain.fep.web.callback.reaper..");
+
+    /**
+     * R7: {@code callback} 下的 {@code @RestController} 不直接依赖 repository 层。
+     *
+     * <p>控制器须经 service 层访问持久化，禁止直连 repository（DLQ/凭证/通知三控制器均经
+     * {@code CallbackReplayService}/{@code CallbackCredentialAdminService}/
+     * {@code CallbackNotificationService} 委派），保持分层职责。</p>
+     */
+    @ArchTest
+    static final ArchRule R7_callback_controllers_must_not_depend_on_repository =
+            noClasses().that().resideInAPackage("com.puchain.fep.web.callback..")
+                    .and().areAnnotatedWith("org.springframework.web.bind.annotation.RestController")
+                    .should().dependOnClassesThat()
+                    .resideInAPackage("com.puchain.fep.web.callback..repository..");
+
+    /**
+     * R8: {@code credential.crypto}（含 {@code CallbackCredentialEncryptionFacade}）仅被
+     * {@code callback.credential} 子包内的类依赖。
+     *
+     * <p>SM4 加解密门面是凭证子系统内部实现细节，不得泄漏到 DLQ/通知/reaper 等其他子域；
+     * 当前仅 {@code CallbackCredentialResolver} / {@code CallbackCredentialAdminService}
+     * （均 {@code credential.service}）使用。</p>
+     */
+    @ArchTest
+    static final ArchRule R8_credential_crypto_only_used_within_credential =
+            classes().that().resideInAPackage("com.puchain.fep.web.callback.credential.crypto..")
+                    .should().onlyHaveDependentClassesThat()
+                    .resideInAnyPackage("com.puchain.fep.web.callback.credential..");
 }
