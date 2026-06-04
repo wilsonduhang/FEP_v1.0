@@ -97,6 +97,30 @@ class PzCheckQuery3107FieldMapperTest {
     }
 
     @Test
+    void toMessageBody_hxqyEntryMissingName_throws() {
+        final Map<String, Object> raw = requiredRaw();
+        final Map<String, Object> entry = hxqy("核心企业甲", "91110000111111111X");
+        entry.remove("hxqy_name");
+        raw.put("hxqy_info", List.of(entry));
+        assertThatThrownBy(() -> mapper.toMessageBody(raw))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("missing required field for 3107: hxqyName")
+                .extracting(e -> ((FepBusinessException) e).getErrorCode())
+                .isEqualTo(FepErrorCode.COLLECT_ASSEMBLE_FAILURE);
+    }
+
+    @Test
+    void toMessageBody_hxqyEntryMissingCode_throws() {
+        final Map<String, Object> raw = requiredRaw();
+        final Map<String, Object> entry = hxqy("核心企业甲", "91110000111111111X");
+        entry.remove("hxqy_code");
+        raw.put("hxqy_info", List.of(entry));
+        assertThatThrownBy(() -> mapper.toMessageBody(raw))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("missing required field for 3107: hxqyCode");
+    }
+
+    @Test
     void toMessageBody_missingCheckDate_throws() {
         final Map<String, Object> raw = requiredRaw();
         raw.remove("check_date");
