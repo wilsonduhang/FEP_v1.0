@@ -18,6 +18,7 @@ import java.util.List;
  * @since 1.0.0
  */
 @Service
+@Transactional
 public class CallbackNotificationService {
 
     private final CallbackNotificationRepository repo;
@@ -60,7 +61,6 @@ public class CallbackNotificationService {
      * @param notificationId 通知 id
      * @param userId         当前登录用户 id
      */
-    @Transactional
     public void markRead(final String notificationId, final String userId) {
         repo.findById(notificationId)
                 .filter(n -> userId.equals(n.getUserId()))
