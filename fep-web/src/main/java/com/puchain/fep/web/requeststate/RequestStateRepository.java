@@ -42,4 +42,20 @@ public interface RequestStateRepository extends JpaRepository<RequestStateEntity
           AND r.updatedAt < :threshold
         """)
     List<RequestStateEntity> findStuck(@Param("threshold") Instant threshold);
+
+    /**
+     * 统计指定生命周期状态的请求行数（{@link RequestStateMetrics} 按 lifecycle 计数 gauge 用）。
+     *
+     * @param lifecycleStatus 生命周期状态
+     * @return 该状态行数（≥0）
+     */
+    long countByLifecycleStatus(RequestStateLifecycle lifecycleStatus);
+
+    /**
+     * 统计 {@code correlation_blocked = true} 的请求行数（{@link RequestStateMetrics} 的 blocked
+     * gauge 用，与 STUCK 计数区分——结构性永等不到匹配的行不计入 STUCK，见 {@link BlockedMessageTypes}）。
+     *
+     * @return correlation_blocked 行数（≥0）
+     */
+    long countByCorrelationBlockedTrue();
 }

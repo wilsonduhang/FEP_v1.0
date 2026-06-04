@@ -57,6 +57,15 @@ fep:
     refresh-token-ttl-seconds: 604800
     issuer: fep
 
+# 显式启用 Prometheus metrics 导出（生产）。基础 application.yml 仅配置 endpoint exposure，
+# 此处显式置 enabled=true 确保 request-state / outbound / callback gauge 与 counter 被
+# PrometheusMeterRegistry 采集导出（红线 springboot3_metrics_export_enabled；S2 T5 santa MINOR）。
+management:
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
 logging:
   level:
     com.puchain.fep: INFO

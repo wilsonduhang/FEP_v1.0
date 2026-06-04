@@ -123,6 +123,26 @@ public class RequestStateService {
         }).orElse(false);
     }
 
+    /**
+     * 标记滞留（reaper 检测 SENT 超 TTL 无结果的非 correlation_blocked 行）：找到 correlation 行 →
+     * {@link RequestStateEntity#markStuck()}。
+     *
+     * <p>作为 STUCK 转换的<strong>单写者入口</strong>（T2 santa CONCERN-1：STUCK 转换不应仅在 entity
+     * 暴露而绕过 Service Tx 边界）。reaper 对 {@link RequestStateRepository#findStuck(java.time.Instant)}
+     * 命中的每行经本方法标记，与其它写方法一致采用 {@code REQUIRES_NEW} 独立短事务隔离。</p>
+     *
+     * @param correlationKey 8 位业务 transitionNo（归一前）
+     * @return {@code true} 命中并更新；{@code false} unmatched（无该 correlation 行 / key 归一后为空）
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean markStuck(final String correlationKey) {
+        return findByCanonicalKey(correlationKey).map(entity -> {
+            entity.markStuck();
+            repository.save(entity);
+            return true;
+        }).orElse(false);
+    }
+
     private Optional<RequestStateEntity> findByCanonicalKey(final String correlationKey) {
         final String canonicalKey = TransitionNoNormalizer.canonical(correlationKey);
         if (canonicalKey == null) {

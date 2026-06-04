@@ -152,6 +152,23 @@ class RequestStateServiceTest {
     }
 
     @Test
+    void markStuck_movesSentToStuck() {
+        service.create("00000001", "3101", "QID-1");
+        service.markSent("00000001");
+
+        final boolean updated = service.markStuck("00000001");
+
+        assertThat(updated).isTrue();
+        assertThat(repository.findByCorrelationKey("00000001").orElseThrow()
+                .getLifecycleStatus()).isEqualTo(RequestStateLifecycle.STUCK);
+    }
+
+    @Test
+    void markStuck_unknownCorrelation_returnsFalse_noThrow() {
+        assertThat(service.markStuck("99999999")).isFalse();
+    }
+
+    @Test
     void markSent_unknownCorrelation_returnsFalse_noThrow() {
         final boolean updated = service.markSent("99999999");
 
