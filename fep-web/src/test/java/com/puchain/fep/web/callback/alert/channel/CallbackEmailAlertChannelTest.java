@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -16,8 +17,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * {@link CallbackEmailAlertChannel} 单元测试。
@@ -30,8 +34,19 @@ class CallbackEmailAlertChannelTest {
 
     @Mock JavaMailSender mailSender;
 
+    @SuppressWarnings("unchecked")
     private CallbackEmailAlertChannel channel() {
-        return new CallbackEmailAlertChannel(mailSender,
+        ObjectProvider<JavaMailSender> provider = mock(ObjectProvider.class);
+        lenient().when(provider.getIfAvailable()).thenReturn(mailSender);
+        return new CallbackEmailAlertChannel(provider,
+                new CallbackAlertEmailProperties("fep-alert@example.com"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private CallbackEmailAlertChannel channelNoSender() {
+        ObjectProvider<JavaMailSender> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(null);
+        return new CallbackEmailAlertChannel(provider,
                 new CallbackAlertEmailProperties("fep-alert@example.com"));
     }
 
@@ -59,6 +74,12 @@ class CallbackEmailAlertChannelTest {
     @Test
     void send_shouldSkipWhenNoRecipient() {
         channel().send(msg(null));
+        verify(mailSender, never()).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
+    void send_shouldSkipWhenMailSenderUnavailable() {
+        channelNoSender().send(msg("ops@bank.com"));
         verify(mailSender, never()).send(any(SimpleMailMessage.class));
     }
 
