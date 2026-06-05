@@ -2,7 +2,7 @@
   <el-dialog
     :model-value="modelValue"
     :title="isCreate ? '新建凭证' : '编辑凭证'"
-    width="520"
+    width="520px"
     @update:model-value="(v: boolean) => emit('update:modelValue', v)"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
