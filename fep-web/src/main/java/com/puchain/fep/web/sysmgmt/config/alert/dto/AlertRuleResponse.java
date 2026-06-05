@@ -120,21 +120,21 @@ public class AlertRuleResponse {
     }
 
     /**
-     * 获取启用的通知渠道集合。
+     * 获取启用的通知渠道集合（防御性副本）。
      *
-     * @return 渠道集合
+     * @return 渠道集合副本，可能为 null
      */
     public Set<NotifyMethod> getNotifyMethods() {
-        return notifyMethods;
+        return notifyMethods == null ? null : new java.util.LinkedHashSet<>(notifyMethods);
     }
 
     /**
-     * 设置启用的通知渠道集合。
+     * 设置启用的通知渠道集合（防御性副本）。
      *
      * @param notifyMethods 渠道集合
      */
     public void setNotifyMethods(final Set<NotifyMethod> notifyMethods) {
-        this.notifyMethods = notifyMethods;
+        this.notifyMethods = notifyMethods == null ? null : new java.util.LinkedHashSet<>(notifyMethods);
     }
 
     /**

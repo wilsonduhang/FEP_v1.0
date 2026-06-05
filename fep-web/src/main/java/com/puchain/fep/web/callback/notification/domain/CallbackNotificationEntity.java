@@ -12,7 +12,7 @@ import java.util.UUID;
 /**
  * 站内信通知实体（通用，{@code category} 区分来源）。
  *
- * <p>首个使用方 {@code CALLBACK_DLQ}（回调死信告警，T12 {@code CallbackNotificationListener}
+ * <p>首个使用方 {@code CALLBACK_DLQ}（回调死信告警，{@code CallbackInAppAlertChannel}
  * 订阅 {@code CallbackDeadLetterEvent} 写入）；表设计为通用站内信，未来 EMAIL/SMS 渠道
  * 扩展目标。每条通知归属单个 {@code userId}（admin 角色用户），{@code read}/{@code readAt}
  * 经 {@link #markRead()} 状态机变更。</p>

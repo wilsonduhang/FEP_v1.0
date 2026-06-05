@@ -102,12 +102,12 @@ public class SysAlertRule {
     }
 
     /**
-     * 获取启用的通知渠道集合。
+     * 获取启用的通知渠道集合（防御性副本，避免暴露内部可变引用）。
      *
-     * @return 渠道集合（非 null，可能为空）
+     * @return 渠道集合副本（非 null，可能为空）
      */
     public Set<NotifyMethod> getNotifyMethods() {
-        return notifyMethods;
+        return new TreeSet<>(notifyMethods);
     }
 
     /**
@@ -185,12 +185,12 @@ public class SysAlertRule {
     }
 
     /**
-     * 设置启用的通知渠道集合。
+     * 设置启用的通知渠道集合（防御性副本，避免存外部可变引用）。
      *
      * @param notifyMethods 渠道集合（非 null）
      */
     public void setNotifyMethods(final Set<NotifyMethod> notifyMethods) {
-        this.notifyMethods = notifyMethods;
+        this.notifyMethods = new TreeSet<>(notifyMethods);
     }
 
     /**

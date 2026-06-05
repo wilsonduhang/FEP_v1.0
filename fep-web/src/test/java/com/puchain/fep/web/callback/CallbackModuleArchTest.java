@@ -143,4 +143,18 @@ class CallbackModuleArchTest {
             classes().that().resideInAPackage("com.puchain.fep.web.callback.credential.crypto..")
                     .should().onlyHaveDependentClassesThat()
                     .resideInAnyPackage("com.puchain.fep.web.callback.credential..");
+
+    /**
+     * R9: {@code callback.alert}（统一告警引擎 + 渠道）不依赖 {@code callback.credential}
+     * 或 {@code callback.reaper}。
+     *
+     * <p>告警子系统经事件解耦（{@code @EventListener CallbackDeadLetterEvent}），与凭证、reaper
+     * 子系统功能正交，不得横向耦合（镜像 R6）。</p>
+     */
+    @ArchTest
+    static final ArchRule R9_alert_must_not_depend_on_credential_or_reaper =
+            noClasses().that().resideInAPackage("com.puchain.fep.web.callback.alert..")
+                    .should().dependOnClassesThat()
+                    .resideInAnyPackage("com.puchain.fep.web.callback.credential..",
+                            "com.puchain.fep.web.callback.reaper..");
 }
