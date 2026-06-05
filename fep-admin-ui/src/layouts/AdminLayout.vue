@@ -45,6 +45,7 @@
     </el-aside>
     <el-container>
       <el-header class="header">
+        <NotificationBell />
         <span class="user">{{ authStore.profile?.userName ?? '未登录' }}</span>
         <el-button
           link
@@ -64,6 +65,7 @@ import { computed } from 'vue';
 import { HomeFilled } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import NotificationBell from '@/features/callback/components/NotificationBell.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
