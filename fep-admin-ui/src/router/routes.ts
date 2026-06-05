@@ -120,6 +120,13 @@ export const routes: RouteRecordRaw[] = [
         // menuTree 后端过滤是权限的唯一权威源；路由 meta 仅声明 requiresAuth + title。
         meta: { requiresAuth: true, title: '报文方向映射' },
       },
+      {
+        path: 'callback/credentials',
+        name: 'CallbackCredentials',
+        component: () => import('@/features/callback/views/CredentialListPage.vue'),
+        // NO meta.permission — feedback_permission_code_vs_menu_code 红线（菜单授权唯一在后端 menuTree）
+        meta: { requiresAuth: true, title: '回调凭证管理' },
+      },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/home' },
