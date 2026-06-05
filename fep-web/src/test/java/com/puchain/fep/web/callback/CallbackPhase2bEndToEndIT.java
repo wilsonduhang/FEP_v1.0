@@ -58,7 +58,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * <p>验证 Phase 2b 完整链路：OAuth2 凭证 → IDP 取 token → 携带 Bearer 回调行内
  * endpoint → 4xx 直接 DEAD_LETTER → {@code CallbackDeadLetterEvent} 事件解耦 →
- * {@code CallbackNotificationListener} 为 ADMIN 用户写 {@code in_app_notification}
+ * {@code CallbackAlertEvaluator} → {@code CallbackInAppAlertChannel} 为 ADMIN 用户写 {@code in_app_notification}
  * → admin 复制重放 → 新 PENDING 行（{@code original_dlq_id} 关联）→ 行内修复后
  * 重新投递成功 → DONE。</p>
  *

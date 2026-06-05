@@ -21,6 +21,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.Comparator;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -135,12 +139,13 @@ class SysAlertRuleControllerTest {
         admin.setLockedUntil(null);
         userRepository.save(admin);
 
-        // 恢复预警规则至 V6 种子数据初始状态，避免测试间状态污染
+        // 恢复预警规则至 V34 迁移后默认状态（enabled+IN_APP，保留 IN_APP 常开），避免测试间状态污染
         alertRuleRepository.findById(DEFAULT_RULE_ID).ifPresent(rule -> {
-            rule.setAlertEnabled(false);
+            rule.setAlertEnabled(true);
             rule.setThreshold(0);
             rule.setAlertEmail(null);
-            rule.setNotifyMethod(com.puchain.fep.web.sysmgmt.config.alert.domain.NotifyMethod.EMAIL);
+            rule.setNotifyMethods(defaultMethods());
+            rule.setAlertPhone(null);
             rule.setAlertFrequency(com.puchain.fep.web.sysmgmt.config.alert.domain.AlertFrequency.REALTIME);
             alertRuleRepository.save(rule);
         });
@@ -148,9 +153,16 @@ class SysAlertRuleControllerTest {
         TestRedisConfiguration.getStore().clear();
     }
 
+    /** V34 迁移后默认渠道集合（保留 IN_APP 常开语义）。 */
+    private static Set<NotifyMethod> defaultMethods() {
+        Set<NotifyMethod> s = new TreeSet<>(Comparator.comparing(Enum::name));
+        s.add(NotifyMethod.IN_APP);
+        return s;
+    }
+
     /**
-     * 查询预警规则应返回 V6 种子数据（rule_id=default_alert_rule_00000000001,
-     * alertEnabled=false, threshold=0, notifyMethod=EMAIL, alertFrequency=REALTIME）。
+     * 查询预警规则应返回 V34 迁移后默认数据（rule_id=default_alert_rule_00000000001,
+     * alertEnabled=true, threshold=0, notifyMethods=[IN_APP], alertFrequency=REALTIME）。
      *
      * @throws Exception MockMvc 请求异常
      */
@@ -161,9 +173,9 @@ class SysAlertRuleControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
                 .andExpect(jsonPath("$.data.ruleId").value(DEFAULT_RULE_ID))
-                .andExpect(jsonPath("$.data.alertEnabled").value(false))
+                .andExpect(jsonPath("$.data.alertEnabled").value(true))
                 .andExpect(jsonPath("$.data.threshold").value(0))
-                .andExpect(jsonPath("$.data.notifyMethod").value("EMAIL"))
+                .andExpect(jsonPath("$.data.notifyMethods[0]").value("IN_APP"))
                 .andExpect(jsonPath("$.data.alertFrequency").value("REALTIME"));
     }
 
@@ -178,7 +190,8 @@ class SysAlertRuleControllerTest {
         request.setAlertEnabled(true);
         request.setThreshold(100);
         request.setAlertEmail("alert@example.com");
-        request.setNotifyMethod(NotifyMethod.SMS);
+        request.setNotifyMethods(Set.of(NotifyMethod.SMS));
+        request.setAlertPhone("13800000000");
         request.setAlertFrequency(AlertFrequency.HOURLY);
 
         mockMvc.perform(put("/api/v1/sys/config/alert-rules")
@@ -190,7 +203,8 @@ class SysAlertRuleControllerTest {
                 .andExpect(jsonPath("$.data.alertEnabled").value(true))
                 .andExpect(jsonPath("$.data.threshold").value(100))
                 .andExpect(jsonPath("$.data.alertEmail").value("alert@example.com"))
-                .andExpect(jsonPath("$.data.notifyMethod").value("SMS"))
+                .andExpect(jsonPath("$.data.notifyMethods[0]").value("SMS"))
+                .andExpect(jsonPath("$.data.alertPhone").value("13800000000"))
                 .andExpect(jsonPath("$.data.alertFrequency").value("HOURLY"));
 
         // 验证更新后 GET 返回一致
@@ -212,7 +226,7 @@ class SysAlertRuleControllerTest {
         request.setAlertEnabled(false);
         request.setThreshold(0);
         request.setAlertEmail("not-an-email");
-        request.setNotifyMethod(NotifyMethod.EMAIL);
+        request.setNotifyMethods(Set.of(NotifyMethod.EMAIL));
         request.setAlertFrequency(AlertFrequency.REALTIME);
 
         mockMvc.perform(put("/api/v1/sys/config/alert-rules")
@@ -233,7 +247,7 @@ class SysAlertRuleControllerTest {
         request.setAlertEnabled(false);
         request.setThreshold(-1);
         request.setAlertEmail(null);
-        request.setNotifyMethod(NotifyMethod.EMAIL);
+        request.setNotifyMethods(Set.of(NotifyMethod.EMAIL));
         request.setAlertFrequency(AlertFrequency.REALTIME);
 
         mockMvc.perform(put("/api/v1/sys/config/alert-rules")
@@ -264,7 +278,7 @@ class SysAlertRuleControllerTest {
         seed.setAlertEnabled(false);
         seed.setThreshold(0);
         seed.setAlertEmail(null);
-        seed.setNotifyMethod(NotifyMethod.EMAIL);
+        seed.setNotifyMethods(defaultMethods());
         seed.setAlertFrequency(AlertFrequency.REALTIME);
         alertRuleRepository.save(seed);
     }
@@ -284,7 +298,7 @@ class SysAlertRuleControllerTest {
         request.setAlertEnabled(false);
         request.setThreshold(0);
         request.setAlertEmail(null);
-        request.setNotifyMethod(NotifyMethod.EMAIL);
+        request.setNotifyMethods(Set.of(NotifyMethod.EMAIL));
         request.setAlertFrequency(AlertFrequency.REALTIME);
 
         mockMvc.perform(put("/api/v1/sys/config/alert-rules")
@@ -297,7 +311,7 @@ class SysAlertRuleControllerTest {
         seed.setAlertEnabled(false);
         seed.setThreshold(0);
         seed.setAlertEmail(null);
-        seed.setNotifyMethod(NotifyMethod.EMAIL);
+        seed.setNotifyMethods(defaultMethods());
         seed.setAlertFrequency(AlertFrequency.REALTIME);
         alertRuleRepository.save(seed);
     }
