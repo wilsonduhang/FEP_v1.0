@@ -7,7 +7,6 @@ import com.puchain.fep.web.sysmgmt.config.alert.domain.NotifyMethod;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
@@ -65,7 +64,9 @@ public class CallbackEmailAlertChannel implements CallbackAlertChannel {
         try {
             mailSender.send(mail);
             LOG.info("DLQ alert email sent, refId={}", LogSanitizer.sanitize(message.refId()));
-        } catch (final MailException ex) {
+        } catch (final RuntimeException ex) {
+            // 渠道自隔离：MailException 及 mailSender 实现层任何 RuntimeException 均不上抛，
+            // 履行 CallbackAlertChannel 契约（不影响其他渠道与死信主流程）。
             LOG.error("DLQ alert email failed, refId={}", LogSanitizer.sanitize(message.refId()), ex);
         }
     }

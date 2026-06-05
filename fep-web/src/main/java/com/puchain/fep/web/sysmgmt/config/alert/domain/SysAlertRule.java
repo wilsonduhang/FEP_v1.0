@@ -190,7 +190,9 @@ public class SysAlertRule {
      * @param notifyMethods 渠道集合（非 null）
      */
     public void setNotifyMethods(final Set<NotifyMethod> notifyMethods) {
-        this.notifyMethods = new TreeSet<>(notifyMethods);
+        this.notifyMethods = notifyMethods == null
+                ? new TreeSet<>(Comparator.comparing(Enum::name))
+                : new TreeSet<>(notifyMethods);
     }
 
     /**

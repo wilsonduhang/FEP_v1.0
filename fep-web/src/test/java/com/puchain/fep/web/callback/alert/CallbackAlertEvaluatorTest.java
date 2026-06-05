@@ -79,6 +79,14 @@ class CallbackAlertEvaluatorTest {
     }
 
     @Test
+    void shouldSkipWhenNoRuleConfigured() {
+        when(ruleRepo.findAll()).thenReturn(List.of());
+        CallbackAlertEvaluator e = evaluator();
+        assertThatCode(() -> e.onDeadLetter(ev(3))).doesNotThrowAnyException();
+        verify(inApp, never()).send(any());
+    }
+
+    @Test
     void shouldSkipWhenDisabled() {
         when(ruleRepo.findAll()).thenReturn(List.of(
                 rule(false, 0, methods(NotifyMethod.IN_APP))));

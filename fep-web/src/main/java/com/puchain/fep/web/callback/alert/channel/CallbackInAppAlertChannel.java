@@ -15,6 +15,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -69,7 +70,7 @@ public class CallbackInAppAlertChannel implements CallbackAlertChannel {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void send(final CallbackAlertMessage message) {
         final Optional<SysRole> adminRole = roleRepo.findByRoleCode(ADMIN_ROLE_CODE);
         if (adminRole.isEmpty()) {
