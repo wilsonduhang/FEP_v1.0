@@ -127,6 +127,13 @@ export const routes: RouteRecordRaw[] = [
         // NO meta.permission — feedback_permission_code_vs_menu_code 红线（菜单授权唯一在后端 menuTree）
         meta: { requiresAuth: true, title: '回调凭证管理' },
       },
+      {
+        path: 'callback/dlq',
+        name: 'CallbackDlq',
+        component: () => import('@/features/callback/views/DlqListPage.vue'),
+        // NO meta.permission — feedback_permission_code_vs_menu_code 红线（菜单授权唯一在后端 menuTree；后端 @PreAuthorize ROLE_ADMIN 兜底）
+        meta: { requiresAuth: true, title: '回调死信队列' },
+      },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/home' },
