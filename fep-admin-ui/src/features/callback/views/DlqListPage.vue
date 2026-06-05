@@ -11,9 +11,10 @@
       <el-table-column prop="retryCount" label="重试次数" width="90" />
       <el-table-column prop="lastError" label="末次错误" min-width="220" show-overflow-tooltip />
       <el-table-column prop="originalDlqId" label="源死信 ID" min-width="180" />
-      <el-table-column label="操作" width="120" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="openReplay(row)">重放</el-button>
+          <el-button link type="primary" @click="openChain(row)">查看重放链</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -25,6 +26,7 @@
     </div>
 
     <DlqReplayConfirmDialog v-model="dialogVisible" :record="replaying" @replayed="refresh" />
+    <DlqChainDialog v-model="chainVisible" :queue-id="chainQueueId" />
   </div>
 </template>
 
@@ -32,6 +34,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { callbackDlqApi, type DlqEntryResponse } from '../api/callbackDlq';
 import DlqReplayConfirmDialog from '../components/DlqReplayConfirmDialog.vue';
+import DlqChainDialog from '../components/DlqChainDialog.vue';
 
 const SIZE = 20;
 const rows = ref<DlqEntryResponse[]>([]);
@@ -39,6 +42,8 @@ const loading = ref(false);
 const page = ref(0);
 const dialogVisible = ref(false);
 const replaying = ref<DlqEntryResponse | null>(null);
+const chainVisible = ref(false);
+const chainQueueId = ref<string | null>(null);
 
 const hasNext = computed(() => rows.value.length === SIZE);
 
@@ -68,6 +73,11 @@ function next() {
 function openReplay(row: DlqEntryResponse) {
   replaying.value = row;
   dialogVisible.value = true;
+}
+
+function openChain(row: DlqEntryResponse) {
+  chainQueueId.value = row.queueId;
+  chainVisible.value = true;
 }
 
 onMounted(refresh);

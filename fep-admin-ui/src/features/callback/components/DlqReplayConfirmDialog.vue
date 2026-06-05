@@ -2,7 +2,7 @@
   <el-dialog
     :model-value="modelValue"
     title="复制重放确认"
-    width="520"
+    width="520px"
     @update:model-value="(v: boolean) => emit('update:modelValue', v)"
   >
     <el-descriptions v-if="record" :column="1" border>

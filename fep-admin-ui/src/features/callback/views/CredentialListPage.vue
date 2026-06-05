@@ -33,7 +33,9 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="rotatedAt" label="末次轮换" width="180" />
+      <el-table-column label="末次轮换" width="180">
+        <template #default="{ row }">{{ formatDateTime(row.rotatedAt) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="onEdit(row)">编辑</el-button>
@@ -54,6 +56,7 @@ import {
   type CallbackCredentialResponse,
 } from '../api/callbackCredential';
 import CredentialEditDialog from '../components/CredentialEditDialog.vue';
+import { formatDateTime } from '@/shared/utils/format';
 
 const rows = ref<CallbackCredentialResponse[]>([]);
 const loading = ref(false);
