@@ -77,7 +77,8 @@ public class SysAlertRuleService {
         rule.setAlertEnabled(request.getAlertEnabled());
         rule.setThreshold(request.getThreshold());
         rule.setAlertEmail(request.getAlertEmail());
-        rule.setNotifyMethod(request.getNotifyMethod());
+        rule.setNotifyMethods(request.getNotifyMethods());
+        rule.setAlertPhone(request.getAlertPhone());
         rule.setAlertFrequency(request.getAlertFrequency());
         rule.setUpdateTime(LocalDateTime.now());
         alertRuleRepository.save(rule);

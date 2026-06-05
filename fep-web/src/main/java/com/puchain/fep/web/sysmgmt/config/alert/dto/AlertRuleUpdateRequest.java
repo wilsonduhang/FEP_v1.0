@@ -4,8 +4,11 @@ import com.puchain.fep.web.sysmgmt.config.alert.domain.AlertFrequency;
 import com.puchain.fep.web.sysmgmt.config.alert.domain.NotifyMethod;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.util.Set;
 
 /**
  * 接口预警规则更新请求 DTO。
@@ -28,8 +31,11 @@ public class AlertRuleUpdateRequest {
     @Size(max = 200, message = "alertEmail 不能超过 200 个字符")
     private String alertEmail;
 
-    @NotNull(message = "notifyMethod 不能为空")
-    private NotifyMethod notifyMethod;
+    @NotEmpty(message = "notifyMethods 不能为空")
+    private Set<NotifyMethod> notifyMethods;
+
+    @Size(max = 50, message = "alertPhone 不能超过 50 个字符")
+    private String alertPhone;
 
     @NotNull(message = "alertFrequency 不能为空")
     private AlertFrequency alertFrequency;
@@ -89,21 +95,39 @@ public class AlertRuleUpdateRequest {
     }
 
     /**
-     * 获取通知方式。
+     * 获取启用的通知渠道集合。
      *
-     * @return 通知方式枚举
+     * @return 渠道集合
      */
-    public NotifyMethod getNotifyMethod() {
-        return notifyMethod;
+    public Set<NotifyMethod> getNotifyMethods() {
+        return notifyMethods;
     }
 
     /**
-     * 设置通知方式。
+     * 设置启用的通知渠道集合。
      *
-     * @param notifyMethod 通知方式枚举
+     * @param notifyMethods 渠道集合
      */
-    public void setNotifyMethod(final NotifyMethod notifyMethod) {
-        this.notifyMethod = notifyMethod;
+    public void setNotifyMethods(final Set<NotifyMethod> notifyMethods) {
+        this.notifyMethods = notifyMethods;
+    }
+
+    /**
+     * 获取 SMS 告警收件手机号。
+     *
+     * @return 手机号，可能为 null
+     */
+    public String getAlertPhone() {
+        return alertPhone;
+    }
+
+    /**
+     * 设置 SMS 告警收件手机号。
+     *
+     * @param alertPhone 手机号（可为 null）
+     */
+    public void setAlertPhone(final String alertPhone) {
+        this.alertPhone = alertPhone;
     }
 
     /**

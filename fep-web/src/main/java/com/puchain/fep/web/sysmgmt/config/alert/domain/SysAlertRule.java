@@ -1,6 +1,7 @@
 package com.puchain.fep.web.sysmgmt.config.alert.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -8,6 +9,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * 接口预警规则 Entity，映射 t_sys_alert_rule 表。
@@ -35,9 +39,12 @@ public class SysAlertRule {
     @Column(name = "alert_email", length = 200)
     private String alertEmail;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "notify_method", nullable = false, length = 20)
-    private NotifyMethod notifyMethod;
+    @Convert(converter = NotifyMethodSetConverter.class)
+    @Column(name = "notify_methods", nullable = false, length = 60)
+    private Set<NotifyMethod> notifyMethods = new TreeSet<>(Comparator.comparing(Enum::name));
+
+    @Column(name = "alert_phone", length = 50)
+    private String alertPhone;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "alert_frequency", nullable = false, length = 20)
@@ -95,12 +102,21 @@ public class SysAlertRule {
     }
 
     /**
-     * 获取通知方式。
+     * 获取启用的通知渠道集合。
      *
-     * @return 通知方式枚举
+     * @return 渠道集合（非 null，可能为空）
      */
-    public NotifyMethod getNotifyMethod() {
-        return notifyMethod;
+    public Set<NotifyMethod> getNotifyMethods() {
+        return notifyMethods;
+    }
+
+    /**
+     * 获取 SMS 告警收件手机号。
+     *
+     * @return 手机号，可能为 null
+     */
+    public String getAlertPhone() {
+        return alertPhone;
     }
 
     /**
@@ -169,12 +185,21 @@ public class SysAlertRule {
     }
 
     /**
-     * 设置通知方式。
+     * 设置启用的通知渠道集合。
      *
-     * @param notifyMethod 通知方式枚举
+     * @param notifyMethods 渠道集合（非 null）
      */
-    public void setNotifyMethod(final NotifyMethod notifyMethod) {
-        this.notifyMethod = notifyMethod;
+    public void setNotifyMethods(final Set<NotifyMethod> notifyMethods) {
+        this.notifyMethods = notifyMethods;
+    }
+
+    /**
+     * 设置 SMS 告警收件手机号。
+     *
+     * @param alertPhone 手机号（可为 null）
+     */
+    public void setAlertPhone(final String alertPhone) {
+        this.alertPhone = alertPhone;
     }
 
     /**

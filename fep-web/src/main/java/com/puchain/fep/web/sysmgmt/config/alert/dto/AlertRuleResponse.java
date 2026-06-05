@@ -5,6 +5,7 @@ import com.puchain.fep.web.sysmgmt.config.alert.domain.NotifyMethod;
 import com.puchain.fep.web.sysmgmt.config.alert.domain.SysAlertRule;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 /**
  * 接口预警规则响应 DTO。
@@ -20,7 +21,8 @@ public class AlertRuleResponse {
     private Boolean alertEnabled;
     private Integer threshold;
     private String alertEmail;
-    private NotifyMethod notifyMethod;
+    private Set<NotifyMethod> notifyMethods;
+    private String alertPhone;
     private AlertFrequency alertFrequency;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
@@ -37,7 +39,8 @@ public class AlertRuleResponse {
         resp.setAlertEnabled(entity.getAlertEnabled());
         resp.setThreshold(entity.getThreshold());
         resp.setAlertEmail(entity.getAlertEmail());
-        resp.setNotifyMethod(entity.getNotifyMethod());
+        resp.setNotifyMethods(entity.getNotifyMethods());
+        resp.setAlertPhone(entity.getAlertPhone());
         resp.setAlertFrequency(entity.getAlertFrequency());
         resp.setCreateTime(entity.getCreateTime());
         resp.setUpdateTime(entity.getUpdateTime());
@@ -117,21 +120,39 @@ public class AlertRuleResponse {
     }
 
     /**
-     * 获取通知方式。
+     * 获取启用的通知渠道集合。
      *
-     * @return 通知方式枚举
+     * @return 渠道集合
      */
-    public NotifyMethod getNotifyMethod() {
-        return notifyMethod;
+    public Set<NotifyMethod> getNotifyMethods() {
+        return notifyMethods;
     }
 
     /**
-     * 设置通知方式。
+     * 设置启用的通知渠道集合。
      *
-     * @param notifyMethod 通知方式枚举
+     * @param notifyMethods 渠道集合
      */
-    public void setNotifyMethod(final NotifyMethod notifyMethod) {
-        this.notifyMethod = notifyMethod;
+    public void setNotifyMethods(final Set<NotifyMethod> notifyMethods) {
+        this.notifyMethods = notifyMethods;
+    }
+
+    /**
+     * 获取 SMS 告警收件手机号。
+     *
+     * @return 手机号，可能为 null
+     */
+    public String getAlertPhone() {
+        return alertPhone;
+    }
+
+    /**
+     * 设置 SMS 告警收件手机号。
+     *
+     * @param alertPhone 手机号
+     */
+    public void setAlertPhone(final String alertPhone) {
+        this.alertPhone = alertPhone;
     }
 
     /**
