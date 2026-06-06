@@ -56,4 +56,9 @@ class CallbackCredentialControllerOperationLogTest {
     void delete_hasDeleteOperationLog() throws Exception {
         assertThat(annotationOf("delete", String.class).type()).isEqualTo(OperationType.DELETE);
     }
+
+    @Test
+    void rotateKey_hasUpdateOperationLog() throws Exception {
+        assertThat(annotationOf("rotateKey", String.class).type()).isEqualTo(OperationType.UPDATE);
+    }
 }

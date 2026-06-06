@@ -132,6 +132,50 @@ public class CallbackCredentialAdminService {
     }
 
     /**
+     * 轮换凭证密钥：用密文记录的旧 keyId 解密全部密文，再以当前活跃 key 重加密落库。
+     * 适用于 ③ 安全专家轮换活跃 SM4 主密钥后，将存量凭证迁移至新密钥版本。
+     * 轮换后失效 OAuth2 token 缓存。
+     *
+     * @param interfaceId 接口 ID
+     * @return 不含密文的凭证响应
+     * @throws FepBusinessException 凭证不存在（BIZ_5001）或 NONE 类型无密文可轮换（BIZ_5003）
+     */
+    public CallbackCredentialResponse rotateKey(final String interfaceId) {
+        final CallbackCredentialEntity e = repo.findByInterfaceId(interfaceId)
+                .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
+                        "credential not found, interfaceId=" + interfaceId));
+        final String oldKeyId = e.getKeyId();
+        byte[] newTokenCipher = null;
+        byte[] newClientIdCipher = null;
+        byte[] newClientSecretCipher = null;
+        final String newKeyId;
+        switch (e.getAuthType()) {
+            case TOKEN -> {
+                final String plain = facade.decrypt(e.getTokenCiphertext(), oldKeyId);
+                final EncryptedCredential enc = facade.encrypt(plain);
+                newTokenCipher = enc.ciphertext();
+                newKeyId = enc.keyId();
+            }
+            case OAUTH2 -> {
+                final String id = facade.decrypt(e.getOauthClientIdCiphertext(), oldKeyId);
+                final String secret = facade.decrypt(e.getOauthClientSecretCiphertext(), oldKeyId);
+                final EncryptedCredential encId = facade.encrypt(id);
+                final EncryptedCredential encSec = facade.encrypt(secret);
+                newClientIdCipher = encId.ciphertext();
+                newClientSecretCipher = encSec.ciphertext();
+                newKeyId = encId.keyId();
+            }
+            case NONE -> throw new FepBusinessException(FepErrorCode.BIZ_5003,
+                    "NONE authType has no credential to rotate");
+            default -> throw new FepBusinessException(FepErrorCode.BIZ_5003,
+                    "unsupported authType for key rotation");
+        }
+        e.rotate(newTokenCipher, newClientIdCipher, newClientSecretCipher, newKeyId);
+        tokenCache.invalidate(interfaceId);
+        return CallbackCredentialResponse.from(e);
+    }
+
+    /**
      * 校验凭证有效期：非 null 时必须为将来时刻，否则抛 {@link FepBusinessException}（BIZ_5003）。
      * null 表示永不过期（create）或不变（update），合法放行。
      *

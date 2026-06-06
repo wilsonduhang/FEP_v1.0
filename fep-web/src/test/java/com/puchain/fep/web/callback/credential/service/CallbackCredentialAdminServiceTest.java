@@ -22,6 +22,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -200,6 +202,52 @@ class CallbackCredentialAdminServiceTest {
         when(repo.findByInterfaceId("IF-404")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> svc.get("IF-404"))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("not found");
+    }
+
+    @Test
+    void rotateKey_tokenCredential_reEncryptsWithNewActiveKey() {
+        final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken(
+                "IF-001", new byte[]{7}, "Authorization", "k-old", null);
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
+        when(facade.decrypt(any(), eq("k-old"))).thenReturn("plain-token");
+        when(facade.encrypt("plain-token"))
+                .thenReturn(new EncryptedCredential(new byte[]{8}, "k-new"));
+
+        final CallbackCredentialResponse resp = svc.rotateKey("IF-001");
+
+        assertThat(entity.getKeyId()).isEqualTo("k-new");
+        assertThat(entity.getRotatedAt()).isNotNull();
+        assertThat(entity.getTokenCiphertext()).containsExactly(8);
+        assertThat(resp.getInterfaceId()).isEqualTo("IF-001");
+        verify(cache).invalidate("IF-001");
+    }
+
+    @Test
+    void rotateKey_oauth2Credential_reEncryptsBothCiphers() {
+        final CallbackCredentialEntity entity = CallbackCredentialEntity.newOauth(
+                "IF-001", new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "k-old", null);
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
+        when(facade.decrypt(new byte[]{1}, "k-old")).thenReturn("clid");
+        when(facade.decrypt(new byte[]{2}, "k-old")).thenReturn("csec");
+        when(facade.encrypt("clid")).thenReturn(new EncryptedCredential(new byte[]{11}, "k-new"));
+        when(facade.encrypt("csec")).thenReturn(new EncryptedCredential(new byte[]{22}, "k-new"));
+
+        svc.rotateKey("IF-001");
+
+        assertThat(entity.getKeyId()).isEqualTo("k-new");
+        assertThat(entity.getRotatedAt()).isNotNull();
+        assertThat(entity.getOauthClientIdCiphertext()).containsExactly(11);
+        assertThat(entity.getOauthClientSecretCiphertext()).containsExactly(22);
+        verify(cache).invalidate("IF-001");
+    }
+
+    @Test
+    void rotateKey_missing_throwsBiz5001() {
+        when(repo.findByInterfaceId("IF-404")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> svc.rotateKey("IF-404"))
                 .isInstanceOf(FepBusinessException.class)
                 .hasMessageContaining("not found");
     }

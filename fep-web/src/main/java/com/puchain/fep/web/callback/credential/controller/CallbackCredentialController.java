@@ -118,6 +118,22 @@ public class CallbackCredentialController {
     }
 
     /**
+     * 轮换凭证密钥（解密旧 keyId → 重加密当前活跃 SM4 主密钥）。
+     *
+     * @param interfaceId 接口 ID
+     * @return 不含密文的凭证响应
+     */
+    @PostMapping("/{interfaceId}/rotate-key")
+    @OperationLog(module = "回调凭证管理", type = OperationType.UPDATE, description = "轮换凭证密钥")
+    @Operation(summary = "轮换凭证密钥", description = "用旧 keyId 解密后以当前活跃 SM4 主密钥重加密落库")
+    @ApiResponse(responseCode = "200", description = "轮换成功")
+    @ApiResponse(responseCode = "404", description = "凭证不存在")
+    public ApiResult<CallbackCredentialResponse> rotateKey(
+            @Parameter(description = "输出接口 ID") @PathVariable final String interfaceId) {
+        return ApiResult.success(service.rotateKey(interfaceId));
+    }
+
+    /**
      * 删除凭证（幂等）。
      *
      * @param interfaceId 接口 ID
