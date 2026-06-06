@@ -68,6 +68,33 @@ class CallbackCredentialRepositoryTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    void expiresAt_shouldPersistAndReadBack() {
+        seedInterface("IF-T3-EXP");
+        final java.time.LocalDateTime expiry = java.time.LocalDateTime.of(2030, 1, 1, 12, 0);
+        repository.save(CallbackCredentialEntity.newToken(
+                "IF-T3-EXP", new byte[]{1, 2, 3}, "Authorization", "KEY-V1", expiry));
+        entityManager.flush();
+        entityManager.clear();
+
+        final Optional<CallbackCredentialEntity> found = repository.findByInterfaceId("IF-T3-EXP");
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getExpiresAt()).isEqualTo(expiry);
+    }
+
+    @Test
+    void expiresAt_nullPersistsAsNeverExpire() {
+        seedInterface("IF-T3-NOEXP");
+        repository.save(CallbackCredentialEntity.newToken(
+                "IF-T3-NOEXP", new byte[]{1}, "Authorization", "KEY-V1", null));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(repository.findByInterfaceId("IF-T3-NOEXP")).isPresent()
+                .get().extracting(CallbackCredentialEntity::getExpiresAt).isNull();
+    }
+
     /**
      * Seed 一个 {@code t_sub_output_interface} 父行以满足 callback_credential FK 约束。
      *

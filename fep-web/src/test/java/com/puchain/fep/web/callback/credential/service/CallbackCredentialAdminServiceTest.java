@@ -208,8 +208,9 @@ class CallbackCredentialAdminServiceTest {
 
     @Test
     void rotateKey_tokenCredential_reEncryptsWithNewActiveKey() {
+        final LocalDateTime expiry = LocalDateTime.of(2030, 1, 1, 0, 0);
         final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken(
-                "IF-001", new byte[]{7}, "Authorization", "k-old", null);
+                "IF-001", new byte[]{7}, "Authorization", "k-old", expiry);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
         when(facade.decrypt(any(), eq("k-old"))).thenReturn("plain-token");
         when(facade.encrypt("plain-token"))
@@ -220,6 +221,8 @@ class CallbackCredentialAdminServiceTest {
         assertThat(entity.getKeyId()).isEqualTo("k-new");
         assertThat(entity.getRotatedAt()).isNotNull();
         assertThat(entity.getTokenCiphertext()).containsExactly(8);
+        // 轮换只动密文/keyId/rotatedAt，不动有效期
+        assertThat(entity.getExpiresAt()).isEqualTo(expiry);
         assertThat(resp.getInterfaceId()).isEqualTo("IF-001");
         verify(cache).invalidate("IF-001");
     }
