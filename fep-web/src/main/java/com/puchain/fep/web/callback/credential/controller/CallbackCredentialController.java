@@ -5,6 +5,8 @@ import com.puchain.fep.web.callback.credential.dto.CallbackCredentialCreateReque
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialUpdateRequest;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialAdminService;
+import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
+import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -59,6 +61,7 @@ public class CallbackCredentialController {
      * @return 不含密文的凭证响应
      */
     @PostMapping
+    @OperationLog(module = "回调凭证管理", type = OperationType.CREATE, description = "新建回调凭证")
     @Operation(summary = "新建凭证", description = "明文凭证 server 端 SM4 加密落库，响应不回显密文")
     @ApiResponse(responseCode = "200", description = "创建成功")
     @ApiResponse(responseCode = "400", description = "参数校验失败")
@@ -74,6 +77,7 @@ public class CallbackCredentialController {
      * @return 不含密文的凭证响应
      */
     @GetMapping("/{interfaceId}")
+    @OperationLog(module = "回调凭证管理", type = OperationType.QUERY, description = "查询回调凭证")
     @Operation(summary = "查询凭证", description = "返回元数据 + 配置标记，不回显密文")
     @ApiResponse(responseCode = "200", description = "查询成功")
     @ApiResponse(responseCode = "404", description = "凭证不存在")
@@ -88,6 +92,7 @@ public class CallbackCredentialController {
      * @return 凭证响应列表
      */
     @GetMapping
+    @OperationLog(module = "回调凭证管理", type = OperationType.QUERY, description = "回调凭证列表")
     @Operation(summary = "凭证列表", description = "返回全部凭证元数据，不回显密文")
     @ApiResponse(responseCode = "200", description = "查询成功")
     public ApiResult<List<CallbackCredentialResponse>> list() {
@@ -102,6 +107,7 @@ public class CallbackCredentialController {
      * @return 不含密文的凭证响应
      */
     @PutMapping("/{interfaceId}")
+    @OperationLog(module = "回调凭证管理", type = OperationType.UPDATE, description = "更新回调凭证")
     @Operation(summary = "更新凭证", description = "partial — 字段空=保留原值，密文字段非空=轮换，更新后清空 token 缓存")
     @ApiResponse(responseCode = "200", description = "更新成功")
     @ApiResponse(responseCode = "404", description = "凭证不存在")
@@ -118,6 +124,7 @@ public class CallbackCredentialController {
      * @return 空结果
      */
     @DeleteMapping("/{interfaceId}")
+    @OperationLog(module = "回调凭证管理", type = OperationType.DELETE, description = "删除回调凭证")
     @Operation(summary = "删除凭证", description = "删除并清空 token 缓存，不存在时静默成功")
     @ApiResponse(responseCode = "200", description = "删除成功")
     public ApiResult<Void> delete(
