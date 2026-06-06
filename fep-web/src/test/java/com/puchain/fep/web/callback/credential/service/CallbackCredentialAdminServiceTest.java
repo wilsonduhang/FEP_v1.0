@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -89,6 +90,37 @@ class CallbackCredentialAdminServiceTest {
         assertThat(resp.isOauthClientIdConfigured()).isTrue();
         assertThat(resp.isOauthClientSecretConfigured()).isTrue();
         assertThat(resp.isTokenConfigured()).isFalse();
+    }
+
+    @Test
+    void create_pastExpiresAt_throwsBiz5003() {
+        final CallbackCredentialCreateRequest req = new CallbackCredentialCreateRequest();
+        req.setInterfaceId("IF-001");
+        req.setAuthType(InterfaceAuthType.TOKEN);
+        req.setToken("plain-token");
+        req.setExpiresAt(LocalDateTime.now().minusDays(1));
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> svc.create(req))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("expiresAt");
+    }
+
+    @Test
+    void create_futureExpiresAt_persistsValue() {
+        final LocalDateTime future = LocalDateTime.now().plusDays(1);
+        final CallbackCredentialCreateRequest req = new CallbackCredentialCreateRequest();
+        req.setInterfaceId("IF-001");
+        req.setAuthType(InterfaceAuthType.TOKEN);
+        req.setToken("plain-token");
+        req.setExpiresAt(future);
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.empty());
+        when(facade.encrypt("plain-token"))
+                .thenReturn(new EncryptedCredential(new byte[]{1}, "KEY-V1"));
+
+        final CallbackCredentialResponse resp = svc.create(req);
+
+        assertThat(resp.getExpiresAt()).isEqualTo(future);
     }
 
     @Test

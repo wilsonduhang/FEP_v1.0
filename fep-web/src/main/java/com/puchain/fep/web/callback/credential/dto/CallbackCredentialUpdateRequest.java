@@ -16,6 +16,9 @@ public class CallbackCredentialUpdateRequest {
     /** TOKEN 鉴权：新 token 明文（null=不变）。 */
     private String token;
 
+    /** 新凭证有效期（null=不变；非 null 须为将来时刻）。 */
+    private java.time.LocalDateTime expiresAt;
+
     /** TOKEN 鉴权：新 HTTP header 名（null=不变）。 */
     private String tokenHeader;
 
@@ -137,5 +140,23 @@ public class CallbackCredentialUpdateRequest {
      */
     public void setOauthScope(final String oauthScope) {
         this.oauthScope = oauthScope;
+    }
+
+    /**
+     * 获取新凭证有效期。
+     *
+     * @return 有效期（null=不变）
+     */
+    public java.time.LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    /**
+     * 设置新凭证有效期。
+     *
+     * @param expiresAt 有效期（null=不变，非 null 须为将来）
+     */
+    public void setExpiresAt(final java.time.LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

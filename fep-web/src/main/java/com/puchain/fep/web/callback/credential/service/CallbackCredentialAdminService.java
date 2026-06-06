@@ -65,18 +65,19 @@ public class CallbackCredentialAdminService {
             throw new FepBusinessException(FepErrorCode.BIZ_5002,
                     "credential already exists for interfaceId=" + req.getInterfaceId());
         }
+        validateExpiresAt(req.getExpiresAt());
         final CallbackCredentialEntity entity = switch (req.getAuthType()) {
             case TOKEN -> {
                 final EncryptedCredential enc = facade.encrypt(req.getToken());
                 yield CallbackCredentialEntity.newToken(req.getInterfaceId(),
-                        enc.ciphertext(), req.getTokenHeader(), enc.keyId(), null);
+                        enc.ciphertext(), req.getTokenHeader(), enc.keyId(), req.getExpiresAt());
             }
             case OAUTH2 -> {
                 final EncryptedCredential encId = facade.encrypt(req.getOauthClientId());
                 final EncryptedCredential encSec = facade.encrypt(req.getOauthClientSecret());
                 yield CallbackCredentialEntity.newOauth(req.getInterfaceId(),
                         encId.ciphertext(), encSec.ciphertext(),
-                        req.getOauthTokenEndpoint(), req.getOauthScope(), encId.keyId(), null);
+                        req.getOauthTokenEndpoint(), req.getOauthScope(), encId.keyId(), req.getExpiresAt());
             }
             case NONE -> throw new FepBusinessException(FepErrorCode.BIZ_5002,
                     "NONE authType has no credential to persist");
@@ -98,6 +99,7 @@ public class CallbackCredentialAdminService {
         final CallbackCredentialEntity e = repo.findByInterfaceId(interfaceId)
                 .orElseThrow(() -> new FepBusinessException(FepErrorCode.BIZ_5001,
                         "credential not found, interfaceId=" + interfaceId));
+        validateExpiresAt(req.getExpiresAt());
 
         byte[] newTokenCipher = null;
         byte[] newClientIdCipher = null;
@@ -123,9 +125,24 @@ public class CallbackCredentialAdminService {
             e.rotate(newTokenCipher, newClientIdCipher, newClientSecretCipher, newKeyId);
         }
         e.updateNonSecretFields(req.getTokenHeader(), req.getOauthTokenEndpoint(), req.getOauthScope());
+        e.updateExpiresAt(req.getExpiresAt());
 
         tokenCache.invalidate(interfaceId);
         return CallbackCredentialResponse.from(e);
+    }
+
+    /**
+     * 校验凭证有效期：非 null 时必须为将来时刻，否则抛 {@link FepBusinessException}（BIZ_5003）。
+     * null 表示永不过期（create）或不变（update），合法放行。
+     *
+     * @param expiresAt 待校验有效期
+     * @throws FepBusinessException 当 {@code expiresAt} 非 null 且不晚于当前时刻
+     */
+    private void validateExpiresAt(final java.time.LocalDateTime expiresAt) {
+        if (expiresAt != null && !expiresAt.isAfter(java.time.LocalDateTime.now())) {
+            throw new FepBusinessException(FepErrorCode.BIZ_5003,
+                    "expiresAt must be in the future");
+        }
     }
 
     /**

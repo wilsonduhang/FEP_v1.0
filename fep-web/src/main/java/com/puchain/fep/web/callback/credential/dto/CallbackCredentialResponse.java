@@ -46,6 +46,9 @@ public class CallbackCredentialResponse {
     /** 最近一次密文轮换时间（首次创建为 null）。 */
     private LocalDateTime rotatedAt;
 
+    /** 凭证有效期（null=永不过期）。 */
+    private LocalDateTime expiresAt;
+
     /** TOKEN 密文是否已配置（mask 标记，不回显密文本身）。 */
     private boolean tokenConfigured;
 
@@ -72,6 +75,7 @@ public class CallbackCredentialResponse {
         r.createTime = e.getCreateTime();
         r.updateTime = e.getUpdateTime();
         r.rotatedAt = e.getRotatedAt();
+        r.expiresAt = e.getExpiresAt();
         r.tokenConfigured = e.getTokenCiphertext() != null;
         r.oauthClientIdConfigured = e.getOauthClientIdCiphertext() != null;
         r.oauthClientSecretConfigured = e.getOauthClientSecretCiphertext() != null;
@@ -238,6 +242,24 @@ public class CallbackCredentialResponse {
      */
     public void setRotatedAt(final LocalDateTime rotatedAt) {
         this.rotatedAt = rotatedAt;
+    }
+
+    /**
+     * 获取凭证有效期。
+     *
+     * @return 有效期（null=永不过期）
+     */
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    /**
+     * 设置凭证有效期。
+     *
+     * @param expiresAt 有效期
+     */
+    public void setExpiresAt(final LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 
     /**

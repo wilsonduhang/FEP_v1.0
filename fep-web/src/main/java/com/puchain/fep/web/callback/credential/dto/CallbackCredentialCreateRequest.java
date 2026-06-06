@@ -4,6 +4,8 @@ import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.LocalDateTime;
+
 /**
  * 回调凭证新建请求。
  *
@@ -41,6 +43,9 @@ public class CallbackCredentialCreateRequest {
 
     /** OAUTH2 鉴权：scope（可选）。 */
     private String oauthScope;
+
+    /** 凭证有效期（可选，null=永不过期；非 null 须为将来时刻）。 */
+    private LocalDateTime expiresAt;
 
     /**
      * 获取关联输出接口 ID。
@@ -184,5 +189,23 @@ public class CallbackCredentialCreateRequest {
      */
     public void setOauthScope(final String oauthScope) {
         this.oauthScope = oauthScope;
+    }
+
+    /**
+     * 获取凭证有效期。
+     *
+     * @return 有效期（null=永不过期）
+     */
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    /**
+     * 设置凭证有效期。
+     *
+     * @param expiresAt 有效期（null=永不过期，非 null 须为将来）
+     */
+    public void setExpiresAt(final LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }
