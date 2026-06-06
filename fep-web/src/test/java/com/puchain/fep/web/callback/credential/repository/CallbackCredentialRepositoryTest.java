@@ -42,7 +42,7 @@ class CallbackCredentialRepositoryTest {
     void findByInterfaceId_shouldReturnPersistedTokenCredential() {
         seedInterface("IF-T3-001");
         final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken(
-                "IF-T3-001", new byte[]{1, 2, 3}, "Authorization", "KEY-V1");
+                "IF-T3-001", new byte[]{1, 2, 3}, "Authorization", "KEY-V1", null);
         repository.save(entity);
         entityManager.flush();
         entityManager.clear();
@@ -60,11 +60,11 @@ class CallbackCredentialRepositoryTest {
     void save_shouldRejectDuplicateInterfaceIdByUniqueConstraint() {
         seedInterface("IF-T3-002");
         repository.saveAndFlush(CallbackCredentialEntity.newToken(
-                "IF-T3-002", new byte[]{1}, null, "KEY-V1"));
+                "IF-T3-002", new byte[]{1}, null, "KEY-V1", null));
 
         assertThatThrownBy(() -> repository.saveAndFlush(
                 CallbackCredentialEntity.newToken(
-                        "IF-T3-002", new byte[]{2}, null, "KEY-V1")))
+                        "IF-T3-002", new byte[]{2}, null, "KEY-V1", null)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

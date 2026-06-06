@@ -69,14 +69,14 @@ public class CallbackCredentialAdminService {
             case TOKEN -> {
                 final EncryptedCredential enc = facade.encrypt(req.getToken());
                 yield CallbackCredentialEntity.newToken(req.getInterfaceId(),
-                        enc.ciphertext(), req.getTokenHeader(), enc.keyId());
+                        enc.ciphertext(), req.getTokenHeader(), enc.keyId(), null);
             }
             case OAUTH2 -> {
                 final EncryptedCredential encId = facade.encrypt(req.getOauthClientId());
                 final EncryptedCredential encSec = facade.encrypt(req.getOauthClientSecret());
                 yield CallbackCredentialEntity.newOauth(req.getInterfaceId(),
                         encId.ciphertext(), encSec.ciphertext(),
-                        req.getOauthTokenEndpoint(), req.getOauthScope(), encId.keyId());
+                        req.getOauthTokenEndpoint(), req.getOauthScope(), encId.keyId(), null);
             }
             case NONE -> throw new FepBusinessException(FepErrorCode.BIZ_5002,
                     "NONE authType has no credential to persist");

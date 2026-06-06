@@ -98,7 +98,7 @@ class CallbackCredentialAdminServiceTest {
         req.setAuthType(InterfaceAuthType.TOKEN);
         req.setToken("x");
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(
-                CallbackCredentialEntity.newToken("IF-001", new byte[]{7}, null, "KEY-V1")));
+                CallbackCredentialEntity.newToken("IF-001", new byte[]{7}, null, "KEY-V1", null)));
 
         assertThatThrownBy(() -> svc.create(req))
                 .isInstanceOf(FepBusinessException.class)
@@ -109,7 +109,7 @@ class CallbackCredentialAdminServiceTest {
     @Test
     void updatePartialKeepsExistingFieldsAndInvalidatesCache() {
         final CallbackCredentialEntity existing = CallbackCredentialEntity.newOauth("IF-001",
-                new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1");
+                new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1", null);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(existing));
         final CallbackCredentialUpdateRequest req = new CallbackCredentialUpdateRequest();
         req.setOauthClientSecret("new-csec");
@@ -127,7 +127,7 @@ class CallbackCredentialAdminServiceTest {
     @Test
     void updateNonSecretMetadataOnly() {
         final CallbackCredentialEntity existing = CallbackCredentialEntity.newOauth("IF-001",
-                new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1");
+                new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1", null);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(existing));
         final CallbackCredentialUpdateRequest req = new CallbackCredentialUpdateRequest();
         req.setOauthScope("read write");
@@ -153,7 +153,7 @@ class CallbackCredentialAdminServiceTest {
     @Test
     void getByInterfaceIdReturnsResponseWithoutCiphertext() {
         final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken("IF-001",
-                new byte[]{1, 2, 3}, "Authorization", "KEY-V1");
+                new byte[]{1, 2, 3}, "Authorization", "KEY-V1", null);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
 
         final CallbackCredentialResponse resp = svc.get("IF-001");
@@ -175,7 +175,7 @@ class CallbackCredentialAdminServiceTest {
     @Test
     void deleteRemovesAndInvalidatesCache() {
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(
-                CallbackCredentialEntity.newToken("IF-001", new byte[]{1}, null, "KEY-V1")));
+                CallbackCredentialEntity.newToken("IF-001", new byte[]{1}, null, "KEY-V1", null)));
 
         svc.delete("IF-001");
 

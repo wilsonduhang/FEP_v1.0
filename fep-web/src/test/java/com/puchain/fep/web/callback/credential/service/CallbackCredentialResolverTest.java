@@ -65,7 +65,7 @@ class CallbackCredentialResolverTest {
     void resolveTokenReturnsDecryptedToken() {
         final SubOutputInterface target = mockTarget("IF-001", InterfaceAuthType.TOKEN);
         final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken(
-                "IF-001", new byte[]{1}, "X-Auth", "KEY-V1");
+                "IF-001", new byte[]{1}, "X-Auth", "KEY-V1", null);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
         when(facade.decrypt(new byte[]{1}, "KEY-V1")).thenReturn("tok-plain");
 
@@ -95,7 +95,7 @@ class CallbackCredentialResolverTest {
         final SubOutputInterface target = mockTarget("IF-001", InterfaceAuthType.OAUTH2);
         when(cache.get("IF-001")).thenReturn(Optional.empty());
         final CallbackCredentialEntity cred = CallbackCredentialEntity.newOauth(
-                "IF-001", new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1");
+                "IF-001", new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1", null);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(cred));
         when(facade.decrypt(new byte[]{1}, "KEY-V1")).thenReturn("clid");
         when(facade.decrypt(new byte[]{2}, "KEY-V1")).thenReturn("csec");
