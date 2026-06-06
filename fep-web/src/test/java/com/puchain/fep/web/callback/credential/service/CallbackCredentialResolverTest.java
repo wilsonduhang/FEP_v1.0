@@ -7,18 +7,24 @@ import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenResponse;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialResolver.AuthHeader;
+import com.puchain.fep.web.callback.metrics.CallbackMetrics;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -48,7 +54,15 @@ class CallbackCredentialResolverTest {
 
     @BeforeEach
     void setUp() {
-        resolver = new CallbackCredentialResolver(repo, facade, cache, oauthClient);
+        resolver = new CallbackCredentialResolver(repo, facade, cache, oauthClient,
+                Clock.systemUTC(), new CallbackMetrics(new SimpleMeterRegistry()));
+    }
+
+    /** 固定时钟 now=2030-06-01（过期门禁确定性测试）。 */
+    private CallbackCredentialResolver resolverAt(final LocalDateTime now) {
+        final Clock fixed = Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+        return new CallbackCredentialResolver(repo, facade, cache, oauthClient, fixed,
+                new CallbackMetrics(new SimpleMeterRegistry()));
     }
 
     @Test
@@ -119,6 +133,38 @@ class CallbackCredentialResolverTest {
         assertThatThrownBy(() -> resolver.resolveAuthHeader(target))
                 .isInstanceOf(CallbackCredentialMissingException.class)
                 .hasMessageContaining("IF-001");
+    }
+
+    @Test
+    void resolveToken_expiredCredential_throwsExpired() {
+        final CallbackCredentialResolver expResolver = resolverAt(LocalDateTime.of(2030, 6, 1, 0, 0));
+        final CallbackCredentialEntity expired = CallbackCredentialEntity.newToken(
+                "IF-001", new byte[]{1}, "Authorization", "k1",
+                LocalDateTime.of(2030, 5, 1, 0, 0));
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(expired));
+        final SubOutputInterface target = mockTarget("IF-001", InterfaceAuthType.TOKEN);
+
+        assertThatThrownBy(() -> expResolver.resolveAuthHeader(target))
+                .isInstanceOf(CallbackCredentialExpiredException.class)
+                .hasMessageContaining("IF-001");
+        verifyNoInteractions(facade);
+    }
+
+    @Test
+    void resolveToken_notExpired_resolvesNormally() {
+        final CallbackCredentialResolver okResolver = resolverAt(LocalDateTime.of(2030, 6, 1, 0, 0));
+        final CallbackCredentialEntity ok = CallbackCredentialEntity.newToken(
+                "IF-001", new byte[]{1}, "X-Token", "k1",
+                LocalDateTime.of(2030, 7, 1, 0, 0));
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(ok));
+        when(facade.decrypt(any(), eq("k1"))).thenReturn("plain");
+        final SubOutputInterface target = mockTarget("IF-001", InterfaceAuthType.TOKEN);
+
+        final Optional<AuthHeader> h = okResolver.resolveAuthHeader(target);
+
+        assertThat(h).isPresent();
+        assertThat(h.get().name()).isEqualTo("X-Token");
+        assertThat(h.get().value()).isEqualTo("plain");
     }
 
     private SubOutputInterface mockTarget(final String id, final InterfaceAuthType at) {

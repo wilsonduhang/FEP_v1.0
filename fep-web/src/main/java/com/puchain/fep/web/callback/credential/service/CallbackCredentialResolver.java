@@ -6,11 +6,14 @@ import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2ClientCredent
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenResponse;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
+import com.puchain.fep.web.callback.metrics.CallbackMetrics;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -52,25 +55,33 @@ public class CallbackCredentialResolver {
     private final CallbackCredentialEncryptionFacade facade;
     private final CallbackOAuth2TokenCache cache;
     private final CallbackOAuth2ClientCredentialsClient oauthClient;
+    private final Clock clock;
+    private final CallbackMetrics metrics;
 
     /**
-     * 构造解析器，注入凭证仓储、加解密 facade、OAuth2 token 缓存与 client。
+     * 构造解析器，注入凭证仓储、加解密 facade、OAuth2 token 缓存与 client、时钟与指标门面。
      *
      * @param repo        凭证仓储，不可为 null
      * @param facade      凭证加解密 facade，不可为 null
      * @param cache       OAuth2 token 缓存，不可为 null
      * @param oauthClient OAuth2 client credentials 客户端，不可为 null
+     * @param clock       时钟（过期判定，可测试），不可为 null
+     * @param metrics     回调指标门面（过期计数），不可为 null
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
             justification = "Spring-managed singletons stored by reference per container contract")
     public CallbackCredentialResolver(final CallbackCredentialRepository repo,
                                       final CallbackCredentialEncryptionFacade facade,
                                       final CallbackOAuth2TokenCache cache,
-                                      final CallbackOAuth2ClientCredentialsClient oauthClient) {
+                                      final CallbackOAuth2ClientCredentialsClient oauthClient,
+                                      final Clock clock,
+                                      final CallbackMetrics metrics) {
         this.repo = repo;
         this.facade = facade;
         this.cache = cache;
         this.oauthClient = oauthClient;
+        this.clock = clock;
+        this.metrics = metrics;
     }
 
     /**
@@ -101,8 +112,25 @@ public class CallbackCredentialResolver {
         final CallbackCredentialEntity entity = repo.findByInterfaceId(interfaceId)
                 .orElseThrow(() -> new CallbackCredentialMissingException(
                         "TOKEN credential missing for interfaceId=" + interfaceId));
+        ensureNotExpired(entity);
         final String plain = facade.decrypt(entity.getTokenCiphertext(), entity.getKeyId());
         return new AuthHeader(entity.getTokenHeader(), plain);
+    }
+
+    /**
+     * 解析期过期门禁：凭证 {@code expires_at} 非 null 且早于当前时刻则计数并拒用，
+     * 不静默降级。{@code null} 有效期（永不过期）放行。
+     *
+     * @param entity 凭证实体
+     * @throws CallbackCredentialExpiredException 凭证已过期
+     */
+    private void ensureNotExpired(final CallbackCredentialEntity entity) {
+        final LocalDateTime exp = entity.getExpiresAt();
+        if (exp != null && LocalDateTime.now(clock).isAfter(exp)) {
+            metrics.recordCredentialExpired();
+            throw new CallbackCredentialExpiredException(
+                    "credential expired for interfaceId=" + entity.getInterfaceId());
+        }
     }
 
     private AuthHeader resolveOAuth2(final String interfaceId) {
@@ -113,6 +141,7 @@ public class CallbackCredentialResolver {
         final CallbackCredentialEntity entity = repo.findByInterfaceId(interfaceId)
                 .orElseThrow(() -> new CallbackCredentialMissingException(
                         "OAUTH2 credential missing for interfaceId=" + interfaceId));
+        ensureNotExpired(entity);
         final String clientId = facade.decrypt(entity.getOauthClientIdCiphertext(), entity.getKeyId());
         final String clientSecret =
                 facade.decrypt(entity.getOauthClientSecretCiphertext(), entity.getKeyId());
