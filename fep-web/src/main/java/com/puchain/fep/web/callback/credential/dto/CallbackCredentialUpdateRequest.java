@@ -1,5 +1,7 @@
 package com.puchain.fep.web.callback.credential.dto;
 
+import java.time.LocalDateTime;
+
 /**
  * 回调凭证更新请求（partial update）。
  *
@@ -17,7 +19,7 @@ public class CallbackCredentialUpdateRequest {
     private String token;
 
     /** 新凭证有效期（null=不变；非 null 须为将来时刻）。 */
-    private java.time.LocalDateTime expiresAt;
+    private LocalDateTime expiresAt;
 
     /** TOKEN 鉴权：新 HTTP header 名（null=不变）。 */
     private String tokenHeader;
@@ -147,7 +149,7 @@ public class CallbackCredentialUpdateRequest {
      *
      * @return 有效期（null=不变）
      */
-    public java.time.LocalDateTime getExpiresAt() {
+    public LocalDateTime getExpiresAt() {
         return expiresAt;
     }
 
@@ -156,7 +158,7 @@ public class CallbackCredentialUpdateRequest {
      *
      * @param expiresAt 有效期（null=不变，非 null 须为将来）
      */
-    public void setExpiresAt(final java.time.LocalDateTime expiresAt) {
+    public void setExpiresAt(final LocalDateTime expiresAt) {
         this.expiresAt = expiresAt;
     }
 }

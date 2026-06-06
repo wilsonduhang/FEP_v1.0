@@ -14,6 +14,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -167,6 +168,8 @@ public class CallbackCredentialAdminService {
             }
             case NONE -> throw new FepBusinessException(FepErrorCode.BIZ_5003,
                     "NONE authType has no credential to rotate");
+            // default 为 final newKeyId 的 definite-assignment 兜底（statement-switch 非穷尽判定）
+            // + 防 InterfaceAuthType 未来新增枚举值，禁删。
             default -> throw new FepBusinessException(FepErrorCode.BIZ_5003,
                     "unsupported authType for key rotation");
         }
@@ -182,8 +185,8 @@ public class CallbackCredentialAdminService {
      * @param expiresAt 待校验有效期
      * @throws FepBusinessException 当 {@code expiresAt} 非 null 且不晚于当前时刻
      */
-    private void validateExpiresAt(final java.time.LocalDateTime expiresAt) {
-        if (expiresAt != null && !expiresAt.isAfter(java.time.LocalDateTime.now())) {
+    private void validateExpiresAt(final LocalDateTime expiresAt) {
+        if (expiresAt != null && !expiresAt.isAfter(LocalDateTime.now())) {
             throw new FepBusinessException(FepErrorCode.BIZ_5003,
                     "expiresAt must be in the future");
         }
