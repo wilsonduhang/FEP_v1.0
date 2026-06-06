@@ -73,4 +73,26 @@ public class MockKeyService implements KeyService {
         // 防御性 clone 避免外部修改污染 mock 常量；⚠️ 仅 dev/CI 用
         return MOCK_SM4_CREDENTIAL_MASTER_KEY.clone();
     }
+
+    @Override
+    public byte[] getSm4CredentialMasterKey(final String keyId) {
+        if (MOCK_KEY_ID.equals(keyId)) {
+            return MOCK_SM4_CREDENTIAL_MASTER_KEY.clone();
+        }
+        // ⚠️ 仅 dev/CI：按 keyId 确定性派生 16 字节占位 key（非真实国密派生）。
+        // 真实多版本密钥派生由 ③ 安全工程师在 fep-security-impl 编写（⛔ Mode E）。
+        return deriveMock16(keyId);
+    }
+
+    private static byte[] deriveMock16(final String keyId) {
+        try {
+            final byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(keyId.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            final byte[] key = new byte[16];
+            System.arraycopy(digest, 0, key, 0, 16);
+            return key;
+        } catch (final java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
+    }
 }
