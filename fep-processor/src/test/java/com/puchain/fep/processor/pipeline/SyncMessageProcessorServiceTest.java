@@ -50,6 +50,7 @@ class SyncMessageProcessorServiceTest {
 
     private SyncMessageProcessorService processor;
     private InMemoryMessageProcessStore store;
+    private com.puchain.fep.processor.validation.rule.MessageRuleRegistry ruleRegistry;
 
     @BeforeEach
     void setUp() {
@@ -58,7 +59,10 @@ class SyncMessageProcessorServiceTest {
         XsdValidator validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
-        processor = new SyncMessageProcessorService(validator, machine, store);
+        ruleRegistry = new com.puchain.fep.processor.validation.rule.MessageRuleRegistry();
+        com.puchain.fep.processor.validation.BusinessRuleValidator businessRuleValidator =
+                new com.puchain.fep.processor.validation.BusinessRuleValidator(ruleRegistry);
+        processor = new SyncMessageProcessorService(validator, businessRuleValidator, machine, store);
     }
 
     /**
@@ -139,5 +143,34 @@ class SyncMessageProcessorServiceTest {
                 .get()
                 .extracting(MessageProcessRecord::getStatus)
                 .isEqualTo(MessageProcessStatus.COMPLETED);
+    }
+
+    @Test
+    void process_shouldFailWithProc8507_whenBusinessRuleViolated() throws IOException {
+        // XSD-valid sample but a registered business rule fails → FAILED(PROC_8507),
+        // proving the second (business) gate runs after XSD passes.
+        byte[] xml = loadSample("/samples/1001-valid.xml");
+        ruleRegistry.register(MessageType.MSG_1001,
+                ctx -> java.util.Optional.of("forced business violation for test"));
+
+        MessageProcessRecord result = processor.processInbound(
+                MessageType.MSG_1001, "TX-RULE-FAIL", xml);
+
+        assertThat(result.getStatus()).isEqualTo(MessageProcessStatus.FAILED);
+        assertThat(result.getErrorCode()).isEqualTo("PROC_8507");
+        assertThat(result.getErrorMessage()).contains("forced business violation");
+    }
+
+    @Test
+    void process_shouldComplete_whenBusinessRulesPass() throws IOException {
+        // XSD-valid sample + a registered rule that passes → COMPLETED (backward compatible).
+        byte[] xml = loadSample("/samples/1001-valid.xml");
+        ruleRegistry.register(MessageType.MSG_1001, ctx -> java.util.Optional.empty());
+
+        MessageProcessRecord result = processor.processInbound(
+                MessageType.MSG_1001, "TX-RULE-PASS", xml);
+
+        assertThat(result.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+        assertThat(result.getErrorCode()).isNull();
     }
 }
