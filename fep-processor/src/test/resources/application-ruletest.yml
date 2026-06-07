@@ -1,0 +1,9 @@
+# ⚠️ 框架验证用示例规则，非权威规则母本（母本由 ② 领域专家按人行规范填充）。
+# 供 BusinessRuleEngineIntegrationTest 验证「配置 → ConfiguredRuleFactory 启动期装配 → 引擎执行」端到端链路。
+fep:
+  validation:
+    rules:
+      "3116":
+        - type: ENUM
+          field: Currency
+          allowed: [CNY, USD]

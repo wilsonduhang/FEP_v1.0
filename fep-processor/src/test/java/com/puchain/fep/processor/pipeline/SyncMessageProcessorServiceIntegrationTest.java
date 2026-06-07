@@ -66,7 +66,10 @@ class SyncMessageProcessorServiceIntegrationTest {
         XsdValidator validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
-        processor = new SyncMessageProcessorService(validator, machine, store);
+        com.puchain.fep.processor.validation.BusinessRuleValidator businessRuleValidator =
+                new com.puchain.fep.processor.validation.BusinessRuleValidator(
+                        new com.puchain.fep.processor.validation.rule.MessageRuleRegistry());
+        processor = new SyncMessageProcessorService(validator, businessRuleValidator, machine, store);
     }
 
     /**

@@ -20,6 +20,27 @@
         </Or>
     </Match>
 
+    <!-- RuleDefinitionProperties (§5.8 business rule engine): @ConfigurationProperties bean，
+         Spring Binder 反射写入 Map/List + 调用方（ConfiguredRuleFactory）仅 read-only 消费，
+         可变 List/Map/嵌套类是 Boot 标准 style；与 CollectorProperties 同模式 -->
+    <Match>
+        <Or>
+            <Class name="com.puchain.fep.processor.validation.rule.RuleDefinitionProperties"/>
+            <Class name="com.puchain.fep.processor.validation.rule.RuleDefinitionProperties$RuleDef"/>
+        </Or>
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP"/>
+            <Bug pattern="EI_EXPOSE_REP2"/>
+        </Or>
+    </Match>
+
+    <!-- ConfiguredRuleFactory: Spring-managed singleton，注入的 RuleDefinitionProperties
+         是框架管理的单例，启动期 @PostConstruct read-only 消费后不再变更；与上方 Spring DI 块同模式 -->
+    <Match>
+        <Class name="com.puchain.fep.processor.validation.rule.ConfiguredRuleFactory"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
     <!-- 排除测试类的某些检查 -->
     <Match>
         <Class name="~.*Test"/>
