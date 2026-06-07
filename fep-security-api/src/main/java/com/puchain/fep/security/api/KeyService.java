@@ -73,4 +73,24 @@ public interface KeyService {
      * @return 16-byte SM4 master key (never {@code null})
      */
     byte[] getSm4CredentialMasterKey();
+
+    /**
+     * Returns the SM4 master key for a specific key version (16 bytes).
+     *
+     * <p>Used by {@code CallbackCredentialEncryptionFacade} to decrypt ciphertext that was
+     * encrypted under an earlier active key version, enabling multi-version coexistence during
+     * key rotation. {@link #getSm4CredentialMasterKey()} (no-arg) returns the current active key
+     * used for new encryption; this overload resolves the key recorded on the ciphertext.</p>
+     *
+     * <p><strong>⛔ Mode E:</strong> The real implementation must be written by the security
+     * specialist in {@code fep-security-impl}. AI agents must NOT implement key derivation or
+     * HSM/key-store lookup. The returned array must be 16 bytes (SM4 key length per
+     * GB/T 32907-2016) and treated as a defensive copy — callers must not retain references
+     * beyond a single encrypt/decrypt operation.</p>
+     *
+     * @param keyId key version identifier (as recorded on the ciphertext); never {@code null}
+     * @return 16-byte SM4 master key for that version (never {@code null})
+     * @throws IllegalArgumentException if the key version is unknown/unavailable
+     */
+    byte[] getSm4CredentialMasterKey(String keyId);
 }

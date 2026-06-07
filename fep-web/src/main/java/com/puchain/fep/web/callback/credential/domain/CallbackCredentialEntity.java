@@ -91,6 +91,10 @@ public class CallbackCredentialEntity {
     @Column(name = "rotated_at")
     private LocalDateTime rotatedAt;
 
+    /** 凭证有效期（NULL = 永不过期）。解析期 now &gt; expiresAt 拒用。 */
+    @Column(name = "expires_at")
+    private LocalDateTime expiresAt;
+
     /**
      * JPA 要求的无参构造方法。
      */
@@ -105,10 +109,12 @@ public class CallbackCredentialEntity {
      * @param tokenCipher token 密文（非 null）
      * @param tokenHeader HTTP header 名（null 时默认 {@code Authorization}）
      * @param keyId       SM4 主密钥版本号（非 null）
+     * @param expiresAt   凭证有效期（null = 永不过期）
      * @return 新建 TOKEN 凭证实体
      */
     public static CallbackCredentialEntity newToken(final String interfaceId, final byte[] tokenCipher,
-                                                    final String tokenHeader, final String keyId) {
+                                                    final String tokenHeader, final String keyId,
+                                                    final LocalDateTime expiresAt) {
         final CallbackCredentialEntity e = new CallbackCredentialEntity();
         e.credentialId = UUID.randomUUID().toString().replace("-", "");
         e.interfaceId = Objects.requireNonNull(interfaceId, "interfaceId");
@@ -117,6 +123,7 @@ public class CallbackCredentialEntity {
         e.tokenCiphertext = Objects.requireNonNull(tokenCipher, "tokenCipher").clone();
         e.tokenHeader = tokenHeader != null ? tokenHeader : "Authorization";
         e.keyId = Objects.requireNonNull(keyId, "keyId");
+        e.expiresAt = expiresAt;
         e.createTime = LocalDateTime.now();
         e.updateTime = e.createTime;
         return e;
@@ -131,11 +138,13 @@ public class CallbackCredentialEntity {
      * @param tokenEndpoint      token 端点 URL（非 null）
      * @param scope              OAuth2 scope（可 null）
      * @param keyId              SM4 主密钥版本号（非 null）
+     * @param expiresAt          凭证有效期（null = 永不过期）
      * @return 新建 OAUTH2 凭证实体
      */
     public static CallbackCredentialEntity newOauth(final String interfaceId,
             final byte[] clientIdCipher, final byte[] clientSecretCipher,
-            final String tokenEndpoint, final String scope, final String keyId) {
+            final String tokenEndpoint, final String scope, final String keyId,
+            final LocalDateTime expiresAt) {
         final CallbackCredentialEntity e = new CallbackCredentialEntity();
         e.credentialId = UUID.randomUUID().toString().replace("-", "");
         e.interfaceId = Objects.requireNonNull(interfaceId, "interfaceId");
@@ -147,6 +156,7 @@ public class CallbackCredentialEntity {
         e.oauthTokenEndpoint = Objects.requireNonNull(tokenEndpoint, "tokenEndpoint");
         e.oauthScope = scope;
         e.keyId = Objects.requireNonNull(keyId, "keyId");
+        e.expiresAt = expiresAt;
         e.createTime = LocalDateTime.now();
         e.updateTime = e.createTime;
         return e;
@@ -213,6 +223,19 @@ public class CallbackCredentialEntity {
             changed = true;
         }
         if (changed) {
+            this.updateTime = LocalDateTime.now();
+        }
+    }
+
+    /**
+     * 更新凭证有效期（partial）。{@code newExpiresAt} 非 null 才更新并刷新 {@code updateTime}；
+     * null 表示不变（本期不支持经此方法清空回 null，需重建凭证）。
+     *
+     * @param newExpiresAt 新有效期（null=不变）
+     */
+    public void updateExpiresAt(final LocalDateTime newExpiresAt) {
+        if (newExpiresAt != null) {
+            this.expiresAt = newExpiresAt;
             this.updateTime = LocalDateTime.now();
         }
     }
@@ -334,5 +357,14 @@ public class CallbackCredentialEntity {
      */
     public LocalDateTime getRotatedAt() {
         return rotatedAt;
+    }
+
+    /**
+     * 获取凭证有效期。
+     *
+     * @return 有效期（null=永不过期）
+     */
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
     }
 }

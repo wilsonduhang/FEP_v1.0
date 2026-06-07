@@ -26,6 +26,7 @@ public class CallbackMetrics {
 
     static final String COUNTER_SEND_TOTAL = "fep_callback_send_total";
     static final String TIMER_SEND_LATENCY = "fep_callback_send_latency_seconds";
+    static final String COUNTER_CREDENTIAL_EXPIRED = "fep_callback_credential_expired_total";
     private static final String TAG_STATUS = "status";
     private static final String STATUS_SENT = "SENT";
     private static final String STATUS_RETRY = "RETRY";
@@ -59,5 +60,10 @@ public class CallbackMetrics {
     /** 记录一次失败转 DEAD_LETTER。 */
     public void recordDeadLetter() {
         registry.counter(COUNTER_SEND_TOTAL, TAG_STATUS, STATUS_DEAD_LETTER).increment();
+    }
+
+    /** 记录一次凭证过期拒用（解析期 now &gt; expires_at）。 */
+    public void recordCredentialExpired() {
+        registry.counter(COUNTER_CREDENTIAL_EXPIRED).increment();
     }
 }

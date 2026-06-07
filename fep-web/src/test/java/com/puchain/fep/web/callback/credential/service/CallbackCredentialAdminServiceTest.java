@@ -17,10 +17,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -92,13 +95,44 @@ class CallbackCredentialAdminServiceTest {
     }
 
     @Test
+    void create_pastExpiresAt_throwsBiz5003() {
+        final CallbackCredentialCreateRequest req = new CallbackCredentialCreateRequest();
+        req.setInterfaceId("IF-001");
+        req.setAuthType(InterfaceAuthType.TOKEN);
+        req.setToken("plain-token");
+        req.setExpiresAt(LocalDateTime.now().minusDays(1));
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> svc.create(req))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("expiresAt");
+    }
+
+    @Test
+    void create_futureExpiresAt_persistsValue() {
+        final LocalDateTime future = LocalDateTime.now().plusDays(1);
+        final CallbackCredentialCreateRequest req = new CallbackCredentialCreateRequest();
+        req.setInterfaceId("IF-001");
+        req.setAuthType(InterfaceAuthType.TOKEN);
+        req.setToken("plain-token");
+        req.setExpiresAt(future);
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.empty());
+        when(facade.encrypt("plain-token"))
+                .thenReturn(new EncryptedCredential(new byte[]{1}, "KEY-V1"));
+
+        final CallbackCredentialResponse resp = svc.create(req);
+
+        assertThat(resp.getExpiresAt()).isEqualTo(future);
+    }
+
+    @Test
     void createDuplicateInterfaceThrows() {
         final CallbackCredentialCreateRequest req = new CallbackCredentialCreateRequest();
         req.setInterfaceId("IF-001");
         req.setAuthType(InterfaceAuthType.TOKEN);
         req.setToken("x");
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(
-                CallbackCredentialEntity.newToken("IF-001", new byte[]{7}, null, "KEY-V1")));
+                CallbackCredentialEntity.newToken("IF-001", new byte[]{7}, null, "KEY-V1", null)));
 
         assertThatThrownBy(() -> svc.create(req))
                 .isInstanceOf(FepBusinessException.class)
@@ -109,7 +143,7 @@ class CallbackCredentialAdminServiceTest {
     @Test
     void updatePartialKeepsExistingFieldsAndInvalidatesCache() {
         final CallbackCredentialEntity existing = CallbackCredentialEntity.newOauth("IF-001",
-                new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1");
+                new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1", null);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(existing));
         final CallbackCredentialUpdateRequest req = new CallbackCredentialUpdateRequest();
         req.setOauthClientSecret("new-csec");
@@ -127,7 +161,7 @@ class CallbackCredentialAdminServiceTest {
     @Test
     void updateNonSecretMetadataOnly() {
         final CallbackCredentialEntity existing = CallbackCredentialEntity.newOauth("IF-001",
-                new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1");
+                new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "KEY-V1", null);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(existing));
         final CallbackCredentialUpdateRequest req = new CallbackCredentialUpdateRequest();
         req.setOauthScope("read write");
@@ -153,7 +187,7 @@ class CallbackCredentialAdminServiceTest {
     @Test
     void getByInterfaceIdReturnsResponseWithoutCiphertext() {
         final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken("IF-001",
-                new byte[]{1, 2, 3}, "Authorization", "KEY-V1");
+                new byte[]{1, 2, 3}, "Authorization", "KEY-V1", null);
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
 
         final CallbackCredentialResponse resp = svc.get("IF-001");
@@ -173,9 +207,58 @@ class CallbackCredentialAdminServiceTest {
     }
 
     @Test
+    void rotateKey_tokenCredential_reEncryptsWithNewActiveKey() {
+        final LocalDateTime expiry = LocalDateTime.of(2030, 1, 1, 0, 0);
+        final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken(
+                "IF-001", new byte[]{7}, "Authorization", "k-old", expiry);
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
+        when(facade.decrypt(any(), eq("k-old"))).thenReturn("plain-token");
+        when(facade.encrypt("plain-token"))
+                .thenReturn(new EncryptedCredential(new byte[]{8}, "k-new"));
+
+        final CallbackCredentialResponse resp = svc.rotateKey("IF-001");
+
+        assertThat(entity.getKeyId()).isEqualTo("k-new");
+        assertThat(entity.getRotatedAt()).isNotNull();
+        assertThat(entity.getTokenCiphertext()).containsExactly(8);
+        // 轮换只动密文/keyId/rotatedAt，不动有效期
+        assertThat(entity.getExpiresAt()).isEqualTo(expiry);
+        assertThat(resp.getInterfaceId()).isEqualTo("IF-001");
+        verify(cache).invalidate("IF-001");
+    }
+
+    @Test
+    void rotateKey_oauth2Credential_reEncryptsBothCiphers() {
+        final CallbackCredentialEntity entity = CallbackCredentialEntity.newOauth(
+                "IF-001", new byte[]{1}, new byte[]{2}, "https://idp/token", "read", "k-old", null);
+        when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(entity));
+        when(facade.decrypt(new byte[]{1}, "k-old")).thenReturn("clid");
+        when(facade.decrypt(new byte[]{2}, "k-old")).thenReturn("csec");
+        when(facade.encrypt("clid")).thenReturn(new EncryptedCredential(new byte[]{11}, "k-new"));
+        when(facade.encrypt("csec")).thenReturn(new EncryptedCredential(new byte[]{22}, "k-new"));
+
+        svc.rotateKey("IF-001");
+
+        assertThat(entity.getKeyId()).isEqualTo("k-new");
+        assertThat(entity.getRotatedAt()).isNotNull();
+        assertThat(entity.getOauthClientIdCiphertext()).containsExactly(11);
+        assertThat(entity.getOauthClientSecretCiphertext()).containsExactly(22);
+        verify(cache).invalidate("IF-001");
+    }
+
+    @Test
+    void rotateKey_missing_throwsBiz5001() {
+        when(repo.findByInterfaceId("IF-404")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> svc.rotateKey("IF-404"))
+                .isInstanceOf(FepBusinessException.class)
+                .hasMessageContaining("not found");
+    }
+
+    @Test
     void deleteRemovesAndInvalidatesCache() {
         when(repo.findByInterfaceId("IF-001")).thenReturn(Optional.of(
-                CallbackCredentialEntity.newToken("IF-001", new byte[]{1}, null, "KEY-V1")));
+                CallbackCredentialEntity.newToken("IF-001", new byte[]{1}, null, "KEY-V1", null)));
 
         svc.delete("IF-001");
 

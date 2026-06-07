@@ -63,18 +63,19 @@ public class CallbackCredentialEncryptionFacade {
     /**
      * 解密密文还原明文。
      *
-     * <p>{@code keyId} 用于多版本密钥共存场景的 key 选择；当前 {@link KeyService}
-     * 仅返回单一活跃 key，故本期解密始终使用当前 master key，{@code keyId} 仅作审计/
-     * 兼容入参。轮换支持留 Phase 3。</p>
+     * <p>按密文记录的 {@code keyId} 选取对应版本 SM4 master key（{@link
+     * KeyService#getSm4CredentialMasterKey(String)}），支持轮换期多版本密钥共存：旧密文用其
+     * 加密时的 key 解，活跃 key 轮换后历史密文仍可读。加密恒用当前活跃 key（见 {@link #encrypt}）。</p>
      *
      * @param ciphertext 密文，非 null
-     * @param keyId      加密时记录的 keyId（多版本支持入参，本期仅当前 key）
+     * @param keyId      加密时记录的 keyId（选取对应版本 master key），非 null
      * @return 明文 String（UTF-8 解码）
-     * @throws NullPointerException 如果 {@code ciphertext} 为 null
+     * @throws NullPointerException 如果 {@code ciphertext} 或 {@code keyId} 为 null
      */
     public String decrypt(final byte[] ciphertext, final String keyId) {
         Objects.requireNonNull(ciphertext, "ciphertext");
-        final byte[] key = keyService.getSm4CredentialMasterKey();
+        Objects.requireNonNull(keyId, "keyId");
+        final byte[] key = keyService.getSm4CredentialMasterKey(keyId);
         final byte[] plain = cryptoService.decrypt(ciphertext, key);
         return new String(plain, StandardCharsets.UTF_8);
     }

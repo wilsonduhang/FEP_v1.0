@@ -42,7 +42,7 @@ class CallbackCredentialRepositoryTest {
     void findByInterfaceId_shouldReturnPersistedTokenCredential() {
         seedInterface("IF-T3-001");
         final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken(
-                "IF-T3-001", new byte[]{1, 2, 3}, "Authorization", "KEY-V1");
+                "IF-T3-001", new byte[]{1, 2, 3}, "Authorization", "KEY-V1", null);
         repository.save(entity);
         entityManager.flush();
         entityManager.clear();
@@ -60,12 +60,39 @@ class CallbackCredentialRepositoryTest {
     void save_shouldRejectDuplicateInterfaceIdByUniqueConstraint() {
         seedInterface("IF-T3-002");
         repository.saveAndFlush(CallbackCredentialEntity.newToken(
-                "IF-T3-002", new byte[]{1}, null, "KEY-V1"));
+                "IF-T3-002", new byte[]{1}, null, "KEY-V1", null));
 
         assertThatThrownBy(() -> repository.saveAndFlush(
                 CallbackCredentialEntity.newToken(
-                        "IF-T3-002", new byte[]{2}, null, "KEY-V1")))
+                        "IF-T3-002", new byte[]{2}, null, "KEY-V1", null)))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void expiresAt_shouldPersistAndReadBack() {
+        seedInterface("IF-T3-EXP");
+        final java.time.LocalDateTime expiry = java.time.LocalDateTime.of(2030, 1, 1, 12, 0);
+        repository.save(CallbackCredentialEntity.newToken(
+                "IF-T3-EXP", new byte[]{1, 2, 3}, "Authorization", "KEY-V1", expiry));
+        entityManager.flush();
+        entityManager.clear();
+
+        final Optional<CallbackCredentialEntity> found = repository.findByInterfaceId("IF-T3-EXP");
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getExpiresAt()).isEqualTo(expiry);
+    }
+
+    @Test
+    void expiresAt_nullPersistsAsNeverExpire() {
+        seedInterface("IF-T3-NOEXP");
+        repository.save(CallbackCredentialEntity.newToken(
+                "IF-T3-NOEXP", new byte[]{1}, "Authorization", "KEY-V1", null));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(repository.findByInterfaceId("IF-T3-NOEXP")).isPresent()
+                .get().extracting(CallbackCredentialEntity::getExpiresAt).isNull();
     }
 
     /**

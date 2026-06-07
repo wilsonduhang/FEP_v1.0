@@ -61,4 +61,26 @@ class MockKeyServiceTest {
         byte[] secondCall = keyService.getSm4CredentialMasterKey();
         assertThat(secondCall[0]).isNotEqualTo((byte) 0xFF);
     }
+
+    @Test
+    void getSm4CredentialMasterKey_withCurrentKeyId_matchesNoArg() {
+        // Phase 2c-B T5: keyId 重载在当前活跃版本上须与无参版一致（向后兼容）
+        assertThat(keyService.getSm4CredentialMasterKey(MockKeyService.MOCK_KEY_ID))
+                .isEqualTo(keyService.getSm4CredentialMasterKey());
+    }
+
+    @Test
+    void getSm4CredentialMasterKey_keyedVariant_is16BytesAndDeterministic() {
+        // 历史版本 keyId 派生 16 字节 mock key，确定性（同 keyId 同 key）
+        byte[] k1 = keyService.getSm4CredentialMasterKey("mock-key-v2");
+        byte[] k1b = keyService.getSm4CredentialMasterKey("mock-key-v2");
+        assertThat(k1).hasSize(16).isEqualTo(k1b);
+    }
+
+    @Test
+    void getSm4CredentialMasterKey_differentKeyIds_differentKeys() {
+        // 不同 keyId 派生不同 key（dev/CI 多版本解密测试前提）
+        assertThat(keyService.getSm4CredentialMasterKey("mock-key-v2"))
+                .isNotEqualTo(keyService.getSm4CredentialMasterKey("mock-key-v3"));
+    }
 }
