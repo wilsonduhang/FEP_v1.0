@@ -23,6 +23,7 @@
         <module>fep-common</module>
         <module>fep-security-api</module>
         <module>fep-security-mock</module>
+        <module>fep-security-impl</module>
         <module>fep-transport</module>
         <module>fep-converter</module>
         <module>fep-processor</module>
@@ -143,6 +144,14 @@
                 <artifactId>caffeine</artifactId>
                 <version>${caffeine.version}</version>
             </dependency>
+
+            <!-- BouncyCastle 国密 SM2/SM3/SM4 (fep-security-impl, 2026-06-07 解禁；
+                 1.84 = Maven Central <release> 实测最新，红线 feedback_currency_check_datasource_coverage) -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>1.84</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -259,6 +268,7 @@
                         <!-- 排除 P0 骨架空 @Configuration 类 (P1+ 有逻辑后移出排除) -->
                         <exclude>**/SecurityApiConfiguration.class</exclude>
                         <exclude>**/SecurityMockConfiguration.class</exclude>
+                        <exclude>**/BouncyCastleGmProviderConfig.class</exclude>
                         <exclude>**/OpenApiConfiguration.class</exclude>
                         <exclude>**/RedisConfiguration.class</exclude>
                         <exclude>**/JpaConfiguration.class</exclude>
