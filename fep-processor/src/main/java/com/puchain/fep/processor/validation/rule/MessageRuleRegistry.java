@@ -4,6 +4,7 @@ import com.puchain.fep.converter.type.MessageType;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,8 @@ public class MessageRuleRegistry {
      * @return 规则列表；未注册时为空 List
      */
     public List<ValidationRule> rulesFor(final MessageType type) {
-        return List.copyOf(rules.getOrDefault(type, List.of()));
+        // 注册表 write-once-at-startup / read-only-at-runtime（见类 Javadoc），返回零拷贝
+        // 不可修改视图而非 List.copyOf，省去每报文一次数组克隆（Simplify efficiency F1）。
+        return Collections.unmodifiableList(rules.getOrDefault(type, List.of()));
     }
 }
