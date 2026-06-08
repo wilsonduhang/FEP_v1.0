@@ -4,6 +4,7 @@ import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -33,4 +34,12 @@ public interface CallbackCredentialRepository
      * @param interfaceId 输出接口 ID
      */
     void deleteByInterfaceId(String interfaceId);
+
+    /**
+     * 统计 key_id 属于给定集合（legacy 明文标记）的凭证行数（惰性迁移完成度观测）。
+     *
+     * @param keyIds legacy keyId 集合
+     * @return 匹配行数
+     */
+    long countByKeyIdIn(Collection<String> keyIds);
 }

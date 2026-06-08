@@ -81,6 +81,15 @@ public class CallbackCredentialEncryptionFacade {
     }
 
     /**
+     * 返回当前活跃密钥版本号（新加密使用），供惰性迁移交集校验。
+     *
+     * @return 当前活跃 keyId
+     */
+    public String activeKeyId() {
+        return keyService.getKeyId();
+    }
+
+    /**
      * 加密结果记录 — 密文 + 加密时使用的 keyId。
      *
      * <p>{@code ciphertext} 在 canonical constructor 与 accessor 处均做防御性 clone，

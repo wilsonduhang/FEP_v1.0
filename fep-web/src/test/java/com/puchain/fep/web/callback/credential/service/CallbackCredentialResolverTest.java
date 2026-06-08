@@ -2,6 +2,7 @@ package com.puchain.fep.web.callback.credential.service;
 
 import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
+import com.puchain.fep.web.callback.credential.migration.CallbackLegacyCredentialMigrator;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2ClientCredentialsClient;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenResponse;
@@ -49,20 +50,23 @@ class CallbackCredentialResolverTest {
     private CallbackOAuth2TokenCache cache;
     @Mock
     private CallbackOAuth2ClientCredentialsClient oauthClient;
+    @Mock
+    private CallbackLegacyCredentialMigrator migrator;
 
     private CallbackCredentialResolver resolver;
 
     @BeforeEach
     void setUp() {
+        // migrator.isLegacy(...) 默认 false（Mockito boolean 默认）→ 走真实解密原路径，行为保持
         resolver = new CallbackCredentialResolver(repo, facade, cache, oauthClient,
-                Clock.systemUTC(), new CallbackMetrics(new SimpleMeterRegistry()));
+                Clock.systemUTC(), new CallbackMetrics(new SimpleMeterRegistry()), migrator);
     }
 
     /** 固定时钟 now=2030-06-01（过期门禁确定性测试）。 */
     private CallbackCredentialResolver resolverAt(final LocalDateTime now) {
         final Clock fixed = Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
         return new CallbackCredentialResolver(repo, facade, cache, oauthClient, fixed,
-                new CallbackMetrics(new SimpleMeterRegistry()));
+                new CallbackMetrics(new SimpleMeterRegistry()), migrator);
     }
 
     @Test

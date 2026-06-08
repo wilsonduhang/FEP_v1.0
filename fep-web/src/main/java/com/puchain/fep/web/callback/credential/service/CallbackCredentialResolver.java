@@ -2,6 +2,7 @@ package com.puchain.fep.web.callback.credential.service;
 
 import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
+import com.puchain.fep.web.callback.credential.migration.CallbackLegacyCredentialMigrator;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2ClientCredentialsClient;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenResponse;
@@ -11,6 +12,7 @@ import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -57,9 +59,10 @@ public class CallbackCredentialResolver {
     private final CallbackOAuth2ClientCredentialsClient oauthClient;
     private final Clock clock;
     private final CallbackMetrics metrics;
+    private final CallbackLegacyCredentialMigrator migrator;
 
     /**
-     * 构造解析器，注入凭证仓储、加解密 facade、OAuth2 token 缓存与 client、时钟与指标门面。
+     * 构造解析器，注入凭证仓储、加解密 facade、OAuth2 token 缓存与 client、时钟、指标门面与迁移器。
      *
      * @param repo        凭证仓储，不可为 null
      * @param facade      凭证加解密 facade，不可为 null
@@ -67,6 +70,7 @@ public class CallbackCredentialResolver {
      * @param oauthClient OAuth2 client credentials 客户端，不可为 null
      * @param clock       时钟（过期判定，可测试），不可为 null
      * @param metrics     回调指标门面（过期计数），不可为 null
+     * @param migrator    legacy 明文凭证惰性双读迁移器（封装 legacy keyId 判别），不可为 null
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
             justification = "Spring-managed singletons stored by reference per container contract")
@@ -75,13 +79,15 @@ public class CallbackCredentialResolver {
                                       final CallbackOAuth2TokenCache cache,
                                       final CallbackOAuth2ClientCredentialsClient oauthClient,
                                       final Clock clock,
-                                      final CallbackMetrics metrics) {
+                                      final CallbackMetrics metrics,
+                                      final CallbackLegacyCredentialMigrator migrator) {
         this.repo = repo;
         this.facade = facade;
         this.cache = cache;
         this.oauthClient = oauthClient;
         this.clock = clock;
         this.metrics = metrics;
+        this.migrator = migrator;
     }
 
     /**
@@ -113,6 +119,12 @@ public class CallbackCredentialResolver {
                 .orElseThrow(() -> new CallbackCredentialMissingException(
                         "TOKEN credential missing for interfaceId=" + interfaceId));
         ensureNotExpired(entity);
+        if (migrator.isLegacy(entity.getKeyId())) {
+            final String plain = new String(
+                    entity.getTokenCiphertext(), StandardCharsets.UTF_8);
+            migrator.migrateToActiveKey(interfaceId);
+            return new AuthHeader(entity.getTokenHeader(), plain);
+        }
         final String plain = facade.decrypt(entity.getTokenCiphertext(), entity.getKeyId());
         return new AuthHeader(entity.getTokenHeader(), plain);
     }
@@ -142,9 +154,16 @@ public class CallbackCredentialResolver {
                 .orElseThrow(() -> new CallbackCredentialMissingException(
                         "OAUTH2 credential missing for interfaceId=" + interfaceId));
         ensureNotExpired(entity);
-        final String clientId = facade.decrypt(entity.getOauthClientIdCiphertext(), entity.getKeyId());
-        final String clientSecret =
-                facade.decrypt(entity.getOauthClientSecretCiphertext(), entity.getKeyId());
+        final String clientId;
+        final String clientSecret;
+        if (migrator.isLegacy(entity.getKeyId())) {
+            clientId = new String(entity.getOauthClientIdCiphertext(), StandardCharsets.UTF_8);
+            clientSecret = new String(entity.getOauthClientSecretCiphertext(), StandardCharsets.UTF_8);
+            migrator.migrateToActiveKey(interfaceId);
+        } else {
+            clientId = facade.decrypt(entity.getOauthClientIdCiphertext(), entity.getKeyId());
+            clientSecret = facade.decrypt(entity.getOauthClientSecretCiphertext(), entity.getKeyId());
+        }
         final CallbackOAuth2TokenResponse resp = oauthClient.fetchToken(
                 entity.getOauthTokenEndpoint(), clientId, clientSecret, entity.getOauthScope());
         cache.put(interfaceId, resp.accessToken(),

@@ -1,10 +1,12 @@
 package com.puchain.fep.web.callback.metrics;
 
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * 接口模式回调推送 telemetry：Counter / Timer 门面（镜像 {@code OutboundMetrics}，PRD §8.6）。
@@ -27,6 +29,8 @@ public class CallbackMetrics {
     static final String COUNTER_SEND_TOTAL = "fep_callback_send_total";
     static final String TIMER_SEND_LATENCY = "fep_callback_send_latency_seconds";
     static final String COUNTER_CREDENTIAL_EXPIRED = "fep_callback_credential_expired_total";
+    static final String COUNTER_CREDENTIAL_MIGRATED = "fep_callback_credential_migrated_total";
+    static final String GAUGE_CREDENTIAL_LEGACY_REMAINING = "fep_callback_credential_legacy_remaining";
     private static final String TAG_STATUS = "status";
     private static final String STATUS_SENT = "SENT";
     private static final String STATUS_RETRY = "RETRY";
@@ -65,5 +69,20 @@ public class CallbackMetrics {
     /** 记录一次凭证过期拒用（解析期 now &gt; expires_at）。 */
     public void recordCredentialExpired() {
         registry.counter(COUNTER_CREDENTIAL_EXPIRED).increment();
+    }
+
+    /** 记录一次凭证惰性迁移（legacy 明文 → SM4 密文重加密）。 */
+    public void recordCredentialMigrated() {
+        registry.counter(COUNTER_CREDENTIAL_MIGRATED).increment();
+    }
+
+    /**
+     * 注册 legacy 明文凭证剩余量 gauge（迁移完成度观测）。
+     *
+     * @param remaining 当前 legacy 行数供应函数，非空
+     */
+    public void registerLegacyCredentialGauge(final Supplier<Number> remaining) {
+        Gauge.builder(GAUGE_CREDENTIAL_LEGACY_REMAINING, remaining)
+                .register(registry);
     }
 }
