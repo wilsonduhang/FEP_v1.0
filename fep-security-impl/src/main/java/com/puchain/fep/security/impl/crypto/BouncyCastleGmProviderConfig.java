@@ -2,7 +2,6 @@ package com.puchain.fep.security.impl.crypto;
 
 import jakarta.annotation.PostConstruct;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.springframework.context.annotation.Configuration;
 
 import java.security.Security;
 
@@ -13,9 +12,11 @@ import java.security.Security;
  * 国密实现（S1 CryptoServiceImpl / S2 SignServiceImpl）经 {@code getInstance("...", "BC")}
  * 解析 SM3/SM4/SM3withSM2 算法。</p>
  *
+ * <p>非 Spring stereotype；经 {@code GmSecurityConfiguration} {@code @Bean}（gated impl）注册，
+ * 或测试直接 {@code new} 实例化（构造即注册 BC）。</p>
+ *
  * @since 1.0.0
  */
-@Configuration
 public class BouncyCastleGmProviderConfig {
 
     /**

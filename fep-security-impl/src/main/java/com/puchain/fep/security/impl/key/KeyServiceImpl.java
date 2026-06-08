@@ -2,7 +2,6 @@ package com.puchain.fep.security.impl.key;
 
 import com.puchain.fep.security.api.KeyService;
 import jakarta.annotation.PostConstruct;
-import org.springframework.stereotype.Service;
 
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -25,7 +24,6 @@ import java.util.Objects;
  * @author FEP Team
  * @since 1.0.0
  */
-@Service
 public class KeyServiceImpl implements KeyService {
 
     /** SM4 密钥长度（字节）。 */

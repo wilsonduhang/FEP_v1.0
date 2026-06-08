@@ -56,6 +56,17 @@ fep:
     access-token-ttl-seconds: 7200
     refresh-token-ttl-seconds: 604800
     issuer: fep
+  # 国密真实实现（S1）。⚠️ R7/[R2-1]：provider: impl 翻转全 KeyService → SM2 方法
+  # （AuthController 公钥分发 / LoginVerifier 登录解密 / OutboundSignAdapter 出站报文签名）
+  # 抛 UnsupportedOperationException，prod 出站签名+登录崩溃。故 S1 保持注释；
+  # prod cutover（取消下行注释）GATED ON S2（SM2 实现后方可启用）。
+  security:
+    # provider: impl
+    sm4:
+      active-key-id: ${FEP_SM4_ACTIVE_KEY_ID:sm4-cred-v1}
+      sm4-keys:
+        # hex 编码 16 字节 SM4 密钥，部署期经环境变量/sealed store 注入（密码设备生成），永不入 repo
+        sm4-cred-v1: ${FEP_SM4_KEY_V1}
 
 # 显式启用 Prometheus metrics 导出（生产）。基础 application.yml 仅配置 endpoint exposure，
 # 此处显式置 enabled=true 确保 request-state / outbound / callback gauge 与 counter 被

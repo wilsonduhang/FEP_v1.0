@@ -2,7 +2,6 @@ package com.puchain.fep.security.impl.crypto;
 
 import com.puchain.fep.security.api.CryptoService;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -21,7 +20,6 @@ import java.security.GeneralSecurityException;
  * @author FEP Team
  * @since 1.0.0
  */
-@Service
 public class CryptoServiceImpl implements CryptoService {
 
     /** SM4 算法变换字符串（ECB + PKCS#7 填充）。 */

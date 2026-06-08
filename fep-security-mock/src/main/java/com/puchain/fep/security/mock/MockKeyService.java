@@ -1,6 +1,7 @@
 package com.puchain.fep.security.mock;
 
 import com.puchain.fep.security.api.KeyService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 @Service
 @Profile("dev")
+@ConditionalOnProperty(prefix = "fep.security", name = "provider", havingValue = "mock",
+        matchIfMissing = true)
 public class MockKeyService implements KeyService {
 
     /** Mock public key constant for dev environment only. */
