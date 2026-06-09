@@ -275,6 +275,8 @@
                         <exclude>**/SecurityMockConfiguration.class</exclude>
                         <exclude>**/BouncyCastleGmProviderConfig.class</exclude>
                         <exclude>**/GmSecurityConfiguration.class</exclude>
+                        <exclude>**/DesensitizeConfiguration.class</exclude>
+                        <exclude>**/WebJacksonConfiguration.class</exclude>
                         <exclude>**/OpenApiConfiguration.class</exclude>
                         <exclude>**/RedisConfiguration.class</exclude>
                         <exclude>**/JpaConfiguration.class</exclude>
