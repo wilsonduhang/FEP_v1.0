@@ -1,5 +1,7 @@
 package com.puchain.fep.web.sysmgmt.user.dto;
 
+import com.puchain.fep.web.common.desensitize.Desensitize;
+import com.puchain.fep.web.common.desensitize.DesensitizeType;
 import com.puchain.fep.web.sysmgmt.user.domain.SysUser;
 import com.puchain.fep.web.sysmgmt.user.domain.UserStatus;
 
@@ -9,25 +11,22 @@ import java.util.List;
 /**
  * 用户响应 DTO。
  *
- * <p>手机号做脱敏处理（§8.3 数据掩码）。</p>
+ * <p>手机号做脱敏处理（§8.3 数据掩码）：{@code phone} 字段以
+ * {@link Desensitize @Desensitize(PHONE)} 声明，JSON 序列化时经
+ * {@code DesensitizeService} 脱敏（保留前 3 后 4）。字段内存中保留明文，
+ * 仅在序列化输出时掩蔽。</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
 public class UserResponse {
 
-    /** 中国手机号标准长度。 */
-    private static final int PHONE_LENGTH = 11;
-
-    /** 手机号前缀保留位数。 */
-    private static final int PHONE_PREFIX_LENGTH = 3;
-
-    /** 手机号后缀起始位（从第 8 位开始，即保留后 4 位）。 */
-    private static final int PHONE_SUFFIX_START = 7;
-
     private String userId;
     private String userAccount;
     private String userName;
+
+    /** 手机号（明文存储，@Desensitize 序列化时脱敏为 138****8000）。 */
+    @Desensitize(DesensitizeType.PHONE)
     private String phone;
     private String email;
     private String department;
@@ -40,7 +39,7 @@ public class UserResponse {
     private List<String> roleCodes;
 
     /**
-     * 从 SysUser Entity 构建响应 DTO（含手机号脱敏）。
+     * 从 SysUser Entity 构建响应 DTO（手机号明文存储，序列化期经 @Desensitize 脱敏）。
      *
      * @param user      用户 Entity
      * @param roleCodes 用户角色编码列表
@@ -51,7 +50,7 @@ public class UserResponse {
         resp.setUserId(user.getUserId());
         resp.setUserAccount(user.getUserAccount());
         resp.setUserName(user.getUserName());
-        resp.setPhone(maskPhone(user.getPhone()));
+        resp.setPhone(user.getPhone());
         resp.setEmail(user.getEmail());
         resp.setDepartment(user.getDepartment());
         resp.setUserStatus(user.getUserStatus());
@@ -62,21 +61,6 @@ public class UserResponse {
         resp.setUpdateBy(user.getUpdateBy());
         resp.setRoleCodes(roleCodes);
         return resp;
-    }
-
-    /**
-     * 手机号脱敏：保留前 3 后 4 位，中间替换为 ****。
-     *
-     * <p>例如 13800138000 → 138****8000</p>
-     *
-     * @param phone 原始手机号
-     * @return 脱敏后手机号，非 11 位原样返回
-     */
-    private static String maskPhone(final String phone) {
-        if (phone == null || phone.length() != PHONE_LENGTH) {
-            return phone;
-        }
-        return phone.substring(0, PHONE_PREFIX_LENGTH) + "****" + phone.substring(PHONE_SUFFIX_START);
     }
 
     // ===== Getters =====
@@ -109,9 +93,9 @@ public class UserResponse {
     }
 
     /**
-     * 获取手机号（已脱敏）。
+     * 获取手机号（明文；JSON 序列化时经 @Desensitize 脱敏为 138****8000）。
      *
-     * @return 脱敏后的手机号
+     * @return 明文手机号
      */
     public String getPhone() {
         return phone;
