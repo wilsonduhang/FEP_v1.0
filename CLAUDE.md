@@ -6,7 +6,8 @@
 > 目录布局假设：本仓库与项目知识库目录 `FEP/` 并列存放（如 `~/FEP/` 与 `~/FEP_v1.0/`）。`FEP/` 不是 git 仓库，由 muzhou 单独维护文档与 Plan，团队成员需向 muzhou 索取或独立访问。
 
 ## 当前阶段
-P3 完成 — 详见 `../FEP/docs/plans/PHASE_HISTORY.md`
+S1 国密 SM4 + KeyServiceImpl + callback_credential 惰性双读迁移 — 详见 `../FEP/docs/plans/PHASE_HISTORY.md`
+（CryptoServiceImpl SM4/ECB/PKCS7 + KeyServiceImpl 多版本主密钥 + GmSecurityConfiguration `provider=impl` 门控 + 惰性迁移；`provider=impl` prod cutover gated on S2 SM2。完整状态见 `../FEP/CLAUDE.md` 当前项目状态段）
 
 ## 模块入口
 - `fep-common/CLAUDE.md` — 公共基础模块（异常 / DTO / 校验 / 工具类）
