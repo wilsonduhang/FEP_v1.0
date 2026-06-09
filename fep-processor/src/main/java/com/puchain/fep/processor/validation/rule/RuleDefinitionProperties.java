@@ -41,6 +41,7 @@ public class RuleDefinitionProperties {
         private List<String> allowed = new ArrayList<>();
         private String keyField;
         private Map<String, List<String>> allowedByKey = Map.of();
+        private List<String> groupFields = new ArrayList<>();
 
         /** @return 规则类型 */
         public String getType() {
@@ -120,6 +121,16 @@ public class RuleDefinitionProperties {
         /** @param allowedByKey key 值 → 目标允许集 */
         public void setAllowedByKey(final Map<String, List<String>> allowedByKey) {
             this.allowedByKey = allowedByKey;
+        }
+
+        /** @return 分组共现字段列表（GROUP_COOCCURRENCE 用） */
+        public List<String> getGroupFields() {
+            return groupFields;
+        }
+
+        /** @param groupFields 分组共现字段列表 */
+        public void setGroupFields(final List<String> groupFields) {
+            this.groupFields = groupFields;
         }
     }
 }

@@ -85,4 +85,35 @@ class RuleTypesTest {
         assertThat(rule.evaluate(ctx("<CFX><MainClass>EAST</MainClass><SecondClass>HX01</SecondClass></CFX>")))
                 .get().asString().contains("SecondClass");
     }
+
+    @Test
+    void groupCooccurrence_violatedWhenPartiallyPresent() {
+        ValidationRule rule = new GroupCooccurrenceRule(List.of("AcctNo", "AcctName", "BankNo"));
+        // 验收 1：全部有值 → 通过
+        assertThat(rule.evaluate(ctx(
+                "<CFX><AcctNo>123</AcctNo><AcctName>n</AcctName><BankNo>9</BankNo></CFX>"))).isEmpty();
+        // 验收 2：全部无值 → 通过
+        assertThat(rule.evaluate(ctx("<CFX><Other>x</Other></CFX>"))).isEmpty();
+        // 验收 3：部分有值 → 违规，含缺失字段名
+        assertThat(rule.evaluate(ctx("<CFX><AcctNo>123</AcctNo></CFX>")))
+                .get().asString().contains("AcctName", "BankNo");
+    }
+
+    @Test
+    void groupCooccurrence_rejectsGroupSmallerThanTwo() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> new GroupCooccurrenceRule(List.of("Only")))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void groupCooccurrence_defensivelyCopiesConstructorList() {
+        java.util.List<String> fields = new java.util.ArrayList<>();
+        fields.add("AcctNo");
+        fields.add("AcctName");
+        ValidationRule rule = new GroupCooccurrenceRule(fields);
+        // 验收 6：构造后外部增删不影响规则
+        fields.add("BankNo");
+        assertThat(rule.evaluate(ctx("<CFX><AcctNo>1</AcctNo><AcctName>n</AcctName></CFX>"))).isEmpty();
+    }
 }
