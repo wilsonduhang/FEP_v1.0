@@ -147,7 +147,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.data.userId").value("u1"))
                 .andExpect(jsonPath("$.data.userAccount").value("alice"))
                 .andExpect(jsonPath("$.data.userName").value("Alice"))
-                .andExpect(jsonPath("$.data.phone").value("13800000000"))
+                // phone 经 @Desensitize 序列化期脱敏（13800000000 → 138****0000）
+                .andExpect(jsonPath("$.data.phone").value("138****0000"))
                 .andExpect(jsonPath("$.data.roleCodes", hasSize(1)))
                 .andExpect(jsonPath("$.data.permissions", hasSize(2)))
                 .andExpect(jsonPath("$.data.permissions[0]").value("sys:user:create"))

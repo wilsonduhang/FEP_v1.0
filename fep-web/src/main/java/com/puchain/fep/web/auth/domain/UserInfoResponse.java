@@ -1,5 +1,7 @@
 package com.puchain.fep.web.auth.domain;
 
+import com.puchain.fep.web.common.desensitize.Desensitize;
+import com.puchain.fep.web.common.desensitize.DesensitizeType;
 import com.puchain.fep.web.sysmgmt.menu.dto.MenuTreeNode;
 
 import java.util.List;
@@ -10,6 +12,9 @@ import java.util.List;
  * <p>Aggregates the current user's profile, role codes, permission codes,
  * and accessible menu tree for front-end permission guards.</p>
  *
+ * <p>The {@code phone} field is stored in plaintext but masked at JSON
+ * serialization via {@link Desensitize @Desensitize(PHONE)} (§8.3 data masking).</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
@@ -18,6 +23,9 @@ public class UserInfoResponse {
     private final String userId;
     private final String userAccount;
     private final String userName;
+
+    /** Phone number (plaintext; masked to 138****8000 at JSON serialization). */
+    @Desensitize(DesensitizeType.PHONE)
     private final String phone;
     private final String email;
     private final String department;
@@ -70,7 +78,7 @@ public class UserInfoResponse {
         return userName;
     }
 
-    /** Returns the phone number (may be null). */
+    /** Returns the phone number in plaintext (masked at JSON serialization; may be null). */
     public String getPhone() {
         return phone;
     }
