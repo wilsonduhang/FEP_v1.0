@@ -3,6 +3,7 @@ package com.puchain.fep.security.mock;
 import com.puchain.fep.security.api.SignService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Profile("dev")
+@ConditionalOnProperty(prefix = "fep.security", name = "provider", havingValue = "mock",
+        matchIfMissing = true)
 public class MockSignService implements SignService {
 
     private static final Logger log = LoggerFactory.getLogger(MockSignService.class);

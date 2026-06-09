@@ -29,6 +29,13 @@
             <artifactId>fep-security-mock</artifactId>
         </dependency>
         <dependency>
+            <!-- S1: 国密真实实现（runtime scope：impl bean 运行期可装配，但 fep-web source
+                 编译期不可见 impl 类 → 不产生 callback→security.impl 的 source 依赖，守 ArchUnit R5/BC 边界） -->
+            <groupId>com.puchain</groupId>
+            <artifactId>fep-security-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>com.puchain</groupId>
             <artifactId>fep-transport</artifactId>
         </dependency>

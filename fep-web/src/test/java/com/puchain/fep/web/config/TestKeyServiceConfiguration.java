@@ -2,6 +2,7 @@ package com.puchain.fep.web.config;
 
 import com.puchain.fep.security.api.KeyService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -20,6 +21,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @since 1.0.0
  */
 @Configuration
+@ConditionalOnProperty(prefix = "fep.security", name = "provider", havingValue = "mock",
+        matchIfMissing = true)
 public class TestKeyServiceConfiguration {
 
     /**

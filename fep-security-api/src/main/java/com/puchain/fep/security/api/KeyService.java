@@ -62,13 +62,11 @@ public interface KeyService {
      * {@code callback_credential} table. Each call returns the current active SM4
      * master key; rotation is signaled via {@link #getKeyId()} change.</p>
      *
-     * <p><strong>⛔ Mode E:</strong> The real implementation must be written by the
-     * security specialist in {@code fep-security-impl}. AI agents must NOT generate
-     * the implementation. Key material must come from a HSM, sealed key store, or
-     * envelope-encrypted configuration file; never from plaintext on disk. The
-     * returned byte array must be 16 bytes (SM4 key length per GB/T 32907-2016)
-     * and treated as defensive copy — callers must not retain references beyond
-     * a single encrypt/decrypt operation.</p>
+     * <p><strong>🔓 Mode A (2026-06-07 解禁):</strong> muzhou 授权 AI 进入国密域，本方法的
+     * 真实实现 {@code KeyServiceImpl}（fep-security-impl）由 AI 编写 + 密码学专项 review。
+     * 真实密钥材料仍由密码设备生成、部署期经 HSM/sealed key store/envelope-encrypted 配置
+     * 注入，<strong>永不入 repo/git</strong>；dev/CI 用 GB/T 测试密钥。返回 16 字节
+     * （GB/T 32907-2016 SM4 密钥长度）防御性副本，调用方不得跨单次加解密保留引用。</p>
      *
      * @return 16-byte SM4 master key (never {@code null})
      */
@@ -82,11 +80,11 @@ public interface KeyService {
      * key rotation. {@link #getSm4CredentialMasterKey()} (no-arg) returns the current active key
      * used for new encryption; this overload resolves the key recorded on the ciphertext.</p>
      *
-     * <p><strong>⛔ Mode E:</strong> The real implementation must be written by the security
-     * specialist in {@code fep-security-impl}. AI agents must NOT implement key derivation or
-     * HSM/key-store lookup. The returned array must be 16 bytes (SM4 key length per
-     * GB/T 32907-2016) and treated as a defensive copy — callers must not retain references
-     * beyond a single encrypt/decrypt operation.</p>
+     * <p><strong>🔓 Mode A (2026-06-07 解禁):</strong> muzhou 授权 AI 进入国密域，本方法的
+     * 真实实现 {@code KeyServiceImpl}（fep-security-impl）由 AI 编写 + 密码学专项 review，从
+     * 多版本密钥映射按 keyId 路由。真实密钥材料仍由密码设备生成、部署期经 HSM/sealed key
+     * store/envelope-encrypted 配置注入，<strong>永不入 repo/git</strong>；dev/CI 用 GB/T 测试
+     * 密钥。返回 16 字节（GB/T 32907-2016）防御性副本，调用方不得跨单次加解密保留引用。</p>
      *
      * @param keyId key version identifier (as recorded on the ciphertext); never {@code null}
      * @return 16-byte SM4 master key for that version (never {@code null})

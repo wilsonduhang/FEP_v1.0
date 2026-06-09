@@ -100,6 +100,11 @@
             </dependency>
             <dependency>
                 <groupId>com.puchain</groupId>
+                <artifactId>fep-security-impl</artifactId>
+                <version>${fep.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.puchain</groupId>
                 <artifactId>fep-transport</artifactId>
                 <version>${fep.version}</version>
             </dependency>
@@ -269,6 +274,7 @@
                         <exclude>**/SecurityApiConfiguration.class</exclude>
                         <exclude>**/SecurityMockConfiguration.class</exclude>
                         <exclude>**/BouncyCastleGmProviderConfig.class</exclude>
+                        <exclude>**/GmSecurityConfiguration.class</exclude>
                         <exclude>**/OpenApiConfiguration.class</exclude>
                         <exclude>**/RedisConfiguration.class</exclude>
                         <exclude>**/JpaConfiguration.class</exclude>
