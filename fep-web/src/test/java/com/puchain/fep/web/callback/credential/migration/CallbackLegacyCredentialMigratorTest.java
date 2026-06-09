@@ -60,6 +60,28 @@ class CallbackLegacyCredentialMigratorTest {
     }
 
     @Test
+    void migrate_legacyOauthRow_reencryptsBothColumnsAndRotates() {
+        final byte[] clientIdBytes = "client-id-val".getBytes(StandardCharsets.UTF_8);
+        final byte[] clientSecretBytes = "client-secret-val".getBytes(StandardCharsets.UTF_8);
+        final CallbackCredentialEntity entity = CallbackCredentialEntity.newOauth(
+                "iface-oauth", clientIdBytes, clientSecretBytes,
+                "https://token.test/oauth", "read", "mock-key-v1", null);
+        when(repo.findByInterfaceId("iface-oauth")).thenReturn(Optional.of(entity));
+        when(facade.encrypt("client-id-val"))
+                .thenReturn(new EncryptedCredential(new byte[]{1, 1, 1}, "sm4-cred-v1"));
+        when(facade.encrypt("client-secret-val"))
+                .thenReturn(new EncryptedCredential(new byte[]{2, 2, 2}, "sm4-cred-v1"));
+
+        newMigrator().migrateToActiveKey("iface-oauth");
+
+        assertThat(entity.getKeyId()).isEqualTo("sm4-cred-v1");
+        assertThat(entity.getOauthClientIdCiphertext()).isEqualTo(new byte[]{1, 1, 1});
+        assertThat(entity.getOauthClientSecretCiphertext()).isEqualTo(new byte[]{2, 2, 2});
+        verify(repo).save(entity);
+        verify(metrics).recordCredentialMigrated();
+    }
+
+    @Test
     void migrate_alreadyMigratedRow_isIdempotentNoop() {
         final CallbackCredentialEntity entity = CallbackCredentialEntity.newToken(
                 "iface-2", new byte[]{1, 2, 3}, "Authorization", "sm4-cred-v1", null);
