@@ -39,6 +39,24 @@ class ConfiguredRuleFactoryTest {
     }
 
     @Test
+    void build_shouldCreateDependentEnumRuleFromDefinition() {
+        RuleDefinitionProperties.RuleDef def = new RuleDefinitionProperties.RuleDef();
+        def.setType("DEPENDENT_ENUM");
+        def.setField("SecondClass");
+        def.setKeyField("MainClass");
+        def.setAllowedByKey(Map.of("EAST", List.of("V50")));
+        assertThat(ConfiguredRuleFactory.build(def)).isInstanceOf(DependentEnumRule.class);
+    }
+
+    @Test
+    void build_shouldCreateGroupCooccurrenceRuleFromDefinition() {
+        RuleDefinitionProperties.RuleDef def = new RuleDefinitionProperties.RuleDef();
+        def.setType("GROUP_COOCCURRENCE");
+        def.setGroupFields(List.of("AcctNo", "AcctName"));
+        assertThat(ConfiguredRuleFactory.build(def)).isInstanceOf(GroupCooccurrenceRule.class);
+    }
+
+    @Test
     void build_shouldThrowOnUnknownRuleType() {
         RuleDefinitionProperties.RuleDef def = new RuleDefinitionProperties.RuleDef();
         def.setType("NOPE");
