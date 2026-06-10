@@ -61,11 +61,11 @@ class RuleMasterMainClass1001Test {
         RuleDefinitionProperties props = bindProductionRules();
 
         List<RuleDefinitionProperties.RuleDef> defs = props.getRules().get("1001");
-        assertThat(defs).hasSize(1);
-        RuleDefinitionProperties.RuleDef def = defs.get(0);
-        assertThat(def.getType()).isEqualTo("ENUM");
-        assertThat(def.getField()).isEqualTo("MainClass");
-        assertThat(def.getAllowed()).containsExactlyInAnyOrderElementsOf(MAIN_CLASS_CODES);
+        assertThat(defs).hasSize(2);
+        RuleDefinitionProperties.RuleDef enumDef = defs.stream()
+                .filter(d -> "ENUM".equals(d.getType())).findFirst().orElseThrow();
+        assertThat(enumDef.getField()).isEqualTo("MainClass");
+        assertThat(enumDef.getAllowed()).containsExactlyInAnyOrderElementsOf(MAIN_CLASS_CODES);
     }
 
     @Test
@@ -81,6 +81,62 @@ class RuleMasterMainClass1001Test {
         BusinessRuleValidator validator = validatorFromProductionConfig();
         ValidationResult r = validator.validate(MessageType.MSG_1001, msg1001("COINFO"));
         assertThat(r.valid()).isTrue();
+    }
+
+    /** 显式 MainClass + SecondClass 的 1001 envelope（SecondClass 依赖枚举测试用）。 */
+    private static byte[] msg1001(String mainClass, String secondClass) {
+        String xml = "<CFX><MSG><RealHead1001>"
+                + "<TransitionNo>20260610</TransitionNo>"
+                + "<MainClass>" + mainClass + "</MainClass>"
+                + "<SecondClass>" + secondClass + "</SecondClass>"
+                + "</RealHead1001></MSG></CFX>";
+        return xml.getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void productionConfig_shouldBindSecondClassDependentEnumRuleFor1001() throws IOException {
+        RuleDefinitionProperties props = bindProductionRules();
+        RuleDefinitionProperties.RuleDef depDef = props.getRules().get("1001").stream()
+                .filter(d -> "DEPENDENT_ENUM".equals(d.getType())).findFirst().orElseThrow();
+        assertThat(depDef.getField()).isEqualTo("SecondClass");
+        assertThat(depDef.getKeyField()).isEqualTo("MainClass");
+        // §5.1.3-1：9 个非-GENERAL 大类映射；GENERAL 故意省略（不约束）
+        assertThat(depDef.getAllowedByKey()).hasSize(9)
+                .containsKeys("EAST", "COINFO", "COAUTH", "GYL", "MONITOR",
+                        "STATS", "YWTB", "ZFJS", "SYSTEM")
+                .doesNotContainKey("GENERAL");
+        assertThat(depDef.getAllowedByKey().get("GYL"))
+                .containsExactlyInAnyOrder("HX01", "HX02", "HX03", "HX04",
+                        "PT01", "PT02", "PT03", "BB01", "BB02");
+    }
+
+    @Test
+    void secondClassRule_shouldAcceptCodeInKeyedSet() throws IOException {
+        BusinessRuleValidator validator = validatorFromProductionConfig();
+        // 验收 2：COINFO + I1001 合法
+        assertThat(validator.validate(MessageType.MSG_1001, msg1001("COINFO", "I1001")).valid()).isTrue();
+        // 验收 4：GYL + PT03 合法
+        assertThat(validator.validate(MessageType.MSG_1001, msg1001("GYL", "PT03")).valid()).isTrue();
+        // 验收 6：EAST + V50 合法
+        assertThat(validator.validate(MessageType.MSG_1001, msg1001("EAST", "V50")).valid()).isTrue();
+    }
+
+    @Test
+    void secondClassRule_shouldRejectCodeNotInKeyedSet() throws IOException {
+        BusinessRuleValidator validator = validatorFromProductionConfig();
+        // 验收 3：COINFO + V50（V50 仅属 EAST）→ invalid
+        ValidationResult r = validator.validate(MessageType.MSG_1001, msg1001("COINFO", "V50"));
+        assertThat(r.valid()).isFalse();
+        assertThat(r.errors().get(0)).contains("SecondClass");
+        // 验收 6：EAST + I1001（I1001 不属 EAST）→ invalid
+        assertThat(validator.validate(MessageType.MSG_1001, msg1001("EAST", "I1001")).valid()).isFalse();
+    }
+
+    @Test
+    void secondClassRule_shouldNotConstrainGeneralFreeClass() throws IOException {
+        BusinessRuleValidator validator = validatorFromProductionConfig();
+        // 验收 5：GENERAL 未映射 → 任意小类不约束
+        assertThat(validator.validate(MessageType.MSG_1001, msg1001("GENERAL", "FREEDEF")).valid()).isTrue();
     }
 
     /** 从生产 application.yml 装配 BusinessRuleValidator（仅 1001 规则注册）。 */
