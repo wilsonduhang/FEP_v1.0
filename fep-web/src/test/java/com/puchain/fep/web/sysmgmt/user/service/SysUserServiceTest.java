@@ -1,5 +1,6 @@
 package com.puchain.fep.web.sysmgmt.user.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.sysmgmt.user.dto.UserCreateRequest;
 import com.puchain.fep.web.sysmgmt.user.dto.UserResponse;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,8 +35,11 @@ class SysUserServiceTest {
     @Autowired
     private SysUserService userService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Test
-    void createUserWithRoleShouldPersist() {
+    void createUserWithRoleShouldPersist() throws Exception {
         UserCreateRequest request = new UserCreateRequest();
         request.setAccount("testuser01");
         request.setUserName("测试用户");
@@ -49,7 +54,11 @@ class SysUserServiceTest {
         assertNotNull(response.getUserId(), "用户 ID 应自动生成");
         assertEquals("testuser01", response.getUserAccount());
         assertEquals("测试用户", response.getUserName());
-        assertEquals("138****8000", response.getPhone(), "手机号应已脱敏");
+        // 抉择①：DTO 内存保留明文，序列化时经 @Desensitize 脱敏（红线 feedback_unit_test_bypass：测真实序列化路径）
+        assertEquals("13800138000", response.getPhone(), "DTO 手机号保留明文");
+        assertThat(objectMapper.writeValueAsString(response))
+                .as("JSON 序列化输出应脱敏手机号")
+                .contains("\"phone\":\"138****8000\"");
         assertEquals(1, response.getRoleCodes().size());
         assertEquals("SYSTEM_ADMIN", response.getRoleCodes().get(0));
     }
