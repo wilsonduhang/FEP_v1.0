@@ -6,9 +6,10 @@ package com.puchain.fep.security.api;
  * <p>Provides public key distribution for client-side password encryption
  * and server-side decryption during login.</p>
  *
- * <p><strong>Security note:</strong> The real implementation in {@code security-impl}
- * must be written by the security specialist (Mode E). This interface and its
- * mock are AI-generated (Mode B).</p>
+ * <p><strong>Security note:</strong> 🔓 2026-06-07 muzhou 解禁国密域——SM4 凭证密钥
+ * （S1）与 SM2 登录密钥（S2a）的真实实现由 AI 编写 + 密码学专项 review；
+ * {@link #getSignPrivateKey()}（SM2 报文签名）仍属 S2b，待架构 §0.3 决策门定调。
+ * 真实密钥材料永不入 repo，部署期注入。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -16,28 +17,59 @@ package com.puchain.fep.security.api;
 public interface KeyService {
 
     /**
-     * Returns the current SM2 public key in Base64 encoding.
+     * Returns the current SM2 login public key in Base64 encoding.
      *
-     * @return Base64-encoded SM2 public key (X.509 SubjectPublicKeyInfo format)
+     * <p><strong>Wire format（GM S2a 抉择②）:</strong> Base64 of the 65-byte uncompressed
+     * EC point {@code 04‖x‖y} — NOT X.509 SubjectPublicKeyInfo. The front-end
+     * ({@code fep-admin-ui sm2-cipher.ts normalizePublicKey}) decodes Base64 to raw-byte
+     * hex and feeds it to sm-crypto directly; an ASN.1-wrapped SPKI would corrupt the
+     * key material. Mock provider returns a {@code MOCK_}-prefixed sentinel instead.</p>
+     *
+     * @return Base64-encoded SM2 login public key (raw uncompressed point)
+     * @throws IllegalStateException if SM2 login keys are not configured (impl provider)
      */
     String getSm2PublicKeyBase64();
 
     /**
-     * Returns the key ID (version) of the current active SM2 key pair.
+     * Returns the key ID (version) of the current active SM4 credential master key.
+     *
+     * <p>Consumed by {@code CallbackCredentialEncryptionFacade}. Distinct from
+     * {@link #getSm2LoginKeyId()} — SM4 credential keys and SM2 login keys rotate
+     * independently (GM S2a 抉择⑤).</p>
      *
      * @return key identifier string
      */
     String getKeyId();
 
     /**
-     * Decrypts a login password that was encrypted with the SM2 public key.
+     * Returns the key ID (version) of the current active SM2 login key pair.
      *
-     * @param encryptedBase64 Base64-encoded SM2 ciphertext
-     * @param keyId           key version used for encryption (for key rotation support)
-     * @return cleartext password
-     * @throws IllegalArgumentException if decryption fails
+     * <p>Distributed alongside {@link #getSm2PublicKeyBase64()} by the public-key
+     * endpoint; echoed back in the login request for {@link #decryptLoginPassword}
+     * key-version routing. Distinct from {@link #getKeyId()} (SM4 credential key).</p>
+     *
+     * @return SM2 login key identifier string
+     * @throws IllegalStateException if SM2 login keys are not configured (impl provider)
      */
-    String decryptLoginPassword(String encryptedBase64, String keyId);
+    String getSm2LoginKeyId();
+
+    /**
+     * Decrypts a login password that was encrypted with the SM2 login public key.
+     *
+     * <p><strong>Wire format per provider（GM S2a 抉择③）:</strong> impl provider expects
+     * the sm-crypto C1C3C2 hex ciphertext WITHOUT the leading {@code 04} point prefix
+     * （fep-admin-ui {@code sm2-cipher.ts doEncrypt(msg, key, 1)} contract）; mock provider
+     * expects Base64(plaintext). The parameter is therefore provider-format-specific,
+     * not always Base64.</p>
+     *
+     * @param encryptedPassword SM2 ciphertext in provider wire format (see above)
+     * @param keyId             key version used for encryption (for key rotation support)
+     * @return cleartext password
+     * @throws IllegalArgumentException if the ciphertext is malformed, the keyId is
+     *         unknown, or decryption fails
+     * @throws IllegalStateException if SM2 login keys are not configured (impl provider)
+     */
+    String decryptLoginPassword(String encryptedPassword, String keyId);
 
     /**
      * Returns the SM2 private key used for outbound message signing (PKCS#8 encoded).

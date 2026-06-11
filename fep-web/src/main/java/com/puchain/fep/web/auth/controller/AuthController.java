@@ -152,7 +152,7 @@ public class AuthController {
     public ApiResult<PublicKeyResponse> getPublicKey() {
         return ApiResult.success(new PublicKeyResponse(
                 keyService.getSm2PublicKeyBase64(),
-                keyService.getKeyId(),
+                keyService.getSm2LoginKeyId(),
                 "SM2"));
     }
 }

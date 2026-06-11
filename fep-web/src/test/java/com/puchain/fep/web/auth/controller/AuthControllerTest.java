@@ -167,14 +167,15 @@ class AuthControllerTest {
     void getPublicKeyShouldReturnSm2PublicKey() throws Exception {
         when(keyService.getSm2PublicKeyBase64())
                 .thenReturn("MOCK_SM2_PUBLIC_KEY_BASE64_FOR_DEV_ONLY");
-        when(keyService.getKeyId()).thenReturn("mock-key-v1");
+        // GM S2a 抉择⑤：公钥端点 keyId = SM2 登录密钥版本（非 getKeyId() 的 SM4 凭证版本）
+        when(keyService.getSm2LoginKeyId()).thenReturn("sm2-login-v1");
 
         mockMvc.perform(get("/api/v1/auth/public-key"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
                 .andExpect(jsonPath("$.data.publicKeyBase64")
                         .value("MOCK_SM2_PUBLIC_KEY_BASE64_FOR_DEV_ONLY"))
-                .andExpect(jsonPath("$.data.keyId").value("mock-key-v1"))
+                .andExpect(jsonPath("$.data.keyId").value("sm2-login-v1"))
                 .andExpect(jsonPath("$.data.algorithm").value("SM2"));
     }
 }
