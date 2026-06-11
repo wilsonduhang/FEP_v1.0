@@ -7,12 +7,14 @@ import com.puchain.fep.processor.state.IllegalMessageStateException;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageProcessStore;
 import com.puchain.fep.processor.state.MessageStateMachine;
+import com.puchain.fep.processor.validation.BusinessRuleValidator;
 import com.puchain.fep.processor.validation.ValidationResult;
 import com.puchain.fep.processor.validation.XsdValidator;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -53,12 +55,19 @@ import static org.mockito.Mockito.when;
 class BatchMessageProcessorServiceTest {
 
     @Mock private XsdValidator xsdValidator;
+    @Mock private BusinessRuleValidator businessRuleValidator;
     @Mock private MessageStateMachine stateMachine;
     @Mock private MessageProcessStore store;
     @Mock private BatchPayloadAdapter adapter;
     @Mock private OutboundWireShapeDispatcher wireShapeDispatcher;
 
     @InjectMocks private BatchMessageProcessorService service;
+
+    @BeforeEach
+    void setUp() {
+        // mock 默认返回 null 会使 XSD 放行用例在第二关 NPE；统一 stub 放行（LENIENT 容忍未消费）
+        when(businessRuleValidator.validate(any(), any())).thenReturn(ValidationResult.ok());
+    }
 
     @Test
     void process_nullMessage_shouldReturnEmptyResult() {
@@ -145,7 +154,7 @@ class BatchMessageProcessorServiceTest {
 
     @Test
     void constructor_shouldRejectNullDependency() {
-        assertThatThrownBy(() -> new BatchMessageProcessorService(null, null, null, null, null))
+        assertThatThrownBy(() -> new BatchMessageProcessorService(null, null, null, null, null, null))
                 .isInstanceOf(NullPointerException.class);
     }
 

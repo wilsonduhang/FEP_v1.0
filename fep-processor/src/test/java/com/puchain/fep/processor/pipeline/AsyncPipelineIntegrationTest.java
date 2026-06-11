@@ -8,7 +8,9 @@ import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageStateMachine;
 import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
+import com.puchain.fep.processor.validation.BusinessRuleValidator;
 import com.puchain.fep.processor.validation.XsdValidator;
+import com.puchain.fep.processor.validation.rule.MessageRuleRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -19,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +50,7 @@ class AsyncPipelineIntegrationTest {
 
     private AsyncMessageProcessorService service;
     private InMemoryMessageProcessStore store;
+    private MessageRuleRegistry ruleRegistry;
 
     /** Shared HEAD template; callers replace {@code {{MSG_NO}}} with the actual message number. */
     private static final String HEAD_TEMPLATE = """
@@ -80,7 +84,9 @@ class AsyncPipelineIntegrationTest {
         XsdValidator validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
-        service = new AsyncMessageProcessorService(validator, machine, store);
+        ruleRegistry = new MessageRuleRegistry();
+        BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(ruleRegistry);
+        service = new AsyncMessageProcessorService(validator, businessRuleValidator, machine, store);
     }
 
     // ── 3001 → 3002 async flow ─────────────────────────────────────────
@@ -337,6 +343,126 @@ class AsyncPipelineIntegrationTest {
         assertThat(p95Ms)
                 .as("P95 async inbound latency should be < 15ms, was %.2fms (mean=%.2fms)", p95Ms, meanMs)
                 .isLessThan(15.0);
+    }
+
+    // ── business rule gate（Batch/Async 接入 Plan 2026-06-10）──────────
+
+    @Test
+    void asyncRequest_businessRuleViolation_shouldFailWithProc8507() {
+        ruleRegistry.register(MessageType.MSG_3001,
+                ctx -> Optional.of("forced async request violation"));
+        byte[] requestXml = toBytes(cfx("3001", """
+                <RealHead3001>
+            """ + REQUEST_HEAD + """
+                </RealHead3001>
+                <ProgressQuery3001>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <QueryType>1</QueryType>
+                    <QueryKey>KEY001</QueryKey>
+                </ProgressQuery3001>"""));
+
+        MessageProcessRecord record = service.processAsyncInbound(
+                MessageType.MSG_3001, "TN-RULE-REQ", requestXml);
+
+        assertThat(record.getStatus()).isEqualTo(MessageProcessStatus.FAILED);
+        assertThat(record.getErrorCode()).isEqualTo("PROC_8507");
+        assertThat(record.getErrorMessage()).contains("forced async request violation");
+    }
+
+    @Test
+    void asyncResponse_businessRuleViolation_shouldFailWithProc8507() {
+        // 请求段无规则正常停 PROCESSING；应答类型 3002 注册强制违规 → 应答段 FAILED
+        ruleRegistry.register(MessageType.MSG_3002,
+                ctx -> Optional.of("forced async response violation"));
+        byte[] requestXml = toBytes(cfx("3001", """
+                <RealHead3001>
+            """ + REQUEST_HEAD + """
+                </RealHead3001>
+                <ProgressQuery3001>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <QueryType>1</QueryType>
+                    <QueryKey>KEY001</QueryKey>
+                </ProgressQuery3001>"""));
+        byte[] responseXml = toBytes(cfx("3002", """
+                <RealHead3002>
+            """ + RESPONSE_HEAD + """
+                </RealHead3002>
+                <ProgressQueryReturn3002>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <QueryType>1</QueryType>
+                    <QueryKey>KEY001</QueryKey>
+                    <ReturnCode>01</ReturnCode>
+                </ProgressQueryReturn3002>"""));
+
+        MessageProcessRecord inbound = service.processAsyncInbound(
+                MessageType.MSG_3001, "TN-RULE-RSP", requestXml);
+        assertThat(inbound.getStatus()).isEqualTo(MessageProcessStatus.PROCESSING);
+
+        MessageProcessRecord failed = service.completeWithResponse(
+                "TN-RULE-RSP", MessageType.MSG_3002, responseXml);
+
+        assertThat(failed.getStatus()).isEqualTo(MessageProcessStatus.FAILED);
+        assertThat(failed.getErrorCode()).isEqualTo("PROC_8507");
+        assertThat(failed.getErrorMessage()).contains("forced async response violation");
+    }
+
+    @Test
+    void asyncFlow_businessRulesPass_shouldCompleteAsBeforehand() {
+        ruleRegistry.register(MessageType.MSG_3001, ctx -> Optional.empty());
+        ruleRegistry.register(MessageType.MSG_3002, ctx -> Optional.empty());
+        byte[] requestXml = toBytes(cfx("3001", """
+                <RealHead3001>
+            """ + REQUEST_HEAD + """
+                </RealHead3001>
+                <ProgressQuery3001>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <QueryType>1</QueryType>
+                    <QueryKey>KEY001</QueryKey>
+                </ProgressQuery3001>"""));
+        byte[] responseXml = toBytes(cfx("3002", """
+                <RealHead3002>
+            """ + RESPONSE_HEAD + """
+                </RealHead3002>
+                <ProgressQueryReturn3002>
+                    <SerialNo>""" + SERIAL_NO + """
+            </SerialNo>
+                    <SendNodeCode>12345678901234</SendNodeCode>
+                    <DesNodeCode>A1000143000104</DesNodeCode>
+                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
+                    <hxqyCode>123456789012345678</hxqyCode>
+                    <QueryType>1</QueryType>
+                    <QueryKey>KEY001</QueryKey>
+                    <ReturnCode>01</ReturnCode>
+                </ProgressQueryReturn3002>"""));
+
+        MessageProcessRecord inbound = service.processAsyncInbound(
+                MessageType.MSG_3001, "TN-RULE-OK", requestXml);
+        assertThat(inbound.getStatus()).isEqualTo(MessageProcessStatus.PROCESSING);
+
+        MessageProcessRecord completed = service.completeWithResponse(
+                "TN-RULE-OK", MessageType.MSG_3002, responseXml);
+        assertThat(completed.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+        assertThat(completed.getErrorCode()).isNull();
     }
 
     // ── helpers ─────────────────────────────────────────────────────────
