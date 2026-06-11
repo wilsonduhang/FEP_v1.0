@@ -128,6 +128,11 @@ class CallbackCredentialEncryptionFacadeTest {
             }
 
             @Override
+            public String getSm2LoginKeyId() {
+                return "k-new";
+            }
+
+            @Override
             public String decryptLoginPassword(final String e, final String id) {
                 return e;
             }

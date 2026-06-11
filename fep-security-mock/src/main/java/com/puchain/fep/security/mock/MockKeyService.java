@@ -61,6 +61,12 @@ public class MockKeyService implements KeyService {
     }
 
     @Override
+    public String getSm2LoginKeyId() {
+        // GM S2a: mock 域 SM2 登录 keyId 与 SM4 凭证 keyId 共用同一常量
+        return MOCK_KEY_ID;
+    }
+
+    @Override
     public String decryptLoginPassword(final String encryptedBase64, final String keyId) {
         return new String(Base64.getDecoder().decode(encryptedBase64), UTF_8);
     }

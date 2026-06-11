@@ -5,6 +5,7 @@ import com.puchain.fep.security.api.KeyService;
 import com.puchain.fep.security.impl.crypto.BouncyCastleGmProviderConfig;
 import com.puchain.fep.security.impl.crypto.CryptoServiceImpl;
 import com.puchain.fep.security.impl.key.FepSecurityKeyProperties;
+import com.puchain.fep.security.impl.key.FepSecuritySm2Properties;
 import com.puchain.fep.security.impl.key.KeyServiceImpl;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConditionalOnProperty(prefix = "fep.security", name = "provider", havingValue = "impl")
-@EnableConfigurationProperties(FepSecurityKeyProperties.class)
+@EnableConfigurationProperties({FepSecurityKeyProperties.class, FepSecuritySm2Properties.class})
 public class GmSecurityConfiguration {
 
     /**
@@ -51,13 +52,15 @@ public class GmSecurityConfiguration {
     }
 
     /**
-     * SM4 主密钥多版本加载服务。
+     * SM4 主密钥 + SM2 登录密钥多版本加载服务。
      *
-     * @param props SM4 密钥配置
+     * @param props    SM4 密钥配置
+     * @param sm2Props SM2 登录密钥配置（GM S2a，可选段）
      * @return KeyService 实现
      */
     @Bean
-    public KeyService keyService(final FepSecurityKeyProperties props) {
-        return new KeyServiceImpl(props);
+    public KeyService keyService(final FepSecurityKeyProperties props,
+                                 final FepSecuritySm2Properties sm2Props) {
+        return new KeyServiceImpl(props, sm2Props);
     }
 }

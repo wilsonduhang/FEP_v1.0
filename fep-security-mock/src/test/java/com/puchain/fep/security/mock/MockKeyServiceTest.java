@@ -25,6 +25,12 @@ class MockKeyServiceTest {
     }
 
     @Test
+    void getSm2LoginKeyId_returnsMockKeyId() {
+        // GM S2a: SM2 登录 keyId 与 SM4 凭证 keyId 在 mock 域共用同一常量
+        assertThat(keyService.getSm2LoginKeyId()).isEqualTo("mock-key-v1");
+    }
+
+    @Test
     void decryptLoginPassword_shouldBase64Decode() {
         String clearPassword = "Abc12345";
         String encrypted = Base64.getEncoder().encodeToString(clearPassword.getBytes(UTF_8));
