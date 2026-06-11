@@ -3,6 +3,7 @@ package com.puchain.fep.web.submission.record.repository;
 import com.puchain.fep.web.submission.record.domain.EntryMethod;
 import com.puchain.fep.web.submission.record.domain.PushStatus;
 import com.puchain.fep.web.submission.record.domain.SubSubmissionRecord;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 所以测试先 {@code saveAndFlush} 拿到 record_id，再用 {@link JdbcTemplate}
  * 直接 UPDATE {@code create_time} 字段模拟历史时间点。</p>
  *
+ * <p><b>测试隔离</b>：共享 H2 中先行测试类（如 {@code SubDashboardServicePerfTest}
+ * 提交 1 万行 12 种 messageType 且不回滚）会把本类自插的 count=1 聚合组挤出
+ * {@code PageRequest.of(0, 10)} Top-10（聚合 {@code ORDER BY COUNT DESC} 无次级排序），
+ * 表现为类执行顺序敏感的 {@code NoSuchElementException}（PR #77 CI 实证）。
+ * {@link #clearTable()} 在每个用例事务内先清空表（{@code @Transactional} 回滚自动
+ * 恢复，不影响后续类），使聚合断言只基于本用例 fixture，消除顺序依赖。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
@@ -44,6 +52,12 @@ class SubSubmissionRecordRepositoryTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @BeforeEach
+    void clearTable() {
+        // 事务内清场：先行测试类遗留的已提交行对本类聚合断言不可见；回滚后原数据恢复
+        jdbcTemplate.update("DELETE FROM t_sub_submission_record");
+    }
 
     @Test
     void aggregateDistributionByMessageType_shouldFilterByStartTime_whenProvided() {

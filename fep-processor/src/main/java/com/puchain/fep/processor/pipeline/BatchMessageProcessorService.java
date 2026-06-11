@@ -13,6 +13,7 @@ import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageProcessStore;
 import com.puchain.fep.processor.state.MessageStateMachine;
+import com.puchain.fep.processor.validation.BusinessRuleValidator;
 import com.puchain.fep.processor.validation.ValidationResult;
 import com.puchain.fep.processor.validation.XsdValidator;
 import jakarta.xml.bind.JAXBContext;
@@ -41,6 +42,9 @@ import java.util.Objects;
  * {@code PARTIAL_SUCCESS} 状态，整体由 {@code failedCount == 0} 决策；失败
  * 明细完整保留在 {@link BatchResult#errors()}。</p>
  *
+ * <p>每条记录依次过 XSD 结构关与业务规则关（镜像 {@link SyncMessageProcessorService}
+ * 两关模式）；任一关失败该条计入 {@link BatchResult#errors()}。</p>
+ *
  * <p><b>FAILED 语义取舍</b>：本实现用 {@code stateMachine.transition(recordId, FAILED)}
  * 推进 FAILED 态，<b>不调</b> {@code stateMachine.failWith(...)}；因此
  * {@code message_process_record.error_code / error_message} 保持 {@code null}，
@@ -57,32 +61,37 @@ public class BatchMessageProcessorService {
     private static final Logger log = LoggerFactory.getLogger(BatchMessageProcessorService.class);
 
     private final XsdValidator xsdValidator;
+    private final BusinessRuleValidator businessRuleValidator;
     private final MessageStateMachine stateMachine;
     private final MessageProcessStore store;
     private final BatchPayloadAdapter adapter;
     private final OutboundWireShapeDispatcher wireShapeDispatcher;
 
     /**
-     * 构造器注入 5 项业务依赖。
+     * 构造器注入 6 项业务依赖。
      *
      * <p>P5 T3：新增 {@link OutboundWireShapeDispatcher} 用于 {@link #wrapBodyInCfx}
      * 按 wire-shape 派发 head 元素名（修正 hardcoded {@code "RealHead" + msgNo}
      * 仅 1/8 报文正确的缺陷）。</p>
      *
-     * @param xsdValidator         XSD 校验器
-     * @param stateMachine         状态机（5 态）
-     * @param store                持久化端口
-     * @param adapter              8KB 分拆适配
-     * @param wireShapeDispatcher  wire-shape 路由（决定 head 元素名按 16 上行报文 dispatch）
+     * @param xsdValidator          XSD 校验器
+     * @param businessRuleValidator 业务规则校验器（XSD 之后的第二道关）
+     * @param stateMachine          状态机（5 态）
+     * @param store                 持久化端口
+     * @param adapter               8KB 分拆适配
+     * @param wireShapeDispatcher   wire-shape 路由（决定 head 元素名按 16 上行报文 dispatch）
      * @throws NullPointerException 任一参数为 {@code null}
      */
     public BatchMessageProcessorService(
             final XsdValidator xsdValidator,
+            final BusinessRuleValidator businessRuleValidator,
             final MessageStateMachine stateMachine,
             final MessageProcessStore store,
             final BatchPayloadAdapter adapter,
             final OutboundWireShapeDispatcher wireShapeDispatcher) {
         this.xsdValidator = Objects.requireNonNull(xsdValidator, "xsdValidator");
+        this.businessRuleValidator =
+                Objects.requireNonNull(businessRuleValidator, "businessRuleValidator");
         this.stateMachine = Objects.requireNonNull(stateMachine, "stateMachine");
         this.store = Objects.requireNonNull(store, "store");
         this.adapter = Objects.requireNonNull(adapter, "adapter");
@@ -134,12 +143,19 @@ public class BatchMessageProcessorService {
                 adapter.split(record);
                 log.debug("batch record[{}] triggered split (size>8KB)", i);
             }
-            final ValidationResult vr = xsdValidator.validate(
-                    type, record.getBytes(StandardCharsets.UTF_8));
-            if (vr.valid()) {
+            final byte[] recordBytes = record.getBytes(StandardCharsets.UTF_8);
+            final ValidationResult vr = xsdValidator.validate(type, recordBytes);
+            if (!vr.valid()) {
+                errors.add(new BatchResult.BatchError(i, firstError(vr)));
+                continue;
+            }
+            // 第二关：业务规则（XSD 通过保证 well-formed，ValidationException 不可达；
+            // 违规文案与 XSD 错误同入 BatchResult.errors，record 级 error_code 保持 null）
+            final ValidationResult br = businessRuleValidator.validate(type, recordBytes);
+            if (br.valid()) {
                 success++;
             } else {
-                errors.add(new BatchResult.BatchError(i, firstError(vr)));
+                errors.add(new BatchResult.BatchError(i, firstError(br)));
             }
         }
         final int failed = records.size() - success;

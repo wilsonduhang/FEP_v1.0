@@ -7,14 +7,19 @@ import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
 import com.puchain.fep.processor.body.common.Forward9000;
 import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
 import com.puchain.fep.processor.body.supplychain.QyAccQuery3005;
+import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.state.InMemoryMessageProcessStore;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageStateMachine;
 import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
+import com.puchain.fep.processor.validation.BusinessRuleValidator;
 import com.puchain.fep.processor.validation.XsdValidator;
+import com.puchain.fep.processor.validation.rule.MessageRuleRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,6 +53,7 @@ class BatchMessageProcessorServiceIntegrationTest {
 
     private BatchMessageProcessorService service;
     private InMemoryMessageProcessStore store;
+    private MessageRuleRegistry ruleRegistry;
 
     @BeforeEach
     void setUp() {
@@ -56,7 +62,10 @@ class BatchMessageProcessorServiceIntegrationTest {
         MessageStateMachine machine = new MessageStateMachine(store);
         BatchPayloadAdapter adapter = new BatchPayloadAdapter();
         OutboundWireShapeDispatcher dispatcher = new OutboundWireShapeDispatcher();
-        service = new BatchMessageProcessorService(validator, machine, store, adapter, dispatcher);
+        ruleRegistry = new MessageRuleRegistry();
+        BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(ruleRegistry);
+        service = new BatchMessageProcessorService(
+                validator, businessRuleValidator, machine, store, adapter, dispatcher);
     }
 
     @Test
@@ -176,6 +185,88 @@ class BatchMessageProcessorServiceIntegrationTest {
         // allSucceeded() 契约：processedCount > 0 才可能为 true；空 batch 严格 false
         assertThat(result.allSucceeded()).isFalse();
         assertThat(result.errors()).isEmpty();
+    }
+
+    // ── business rule gate（Batch/Async 接入 Plan 2026-06-10）──────────
+
+    @Test
+    void businessRuleViolation_shouldCountRecordAsFailed() {
+        // XSD 通过但注册规则强制违规 → 该条计入 failed，错误文案进 errors()
+        // （镜像 SyncMessageProcessorServiceTest#process_shouldFailWithProc8507_whenBusinessRuleViolated）
+        ruleRegistry.register(MessageType.MSG_3005,
+                ctx -> Optional.of("forced business violation for batch test"));
+        CommonHead head = head("3005");
+        CfxMessage msg = CfxMessage.of(head, qyAccQuery3005());
+
+        BatchResult result = service.process(msg);
+
+        assertThat(result.processedCount()).isEqualTo(1);
+        assertThat(result.successCount()).isZero();
+        assertThat(result.failedCount()).isEqualTo(1);
+        assertThat(result.errors()).hasSize(1);
+        assertThat(result.errors().get(0).errorMessage())
+                .contains("forced business violation");
+        // 批量整体 FAILED（record 级 error_code 保持 null — 既有批量取舍不变）
+        assertThat(store.countByStatus(MessageProcessStatus.FAILED)).isPositive();
+    }
+
+    @Test
+    void businessRule_perRecordEvaluation_shouldSplitSuccessAndFailure() {
+        // 规则按 SerialNo 尾号选择性违规 → 2 条记录 1 过 1 失败（逐条独立求值）
+        ruleRegistry.register(MessageType.MSG_3005,
+                ctx -> ctx.first("SerialNo")
+                        .filter(v -> v.endsWith("02"))
+                        .map(v -> "SerialNo " + v + " rejected by test rule"));
+        QyAccQuery3005 pass = qyAccQuery3005(); // SerialNo ...0001
+        QyAccQuery3005 fail = qyAccQuery3005();
+        fail.setSerialNo("SN2026042312000000000000000002");
+        CommonHead head = head("3005");
+        CfxMessage msg = CfxMessage.of(head, pass, fail);
+
+        BatchResult result = service.process(msg);
+
+        assertThat(result.processedCount()).isEqualTo(2);
+        assertThat(result.successCount()).isEqualTo(1);
+        assertThat(result.failedCount()).isEqualTo(1);
+        assertThat(result.errors()).hasSize(1);
+        assertThat(result.errors().get(0).index()).isEqualTo(1);
+        assertThat(result.errors().get(0).errorMessage()).contains("0002");
+    }
+
+    @Test
+    void xsdFailedRecord_shouldNotEnterBusinessRuleGate() {
+        // 验收标准 5：XSD 非法记录在第一关即记错，不进规则关（不双计、错误文案为 XSD 文案）
+        ruleRegistry.register(MessageType.MSG_3005,
+                ctx -> Optional.of("rule violation marker"));
+        QyAccQuery3005 xsdInvalid = qyAccQuery3005();
+        xsdInvalid.setSerialNo(null); // 缺必填 SerialNo → XSD 必失败（镜像既有 partialInvalid 手法）
+        CommonHead head = head("3005");
+        CfxMessage msg = CfxMessage.of(head, qyAccQuery3005(), xsdInvalid);
+
+        BatchResult result = service.process(msg);
+
+        // 合法记录（index 0）被恒违规规则拦；非法记录（index 1）被 XSD 关拦 → 恰 2 错误无双计
+        assertThat(result.processedCount()).isEqualTo(2);
+        assertThat(result.failedCount()).isEqualTo(2);
+        assertThat(result.errors()).hasSize(2);
+        assertThat(result.errors().get(0).index()).isZero();
+        assertThat(result.errors().get(0).errorMessage()).contains("rule violation marker");
+        assertThat(result.errors().get(1).index()).isEqualTo(1);
+        assertThat(result.errors().get(1).errorMessage())
+                .doesNotContain("rule violation marker"); // XSD 文案，证明该条未进规则关
+    }
+
+    @Test
+    void businessRulePass_shouldCompleteAsBeforehand() {
+        // 注册通过的规则 → 与无规则行为一致（向后兼容）
+        ruleRegistry.register(MessageType.MSG_3005, ctx -> Optional.empty());
+        CommonHead head = head("3005");
+        CfxMessage msg = CfxMessage.of(head, qyAccQuery3005());
+
+        BatchResult result = service.process(msg);
+
+        assertThat(result.allSucceeded()).isTrue();
+        assertThat(store.countByStatus(MessageProcessStatus.COMPLETED)).isPositive();
     }
 
     // ── helpers ─────────────────────────────────────
