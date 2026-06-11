@@ -29,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * End-to-end integration tests for the async message processing pipeline.
  * Validates the full request-then-response flow for all three supply-chain
- * query pairs (3001/3002, 3003/3004, 3005/3006), XSD failure path, and
+ * query pairs (3001/3002, 3003/3004, 3005/3006), XSD failure path, the
+ * business-rule gate (PROC_8507, request and response legs), and
  * a performance baseline of 100 inbound operations.
  *
  * <p>No Spring context required; components are wired manually.</p>
@@ -345,7 +346,7 @@ class AsyncPipelineIntegrationTest {
                 .isLessThan(15.0);
     }
 
-    // ── business rule gate（Batch/Async 接入 Plan 2026-06-10）──────────
+    // ── business rule gate ──────────────────────────────
 
     @Test
     void asyncRequest_businessRuleViolation_shouldFailWithProc8507() {

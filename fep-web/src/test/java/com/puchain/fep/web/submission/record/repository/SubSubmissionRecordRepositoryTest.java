@@ -85,8 +85,8 @@ class SubSubmissionRecordRepositoryTest {
                 null,
                 PageRequest.of(0, 10));
 
-        // 全量包含新插入的 2 种 messageType（可能还有 seed 数据）
-        assertThat(all).hasSizeGreaterThanOrEqualTo(2);
+        // 清场后全量 = 恰好本用例插入的 2 种 messageType
+        assertThat(all).hasSize(2);
     }
 
     @Test
@@ -114,7 +114,7 @@ class SubSubmissionRecordRepositoryTest {
                 null,
                 PageRequest.of(0, 10));
 
-        assertThat(all).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(all).hasSize(2);
     }
 
     /**
