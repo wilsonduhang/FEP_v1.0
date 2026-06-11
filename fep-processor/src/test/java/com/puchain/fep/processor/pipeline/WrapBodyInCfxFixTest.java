@@ -10,7 +10,9 @@ import com.puchain.fep.processor.body.supplychain.RzReturnInfo3009;
 import com.puchain.fep.processor.state.InMemoryMessageProcessStore;
 import com.puchain.fep.processor.state.MessageStateMachine;
 import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
+import com.puchain.fep.processor.validation.BusinessRuleValidator;
 import com.puchain.fep.processor.validation.XsdValidator;
+import com.puchain.fep.processor.validation.rule.MessageRuleRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,7 +58,10 @@ class WrapBodyInCfxFixTest {
         MessageStateMachine machine = new MessageStateMachine(store);
         BatchPayloadAdapter adapter = new BatchPayloadAdapter();
         OutboundWireShapeDispatcher dispatcher = new OutboundWireShapeDispatcher();
-        service = new BatchMessageProcessorService(validator, machine, store, adapter, dispatcher);
+        BusinessRuleValidator businessRuleValidator =
+                new BusinessRuleValidator(new MessageRuleRegistry());
+        service = new BatchMessageProcessorService(
+                validator, businessRuleValidator, machine, store, adapter, dispatcher);
     }
 
     @Test
