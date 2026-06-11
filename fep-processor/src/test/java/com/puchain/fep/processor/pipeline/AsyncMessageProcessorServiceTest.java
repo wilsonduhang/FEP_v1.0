@@ -6,7 +6,9 @@ import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageStateMachine;
 import com.puchain.fep.processor.validation.AbstractXsdValidationTest;
+import com.puchain.fep.processor.validation.BusinessRuleValidator;
 import com.puchain.fep.processor.validation.XsdValidator;
+import com.puchain.fep.processor.validation.rule.MessageRuleRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +28,10 @@ class AsyncMessageProcessorServiceTest {
         XsdValidator validator = AbstractXsdValidationTest.SHARED_VALIDATOR;
         store = new InMemoryMessageProcessStore();
         MessageStateMachine machine = new MessageStateMachine(store);
-        processor = new AsyncMessageProcessorService(validator, machine, store);
+        processor = new AsyncMessageProcessorService(
+                validator,
+                new BusinessRuleValidator(new MessageRuleRegistry()),
+                machine, store);
     }
 
     /**

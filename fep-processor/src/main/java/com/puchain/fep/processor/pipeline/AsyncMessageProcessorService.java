@@ -8,6 +8,7 @@ import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageProcessStore;
 import com.puchain.fep.processor.state.MessageStateMachine;
+import com.puchain.fep.processor.validation.BusinessRuleValidator;
 import com.puchain.fep.processor.validation.ValidationResult;
 import com.puchain.fep.processor.validation.XsdValidator;
 import org.slf4j.Logger;
@@ -17,7 +18,8 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 
 /**
- * PRD v1.3 §4.7 模式2/5 异步流水线编排器：接收报文 → XSD 校验 → 状态流转至 PROCESSING → 返回记录。
+ * PRD v1.3 §4.7 模式2/5 异步流水线编排器：接收报文 → XSD 校验 → 业务规则校验 →
+ * 状态流转至 PROCESSING → 返回记录。
  *
  * <p>与 {@link SyncMessageProcessorService} 的核心区别：同步模式在单次调用中走完
  * {@code RECEIVED → VALIDATED → PROCESSING → COMPLETED}；异步模式分两阶段：</p>
@@ -25,7 +27,8 @@ import java.time.Instant;
  *   <li>{@link #processAsyncInbound} / {@link #processAsyncOutbound}：走到
  *       {@code PROCESSING} 停止，调用方基于返回记录生成 9120 ACK</li>
  *   <li>{@link #completeWithResponse}：收到异步应答（如 3002/3004/3006）后，
- *       校验应答 XML 并将原记录从 {@code PROCESSING → COMPLETED}</li>
+ *       对应答 XML 依次过 XSD 校验 → 业务规则校验，再将原记录从
+ *       {@code PROCESSING → COMPLETED}</li>
  * </ol>
  *
  * <p>所有 {@code transitionNo} 与错误消息在写入日志前经
@@ -40,20 +43,24 @@ public class AsyncMessageProcessorService {
     private static final Logger log = LoggerFactory.getLogger(AsyncMessageProcessorService.class);
 
     private final XsdValidator validator;
+    private final BusinessRuleValidator businessRuleValidator;
     private final MessageStateMachine stateMachine;
     private final MessageProcessStore store;
 
     /**
-     * Spring 构造注入三个协作者。所有依赖均为 {@code final}，不参与可变状态共享。
+     * Spring 构造注入四个协作者。所有依赖均为 {@code final}，不参与可变状态共享。
      *
-     * @param validator    XSD 结构校验器，非空
-     * @param stateMachine 报文级状态机，非空
-     * @param store        报文处理记录存储端口，非空
+     * @param validator             XSD 结构校验器，非空
+     * @param businessRuleValidator 业务规则校验器（XSD 之后的第二道关），非空
+     * @param stateMachine          报文级状态机，非空
+     * @param store                 报文处理记录存储端口，非空
      */
     public AsyncMessageProcessorService(final XsdValidator validator,
+                                        final BusinessRuleValidator businessRuleValidator,
                                         final MessageStateMachine stateMachine,
                                         final MessageProcessStore store) {
         this.validator = validator;
+        this.businessRuleValidator = businessRuleValidator;
         this.stateMachine = stateMachine;
         this.store = store;
     }
@@ -103,7 +110,7 @@ public class AsyncMessageProcessorService {
      * @param originalTransitionNo 原始请求的流水号，非空
      * @param responseType         应答报文类型，非空
      * @param responseXml          应答 XML payload，非空
-     * @return COMPLETED 态记录
+     * @return COMPLETED 态记录（校验失败时为 FAILED 态记录）
      * @throws IllegalArgumentException 任一参数为 {@code null}，或原始流水号未找到
      * @throws IllegalStateException    原始记录不在 PROCESSING 状态
      */
@@ -144,6 +151,17 @@ public class AsyncMessageProcessorService {
                     LogSanitizer.sanitize(originalTransitionNo),
                     LogSanitizer.sanitize(firstError));
             return stateMachine.failWith(original, FepErrorCode.PROC_8501, firstError);
+        }
+
+        ValidationResult br = businessRuleValidator.validate(responseType, responseXml);
+        if (!br.valid()) {
+            String firstError = br.errors().isEmpty() ? "unknown" : br.errors().get(0);
+            log.warn("[ASYNC-COMPLETE] response business rule validation failed msg={} "
+                            + "transitionNo={} firstError={}",
+                    responseType.msgNo(),
+                    LogSanitizer.sanitize(originalTransitionNo),
+                    LogSanitizer.sanitize(firstError));
+            return stateMachine.failWith(original, FepErrorCode.PROC_8507, firstError);
         }
 
         MessageProcessRecord completed = stateMachine.transition(original,
@@ -190,6 +208,17 @@ public class AsyncMessageProcessorService {
                     LogSanitizer.sanitize(transitionNo),
                     LogSanitizer.sanitize(firstError));
             return stateMachine.failWith(saved, FepErrorCode.PROC_8501, firstError);
+        }
+
+        ValidationResult br = businessRuleValidator.validate(type, xml);
+        if (!br.valid()) {
+            String firstError = br.errors().isEmpty() ? "unknown" : br.errors().get(0);
+            log.warn("[ASYNC-{}] business rule validation failed msg={} transitionNo={} "
+                            + "firstError={}",
+                    direction, type.msgNo(),
+                    LogSanitizer.sanitize(transitionNo),
+                    LogSanitizer.sanitize(firstError));
+            return stateMachine.failWith(saved, FepErrorCode.PROC_8507, firstError);
         }
 
         MessageProcessRecord validated = stateMachine.transition(saved,
