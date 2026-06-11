@@ -3,11 +3,11 @@ package com.puchain.fep.processor.pipeline;
 import com.puchain.fep.common.util.FepConstants;
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
+import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
 import com.puchain.fep.processor.body.common.Forward9000;
 import com.puchain.fep.processor.body.supplychain.PzInfoQuery3003;
 import com.puchain.fep.processor.body.supplychain.QyAccQuery3005;
-import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.state.InMemoryMessageProcessStore;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageStateMachine;
@@ -187,7 +187,7 @@ class BatchMessageProcessorServiceIntegrationTest {
         assertThat(result.errors()).isEmpty();
     }
 
-    // ── business rule gate（Batch/Async 接入 Plan 2026-06-10）──────────
+    // ── business rule gate ──────────────────────────────
 
     @Test
     void businessRuleViolation_shouldCountRecordAsFailed() {
