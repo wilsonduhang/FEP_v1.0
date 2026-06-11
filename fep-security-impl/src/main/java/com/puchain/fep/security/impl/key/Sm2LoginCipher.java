@@ -1,10 +1,15 @@
 package com.puchain.fep.security.impl.key;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import org.bouncycastle.asn1.gm.GMNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.crypto.engines.SM2Engine;
 import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 
 /**
@@ -25,6 +30,12 @@ final class Sm2LoginCipher {
     static final ECDomainParameters DOMAIN = new ECDomainParameters(
             SM2_X9.getCurve(), SM2_X9.getG(), SM2_X9.getN(), SM2_X9.getH());
 
+    /** 前端线格式最小 hex 长度：C1(128) + C3(64) + C2(≥2)。 */
+    private static final int MIN_CIPHER_HEX_LENGTH = 194;
+
+    /** 未压缩点标识字节。 */
+    private static final byte UNCOMPRESSED_POINT_PREFIX = 0x04;
+
     private Sm2LoginCipher() {
     }
 
@@ -39,20 +50,41 @@ final class Sm2LoginCipher {
         final BigInteger d = new BigInteger(privateKeyHex, 16);
         final ECPoint derived = DOMAIN.getG().multiply(d).normalize();
         // 字节级比较（Hex.decode 大小写兼容），规避字符串 case-mapping（IMPROPER_UNICODE）
-        return java.util.Arrays.equals(derived.getEncoded(false), Hex.decode(publicKeyHex));
+        return Arrays.equals(derived.getEncoded(false), Hex.decode(publicKeyHex));
     }
 
     /**
-     * 解密前端线格式 SM2 密文（sm-crypto C1C3C2，hex，无 04 前缀）。
+     * 解密前端线格式 SM2 密文（sm-crypto C1C3C2，hex，无 04 前缀——
+     * fep-admin-ui sm2-cipher.ts 契约，内部统一补 0x04 后喂 BC SM2Engine）。
      *
-     * <p>GM S2a Task 3 实装；Task 2 阶段为编译衔接桩（同 Plan 内闭环替换）。</p>
-     *
-     * @param cipherHexNoPrefix C1C3C2 hex（无 04 前缀）
+     * @param cipherHexNoPrefix C1C3C2 hex（≥194 字符，无 04 前缀）
      * @param privateKeyHex     私钥标量 hex（64 字符）
      * @return 明文字节
-     * @throws IllegalArgumentException 输入格式非法或解密失败
+     * @throws IllegalArgumentException 输入格式非法或解密失败（消息不含密文/明文）
      */
     static byte[] decryptC1C3C2(final String cipherHexNoPrefix, final String privateKeyHex) {
-        throw new UnsupportedOperationException("S2a T3");
+        if (cipherHexNoPrefix == null || cipherHexNoPrefix.length() < MIN_CIPHER_HEX_LENGTH
+                || cipherHexNoPrefix.length() % 2 != 0) {
+            throw new IllegalArgumentException(
+                    "SM2 ciphertext must be even-length hex of at least "
+                            + MIN_CIPHER_HEX_LENGTH + " chars (C1C3C2, no 04 prefix)");
+        }
+        final byte[] c1c3c2;
+        try {
+            c1c3c2 = Hex.decode(cipherHexNoPrefix);
+        } catch (final DecoderException e) {
+            throw new IllegalArgumentException("SM2 ciphertext is not valid hex", e);
+        }
+        final byte[] withPrefix = new byte[c1c3c2.length + 1];
+        withPrefix[0] = UNCOMPRESSED_POINT_PREFIX;
+        System.arraycopy(c1c3c2, 0, withPrefix, 1, c1c3c2.length);
+        final SM2Engine engine = new SM2Engine(SM2Engine.Mode.C1C3C2);
+        engine.init(false, new ECPrivateKeyParameters(
+                new BigInteger(privateKeyHex, 16), DOMAIN));
+        try {
+            return engine.processBlock(withPrefix, 0, withPrefix.length);
+        } catch (final InvalidCipherTextException e) {
+            throw new IllegalArgumentException("SM2 login password decryption failed", e);
+        }
     }
 }

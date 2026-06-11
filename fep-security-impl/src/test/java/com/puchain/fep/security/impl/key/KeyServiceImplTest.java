@@ -146,9 +146,54 @@ class KeyServiceImplTest {
     }
 
     @Test
+    void decryptLoginPassword_smCryptoFixture_recoversPassword() {
+        final KeyService svc = newServiceWithSm2("sm2-login-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThat(svc.decryptLoginPassword(
+                Sm2TestVectors.SM_CRYPTO_FIXTURE_CIPHER_HEX, "sm2-login-v1"))
+                .isEqualTo(Sm2TestVectors.SM_CRYPTO_FIXTURE_PLAINTEXT);
+    }
+
+    @Test
+    void decryptLoginPassword_unknownKeyId_throwsIllegalArgument() {
+        final KeyService svc = newServiceWithSm2("sm2-login-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThatThrownBy(() -> svc.decryptLoginPassword(
+                Sm2TestVectors.SM_CRYPTO_FIXTURE_CIPHER_HEX, "ghost-key"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void sm2LoginConfig_privateKeyZeroScalar_failsStartup() {
         assertThatThrownBy(() -> newServiceWithSm2("sm2-login-v1",
                 "00".repeat(32), Sm2TestVectors.GBT_PUBLIC_KEY_HEX))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("out of range");
+    }
+
+    @Test
+    void sm2LoginConfig_privateKeyEqualToOrder_failsStartup() {
+        // d = n（曲线阶，由 DOMAIN 实算而非字面值）→ 越上界（合法域 1..n-1）
+        final String nHex = Sm2LoginCipher.DOMAIN.getN().toString(16);
+        assertThatThrownBy(() -> newServiceWithSm2("sm2-login-v1",
+                nHex, Sm2TestVectors.GBT_PUBLIC_KEY_HEX))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("out of range");
+    }
+
+    @Test
+    void sm2LoginConfig_uppercaseHexKeyPair_passesValidation() {
+        // 大写 hex 配置兼容（regex [0-9a-fA-F] + Hex.decode 双映射 + BigInteger(16) 大小写均解析）
+        final KeyService svc = newServiceWithSm2("sm2-login-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX.toUpperCase(java.util.Locale.ROOT),
+                Sm2TestVectors.GBT_PUBLIC_KEY_HEX.toUpperCase(java.util.Locale.ROOT));
+        assertThat(svc.getSm2LoginKeyId()).isEqualTo("sm2-login-v1");
+    }
+
+    @Test
+    void sm2LoginConfig_publicKeyWithoutUncompressedPrefix_failsStartup() {
+        // 02 压缩点前缀（长度合法 130 hex，前缀非 04）
+        final String compressedPrefix = "02" + Sm2TestVectors.GBT_PUBLIC_KEY_HEX.substring(2);
+        assertThatThrownBy(() -> newServiceWithSm2("sm2-login-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, compressedPrefix))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("uncompressed");
     }
 }

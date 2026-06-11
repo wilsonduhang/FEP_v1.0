@@ -3,6 +3,9 @@ package com.puchain.fep.security.impl.key;
 import com.puchain.fep.security.api.KeyService;
 import jakarta.annotation.PostConstruct;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -95,7 +98,7 @@ public class KeyServiceImpl implements KeyService {
                     throw new IllegalStateException("SM2 login private key [" + keyId
                             + "] must be 64 hex chars (32-byte scalar)");
                 }
-                final java.math.BigInteger d = new java.math.BigInteger(priv, 16);
+                final BigInteger d = new BigInteger(priv, 16);
                 if (d.signum() <= 0 || d.compareTo(Sm2LoginCipher.DOMAIN.getN()) >= 0) {
                     throw new IllegalStateException("SM2 login private key [" + keyId
                             + "] scalar out of range (require 1 <= d <= n-1)");
@@ -134,7 +137,7 @@ public class KeyServiceImpl implements KeyService {
     @Override
     public String getSm2PublicKeyBase64() {
         final FepSecuritySm2Properties.LoginKeyPair active = loginKeys.get(requireLoginConfigured());
-        return java.util.Base64.getEncoder()
+        return Base64.getEncoder()
                 .encodeToString(HexFormat.of().parseHex(active.getPublicKeyHex()));
     }
 
@@ -151,7 +154,7 @@ public class KeyServiceImpl implements KeyService {
             throw new IllegalArgumentException("Unknown SM2 login keyId: " + keyId);
         }
         final byte[] plain = Sm2LoginCipher.decryptC1C3C2(encryptedPassword, pair.getPrivateKeyHex());
-        return new String(plain, java.nio.charset.StandardCharsets.UTF_8);
+        return new String(plain, StandardCharsets.UTF_8);
     }
 
     @Override
