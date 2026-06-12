@@ -941,6 +941,7 @@ git worktree remove /Users/muzhou/FEP_v1.0_wt-rule-batch2
 | # | 项 | 触发条件 |
 |---|----|---------|
 | DEF-B2-1 | 出站 RESPONSE 报文 Result 业务真值注入（现为合法占位 90000，15 报文） | P5 T6 业务流程结果回写设计定稿后（独立 Plan） |
+| DEF-B2-2 | **生产语义冲突上报**：`ClearingInstructionService.SUCCESS_CODES={"0","00"}`（0=成功）与规范 qsReturnCode 脚注行 22480「0-失败;1-失败成功」判定颠倒——整条既有链（fixture 注释 + 生产判定）按 0=成功 实现。本批仅登记不动生产语义；3115 fixture 暂取 0（母本 {0,1} 内 + 既有链自洽） | muzhou 与甲方/报文整理 xlsx 复核 qsReturnCode 语义后独立 fix Plan |
 
 ## 评审与签字
 

@@ -27,7 +27,7 @@ INSERT INTO outbound_message_queue (
 ) VALUES
 ('aaaa1111bbbb2222cccc3333dddd0001', '3009', '00000001', 'idem_3009_0001',
  '<OutboundHeadFields><sendOrgCode>BANK0010000001</sendOrgCode><entrustDate>20260505</entrustDate><transitionNo>00000001</transitionNo></OutboundHeadFields>',
- '<rzReturnInfo3009><SerialNo>SN3009000000000000000000000001</SerialNo><SendNodeCode>BANK0010000001</SendNodeCode><DesNodeCode>HNDM0010000001</DesNodeCode><PlatApplyNo>PLAT001</PlatApplyNo><hxqyName>核心企业测试</hxqyName><rzpzNo>PZ001</rzpzNo><rzPhaseCode>01</rzPhaseCode></rzReturnInfo3009>', 'RzReturnInfo3009', 'collector://3009/0001',
+ '<rzReturnInfo3009><SerialNo>SN3009000000000000000000000001</SerialNo><SendNodeCode>BANK0010000001</SendNodeCode><DesNodeCode>HNDM0010000001</DesNodeCode><PlatApplyNo>PLAT001</PlatApplyNo><hxqyName>核心企业测试</hxqyName><rzpzNo>PZ001</rzpzNo><rzPhaseCode>11</rzPhaseCode></rzReturnInfo3009>', 'RzReturnInfo3009', 'collector://3009/0001',
  'PENDING', 0, NULL, NULL, NOW(), NOW()),
 ('aaaa1111bbbb2222cccc3333dddd0002', '3101', '00000002', 'idem_3101_0002',
  '<OutboundHeadFields><sendOrgCode>BANK0010000001</sendOrgCode><entrustDate>20260505</entrustDate><transitionNo>00000002</transitionNo></OutboundHeadFields>',
@@ -39,7 +39,7 @@ INSERT INTO outbound_message_queue (
  'PENDING', 0, NULL, NULL, NOW(), NOW()),
 ('aaaa1111bbbb2222cccc3333dddd0004', '3105', '00000004', 'idem_3105_0004',
  '<OutboundHeadFields><sendOrgCode>BANK0010000001</sendOrgCode><entrustDate>20260505</entrustDate><transitionNo>00000004</transitionNo></OutboundHeadFields>',
- '<rzApplyInfo3105><SerialNo>SN3105000000000000000000000004</SerialNo><SendNodeCode>BANK0010000001</SendNodeCode><DesNodeCode>HNDM0010000001</DesNodeCode><ApplyMode>1</ApplyMode><PlatApplyNo>PLAT2026000004</PlatApplyNo><StdBizMode>01</StdBizMode><hxqyName>核心企业测试</hxqyName><hxqyCode>91110000100000000X</hxqyCode><rzpzNo>PZ20260526001</rzpzNo><rzqyName>融资企业测试</rzqyName><rzqyCode>91110000200000000Y</rzqyCode><rzqyPlatNo>RZPLAT2026000004</rzqyPlatNo></rzApplyInfo3105>', 'RzApplyInfo3105', 'collector://3105/0004',
+ '<rzApplyInfo3105><SerialNo>SN3105000000000000000000000004</SerialNo><SendNodeCode>BANK0010000001</SendNodeCode><DesNodeCode>HNDM0010000001</DesNodeCode><ApplyMode>1</ApplyMode><PlatApplyNo>PLAT2026000004</PlatApplyNo><StdBizMode>11</StdBizMode><hxqyName>核心企业测试</hxqyName><hxqyCode>91110000100000000X</hxqyCode><rzpzNo>PZ20260526001</rzpzNo><rzqyName>融资企业测试</rzqyName><rzqyCode>91110000200000000Y</rzqyCode><rzqyPlatNo>RZPLAT2026000004</rzqyPlatNo></rzApplyInfo3105>', 'RzApplyInfo3105', 'collector://3105/0004',
  'PENDING', 0, NULL, NULL, NOW(), NOW()),
 ('aaaa1111bbbb2222cccc3333dddd0005', '3107', '00000005', 'idem_3107_0005',
  '<OutboundHeadFields><sendOrgCode>BANK0010000001</sendOrgCode><entrustDate>20260505</entrustDate><transitionNo>00000005</transitionNo></OutboundHeadFields>',

@@ -39,7 +39,7 @@
                 <qsMemo>月度结算</qsMemo>
                 <qsReturnInfo>
                     <qsReturnBankName>某某银行湖南分行</qsReturnBankName>
-                    <qsReturnCode>00</qsReturnCode>
+                    <qsReturnCode>0</qsReturnCode>
                     <qsReturnSerialNo>BANKSN3115-001</qsReturnSerialNo>
                     <qsReturnDate>20260424</qsReturnDate>
                     <qsReturnFilename>receipt-3115-001.pdf</qsReturnFilename>

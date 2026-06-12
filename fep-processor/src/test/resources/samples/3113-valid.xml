@@ -27,7 +27,7 @@
             <CreditInfo>
                 <hxqyName>湖南某某核心企业A</hxqyName>
                 <hxqyCode>91430100MA00000001</hxqyCode>
-                <RetCode>00000</RetCode>
+                <RetCode>90000</RetCode>
                 <RetMemo>查询成功</RetMemo>
                 <CreditInfoMx>
                     <BankNodeCode>B43010104B0001</BankNodeCode>
@@ -47,7 +47,7 @@
             <CreditInfo>
                 <hxqyName>湖南某某核心企业B</hxqyName>
                 <hxqyCode>91430100MA00000002</hxqyCode>
-                <RetCode>00001</RetCode>
+                <RetCode>90001</RetCode>
             </CreditInfo>
             <ExtInfo>
                 <ExtData>3113回执扩展</ExtData>

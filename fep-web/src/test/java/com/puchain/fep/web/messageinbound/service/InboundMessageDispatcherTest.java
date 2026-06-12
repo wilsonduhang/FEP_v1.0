@@ -484,7 +484,7 @@ class InboundMessageDispatcherTest {
             + "<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>"
             + "<DesNodeCode>12345678901234</DesNodeCode>"
             + "<ApplyMode>1</ApplyMode><PlatApplyNo>PA20260525001</PlatApplyNo>"
-            + "<StdBizMode>01</StdBizMode>"
+            + "<StdBizMode>11</StdBizMode>"
             + "<hxqyName>核心企业</hxqyName><hxqyCode>91110000100000000X</hxqyCode>"
             + "<rzpzNo>PZ20260525001</rzpzNo>"
             + "</rzApplyInfo3105></MSG></CFX>";
@@ -510,7 +510,7 @@ class InboundMessageDispatcherTest {
             + "<PlatApplyNo>PA20260525002</PlatApplyNo>"
             + "<hxqyName>核心企业</hxqyName>"
             + "<rzpzNo>PZ20260525002</rzpzNo>"
-            + "<rzPhaseCode>01</rzPhaseCode>"
+            + "<rzPhaseCode>11</rzPhaseCode>"
             + "</rzReturnInfo3009></MSG></CFX>";
 
     /**

@@ -178,7 +178,7 @@ class AsyncPipelineIntegrationTest {
                     <pzrzState>1</pzrzState>
                     <pzrzStatusInfo>
                         <pzNo>PZ202604170001</pzNo>
-                        <rzPhaseCode>01</rzPhaseCode>
+                        <rzPhaseCode>11</rzPhaseCode>
                         <BankNodeCode>12345678901234</BankNodeCode>
                     </pzrzStatusInfo>
                     <zpzAllInfo>

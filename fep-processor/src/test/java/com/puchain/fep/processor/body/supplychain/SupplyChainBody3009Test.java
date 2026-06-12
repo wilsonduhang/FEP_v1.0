@@ -90,7 +90,7 @@ class SupplyChainBody3009Test {
         original.setPlatApplyNo("PLAT-APPLY-2026042400001");
         original.setHxqyName("湖南某某核心企业");
         original.setRzpzNo("PZ-2026042400001");
-        original.setRzPhaseCode("01");
+        original.setRzPhaseCode("11");
         original.setRzPhaseInfo("已放款");
         original.setRzAmtInfo(amtInfo);
         original.setDbInfo(dbInfo);
@@ -105,7 +105,7 @@ class SupplyChainBody3009Test {
                 .contains("<PlatApplyNo>PLAT-APPLY-2026042400001</PlatApplyNo>")
                 .contains("<hxqyName>湖南某某核心企业</hxqyName>")
                 .contains("<rzpzNo>PZ-2026042400001</rzpzNo>")
-                .contains("<rzPhaseCode>01</rzPhaseCode>")
+                .contains("<rzPhaseCode>11</rzPhaseCode>")
                 .contains("<rzPhaseInfo>已放款</rzPhaseInfo>")
                 .contains("<rzAmtInfo>")
                 .contains("<BillNo>BILL-2026042400001</BillNo>")
@@ -130,7 +130,7 @@ class SupplyChainBody3009Test {
         assertThat(parsed.getPlatApplyNo()).isEqualTo("PLAT-APPLY-2026042400001");
         assertThat(parsed.getHxqyName()).isEqualTo("湖南某某核心企业");
         assertThat(parsed.getRzpzNo()).isEqualTo("PZ-2026042400001");
-        assertThat(parsed.getRzPhaseCode()).isEqualTo("01");
+        assertThat(parsed.getRzPhaseCode()).isEqualTo("11");
         assertThat(parsed.getRzPhaseInfo()).isEqualTo("已放款");
         assertThat(parsed.getRzAmtInfo()).isNotNull();
         assertThat(parsed.getDbInfo()).isNotNull();

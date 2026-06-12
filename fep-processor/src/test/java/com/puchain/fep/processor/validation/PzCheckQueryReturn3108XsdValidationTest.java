@@ -68,7 +68,7 @@ class PzCheckQueryReturn3108XsdValidationTest extends AbstractXsdValidationTest 
                   <pzCheckReturn>
                     <hxqyName>核心企业测试有限公司</hxqyName>
                     <hxqyCode>91110000ABCDEFGH12</hxqyCode>
-                    <RetCode>00000</RetCode>
+                    <RetCode>90000</RetCode>
                     <RetMemo>核对一致</RetMemo>
                     <pzCountAll>10</pzCountAll>
                     <pzAmtAll>100000.00</pzAmtAll>

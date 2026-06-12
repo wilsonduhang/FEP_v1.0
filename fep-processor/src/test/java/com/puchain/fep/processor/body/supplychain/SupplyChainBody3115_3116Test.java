@@ -55,7 +55,7 @@ class SupplyChainBody3115_3116Test {
         // Settlement instruction #1 — payment with bank receipt
         QsReturnInfo ret1 = new QsReturnInfo();
         ret1.setQsReturnBankName("某某银行湖南分行");
-        ret1.setQsReturnCode("00");
+        ret1.setQsReturnCode("1");
         ret1.setQsReturnSerialNo("BANKSN3115-001");
         ret1.setQsReturnDate("20260424");
         ret1.setQsReturnFilename("receipt-3115-001.pdf");
@@ -121,7 +121,7 @@ class SupplyChainBody3115_3116Test {
                 .contains("<WishDate>20260425</WishDate>")
                 .contains("<qsReturnInfo>")
                 .contains("<qsReturnBankName>某某银行湖南分行</qsReturnBankName>")
-                .contains("<qsReturnCode>00</qsReturnCode>")
+                .contains("<qsReturnCode>1</qsReturnCode>")
                 .contains("<qsReturnSerialNo>BANKSN3115-001</qsReturnSerialNo>")
                 .contains("<qsReturnFilename>receipt-3115-001.pdf</qsReturnFilename>")
                 .contains("<SignElement>fkrAccName|fkrAccNo|skrAccName|skrAccNo|Amt|WishDate</SignElement>")
@@ -168,7 +168,7 @@ class SupplyChainBody3115_3116Test {
         QsReturnInfo pr1 = p1.getQsReturnInfo();
         assertThat(pr1).isNotNull();
         assertThat(pr1.getQsReturnBankName()).isEqualTo("某某银行湖南分行");
-        assertThat(pr1.getQsReturnCode()).isEqualTo("00");
+        assertThat(pr1.getQsReturnCode()).isEqualTo("1");
         assertThat(pr1.getQsReturnSerialNo()).isEqualTo("BANKSN3115-001");
         assertThat(pr1.getQsReturnDate()).isEqualTo("20260424");
         assertThat(pr1.getQsReturnFilename()).isEqualTo("receipt-3115-001.pdf");

@@ -82,7 +82,7 @@ class CommonComplexTypeTest {
     void pzrzStatusInfo_jaxbRoundtrip_shouldPreserveAllFields() throws Exception {
         PzrzStatusInfo original = new PzrzStatusInfo();
         original.setPzNo("PZ20260416000001");
-        original.setRzPhaseCode("01");
+        original.setRzPhaseCode("11");
         original.setBankNodeCode("12345678901234");
 
         String xml = JaxbRoundtripSupport.marshal(original);
@@ -90,12 +90,12 @@ class CommonComplexTypeTest {
         assertThat(xml)
                 .contains("<pzrzStatusInfo")
                 .contains("<pzNo>PZ20260416000001</pzNo>")
-                .contains("<rzPhaseCode>01</rzPhaseCode>")
+                .contains("<rzPhaseCode>11</rzPhaseCode>")
                 .contains("<BankNodeCode>12345678901234</BankNodeCode>");
 
         PzrzStatusInfo parsed = JaxbRoundtripSupport.unmarshal(xml, PzrzStatusInfo.class);
         assertThat(parsed.getPzNo()).isEqualTo("PZ20260416000001");
-        assertThat(parsed.getRzPhaseCode()).isEqualTo("01");
+        assertThat(parsed.getRzPhaseCode()).isEqualTo("11");
         assertThat(parsed.getBankNodeCode()).isEqualTo("12345678901234");
     }
 

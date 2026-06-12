@@ -67,7 +67,7 @@ class PzInfoTest {
         body.setPzrzState("01");
         PzrzStatusInfo status = new PzrzStatusInfo();
         status.setPzNo("PZ20260421000001");
-        status.setRzPhaseCode("01");
+        status.setRzPhaseCode("11");
         status.setBankNodeCode("10000000000001");
         body.setPzrzStatusInfo(status);
         body.setPzInfo(pz);

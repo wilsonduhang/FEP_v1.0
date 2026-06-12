@@ -220,7 +220,7 @@ class InboundAck9120BatchWireTest {
                     + "<DesNodeCode>12345678901234</DesNodeCode>"
                     + "<ApplyMode>1</ApplyMode>"
                     + "<PlatApplyNo>PLAT20260526001</PlatApplyNo>"
-                    + "<StdBizMode>01</StdBizMode>"
+                    + "<StdBizMode>11</StdBizMode>"
                     + "<hxqyName>核心企业测试</hxqyName>"
                     + "<hxqyCode>91110000100000000X</hxqyCode>"
                     + "<rzpzNo>PZ20260526001</rzpzNo>"
@@ -238,7 +238,7 @@ class InboundAck9120BatchWireTest {
                     + "<PlatApplyNo>PLAT20260526001</PlatApplyNo>"
                     + "<hxqyName>核心企业测试</hxqyName>"
                     + "<rzpzNo>PZ20260526001</rzpzNo>"
-                    + "<rzPhaseCode>01</rzPhaseCode>"
+                    + "<rzPhaseCode>11</rzPhaseCode>"
                     + "</rzReturnInfo3009>";
 
     /** 3103 企业建档回执 body — root {@code ArchiveReturnInfo3103} (PascalCase!); required scalars only. */
@@ -247,7 +247,7 @@ class InboundAck9120BatchWireTest {
                     + "<SerialNo>{SERIAL}</SerialNo>"
                     + "<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>"
                     + "<DesNodeCode>12345678901234</DesNodeCode>"
-                    + "<CreationRetCode>01</CreationRetCode>"
+                    + "<CreationRetCode>11</CreationRetCode>"
                     + "<hxqyName>核心企业测试</hxqyName>"
                     + "<hxqyCode>91110000100000000X</hxqyCode>"
                     + "<rzqyName>融资企业测试</rzqyName>"
@@ -265,7 +265,7 @@ class InboundAck9120BatchWireTest {
                     + "<CreditInfo>"
                     + "<hxqyName>核心企业测试</hxqyName>"
                     + "<hxqyCode>91110000100000000X</hxqyCode>"
-                    + "<RetCode>00000</RetCode>"
+                    + "<RetCode>90000</RetCode>"
                     + "</CreditInfo>"
                     + "</hxqyCreditAmt3113>";
 }

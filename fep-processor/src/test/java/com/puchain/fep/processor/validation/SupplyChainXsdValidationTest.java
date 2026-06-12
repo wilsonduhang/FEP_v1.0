@@ -155,7 +155,7 @@ class SupplyChainXsdValidationTest {
                     <pzrzState>1</pzrzState>
                     <pzrzStatusInfo>
                         <pzNo>PZ202604170001</pzNo>
-                        <rzPhaseCode>01</rzPhaseCode>
+                        <rzPhaseCode>11</rzPhaseCode>
                         <BankNodeCode>12345678901234</BankNodeCode>
                     </pzrzStatusInfo>
                     <zpzAllInfo>
@@ -207,7 +207,7 @@ class SupplyChainXsdValidationTest {
                     <pzrzState>01</pzrzState>
                     <pzrzStatusInfo>
                         <pzNo>PZ20260421000001</pzNo>
-                        <rzPhaseCode>01</rzPhaseCode>
+                        <rzPhaseCode>11</rzPhaseCode>
                         <BankNodeCode>10000000000001</BankNodeCode>
                     </pzrzStatusInfo>
                     <pzInfo>
@@ -425,7 +425,7 @@ class SupplyChainXsdValidationTest {
                     <pzrzState>1</pzrzState>
                     <pzrzStatusInfo>
                         <pzNo>PZ202604170001</pzNo>
-                        <rzPhaseCode>01</rzPhaseCode>
+                        <rzPhaseCode>11</rzPhaseCode>
                     </pzrzStatusInfo>
                 </pzInfoReturn3004>""");
 
