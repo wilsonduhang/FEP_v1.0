@@ -6,7 +6,10 @@ import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncrypti
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialCreateRequest;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialSweepResponse;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialUpdateRequest;
+import com.puchain.fep.web.callback.credential.migration.CallbackLegacyCredentialKeyIdProperties;
+import com.puchain.fep.web.callback.credential.migration.CallbackLegacyCredentialMigrator;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
@@ -18,12 +21,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,6 +51,12 @@ class CallbackCredentialAdminServiceTest {
 
     @Mock
     private CallbackOAuth2TokenCache cache;
+
+    @Mock
+    private CallbackLegacyCredentialMigrator migrator;
+
+    @Mock
+    private CallbackLegacyCredentialKeyIdProperties legacyProps;
 
     @InjectMocks
     private CallbackCredentialAdminService svc;
@@ -274,5 +286,57 @@ class CallbackCredentialAdminServiceTest {
 
         verify(repo, never()).deleteByInterfaceId(org.mockito.ArgumentMatchers.anyString());
         verify(cache, never()).invalidate(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    void migrateLegacySweepsEveryLegacyRow() {
+        when(legacyProps.getLegacyPlaintextKeyIds()).thenReturn(List.of("mock-key-v1"));
+        final CallbackCredentialEntity a = CallbackCredentialEntity.newToken(
+                "IF-COLD-1", new byte[]{1}, null, "mock-key-v1", null);
+        final CallbackCredentialEntity b = CallbackCredentialEntity.newToken(
+                "IF-COLD-2", new byte[]{2}, null, "mock-key-v1", null);
+        when(repo.findByKeyIdIn(anyCollection())).thenReturn(List.of(a, b));
+        when(repo.countByKeyIdIn(anyCollection())).thenReturn(0L);
+
+        final CallbackCredentialSweepResponse resp = svc.migrateLegacy();
+
+        verify(migrator).migrateToActiveKey("IF-COLD-1");
+        verify(migrator).migrateToActiveKey("IF-COLD-2");
+        assertThat(resp.migrated()).isEqualTo(2);
+        assertThat(resp.failed()).isZero();
+        assertThat(resp.remaining()).isZero();
+    }
+
+    @Test
+    void migrateLegacySingleRowFailureDoesNotAbortSweep() {
+        when(legacyProps.getLegacyPlaintextKeyIds()).thenReturn(List.of("mock-key-v1"));
+        final CallbackCredentialEntity bad = CallbackCredentialEntity.newToken(
+                "IF-BAD", new byte[]{1}, null, "mock-key-v1", null);
+        final CallbackCredentialEntity ok = CallbackCredentialEntity.newToken(
+                "IF-OK", new byte[]{2}, null, "mock-key-v1", null);
+        when(repo.findByKeyIdIn(anyCollection())).thenReturn(List.of(bad, ok));
+        when(repo.countByKeyIdIn(anyCollection())).thenReturn(1L);
+        doThrow(new IllegalStateException("re-encrypt produced legacy keyId"))
+                .when(migrator).migrateToActiveKey("IF-BAD");
+
+        final CallbackCredentialSweepResponse resp = svc.migrateLegacy();
+
+        verify(migrator).migrateToActiveKey("IF-OK");
+        assertThat(resp.migrated()).isEqualTo(1);
+        assertThat(resp.failed()).isEqualTo(1);
+        assertThat(resp.remaining()).isEqualTo(1L);
+    }
+
+    @Test
+    void migrateLegacyWithNoLegacyRowsIsNoOp() {
+        when(legacyProps.getLegacyPlaintextKeyIds()).thenReturn(List.of("mock-key-v1"));
+        when(repo.findByKeyIdIn(anyCollection())).thenReturn(List.of());
+        when(repo.countByKeyIdIn(anyCollection())).thenReturn(0L);
+
+        final CallbackCredentialSweepResponse resp = svc.migrateLegacy();
+
+        verify(migrator, never()).migrateToActiveKey(any());
+        assertThat(resp.migrated()).isZero();
+        assertThat(resp.failed()).isZero();
     }
 }

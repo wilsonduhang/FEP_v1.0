@@ -5,17 +5,26 @@ import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
 import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade.EncryptedCredential;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialCreateRequest;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialSweepResponse;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialUpdateRequest;
+import com.puchain.fep.web.callback.credential.migration.CallbackLegacyCredentialKeyIdProperties;
+import com.puchain.fep.web.callback.credential.migration.CallbackLegacyCredentialMigrator;
 import com.puchain.fep.web.callback.credential.oauth.CallbackOAuth2TokenCache;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 回调凭证管理服务（admin CRUD）。
@@ -33,25 +42,69 @@ import java.util.List;
 @Transactional
 public class CallbackCredentialAdminService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CallbackCredentialAdminService.class);
+
     private final CallbackCredentialRepository repo;
     private final CallbackCredentialEncryptionFacade facade;
     private final CallbackOAuth2TokenCache tokenCache;
+    private final CallbackLegacyCredentialMigrator migrator;
+    private final CallbackLegacyCredentialKeyIdProperties legacyProps;
 
     /**
      * 构造凭证管理服务。
      *
-     * @param repo       凭证仓储
-     * @param facade     SM4 加密门面
-     * @param tokenCache OAuth2 token 缓存（凭证变更后失效）
+     * @param repo        凭证仓储
+     * @param facade      SM4 加密门面
+     * @param tokenCache  OAuth2 token 缓存（凭证变更后失效）
+     * @param migrator    legacy 明文凭证迁移器（批量 sweep 逐行委托）
+     * @param legacyProps legacy keyId 配置（sweep 时惰性读取）
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
             justification = "Spring-managed singletons stored by reference per container contract")
     public CallbackCredentialAdminService(final CallbackCredentialRepository repo,
                                           final CallbackCredentialEncryptionFacade facade,
-                                          final CallbackOAuth2TokenCache tokenCache) {
+                                          final CallbackOAuth2TokenCache tokenCache,
+                                          final CallbackLegacyCredentialMigrator migrator,
+                                          final CallbackLegacyCredentialKeyIdProperties legacyProps) {
         this.repo = repo;
         this.facade = facade;
         this.tokenCache = tokenCache;
+        this.migrator = migrator;
+        this.legacyProps = legacyProps;
+    }
+
+    /**
+     * 主动批量迁移全部 legacy 明文凭证（冷接口收口，运维 DB 备份后触发）。
+     *
+     * <p>逐行委托 {@link CallbackLegacyCredentialMigrator#migrateToActiveKey}
+     * （REQUIRES_NEW 独立短事务 + 幂等 + C1 守护）；单行失败 WARN 计数后继续，
+     * 不阻断扫描。本方法以 {@link Propagation#NOT_SUPPORTED} 覆盖类级事务，
+     * 避免外层长事务包裹批量循环。legacy 集合每次调用从配置惰性读取。</p>
+     *
+     * @return 迁移/失败/剩余计数（不回显任何凭证内容）
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "interfaceId sanitized via LogSanitizer.sanitize before logging")
+    public CallbackCredentialSweepResponse migrateLegacy() {
+        final Set<String> legacyKeyIds = new HashSet<>(legacyProps.getLegacyPlaintextKeyIds());
+        final List<CallbackCredentialEntity> rows = repo.findByKeyIdIn(legacyKeyIds);
+        int migrated = 0;
+        int failed = 0;
+        for (final CallbackCredentialEntity row : rows) {
+            try {
+                migrator.migrateToActiveKey(row.getInterfaceId());
+                migrated++;
+            } catch (final RuntimeException ex) {
+                failed++;
+                LOG.warn("legacy credential sweep failed for interfaceId={}; continuing",
+                        LogSanitizer.sanitize(row.getInterfaceId()), ex);
+            }
+        }
+        final long remaining = repo.countByKeyIdIn(legacyKeyIds);
+        LOG.info("legacy credential sweep done: migrated={}, failed={}, remaining={}",
+                migrated, failed, remaining);
+        return new CallbackCredentialSweepResponse(migrated, failed, remaining);
     }
 
     /**

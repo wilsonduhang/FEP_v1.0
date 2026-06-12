@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -42,4 +43,12 @@ public interface CallbackCredentialRepository
      * @return 匹配行数
      */
     long countByKeyIdIn(Collection<String> keyIds);
+
+    /**
+     * 枚举 key_id 属于给定集合（legacy 明文标记）的全部凭证行（主动批量迁移用）。
+     *
+     * @param keyIds legacy keyId 集合
+     * @return 匹配的凭证实体列表
+     */
+    List<CallbackCredentialEntity> findByKeyIdIn(Collection<String> keyIds);
 }
