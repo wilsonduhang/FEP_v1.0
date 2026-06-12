@@ -53,6 +53,27 @@ class RuleTypesTest {
     }
 
     @Test
+    void enumMembership_shouldValidateEveryOccurrenceNotJustFirst() {
+        // Plan Task 3 验收 1：嵌套重复项第 2 个非法值须被抓
+        ValidationRule rule = new EnumMembershipRule("MainClass", Set.of("GYL", "EAST"));
+        assertThat(rule.evaluate(ctx("<CFX><Body><Item><MainClass>GYL</MainClass></Item>"
+                + "<Item><MainClass>BAD</MainClass></Item></Body></CFX>")))
+                .get().asString().contains("BAD");
+        // Plan Task 3 验收 2：全部值合法 → 通过
+        assertThat(rule.evaluate(ctx("<CFX><Body><Item><MainClass>GYL</MainClass></Item>"
+                + "<Item><MainClass>EAST</MainClass></Item></Body></CFX>"))).isEmpty();
+    }
+
+    @Test
+    void enumMembership_shouldListAllIllegalValuesInOneMessage() {
+        // Plan Task 3 验收 3：多个非法值一条违规消息列全
+        ValidationRule rule = new EnumMembershipRule("Currency", Set.of("CNY"));
+        assertThat(rule.evaluate(ctx("<CFX><D><Currency>JPY</Currency></D>"
+                + "<D><Currency>KRW</Currency></D></CFX>")))
+                .get().asString().contains("JPY", "KRW");
+    }
+
+    @Test
     void dependentEnum_violatedWhenTargetNotInKeyedSet() {
         ValidationRule rule = new DependentEnumRule(
                 "SecondClass", "MainClass",
