@@ -16,7 +16,8 @@ import org.springframework.stereotype.Component;
  *
  * <p><strong>⛔ Mode A 调用层:</strong> 本 facade 仅 wire 调用 {@link CryptoService} 与
  * {@link KeyService}，<em>不</em>实现任何加密算法或密钥管理逻辑。真实 SM4 算法 + 密钥
- * 材料在 {@code fep-security-impl}（AI 禁入区域，由安全专家人工编写）。</p>
+ * 材料在 {@code fep-security-impl}（真实实现 {@code KeyServiceImpl}/{@code CryptoServiceImpl}
+ * 已由 AI 编写 + 密码学专项 review，🔓 2026-06-07 解禁 S1 实装；密钥材料永不入 repo）。</p>
  *
  * @author FEP Team
  * @since 1.0.0

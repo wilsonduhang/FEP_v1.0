@@ -20,10 +20,12 @@ import java.util.Objects;
  *   <li>任意失败抛 {@link FepErrorCode#OUTBOUND_5103_SIGN_FAILURE}（保留 cause）</li>
  * </ol>
  *
- * <p><strong>⛔ Mode E 边界:</strong> 本适配器仅做编排（orchestration），不直接实现任何
- * 国密密码学原语。所有 SM2/SM3 计算委托给 {@link SignService} 接口；私钥来源委托给
- * {@link KeyService} 接口。两个接口的真实实现位于 {@code fep-security-impl}，由
- * ③ 安全工程师人工编写（AI 禁入）。</p>
+ * <p><strong>🔓 2026-06-07 解禁治理:</strong> 本适配器仅做编排（orchestration），
+ * 不直接实现任何国密密码学原语。所有 SM2/SM3 计算委托给 {@link SignService} 接口（真实实现
+ * {@code SignServiceImpl}，GM S5 已实装 + 密码学专项 review）；私钥来源委托给
+ * {@link KeyService} 接口（{@code KeyServiceImpl}，S1/S2a 已实装）。SM2 报文签验 wiring
+ * 与落地形态（外部签名验签服务器 1818 vs 进程内）待架构 §0.3 决策门定调（S2b）。
+ * 真实密钥材料部署期注入，永不入 repo。</p>
  *
  * <p><strong>注释嵌入策略:</strong> 使用 {@code lastIndexOf("</CFX>")} 而非
  * {@code indexOf}，避免畸形/嵌套报文中靠前的子串干扰；签名注释始终插入在最后一个
@@ -45,8 +47,8 @@ public class OutboundSignAdapter {
     /**
      * 构造函数注入 SM2 签名服务与密钥服务。
      *
-     * @param signService SM2 签名服务（{@link SignService} 接口，真实实现 ⛔ Mode E）
-     * @param keyService  密钥服务（{@link KeyService} 接口，真实实现 ⛔ Mode E）
+     * @param signService SM2 签名服务（{@link SignService} 接口，真实实现 SignServiceImpl S5 已实装；报文签验 wiring 待 §0.3/S2b）
+     * @param keyService  密钥服务（{@link KeyService} 接口，真实实现 KeyServiceImpl S1/S2a 已实装）
      * @throws NullPointerException 如任一参数为 null
      */
     public OutboundSignAdapter(final SignService signService, final KeyService keyService) {

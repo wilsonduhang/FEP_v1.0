@@ -26,7 +26,7 @@ class ProcessorArchitectureTest {
         ArchRule rule = noClasses()
                 .that().resideInAPackage("com.puchain.fep.processor..")
                 .should().dependOnClassesThat().resideInAPackage("com.puchain.fep.security.impl..")
-                .because("security.impl 必须由安全专家人工编写，业务处理层仅可依赖 security.api");
+                .because("security.impl 为密钥材料隔离域（2026-06-07 解禁后分层隔离保留），业务处理层仅可依赖 security.api");
         rule.check(processorClasses);
     }
 

@@ -36,12 +36,12 @@ import java.util.Set;
  *       未找到既有行 → {@link FepErrorCode#RECON_ORPHAN_RETURN}。</li>
  * </ol>
  *
- * <h3>Mode E 安全守护</h3>
+ * <h3>PK7 签名守护（S2b 边界）</h3>
  * <p>3115 报文头携带 {@code SignElement} / {@code qsfqSign} / {@code PlatSign} 三类
- * PK7 签名字段，需国密 SM2 签名/验签实现支撑。P2e 阶段属于 ⛔ Mode E 禁入区域，
- * 安全实现尚未到位 → {@link #initiateOutbound} 进站时若发现任一 PK7 字段非 null
+ * PK7 签名字段，需国密 SM2 签名/验签实现支撑。报文/PK7 签验 wiring 属 S2b（🔓 待 §0.3
+ * 决策门），尚未到位 → {@link #initiateOutbound} 进站时若发现任一 PK7 字段非 null
  * 立刻抛 {@link FepErrorCode#CLEAR_BUSINESS_RULE_VIOLATION}，强制调用方先剥离
- * 这三个字段，待安全专家集成后再回填。本守护仅做 null 检查，不接触签名字节。</p>
+ * 这三个字段，待 S2b 实施后再回填。本守护仅做 null 检查，不接触签名字节。</p>
  *
  * <h3>UPSERT 行为</h3>
  * <p>复合主键 ({@code platPayNo}, {@code qsSerialNo})。{@link ClearingInstructionStore#save}
@@ -89,7 +89,7 @@ public class ClearingInstructionService {
      * 处理 3115 出站清算指令发起报文，按 {@code qsInfo} 列表逐条落
      * {@link ClearingInstructionStatus#PENDING} 行。
      *
-     * <p>守护顺序：(1) 入参 + Mode E PK7 字段 → (2) MessageDirectionMap → (3) 业务规则。</p>
+     * <p>守护顺序：(1) 入参 + PK7 签名字段（S2b 守护）→ (2) MessageDirectionMap → (3) 业务规则。</p>
      *
      * @param body      已通过 XSD 校验且反序列化的 {@link PlatPay3115} body，非空
      * @param messageId 报文处理记录 ID，非空且非空白
@@ -107,7 +107,7 @@ public class ClearingInstructionService {
             throw new IllegalArgumentException("messageId");
         }
 
-        // Mode E 安全守护：PK7 字段必须为 null（国密签名实现 TBD）
+        // S2b 守护：PK7 字段必须为 null（报文签验 wiring 待 §0.3）
         if (body.getSignElement() != null
                 || body.getQsfqSign() != null
                 || body.getPlatSign() != null) {

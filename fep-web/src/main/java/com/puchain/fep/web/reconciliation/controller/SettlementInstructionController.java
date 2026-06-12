@@ -41,7 +41,7 @@ import java.util.UUID;
  *       下所有 qsSerialNo 行；未命中 → {@link FepErrorCode#CLEAR_INSTRUCTION_NOT_FOUND}</li>
  * </ul>
  *
- * <h3>PK7 字段守护（Mode E 安全集成边界）</h3>
+ * <h3>PK7 字段守护（S2b 安全集成边界，🔓 待 §0.3）</h3>
  * <p>{@link SettlementInstructionRequest} 故意不暴露 {@code SignElement} /
  * {@code qsfqSign} / {@code PlatSign} 三个 PK7 签名字段；Controller 在 build
  * {@link PlatPay3115} 时把它们留 null。{@link ClearingInstructionService#initiateOutbound}
@@ -128,8 +128,8 @@ public class SettlementInstructionController {
 
     /**
      * Builds a {@link PlatPay3115} business body from the request DTO. PK7
-     * signature fields are intentionally left {@code null}: the Mode E security
-     * integration is pending, and the service layer enforces that contract.
+     * signature fields are intentionally left {@code null}: the S2b security
+     * integration is pending (gated on §0.3), and the service layer enforces that contract.
      *
      * @param req validated request DTO
      * @return populated PlatPay3115 body
@@ -142,7 +142,7 @@ public class SettlementInstructionController {
         body.setPlatPayNo(req.getPlatPayNo());
         // P3 Task 4: PK7 fields now passthrough so service-side guard
         // (ClearingInstructionService.initiateOutbound) can reject non-null
-        // values via REST as well as TLQ. Mode E real signing pending.
+        // values via REST as well as TLQ. S2b real signing pending (gated on §0.3).
         body.setSignElement(req.getSignElement());
         body.setQsfqSign(req.getQsfqSign());
         body.setPlatSign(req.getPlatSign());

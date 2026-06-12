@@ -2,10 +2,10 @@ package com.puchain.fep.web.callback.credential.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
 import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade.EncryptedCredential;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
-import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialCreateRequest;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialSweepResponse;
@@ -187,7 +187,7 @@ public class CallbackCredentialAdminService {
 
     /**
      * 轮换凭证密钥：用密文记录的旧 keyId 解密全部密文，再以当前活跃 key 重加密落库。
-     * 适用于 ③ 安全专家轮换活跃 SM4 主密钥后，将存量凭证迁移至新密钥版本。
+     * 适用于运维轮换活跃 SM4 主密钥后，将存量凭证迁移至新密钥版本。
      * 轮换后失效 OAuth2 token 缓存。
      *
      * @param interfaceId 接口 ID

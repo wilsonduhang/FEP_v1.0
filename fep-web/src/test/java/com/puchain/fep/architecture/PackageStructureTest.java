@@ -24,7 +24,7 @@ class PackageStructureTest {
             .and().resideOutsideOfPackage("com.puchain.fep.security.impl..")
             .should().dependOnClassesThat()
             .resideInAPackage("com.puchain.fep.security.impl..")
-            .because("业务代码只能依赖 security.api 接口，不能直接依赖 security.impl 实现 (⛔ AI 禁入区域)");
+            .because("业务代码只能依赖 security.api 接口，不能直接依赖 security.impl 实现 (密钥材料隔离域——2026-06-07 解禁后分层隔离保留)");
 
     @ArchTest
     static final ArchRule all_classes_in_fep_package =

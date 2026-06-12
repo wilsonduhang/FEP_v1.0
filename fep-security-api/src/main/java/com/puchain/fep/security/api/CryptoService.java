@@ -5,7 +5,9 @@ package com.puchain.fep.security.api;
  *
  * <p>使用 SM4/ECB/PKCS7Padding 模式，密钥由密钥管理模块提供。</p>
  *
- * <p><strong>安全审核:</strong> 接口变更需安全工程师确认，实现类为 AI 禁入区域。</p>
+ * <p><strong>安全审核（🔓 2026-06-07 解禁治理）:</strong> 接口变更经密码学专项 review +
+ * muzhou 签字；真实实现 {@code CryptoServiceImpl}（fep-security-impl）已由 AI 编写 +
+ * 密码学专项 review（SM4 S1 实装）；真实密钥材料永不入 repo，部署期注入。</p>
  *
  * @author FEP Team
  * @since 1.0.0

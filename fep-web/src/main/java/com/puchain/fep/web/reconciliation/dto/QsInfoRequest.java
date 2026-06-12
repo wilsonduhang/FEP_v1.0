@@ -14,7 +14,7 @@ import java.math.BigDecimal;
  * {@link com.puchain.fep.processor.body.supplychain.QsInfo} 业务体。
  *
  * <p>有意省略 PK7 签名字段（{@code SignElement} / {@code qsfqSign} /
- * {@code PlatSign}）— Mode E 安全集成尚未到位，由
+ * {@code PlatSign}）— S2b 安全集成（🔓 待 §0.3）尚未到位，由
  * {@link com.puchain.fep.processor.reconciliation.ClearingInstructionService}
  * 在 service 层校验它们必须为 null。</p>
  *

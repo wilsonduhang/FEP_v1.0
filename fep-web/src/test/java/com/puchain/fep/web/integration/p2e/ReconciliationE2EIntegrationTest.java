@@ -93,9 +93,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * → service chain and asserts &lt; 1000 ms wall-clock. Result is logged via
  * SLF4J for grep recovery (feedback_quality_gate_gap_efficiency_blindspot).</p>
  *
- * <h3>Mode E + Flyway F + XSD validation red lines</h3>
+ * <h3>S2b PK7 guard + Flyway F + XSD validation red lines</h3>
  * <p>Test class only — adds zero main code. {@code fep-security-*} untouched,
- * V1-V18 unchanged. PK7 case 6 verifies the Mode E security guard contract
+ * V1-V18 unchanged. PK7 case 6 verifies the S2b security guard contract
  * by exercising the Controller path (closes ADR-P2e-4 Phase 1 deviation #3).</p>
  *
  * @author FEP Team
@@ -473,7 +473,7 @@ class ReconciliationE2EIntegrationTest {
 
         assertThat(clearingRepository.count()).isEqualTo(2L);
 
-        // Strip the PK7 fields from the inbound sample (Mode E security guard)
+        // Strip the PK7 fields from the inbound sample (S2b security guard)
         // so the listener can reach processInboundReturn without the outbound-
         // path PK7 rejection. Only the inbound-return code path is asserted.
         postInboundWithReplacements("3115", "00000111", "3115-valid.xml",
