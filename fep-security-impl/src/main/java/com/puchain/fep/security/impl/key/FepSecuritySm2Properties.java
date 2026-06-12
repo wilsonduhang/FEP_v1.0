@@ -64,12 +64,12 @@ public class FepSecuritySm2Properties {
     }
 
     /**
-     * 设置登录密钥多版本映射（防御拷贝）。
+     * 设置登录密钥多版本映射（防御拷贝 + null guard，与 setSm4Keys 对称——S2a Simplify R5）。
      *
      * @param loginKeys keyId → 登录密钥对
      */
     public void setLoginKeys(final Map<String, LoginKeyPair> loginKeys) {
-        this.loginKeys = new LinkedHashMap<>(loginKeys);
+        this.loginKeys = loginKeys == null ? new LinkedHashMap<>() : new LinkedHashMap<>(loginKeys);
     }
 
     /**

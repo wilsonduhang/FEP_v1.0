@@ -40,7 +40,7 @@ public class MockKeyService implements KeyService {
 
     /**
      * ⚠️ 仅 dev/CI 用，固定 32 字节 mock SM2 私钥（PKCS#8 占位，非真实国密私钥）。
-     * 真实实现由 ③ 安全工程师在 fep-security-impl 编写（⛔ Mode E）。
+     * 真实报文签名私钥属 S2b（🔓 解禁治理，待 §0.3 决策门定调后 AI 实施 + 密码学专项 review）。
      */
     private static final byte[] MOCK_SIGN_PRIVATE_KEY = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
@@ -51,9 +51,9 @@ public class MockKeyService implements KeyService {
 
     /**
      * ⚠️ 仅 dev/CI 用，固定 16 字节 mock SM4 主密钥（占位，非真实国密 SM4 密钥）。
-     * 真实实现由 ③ 安全工程师在 fep-security-impl 编写（⛔ Mode E），密钥来源 HSM /
+     * 真实实现 KeyServiceImpl（🔓 解禁治理，S1 已实装 + 密码学专项 review），密钥来源 HSM /
      * sealed key store / envelope-encrypted 配置文件。回调凭证加密用。
-     * Callback Phase 2b T1（B5 v0.3 修订：⛔ Mode E ownership，AI 起草作 reviewer aid）。
+     * Callback Phase 2b T1 起草；🔓 2026-06-07 解禁后 S1 实装真实路径。
      */
     private static final byte[] MOCK_SM4_CREDENTIAL_MASTER_KEY = {
         0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
@@ -117,7 +117,7 @@ public class MockKeyService implements KeyService {
             return MOCK_SM4_CREDENTIAL_MASTER_KEY.clone();
         }
         // ⚠️ 仅 dev/CI：按 keyId 确定性派生 16 字节占位 key（非真实国密派生）。
-        // 真实多版本密钥派生由 ③ 安全工程师在 fep-security-impl 编写（⛔ Mode E）。
+        // 真实多版本密钥路由 KeyServiceImpl（🔓 解禁治理，S1 已实装）。
         return deriveMock16(keyId);
     }
 

@@ -3,7 +3,9 @@ package com.puchain.fep.security.impl.key;
 import com.puchain.fep.security.api.KeyService;
 import org.junit.jupiter.api.Test;
 
+import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +21,7 @@ class KeyServiceImplTest {
     private static final String GBT_KEY_HEX = "0123456789abcdeffedcba9876543210";
     private static final String OLD_KEY_HEX = "fedcba98765432100123456789abcdef";
 
-    private KeyServiceImpl newService(final String activeKeyId, final Map<String, String> keys) {
+    private static KeyServiceImpl newService(final String activeKeyId, final Map<String, String> keys) {
         final FepSecurityKeyProperties props = new FepSecurityKeyProperties();
         props.setActiveKeyId(activeKeyId);
         props.setSm4Keys(keys);
@@ -49,7 +51,7 @@ class KeyServiceImplTest {
         return svc;
     }
 
-    private Map<String, String> keys(final String... kv) {
+    private static Map<String, String> keys(final String... kv) {
         final Map<String, String> m = new LinkedHashMap<>();
         for (int i = 0; i < kv.length; i += 2) {
             m.put(kv[i], kv[i + 1]);
@@ -123,7 +125,7 @@ class KeyServiceImplTest {
         final KeyService svc = newServiceWithSm2("sm2-login-v1",
                 Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
         assertThat(svc.getSm2LoginKeyId()).isEqualTo("sm2-login-v1");
-        final byte[] point = java.util.Base64.getDecoder().decode(svc.getSm2PublicKeyBase64());
+        final byte[] point = Base64.getDecoder().decode(svc.getSm2PublicKeyBase64());
         assertThat(point).hasSize(65);
         assertThat(point[0]).isEqualTo((byte) 0x04);
     }
@@ -183,8 +185,8 @@ class KeyServiceImplTest {
     void sm2LoginConfig_uppercaseHexKeyPair_passesValidation() {
         // 大写 hex 配置兼容（regex [0-9a-fA-F] + Hex.decode 双映射 + BigInteger(16) 大小写均解析）
         final KeyService svc = newServiceWithSm2("sm2-login-v1",
-                Sm2TestVectors.GBT_PRIVATE_KEY_HEX.toUpperCase(java.util.Locale.ROOT),
-                Sm2TestVectors.GBT_PUBLIC_KEY_HEX.toUpperCase(java.util.Locale.ROOT));
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX.toUpperCase(Locale.ROOT),
+                Sm2TestVectors.GBT_PUBLIC_KEY_HEX.toUpperCase(Locale.ROOT));
         assertThat(svc.getSm2LoginKeyId()).isEqualTo("sm2-login-v1");
     }
 

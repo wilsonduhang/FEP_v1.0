@@ -77,10 +77,10 @@ public interface KeyService {
      * <p>Consumed by {@code OutboundSignAdapter} (P5 T5) to compute the SM3withSM2
      * signature that is embedded as an XML comment immediately before {@code </CFX>}.</p>
      *
-     * <p><strong>⛔ Mode E:</strong> The real implementation must be written by the
-     * security specialist in {@code fep-security-impl}. AI agents must NOT generate
-     * the implementation. Key material must come from a HSM or sealed key store;
-     * never from plaintext on disk.</p>
+     * <p><strong>S2b 边界（🔓 2026-06-07 解禁治理）:</strong> 真实实现待 roadmap §0.3
+     * 决策门（外部签名验签服务器 1818 vs 进程内 BC）定调后由 AI 实施 + 密码学专项
+     * review；KeyServiceImpl 当前抛 UnsupportedOperationException。真实密钥材料
+     * 部署期注入，永不入 repo。</p>
      *
      * @return PKCS#8-encoded SM2 private key bytes (never {@code null})
      */

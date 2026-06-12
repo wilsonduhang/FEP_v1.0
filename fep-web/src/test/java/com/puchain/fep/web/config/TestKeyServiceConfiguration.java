@@ -81,14 +81,14 @@ public class TestKeyServiceConfiguration {
 
             @Override
             public byte[] getSignPrivateKey() {
-                // ⚠️ 仅 test 用 mock 私钥（非真实国密 SM2 私钥）；真实实现 ⛔ Mode E
+                // ⚠️ 仅 test 用 mock 私钥（非真实国密 SM2 私钥）；真实路径 S1/S2b（🔓 解禁治理）
                 return new byte[32];
             }
 
             @Override
             public byte[] getSm4CredentialMasterKey() {
-                // ⚠️ 仅 test 用 mock SM4 主密钥（非真实国密 SM4 密钥）；真实实现 ⛔ Mode E
-                // Callback Phase 2b T1 (B5 v0.3): ⛔ Mode E ownership; 16 bytes for SM4-CBC
+                // ⚠️ 仅 test 用 mock SM4 主密钥（非真实国密 SM4 密钥）；真实路径 S1/S2b（🔓 解禁治理）
+                // Callback Phase 2b T1 (B5 v0.3): 🔓 解禁治理; 16 bytes for SM4-ECB
                 return new byte[16];
             }
 
@@ -98,7 +98,7 @@ public class TestKeyServiceConfiguration {
                 if ("mock-key-v1".equals(keyId)) {
                     return new byte[16];
                 }
-                // 历史版本按 keyId 确定性派生 16 字节，镜像 MockKeyService；真实实现 ⛔ Mode E
+                // 历史版本按 keyId 确定性派生 16 字节，镜像 MockKeyService；真实路径 S1/S2b（🔓 解禁治理）
                 try {
                     final byte[] d = java.security.MessageDigest.getInstance("SHA-256")
                             .digest(keyId.getBytes(UTF_8));
