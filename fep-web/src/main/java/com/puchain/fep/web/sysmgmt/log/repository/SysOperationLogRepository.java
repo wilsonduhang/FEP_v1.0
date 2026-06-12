@@ -31,6 +31,7 @@ public interface SysOperationLogRepository extends JpaRepository<SysOperationLog
      * @param module      功能模块（精确匹配），可为 null
      * @param startTime   操作时间起始（含），可为 null
      * @param endTime     操作时间截止（含），可为 null
+     * @param traceId     链路追踪 ID（精确匹配，GM S5 架构 §1219），可为 null
      * @param pageable    分页参数
      * @return 分页结果
      */
@@ -39,11 +40,13 @@ public interface SysOperationLogRepository extends JpaRepository<SysOperationLog
             + "AND (:module IS NULL OR l.module = :module) "
             + "AND (:startTime IS NULL OR l.createTime >= :startTime) "
             + "AND (:endTime IS NULL OR l.createTime <= :endTime) "
+            + "AND (:traceId IS NULL OR l.traceId = :traceId) "
             + "ORDER BY l.createTime DESC")
     Page<SysOperationLog> search(@Param("userAccount") String userAccount,
                                  @Param("module") String module,
                                  @Param("startTime") LocalDateTime startTime,
                                  @Param("endTime") LocalDateTime endTime,
+                                 @Param("traceId") String traceId,
                                  Pageable pageable);
 
     /**
