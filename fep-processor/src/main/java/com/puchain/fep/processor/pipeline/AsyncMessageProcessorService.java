@@ -144,7 +144,7 @@ public class AsyncMessageProcessorService {
 
         ValidationResult vr = validator.validate(responseType, responseXml);
         if (!vr.valid()) {
-            String firstError = vr.errors().isEmpty() ? "unknown" : vr.errors().get(0);
+            String firstError = vr.firstError();
             log.warn("[ASYNC-COMPLETE] response xsd validation failed msg={} transitionNo={} "
                             + "firstError={}",
                     responseType.msgNo(),
@@ -155,7 +155,7 @@ public class AsyncMessageProcessorService {
 
         ValidationResult br = businessRuleValidator.validate(responseType, responseXml);
         if (!br.valid()) {
-            String firstError = br.errors().isEmpty() ? "unknown" : br.errors().get(0);
+            String firstError = br.firstError();
             log.warn("[ASYNC-COMPLETE] response business rule validation failed msg={} "
                             + "transitionNo={} firstError={}",
                     responseType.msgNo(),
@@ -202,7 +202,7 @@ public class AsyncMessageProcessorService {
 
         ValidationResult vr = validator.validate(type, xml);
         if (!vr.valid()) {
-            String firstError = vr.errors().isEmpty() ? "unknown" : vr.errors().get(0);
+            String firstError = vr.firstError();
             log.warn("[ASYNC-{}] xsd validation failed msg={} transitionNo={} firstError={}",
                     direction, type.msgNo(),
                     LogSanitizer.sanitize(transitionNo),
@@ -212,7 +212,7 @@ public class AsyncMessageProcessorService {
 
         ValidationResult br = businessRuleValidator.validate(type, xml);
         if (!br.valid()) {
-            String firstError = br.errors().isEmpty() ? "unknown" : br.errors().get(0);
+            String firstError = br.firstError();
             log.warn("[ASYNC-{}] business rule validation failed msg={} transitionNo={} "
                             + "firstError={}",
                     direction, type.msgNo(),

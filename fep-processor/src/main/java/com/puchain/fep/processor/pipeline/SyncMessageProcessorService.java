@@ -133,7 +133,7 @@ public class SyncMessageProcessorService {
 
         ValidationResult vr = validator.validate(type, xml);
         if (!vr.valid()) {
-            String firstError = vr.errors().isEmpty() ? "unknown" : vr.errors().get(0);
+            String firstError = vr.firstError();
             log.warn("[{}] xsd validation failed msg={} transitionNo={} firstError={}",
                     direction, type.msgNo(),
                     LogSanitizer.sanitize(transitionNo),
@@ -143,7 +143,7 @@ public class SyncMessageProcessorService {
 
         ValidationResult br = businessRuleValidator.validate(type, xml);
         if (!br.valid()) {
-            String firstError = br.errors().isEmpty() ? "unknown" : br.errors().get(0);
+            String firstError = br.firstError();
             log.warn("[{}] business rule validation failed msg={} transitionNo={} firstError={}",
                     direction, type.msgNo(),
                     LogSanitizer.sanitize(transitionNo),
