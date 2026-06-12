@@ -52,4 +52,13 @@ public record ValidationResult(boolean valid, List<String> errors) {
     public static ValidationResult failed(final List<String> errors) {
         return new ValidationResult(false, errors);
     }
+
+    /**
+     * 首条错误详情；无错误时返回 {@code "unknown"}（供流水线日志/失败原因统一取值）。
+     *
+     * @return 首条错误或 "unknown"
+     */
+    public String firstError() {
+        return errors.isEmpty() ? "unknown" : errors.get(0);
+    }
 }

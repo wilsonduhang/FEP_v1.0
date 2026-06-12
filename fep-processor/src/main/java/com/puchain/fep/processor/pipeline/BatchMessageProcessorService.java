@@ -146,7 +146,7 @@ public class BatchMessageProcessorService {
             final byte[] recordBytes = record.getBytes(StandardCharsets.UTF_8);
             final ValidationResult vr = xsdValidator.validate(type, recordBytes);
             if (!vr.valid()) {
-                errors.add(new BatchResult.BatchError(i, firstError(vr)));
+                errors.add(new BatchResult.BatchError(i, vr.firstError()));
                 continue;
             }
             // 第二关：业务规则（XSD 通过保证 well-formed，ValidationException 不可达；
@@ -155,7 +155,7 @@ public class BatchMessageProcessorService {
             if (br.valid()) {
                 success++;
             } else {
-                errors.add(new BatchResult.BatchError(i, firstError(br)));
+                errors.add(new BatchResult.BatchError(i, br.firstError()));
             }
         }
         final int failed = records.size() - success;
@@ -352,9 +352,5 @@ public class BatchMessageProcessorService {
         }
         final String msgNo = msg.getHead().getMsgNo();
         return MessageType.byMsgNo(msgNo).orElse(null);
-    }
-
-    private static String firstError(final ValidationResult vr) {
-        return vr.errors().isEmpty() ? "unknown error" : vr.errors().get(0);
     }
 }
