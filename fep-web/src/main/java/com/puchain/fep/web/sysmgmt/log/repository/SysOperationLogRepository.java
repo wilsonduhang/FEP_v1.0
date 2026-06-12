@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * 操作日志 Repository。
@@ -44,4 +45,19 @@ public interface SysOperationLogRepository extends JpaRepository<SysOperationLog
                                  @Param("startTime") LocalDateTime startTime,
                                  @Param("endTime") LocalDateTime endTime,
                                  Pageable pageable);
+
+    /**
+     * 链尾行（seq 最大且非 null；GM S5 AuditChainWriter 启动恢复用）。
+     *
+     * @return 链尾行；空链时 empty
+     */
+    Optional<SysOperationLog> findTopBySeqIsNotNullOrderBySeqDesc();
+
+    /**
+     * 链上行分页升序读取（GM S5 AuditChainVerifier 全链校验用；链外 null-seq 行天然过滤）。
+     *
+     * @param pageable 分页参数
+     * @return 链上行（seq 升序）
+     */
+    Page<SysOperationLog> findBySeqIsNotNullOrderBySeqAsc(Pageable pageable);
 }

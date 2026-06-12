@@ -15,11 +15,16 @@ import java.time.LocalDateTime;
  * <p>记录用户对系统各功能模块的增删改查操作，用于安全审计与运维追踪。</p>
  * <p>参见 PRD v1.3 §5.10.6 日志管理 / §8.3 操作审计日志全覆盖。</p>
  *
+ * <p><strong>GM S5 append-only（架构 §1219）:</strong> 类级 {@code @Immutable} + 完整性
+ * 列 {@code updatable=false}——行落库后不可改写；篡改由 hash 链 + 行签名检测
+ * （AuditChainVerifier）。V36 前存量行完整性列为 null（链外，不回填）。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
 @Entity
 @Table(name = "t_sys_operation_log")
+@org.hibernate.annotations.Immutable
 public class SysOperationLog {
 
     @Id
@@ -62,6 +67,30 @@ public class SysOperationLog {
 
     @Column(name = "create_time", nullable = false, updatable = false)
     private LocalDateTime createTime;
+
+    /** 链序号（GM S5；V36 前存量行为 null = 链外）。 */
+    @Column(name = "seq", updatable = false)
+    private Long seq;
+
+    /** 前行 SM3 hash（链首 = 64 个 '0'）。 */
+    @Column(name = "prev_hash", length = 64, updatable = false)
+    private String prevHash;
+
+    /** 本行 SM3 hash = SM3(prev_hash ∥ canonical)。 */
+    @Column(name = "hash", length = 64, updatable = false)
+    private String hash;
+
+    /** SM2 裸签 Base64（mock 域为占位串）。 */
+    @Column(name = "signature", length = 120, updatable = false)
+    private String signature;
+
+    /** 签名时审计密钥版本。 */
+    @Column(name = "sign_key_id", length = 64, updatable = false)
+    private String signKeyId;
+
+    /** 链路追踪 ID（TraceIdFilter MDC）。 */
+    @Column(name = "trace_id", length = 64, updatable = false)
+    private String traceId;
 
     /**
      * 无参构造方法（JPA 要求）。
@@ -306,5 +335,56 @@ public class SysOperationLog {
      */
     public void setCreateTime(final LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+
+    // ===== GM S5 完整性字段访问器（字段 Javadoc 表意；checkstyle
+    // allowMissingPropertyJavadoc=true 豁免 property 方法，FileLength≤400 约束下省略） =====
+
+    public Long getSeq() {
+        return seq;
+    }
+
+    public void setSeq(final Long seq) {
+        this.seq = seq;
+    }
+
+    public String getPrevHash() {
+        return prevHash;
+    }
+
+    public void setPrevHash(final String prevHash) {
+        this.prevHash = prevHash;
+    }
+
+    public String getHash() {
+        return hash;
+    }
+
+    public void setHash(final String hash) {
+        this.hash = hash;
+    }
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(final String signature) {
+        this.signature = signature;
+    }
+
+    public String getSignKeyId() {
+        return signKeyId;
+    }
+
+    public void setSignKeyId(final String signKeyId) {
+        this.signKeyId = signKeyId;
+    }
+
+    public String getTraceId() {
+        return traceId;
+    }
+
+    public void setTraceId(final String traceId) {
+        this.traceId = traceId;
     }
 }
