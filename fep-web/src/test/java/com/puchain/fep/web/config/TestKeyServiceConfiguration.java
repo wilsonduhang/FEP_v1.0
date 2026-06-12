@@ -1,21 +1,14 @@
 package com.puchain.fep.web.config;
 
 import com.puchain.fep.security.api.KeyService;
+import com.puchain.fep.security.mock.MockKeyService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Base64;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 /**
  * Test configuration providing a {@link KeyService} bean for integration tests.
- *
- * <p>The real {@code MockKeyService} from fep-security-mock is
- * {@code @Profile("dev")}, so it does not load in test context.
- * This configuration provides an equivalent bean for test use.</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -26,89 +19,18 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class TestKeyServiceConfiguration {
 
     /**
-     * Returns a KeyService that performs Base64 decode as SM2 decryption stand-in.
+     * Returns the shared dev {@link MockKeyService}（fep-security-mock，compile-scope 依赖）。
      *
-     * <p>Only registered when no other {@link KeyService} bean is present in the
-     * context. Under the default {@code dev} profile, {@code MockKeyService} from
-     * fep-security-mock is active and takes precedence; this bean then steps
-     * aside so {@code @MockBean KeyService} injection is unambiguous.</p>
+     * <p>直接 {@code new} 实例化绕过其 {@code @Profile("dev")} bean 装配门（注解对直接
+     * 实例化惰性），消除此前 ~50 行逐方法镜像匿名类（Simplify R4）。仅在 context 无其他
+     * {@link KeyService} bean 时注册；dev profile 下 fep-security-mock 的 bean 优先，
+     * 本 bean 让位使 {@code @MockBean KeyService} 注入无歧义。</p>
      *
      * @return test KeyService implementation
      */
     @Bean
     @ConditionalOnMissingBean(KeyService.class)
     public KeyService keyService() {
-        return new KeyService() {
-            @Override
-            public String getSm2PublicKeyBase64() {
-                return "MOCK_SM2_PUBLIC_KEY_BASE64_FOR_DEV_ONLY";
-            }
-
-            @Override
-            public String getKeyId() {
-                return "mock-key-v1";
-            }
-
-            @Override
-            public String getSm2LoginKeyId() {
-                // GM S2a: test mock 域 SM2 登录 keyId 与 SM4 凭证 keyId 共用
-                return "mock-key-v1";
-            }
-
-            @Override
-            public String getAuditKeyId() {
-                // GM S5: 审计 keyId 共用 test mock 常量
-                return "mock-key-v1";
-            }
-
-            @Override
-            public byte[] getAuditSignPrivateKey() {
-                // ⚠️ 仅 test 用占位（MockSignService 忽略内容）
-                return new byte[32];
-            }
-
-            @Override
-            public String getAuditVerifyPublicKeyHex(final String keyId) {
-                // 合法 130-hex（GB/T 公开标准公钥字面值，v0.3 C-NEW-1 parseHex 可解析）
-                return "0409f9df311e5421a150dd7d161e4bc5c672179fad1833fc076bb08ff356f35020"
-                        + "ccea490ce26775a52dc6ea718cc1aa600aed05fbf35e084a6632f6072da9ad13";
-            }
-
-            @Override
-            public String decryptLoginPassword(final String encryptedBase64, final String keyId) {
-                return new String(Base64.getDecoder().decode(encryptedBase64), UTF_8);
-            }
-
-            @Override
-            public byte[] getSignPrivateKey() {
-                // ⚠️ 仅 test 用 mock 私钥（非真实国密 SM2 私钥）；真实路径 S1/S2b（🔓 解禁治理）
-                return new byte[32];
-            }
-
-            @Override
-            public byte[] getSm4CredentialMasterKey() {
-                // ⚠️ 仅 test 用 mock SM4 主密钥（非真实国密 SM4 密钥）；真实路径 S1/S2b（🔓 解禁治理）
-                // Callback Phase 2b T1 (B5 v0.3): 🔓 解禁治理; 16 bytes for SM4-ECB
-                return new byte[16];
-            }
-
-            @Override
-            public byte[] getSm4CredentialMasterKey(final String keyId) {
-                // ⚠️ 仅 test：当前活跃版本须与无参版一致（与 MockKeyService MOCK_KEY_ID 分支对称）
-                if ("mock-key-v1".equals(keyId)) {
-                    return new byte[16];
-                }
-                // 历史版本按 keyId 确定性派生 16 字节，镜像 MockKeyService；真实路径 S1/S2b（🔓 解禁治理）
-                try {
-                    final byte[] d = java.security.MessageDigest.getInstance("SHA-256")
-                            .digest(keyId.getBytes(UTF_8));
-                    final byte[] k = new byte[16];
-                    System.arraycopy(d, 0, k, 0, 16);
-                    return k;
-                } catch (final java.security.NoSuchAlgorithmException e) {
-                    throw new IllegalStateException(e);
-                }
-            }
-        };
+        return new MockKeyService();
     }
 }
