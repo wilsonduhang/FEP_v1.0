@@ -409,7 +409,7 @@ fep:
         # AccReturnCode：表 5.1.7-2 对公账户状态码（p201；Plan Batch2 Task 10）
         - type: ENUM
           field: AccReturnCode
-          allowed: ["0", "1", "2", "3", "9"]
+          allowed: ["0", "1", "2", "3", "4", "9"]
       "3008":
         # Result（业务处理结果）：表 5.1.2-3 处理结果代码表全 52 码（p197-199；Plan 决策 4 统一取值域）
         - type: ENUM

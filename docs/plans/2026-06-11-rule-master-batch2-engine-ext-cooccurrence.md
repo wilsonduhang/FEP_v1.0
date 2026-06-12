@@ -855,7 +855,7 @@ class RuleMasterResultTest {
 | 3103 | CreationRetCode | 11,21,22,23,91,92,93,99 | 表 5.1.7-3 p201 开户建档段 |
 | 3001 | QueryType | 1,2 | 表 5.1.7-18 p204 |
 | 3002 | QueryType | 1,2 | 表 5.1.7-18 p204 |
-| 3006 | AccReturnCode | 0,1,2,3,9 | 表 5.1.7-2 p201 |
+| 3006 | AccReturnCode | 0,1,2,3,4,9 | 表 5.1.7-2 p201（**errata 2026-06-13**：v0.3 漏 4-冻结，T10 review MAJOR-1 揪出，muzhou 批准修订） |
 | 3105 | ApplyMode | 1,2,3 | 表 5.1.7-6 p202（脚注行 15017） |
 | 3105 | StdBizMode | 11,12,21,31 | 表 5.1.7-4 p202 |
 | 3105 | fxMode | 1,2,3 | 表 5.1.7-7 p203 |
@@ -934,6 +934,7 @@ git worktree remove /Users/muzhou/FEP_v1.0_wt-rule-batch2
 | v0.1 | 2026-06-11 | 初稿（研究实测 + 4 分组 + 72 条母本 + 引擎 5 扩展） |
 | v0.2 | 2026-06-12 | santa Round 1 REVISE 修订：BLOCKER-1 Result 统一全 52 码（Task 7 重写）；BLOCKER-2 G1 改 `scope: HEAD`（Task 1 增 headElements/hasElementInHead、Task 2 增 Scope 枚举 + RuleDef.scope、Task 6 yaml + 验收 7）；MAJOR-1 yaml 通配键 `"[*]"`（Task 5/6 + Binder 防回归测试）；MINOR-1 DependentEnumRule 行号 42-43 修正。两 BLOCKER 均经 muzhou 2026-06-12 AskUserQuestion 重拍。 |
 | v0.3 | 2026-06-12 | santa Round 2 PASS 后落 3 MINOR（评审明示不触发 Round 3）：Task 2 Files 补列 RuleDefinitionProperties/ConfiguredRuleFactory；Task 5 增"通配+具体并存聚合"用例；Task 3/4/5 补"按验收标准全写"锚点注。 |
+| v0.3-impl-2 | 2026-06-13 | **母本 errata（muzhou AskUserQuestion 批准）**：3006 AccReturnCode 值集 v0.3 起草漏「4-冻结」（表 5.1.7-2 实为 6 码 {0,1,2,3,4,9}），两轮 santa 与实施测试未抓，T8-T10 per-task review 逐字核对揪出（MAJOR-1）→ yaml 补 "4" + 测试 illegal 改 "5" + 本表勘误；同 commit 补 review MINOR-2/3（供应链缺失态 case + 9007 Status×Result 并存聚合 case）。 |
 | v0.3-impl-1 | 2026-06-12 | **实施期修订（muzhou 两轮 AskUserQuestion 拍板）**：Task 7 全模块回归揪出 `Result=00000` 系统性碰撞——① 入站测试 fixture 历史占位（规范码表无 00000，26 处规范命中全为 MsgId 补零示例）→ 41 个测试文件 Result/QueryResult/RecordResult 语境 00000→90000 合规化；② 出站生产占位符 `OutboundCfxEnvelopeBuilder.RESULT_PLACEHOLDER="00000"` 实测覆盖 **dispatcher RESPONSE 集合 15 报文**（"仅 3101"为过时 Javadoc，OutboundWireShapeDispatcher.java:105/109 实测 RealHead 7 + BatchHead 8）→ 首轮拍板"defer 3101"事实前提被推翻，二轮重拍：**占位符改 "90000"（表 5.1.2-3 业务处理成功合法码）**，生产 1 常量 + Javadoc 变更（随 Task 7 commit，补 review），Result 19 条全保，总 72 条不变；业务真值注入仍归 P5 T6（DEF-B2-1）。 |
 
 ## Deferred 清单（实施期产生）

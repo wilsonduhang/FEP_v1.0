@@ -45,7 +45,7 @@ class RuleMasterSupplyChainCodesTest {
             "3103, ArchiveReturnInfo3103, CreationRetCode, 99, 10", // 表 5.1.7-3 开户建档段（无 10）
             "3001, ProgressQuery3001, QueryType, 2, 3",        // 表 5.1.7-18 {1,2}
             "3002, ProgressQueryReturn3002, QueryType, 2, 3",
-            "3006, qyAccQueryReturn3006, AccReturnCode, 9, 4", // 表 5.1.7-2 {0,1,2,3,9}
+            "3006, qyAccQueryReturn3006, AccReturnCode, 4, 5", // 表 5.1.7-2 {0,1,2,3,4,9}（errata 2026-06-13 补 4-冻结）
             "3105, rzApplyInfo3105, ApplyMode, 3, 4",          // 表 5.1.7-6 {1,2,3}
             "3105, rzApplyInfo3105, StdBizMode, 31, 22",       // 表 5.1.7-4 {11,12,21,31}
             "3105, rzApplyInfo3105, fxMode, 3, 4",             // 表 5.1.7-7 {1,2,3}
@@ -65,6 +65,26 @@ class RuleMasterSupplyChainCodesTest {
             String msgNo, String body, String field, String legal, String illegal)
             throws IOException {
         assertRule(msgNo, body, field, legal, illegal);
+    }
+
+    @Test
+    void fieldAbsent_shouldPass() throws IOException {
+        // 验收"缺失"态：无任何枚举字段的最小 3109 报文 → 通过
+        assertThat(RuleMasterTestSupport.validate("3109",
+                "<CFX><HEAD><MsgNo>3109</MsgNo></HEAD><MSG><qyRegister3109>"
+                        + "<SerialNo>1</SerialNo></qyRegister3109></MSG></CFX>").valid()).isTrue();
+    }
+
+    @Test
+    void msg9007_statusAndResultRules_coexistAndAggregate() throws IOException {
+        // 验收"9007 Status 与 Result 规则并存聚合"：双字段同时非法 → 两条违规聚合
+        ValidationResult r = RuleMasterTestSupport.validate("9007",
+                "<CFX><HEAD><MsgNo>9007</MsgNo></HEAD><MSG><RealHead9007>"
+                        + "<Result>12345</Result></RealHead9007>"
+                        + "<LoginResponse9007><Status>4</Status></LoginResponse9007></MSG></CFX>");
+        assertThat(r.valid()).isFalse();
+        assertThat(r.errors()).hasSize(2);
+        assertThat(String.join(";", r.errors())).contains("Result").contains("Status");
     }
 
     @Test
