@@ -69,7 +69,7 @@ public class AuditChainVerifier {
         this.checkpointRepository = Objects.requireNonNull(checkpointRepository,
                 "checkpointRepository");
         Gauge.builder("fep_audit_chain_checkpoint_seq", checkpointSeqGauge, AtomicLong::get)
-                .description("audit chain checkpoint verified_until_seq (external anchor)")
+                .description("审计链 checkpoint 锚 seq（回退即联合攻击告警线索，EFF-S5-1）")
                 .register(Objects.requireNonNull(meterRegistry, "meterRegistry"));
     }
 

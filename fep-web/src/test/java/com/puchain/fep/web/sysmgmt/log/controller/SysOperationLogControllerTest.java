@@ -177,7 +177,48 @@ class SysOperationLogControllerTest {
                 .andExpect(jsonPath("$.code").value("200"))
                 .andExpect(jsonPath("$.data.intact").value(true))
                 .andExpect(jsonPath("$.data.totalChecked").value(
+                        org.hamcrest.Matchers.greaterThanOrEqualTo(3)))
+                .andExpect(jsonPath("$.data.mode").value("INCREMENTAL"));
+    }
+
+    /**
+     * EFF-S5-1 T3：{@code ?mode=full} 显式全链权威校验——mode 字段自述 FULL
+     * 且 intact（与默认 incremental 用例同一排他链段策略）。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @org.junit.jupiter.api.Test
+    void integrity_withFullMode_reportsFullVerification() throws Exception {
+        jdbcTemplate.update("DELETE FROM t_sys_operation_log WHERE seq IS NOT NULL");
+        jdbcTemplate.update("DELETE FROM audit_chain_checkpoint");
+        auditChainWriter.recoverChainTail();
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(get("/api/v1/sys/logs")
+                            .header("Authorization", "Bearer " + accessToken))
+                    .andExpect(status().isOk());
+        }
+        mockMvc.perform(get("/api/v1/sys/logs/integrity")
+                        .param("mode", "FULL")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.data.intact").value(true))
+                .andExpect(jsonPath("$.data.mode").value("FULL"))
+                .andExpect(jsonPath("$.data.checkpointSeq").value(
                         org.hamcrest.Matchers.greaterThanOrEqualTo(3)));
+    }
+
+    /**
+     * EFF-S5-1 T3：mode 取值非法 → 400（VerifyMode.valueOf IAE 经全局异常处理）。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @org.junit.jupiter.api.Test
+    void integrity_withInvalidMode_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/sys/logs/integrity")
+                        .param("mode", "bogus")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isBadRequest());
     }
 
     @AfterEach

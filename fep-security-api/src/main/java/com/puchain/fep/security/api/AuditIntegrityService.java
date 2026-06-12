@@ -27,9 +27,13 @@ public interface AuditIntegrityService {
     String computeEntryHash(String prevHashHex, byte[] canonical);
 
     /**
-     * 用活跃审计私钥签名行哈希。
+     * 用活跃审计私钥签名行哈希（或 checkpoint 域分隔锚串）。
      *
-     * @param hashHex 行 hash（64 hex），非 null
+     * <p>EFF-S5-1 入参语义放宽：除 64-hex 行 hash 外，亦接受域分隔锚串
+     * {@code audit-checkpoint:<seq>:<hash>}（两输入空间长度即不相交，
+     * 行签名与 checkpoint 签名互不可复用）。</p>
+     *
+     * @param hashHex 行 hash（64 hex）或域分隔锚串，非 null
      * @return 签名串（impl = Base64(raw r∥s 64 字节)；mock = 占位串）
      * @throws IllegalArgumentException hashHex 为 null
      * @throws IllegalStateException    审计密钥段未配置（impl provider）
@@ -47,7 +51,7 @@ public interface AuditIntegrityService {
     /**
      * 按版本验签行哈希。
      *
-     * @param hashHex   行 hash，非 null
+     * @param hashHex   行 hash 或域分隔锚串（与 {@link #signEntryHash} 一致放宽），非 null
      * @param signature 签名串，非 null
      * @param keyId     签名时密钥版本，非 null
      * @return 验签通过 true
