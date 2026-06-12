@@ -33,9 +33,9 @@ import static org.mockito.Mockito.when;
  * <p>Coverage（v1d Plan AC3 ≥ 10 cases，本类共 14 cases）：</p>
  * <ol>
  *   <li>initiateOutbound_dirMapMiss_3115_outbound_shouldThrow</li>
- *   <li>initiateOutbound_pk7SignElement_shouldThrow（Mode E 守护）</li>
- *   <li>initiateOutbound_pk7QsfqSign_shouldThrow（Mode E 守护）</li>
- *   <li>initiateOutbound_pk7PlatSign_shouldThrow（Mode E 守护）</li>
+ *   <li>initiateOutbound_pk7SignElement_shouldThrow（S2b 守护）</li>
+ *   <li>initiateOutbound_pk7QsfqSign_shouldThrow（S2b 守护）</li>
+ *   <li>initiateOutbound_pk7PlatSign_shouldThrow（S2b 守护）</li>
  *   <li>initiateOutbound_qsInfoBusinessRuleViolation_shouldThrow</li>
  *   <li>initiateOutbound_validBody_shouldSaveAllPending</li>
  *   <li>initiateOutbound_blankMessageId_shouldThrowIAE</li>
@@ -89,7 +89,7 @@ class ClearingInstructionServiceTest {
     }
 
     @Test
-    @DisplayName("initiateOutbound: SignElement non-null → CLEAR_BUSINESS_RULE_VIOLATION (Mode E)")
+    @DisplayName("initiateOutbound: SignElement non-null → CLEAR_BUSINESS_RULE_VIOLATION (S2b 守护)")
     void initiateOutbound_pk7SignElement_shouldThrow() {
         final PlatPay3115 body = sampleOutbound("PP-PK7-1", List.of(qs("QS-1", "100.00")));
         body.setSignElement("base64-bytes-placeholder");
@@ -105,7 +105,7 @@ class ClearingInstructionServiceTest {
     }
 
     @Test
-    @DisplayName("initiateOutbound: qsfqSign non-null → CLEAR_BUSINESS_RULE_VIOLATION (Mode E)")
+    @DisplayName("initiateOutbound: qsfqSign non-null → CLEAR_BUSINESS_RULE_VIOLATION (S2b 守护)")
     void initiateOutbound_pk7QsfqSign_shouldThrow() {
         final PlatPay3115 body = sampleOutbound("PP-PK7-2", List.of(qs("QS-1", "100.00")));
         body.setQsfqSign("sm2-signature-bytes");
@@ -117,7 +117,7 @@ class ClearingInstructionServiceTest {
     }
 
     @Test
-    @DisplayName("initiateOutbound: PlatSign non-null → CLEAR_BUSINESS_RULE_VIOLATION (Mode E)")
+    @DisplayName("initiateOutbound: PlatSign non-null → CLEAR_BUSINESS_RULE_VIOLATION (S2b 守护)")
     void initiateOutbound_pk7PlatSign_shouldThrow() {
         final PlatPay3115 body = sampleOutbound("PP-PK7-3", List.of(qs("QS-1", "100.00")));
         body.setPlatSign("plat-signature-bytes");

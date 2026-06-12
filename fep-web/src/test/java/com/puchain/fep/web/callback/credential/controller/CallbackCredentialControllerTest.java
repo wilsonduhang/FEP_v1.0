@@ -2,6 +2,7 @@ package com.puchain.fep.web.callback.credential.controller;
 
 import com.puchain.fep.common.exception.GlobalExceptionHandler;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialSweepResponse;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialAdminService;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,5 +94,20 @@ class CallbackCredentialControllerTest {
                 .andExpect(status().isOk());
 
         verify(service).delete(eq("IF-001"));
+    }
+
+    @Test
+    void postMigrateLegacyReturnsCountsOnly() throws Exception {
+        when(service.migrateLegacy())
+                .thenReturn(new CallbackCredentialSweepResponse(3, 1, 1L));
+
+        mvc.perform(post("/api/v1/callback/credentials/migrate-legacy"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.migrated").value(3))
+                .andExpect(jsonPath("$.data.failed").value(1))
+                .andExpect(jsonPath("$.data.remaining").value(1))
+                .andExpect(jsonPath("$.data.token").doesNotExist())
+                .andExpect(jsonPath("$.data.tokenCiphertext").doesNotExist());
+        verify(service).migrateLegacy();
     }
 }

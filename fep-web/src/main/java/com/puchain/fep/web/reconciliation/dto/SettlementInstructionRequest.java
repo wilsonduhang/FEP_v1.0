@@ -20,8 +20,8 @@ import java.util.List;
  * {@code platSign})，使 service 层守护通过 Controller REST 路径可达（关闭
  * ADR-P2e-4 Phase 1 偏离 #3）。Bean Validation 不加 {@code @AssertNull}：
  * 设计选择保留 service 层 last-line-of-defense 守护，理由是恶意/误用 PK7
- * 提交可被 service 层 audit 日志记录（DTO 校验仅返通用 400），Mode E 安全
- * 集成到位前不优化此 fast path（{@link com.puchain.fep.common.domain.FepErrorCode#CLEAR_BUSINESS_RULE_VIOLATION}）。</p>
+ * 提交可被 service 层 audit 日志记录（DTO 校验仅返通用 400），S2b 安全
+ * 集成（🔓 待 §0.3）到位前不优化此 fast path（{@link com.puchain.fep.common.domain.FepErrorCode#CLEAR_BUSINESS_RULE_VIOLATION}）。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -51,13 +51,13 @@ public class SettlementInstructionRequest {
     @Valid
     private List<QsInfoRequest> qsInfo;
 
-    @Schema(description = "PK7 签名元素（Mode E 集成前必须为 null）", nullable = true)
+    @Schema(description = "PK7 签名元素（S2b 集成前必须为 null）", nullable = true)
     private String signElement;
 
-    @Schema(description = "PK7 签发签名（Mode E 集成前必须为 null）", nullable = true)
+    @Schema(description = "PK7 签发签名（S2b 集成前必须为 null）", nullable = true)
     private String qsfqSign;
 
-    @Schema(description = "PK7 平台签名（Mode E 集成前必须为 null）", nullable = true)
+    @Schema(description = "PK7 平台签名（S2b 集成前必须为 null）", nullable = true)
     private String platSign;
 
     /**
@@ -158,7 +158,7 @@ public class SettlementInstructionRequest {
     }
 
     /**
-     * Returns the PK7 SignElement value (Mode E placeholder; service-only guard).
+     * Returns the PK7 SignElement value (S2b placeholder; service-only guard).
      *
      * @return signElement
      */
@@ -176,7 +176,7 @@ public class SettlementInstructionRequest {
     }
 
     /**
-     * Returns the PK7 issuer signature value (Mode E placeholder; service-only guard).
+     * Returns the PK7 issuer signature value (S2b placeholder; service-only guard).
      *
      * @return qsfqSign
      */
@@ -194,7 +194,7 @@ public class SettlementInstructionRequest {
     }
 
     /**
-     * Returns the PK7 platform signature value (Mode E placeholder; service-only guard).
+     * Returns the PK7 platform signature value (S2b placeholder; service-only guard).
      *
      * @return platSign
      */

@@ -93,7 +93,7 @@ class CallbackModuleArchTest {
      *
      * <p>Phase 2b 凭证子系统经 {@code CallbackCredentialEncryptionFacade} 仅调用
      * {@code security.api}（{@code CryptoService}/{@code KeyService} 接口），严守 CLAUDE.md
-     * ⛔ 安全分层隔离：{@code security.impl}（国密实现，③ 安全专家人工编写）对应用层不可见。
+     * ⛔ 安全分层隔离：{@code security.impl}（国密实现，密钥材料隔离域——2026-06-07 解禁后分层隔离保留）对应用层不可见。
      * 当前 {@code security.impl} 尚未引入，本规则为前向守护，引入时立即生效。</p>
      */
     @ArchTest

@@ -17,7 +17,7 @@ import static org.mockito.Mockito.mock;
  *
  * <p>由于 {@code MessageSigner}/{@code MessageVerifier} 依赖 {@link SignService}、
  * {@code MessageEncryptor} 依赖 {@link CryptoService}（实现类均位于
- * {@code fep-security-impl} 的 AI 禁入区域），测试通过 {@link TestSignServiceConfig}
+ * {@code fep-security-impl} 的密钥材料隔离域——2026-06-07 解禁后分层隔离保留），测试通过 {@link TestSignServiceConfig}
  * 提供 Mockito mock 避免测试期依赖真实 SM2/SM4 实现。</p>
  */
 @SpringBootTest(classes = {ConverterAutoConfiguration.class, ConverterAutoConfigurationTest.TestSignServiceConfig.class})
