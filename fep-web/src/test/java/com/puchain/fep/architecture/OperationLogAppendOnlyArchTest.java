@@ -26,7 +26,8 @@ class OperationLogAppendOnlyArchTest {
     /** 生产代码允许的 Repository 方法白名单。 */
     private static final Set<String> ALLOWED = Set.of(
             "save", "search", "findById",
-            "findTopBySeqIsNotNullOrderBySeqDesc", "findBySeqIsNotNullOrderBySeqAsc");
+            "findTopBySeqIsNotNullOrderBySeqDesc", "findBySeqIsNotNullOrderBySeqAsc",
+            "findBySeq", "findBySeqGreaterThanEqualOrderBySeqAsc");
 
     @ArchTest
     static final ArchRule operation_log_repository_is_append_only =

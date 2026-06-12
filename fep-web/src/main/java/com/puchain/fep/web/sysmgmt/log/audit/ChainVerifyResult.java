@@ -7,32 +7,43 @@ package com.puchain.fep.web.sysmgmt.log.audit;
  * @param intact        链完整
  * @param firstBreakSeq 首断点 seq（intact 时 null）
  * @param breakType     断点类型（intact 时 null）
+ * @param mode          本次校验模式（EFF-S5-1 可观测性：响应自述 full/incremental）
+ * @param checkpointSeq 本次结果对应的 checkpoint 锚 seq（intact 推进后为新锚；
+ *                      broken/未推进为校验前锚；无锚 null）
  * @author FEP Team
  * @since 1.0.0
  */
 public record ChainVerifyResult(long totalChecked, boolean intact,
-        Long firstBreakSeq, AuditChainVerifier.BreakType breakType) {
+        Long firstBreakSeq, AuditChainVerifier.BreakType breakType,
+        AuditChainVerifier.VerifyMode mode, Long checkpointSeq) {
 
     /**
      * 完整链结果。
      *
-     * @param totalChecked 已校验行数
+     * @param totalChecked  已校验行数
+     * @param mode          校验模式
+     * @param checkpointSeq 推进后锚 seq（空链/零新增未推进时为原锚值或 null）
      * @return intact 结果
      */
-    public static ChainVerifyResult intact(final long totalChecked) {
-        return new ChainVerifyResult(totalChecked, true, null, null);
+    public static ChainVerifyResult intact(final long totalChecked,
+            final AuditChainVerifier.VerifyMode mode, final Long checkpointSeq) {
+        return new ChainVerifyResult(totalChecked, true, null, null, mode, checkpointSeq);
     }
 
     /**
-     * 断链结果。
+     * 断链结果（不推进 checkpoint，锚保持校验前值）。
      *
      * @param totalChecked  断点前已校验行数
      * @param firstBreakSeq 首断点 seq
      * @param breakType     断点类型
+     * @param mode          校验模式
+     * @param checkpointSeq 校验前锚 seq（无锚 null）
      * @return broken 结果
      */
     public static ChainVerifyResult broken(final long totalChecked,
-            final long firstBreakSeq, final AuditChainVerifier.BreakType breakType) {
-        return new ChainVerifyResult(totalChecked, false, firstBreakSeq, breakType);
+            final long firstBreakSeq, final AuditChainVerifier.BreakType breakType,
+            final AuditChainVerifier.VerifyMode mode, final Long checkpointSeq) {
+        return new ChainVerifyResult(totalChecked, false, firstBreakSeq, breakType,
+                mode, checkpointSeq);
     }
 }
