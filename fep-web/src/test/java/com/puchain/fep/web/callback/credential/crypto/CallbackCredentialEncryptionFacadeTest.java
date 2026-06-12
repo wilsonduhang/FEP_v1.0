@@ -144,9 +144,8 @@ class CallbackCredentialEncryptionFacadeTest {
 
             @Override
             public String getAuditVerifyPublicKeyHex(final String keyId) {
-                // 合法 130-hex（GB/T 公开标准公钥字面值，v0.3 C-NEW-1）
-                return "0409f9df311e5421a150dd7d161e4bc5c672179fad1833fc076bb08ff356f35020"
-                        + "ccea490ce26775a52dc6ea718cc1aa600aed05fbf35e084a6632f6072da9ad13";
+                // 收编 mock 常量（池⑤：GB/T 公开标准公钥，v0.3 C-NEW-1）
+                return com.puchain.fep.security.mock.MockKeyService.MOCK_AUDIT_PUBLIC_KEY_HEX;
             }
 
             @Override

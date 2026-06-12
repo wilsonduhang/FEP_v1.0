@@ -4,25 +4,23 @@ import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
 import com.puchain.fep.web.sysmgmt.log.audit.AuditChainWriter;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import com.puchain.fep.web.sysmgmt.log.domain.SysOperationLog;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * {@link OperationLogAspect} 单元测试。
+ * {@link OperationLogAspect} 单元测试：entity/枚举基本语义 + around 落库委托行为
+ * （池③ 类头 doc-rot 刷新——原"Task 3 后补集成测试"注记已过时）。
  *
- * <p><b>注意</b>：AOP 集成测试依赖 Task 3 中带有 {@link OperationLog} 注解的 Controller 方法，
- * 因此 Spring Boot 集成场景暂不在本 Task 中验证。本文件当前仅校验核心类可正常编译，
- * Task 3 完成后补充完整的 {@code @SpringBootTest} 集成测试。</p>
- *
- * <p>编译验证覆盖：</p>
- * <ul>
- *   <li>{@link OperationLogAspect} 可被实例化（构造方法签名正确）</li>
- *   <li>{@link SysOperationLog} 字段赋值和 getter 行为正确</li>
- *   <li>{@link OperationType} 枚举常量可正常引用</li>
- * </ul>
+ * <p>AOP 集成链路（切点触发 → {@link AuditChainWriter#append} 链式落库）由
+ * {@code AuditChainWriterTest} + {@code SysOperationLogControllerTest} 的
+ * {@code /integrity} 端到端用例覆盖（GM S5 T6），本类聚焦切面自身行为。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -71,32 +69,18 @@ class OperationLogAspectTest {
     }
 
     /**
-     * 验证 {@link OperationLogAspect} 可使用 mock {@link AuditChainWriter} 构造
-     * （GM S5：落库依赖由 Repository 换为链式写入器）。
-     *
-     * <p>完整链路（切点触发 → append 链式落库）由 {@code AuditChainWriterTest} +
-     * T6 mock 全 context intact 用例覆盖。</p>
-     */
-    @Test
-    void operationLogAspect_canBeConstructed() {
-        OperationLogAspect aspect = new OperationLogAspect(Mockito.mock(AuditChainWriter.class));
-        assertNotNull(aspect);
-    }
-
-    /**
-     * 行为断言（Plan B-2）：around 经 AuditChainWriter.append 落库（非直写 Repository）。
+     * 行为断言（GM S5 B-2；池③ 折叠原 canBeConstructed 弱断言用例——构造正确性
+     * 由本用例的真实构造隐含覆盖）：around 经 AuditChainWriter.append 落库（非直写 Repository）。
      */
     @Test
     void around_delegatesPersistenceToChainWriter() throws Throwable {
         AuditChainWriter writer = Mockito.mock(AuditChainWriter.class);
         OperationLogAspect aspect = new OperationLogAspect(writer);
-        org.springframework.mock.web.MockHttpServletRequest request =
-                new org.springframework.mock.web.MockHttpServletRequest("GET", "/api/v1/sys/logs");
-        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
-                new org.springframework.web.context.request.ServletRequestAttributes(request));
+        MockHttpServletRequest request =
+                new MockHttpServletRequest("GET", "/api/v1/sys/logs");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         try {
-            org.aspectj.lang.ProceedingJoinPoint joinPoint =
-                    Mockito.mock(org.aspectj.lang.ProceedingJoinPoint.class);
+            ProceedingJoinPoint joinPoint = Mockito.mock(ProceedingJoinPoint.class);
             Mockito.when(joinPoint.proceed()).thenReturn("ok");
             OperationLog annotation = Mockito.mock(OperationLog.class);
             Mockito.when(annotation.module()).thenReturn("日志管理");
@@ -105,7 +89,7 @@ class OperationLogAspectTest {
             assertEquals("ok", aspect.around(joinPoint, annotation));
             Mockito.verify(writer).append(Mockito.any(SysOperationLog.class));
         } finally {
-            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+            RequestContextHolder.resetRequestAttributes();
         }
     }
 }

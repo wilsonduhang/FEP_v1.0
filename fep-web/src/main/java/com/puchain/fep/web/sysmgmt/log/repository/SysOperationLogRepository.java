@@ -63,4 +63,21 @@ public interface SysOperationLogRepository extends JpaRepository<SysOperationLog
      * @return 链上行（seq 升序）
      */
     Page<SysOperationLog> findBySeqIsNotNullOrderBySeqAsc(Pageable pageable);
+
+    /**
+     * 按链 seq 读单行（EFF-S5-1 checkpoint 锚行一致性校验用）。
+     *
+     * @param seq 链序号
+     * @return 该 seq 行；不存在 empty
+     */
+    Optional<SysOperationLog> findBySeq(Long seq);
+
+    /**
+     * 自 seq 起链上行分页升序读取（EFF-S5-1 incremental 锚后增量段扫描用）。
+     *
+     * @param seq      起始链序号（含）
+     * @param pageable 分页参数
+     * @return 链上行（seq 升序）
+     */
+    Page<SysOperationLog> findBySeqGreaterThanEqualOrderBySeqAsc(Long seq, Pageable pageable);
 }

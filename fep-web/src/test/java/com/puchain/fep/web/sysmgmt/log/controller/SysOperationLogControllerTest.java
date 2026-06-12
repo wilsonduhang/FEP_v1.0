@@ -160,9 +160,10 @@ class SysOperationLogControllerTest {
      */
     @org.junit.jupiter.api.Test
     void integrity_afterAspectDrivenAppends_reportsIntact() throws Exception {
-        // 排他链段：清空共享 H2 既有链行并重锚 context writer（与 AuditChainVerifierTest 同权衡）
-        jdbcTemplate.update("DELETE FROM t_sys_operation_log WHERE seq IS NOT NULL");
-        auditChainWriter.recoverChainTail();
+        // 排他链段 + checkpoint 清空 + 重锚（Plan B1；池② util 收编——别类推进的锚指向
+        // 已删链行，残留致 incremental 假断点）
+        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
+                .resetChain(jdbcTemplate, auditChainWriter);
         // 经切面真实写入 ≥3 行（search 端点带 @OperationLog）
         for (int i = 0; i < 3; i++) {
             mockMvc.perform(get("/api/v1/sys/logs")
@@ -175,7 +176,49 @@ class SysOperationLogControllerTest {
                 .andExpect(jsonPath("$.code").value("200"))
                 .andExpect(jsonPath("$.data.intact").value(true))
                 .andExpect(jsonPath("$.data.totalChecked").value(
+                        org.hamcrest.Matchers.greaterThanOrEqualTo(3)))
+                .andExpect(jsonPath("$.data.mode").value("INCREMENTAL"));
+    }
+
+    /**
+     * EFF-S5-1 T3：{@code ?mode=full} 显式全链权威校验——mode 字段自述 FULL
+     * 且 intact（与默认 incremental 用例同一排他链段策略）。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @org.junit.jupiter.api.Test
+    void integrity_withFullMode_reportsFullVerification() throws Exception {
+        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
+                .resetChain(jdbcTemplate, auditChainWriter);
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(get("/api/v1/sys/logs")
+                            .header("Authorization", "Bearer " + accessToken))
+                    .andExpect(status().isOk());
+        }
+        // 小写入参（断言 mode=FULL 同时直接覆盖大小写不敏感路径，T3 spec MINOR-1）
+        mockMvc.perform(get("/api/v1/sys/logs/integrity")
+                        .param("mode", "full")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.data.intact").value(true))
+                .andExpect(jsonPath("$.data.mode").value("FULL"))
+                .andExpect(jsonPath("$.data.checkpointSeq").value(
                         org.hamcrest.Matchers.greaterThanOrEqualTo(3)));
+    }
+
+    /**
+     * EFF-S5-1 T3：mode 取值非法 → 400（VerifyMode.valueOf IAE 经全局异常处理）。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @org.junit.jupiter.api.Test
+    void integrity_withInvalidMode_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/sys/logs/integrity")
+                        .param("mode", "bogus")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PARAM_4002"));
     }
 
     @AfterEach

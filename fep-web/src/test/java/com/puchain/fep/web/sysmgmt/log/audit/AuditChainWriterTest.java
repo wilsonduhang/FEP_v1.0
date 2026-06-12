@@ -4,11 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.puchain.fep.security.api.AuditIntegrityService;
-import com.puchain.fep.security.impl.audit.AuditIntegrityServiceImpl;
-import com.puchain.fep.security.impl.hash.HashServiceImpl;
-import com.puchain.fep.security.impl.key.FepSecurityKeyProperties;
-import com.puchain.fep.security.impl.key.FepSecuritySm2Properties;
-import com.puchain.fep.security.impl.key.KeyServiceImpl;
 import com.puchain.fep.security.mock.MockSignService;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import com.puchain.fep.web.sysmgmt.log.domain.SysOperationLog;
@@ -44,13 +39,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @ActiveProfiles("dev")
 class AuditChainWriterTest {
 
-    /** GB/T 32918.5-2017 附录 A 公开标准测试密钥对（同 Sm2TestVectors）。 */
-    private static final String PRIV =
-            "3945208f7b2144b13f36e38ac6d39f95889393692860b51a42fb81ef4df7c5b8";
-    private static final String PUB =
-            "0409f9df311e5421a150dd7d161e4bc5c672179fad1833fc076bb08ff356f35020"
-                    + "ccea490ce26775a52dc6ea718cc1aa600aed05fbf35e084a6632f6072da9ad13";
-
     @Autowired
     private SysOperationLogRepository repository;
 
@@ -66,19 +54,8 @@ class AuditChainWriterTest {
 
     @BeforeEach
     void setUp() {
-        final FepSecuritySm2Properties sm2 = new FepSecuritySm2Properties();
-        sm2.setAuditActiveKeyId("sm2-audit-v1");
-        final FepSecuritySm2Properties.LoginKeyPair pair = new FepSecuritySm2Properties.LoginKeyPair();
-        pair.setPrivateKeyHex(PRIV);
-        pair.setPublicKeyHex(PUB);
-        sm2.getAuditKeys().put("sm2-audit-v1", pair);
-        final FepSecurityKeyProperties sm4 = new FepSecurityKeyProperties();
-        sm4.setActiveKeyId("sm4-cred-v1");
-        sm4.getSm4Keys().put("sm4-cred-v1", "0123456789abcdeffedcba9876543210");
-        final KeyServiceImpl keyService = new KeyServiceImpl(sm4, sm2);
-        keyService.validateOnStartup();
-        this.integrity = new AuditIntegrityServiceImpl(
-                new HashServiceImpl(), new MockSignService(), keyService);
+        // 装配块收编 AuditIntegrityTestSupport（池⑥：fixture 同步义务 2→1 处）
+        this.integrity = AuditIntegrityTestSupport.newIntegrityService(new MockSignService());
         this.writer = new AuditChainWriter(repository, integrity,
                 transactionManager, new SimpleMeterRegistry());
         writer.recoverChainTail();

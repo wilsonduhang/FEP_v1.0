@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 /**
  * 操作日志查询 REST API。
@@ -90,20 +91,32 @@ public class SysOperationLogController {
     }
 
     /**
-     * 审计链完整性校验（GM S5，架构 §1219 篡改可检）。
+     * 审计链完整性校验（GM S5，架构 §1219 篡改可检；EFF-S5-1 增量化）。
      *
-     * <p>分页重算 SM3 hash 链 + 逐行 SM2 验签，返回首断点；本端点自身经
+     * <p>incremental（默认）= checkpoint 锚后增量段（O(Δ)，跳过已验段且不检测
+     * 已验段内事后篡改；缺锚退化全链）；full = GENESIS 起全链权威校验
+     * （O(n)×约1-3ms/行，SM2 验签主导——链长 ≤1 万行可同步调用，超出建议
+     * 低频运维窗口执行并周期性以 full 复核）。本端点自身经
      * {@code @OperationLog} 入链。</p>
      *
-     * @return 校验结果（intact / firstBreakSeq / breakType）
+     * @param mode 校验模式 full / incremental（大小写不敏感，默认 incremental）
+     * @return 校验结果（intact / firstBreakSeq / breakType / mode / checkpointSeq）
      */
     @GetMapping("/integrity")
     @Operation(summary = "审计链完整性校验",
-            description = "重算 SM3 hash 链 + 逐行 SM2 验签，返回链完整性与首断点（架构 §1219）")
+            description = "重算 SM3 hash 链 + 逐行 SM2 验签，返回链完整性与首断点（架构 §1219）。"
+                    + "mode=incremental（默认）自 checkpoint 锚增量校验 O(Δ)，跳过已验段、"
+                    + "不检测已验段内事后篡改，缺锚自动退化全链；mode=full 全链权威校验"
+                    + " O(n)×约1-3ms/行（SM2 验签主导）——链长超 1 万行建议低频运维窗口调用，"
+                    + "并周期性以 full 复核增量结果")
     @ApiResponse(responseCode = "200", description = "校验完成（intact 字段标识链是否完整）")
+    @ApiResponse(responseCode = "400", description = "mode 取值非法（仅 full / incremental）")
     @OperationLog(module = "日志管理", type = OperationType.QUERY, description = "审计链完整性校验")
-    public ApiResult<ChainVerifyResult> integrity() {
-        return ApiResult.success(auditChainVerifier.verifyChain());
+    public ApiResult<ChainVerifyResult> integrity(
+            @Parameter(description = "校验模式：incremental（默认）/ full")
+            @RequestParam(defaultValue = "incremental") final String mode) {
+        return ApiResult.success(auditChainVerifier.verifyChain(
+                AuditChainVerifier.VerifyMode.valueOf(mode.toUpperCase(Locale.ROOT))));
     }
 
     /**
