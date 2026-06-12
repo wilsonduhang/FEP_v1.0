@@ -1,6 +1,10 @@
 package com.puchain.fep.processor.validation.rule;
 
+import com.puchain.fep.converter.type.MessageType;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.core.env.MapPropertySource;
+import org.springframework.core.env.StandardEnvironment;
 
 import java.util.List;
 import java.util.Map;
@@ -84,5 +88,62 @@ class ConfiguredRuleFactoryTest {
         assertThatThrownBy(factory::registerConfiguredRules)
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("未知报文号");
+    }
+
+    private static RuleDefinitionProperties.RuleDef headGroupDef() {
+        RuleDefinitionProperties.RuleDef def = new RuleDefinitionProperties.RuleDef();
+        def.setType("GROUP_COOCCURRENCE");
+        def.setGroupFields(List.of("FileName", "FileContentHash", "FileSize"));
+        def.setScope("HEAD");
+        return def;
+    }
+
+    @Test
+    void wildcardMsgNo_shouldRegisterRuleForAllMessageTypes() {
+        // Plan Task 5 验收 1：通配键 → 全部 MessageType 各注册 1 条
+        RuleDefinitionProperties props = new RuleDefinitionProperties();
+        props.setRules(Map.of("*", List.of(headGroupDef())));
+        MessageRuleRegistry registry = new MessageRuleRegistry();
+        new ConfiguredRuleFactory(props, registry).registerConfiguredRules();
+        for (MessageType type : MessageType.values()) {
+            assertThat(registry.rulesFor(type)).as("type %s", type).hasSize(1);
+        }
+    }
+
+    @Test
+    void wildcardAndSpecificMsgNo_shouldAggregate() {
+        // Plan Task 5 验收 2：通配与具体 msgNo 并存 → 具体报文聚合两者
+        RuleDefinitionProperties props = new RuleDefinitionProperties();
+        props.setRules(Map.of("*", List.of(headGroupDef()), "3116", List.of(enumDef())));
+        MessageRuleRegistry registry = new MessageRuleRegistry();
+        new ConfiguredRuleFactory(props, registry).registerConfiguredRules();
+        assertThat(registry.rulesFor(MessageType.MSG_3116)).hasSize(2);
+    }
+
+    @Test
+    void wildcardYamlBracketKey_shouldBindLiteralStarThroughRelaxedBinding() {
+        // Plan 决策 6 防回归：经真实 Binder 验证 "[*]" 绑定为字面 "*" key（裸 * 会被 relaxed binding 剥除）
+        StandardEnvironment env = new StandardEnvironment();
+        env.getPropertySources().addFirst(new MapPropertySource("t", Map.of(
+                "fep.validation.rules.[*][0].type", "GROUP_COOCCURRENCE",
+                "fep.validation.rules.[*][0].scope", "HEAD",
+                "fep.validation.rules.[*][0].group-fields[0]", "FileName",
+                "fep.validation.rules.[*][0].group-fields[1]", "FileContentHash",
+                "fep.validation.rules.[*][0].group-fields[2]", "FileSize")));
+        RuleDefinitionProperties bound = Binder.get(env)
+                .bind("fep.validation", RuleDefinitionProperties.class).get();
+        assertThat(bound.getRules()).containsKey("*");
+        assertThat(bound.getRules().get("*").get(0).getScope()).isEqualTo("HEAD");
+    }
+
+    @Test
+    void build_groupCooccurrence_shouldPassScopeThrough() {
+        // Task 2 review minor 3：scope="HEAD" 透传 + 非法 scope fail-fast
+        assertThat(ConfiguredRuleFactory.build(headGroupDef()))
+                .isInstanceOf(GroupCooccurrenceRule.class);
+        RuleDefinitionProperties.RuleDef bad = headGroupDef();
+        bad.setScope("head");
+        assertThatThrownBy(() -> ConfiguredRuleFactory.build(bad))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

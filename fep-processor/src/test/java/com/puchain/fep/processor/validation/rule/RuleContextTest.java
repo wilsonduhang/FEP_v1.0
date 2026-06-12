@@ -84,6 +84,13 @@ class RuleContextTest {
     }
 
     @Test
+    void hasElement_nullLocalName_shouldReturnFalseLikeHas() {
+        RuleContext ctx = of("<CFX><a>1</a></CFX>");
+        assertThat(ctx.hasElement(null)).isFalse();
+        assertThat(ctx.hasElementInHead(null)).isFalse();
+    }
+
+    @Test
     void hasElementInHead_shouldScopeToHeadSubtreeOnly() {
         RuleContext ctx = of("<CFX><HEAD><FileName>a.zip</FileName></HEAD>"
                 + "<MSG><Item><FileName>b.csv</FileName><FileSize>9</FileSize></Item></MSG></CFX>");

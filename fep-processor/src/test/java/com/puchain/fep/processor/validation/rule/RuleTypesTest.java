@@ -178,6 +178,13 @@ class RuleTypesTest {
     }
 
     @Test
+    void groupCooccurrence_rejectsNullScope() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> new GroupCooccurrenceRule(List.of("A", "B"), null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void groupCooccurrence_defensivelyCopiesConstructorList() {
         java.util.List<String> fields = new java.util.ArrayList<>();
         fields.add("AcctNo");
