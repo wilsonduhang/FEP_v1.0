@@ -152,6 +152,14 @@ fep:
             YWTB: [ZHYW]
             ZFJS: [FZBMD]
             SYSTEM: [I0001]
+        # Period：表 5.1.4-1 数据传输周期代码（p200；Plan Batch2 Task 9）
+        - type: ENUM
+          field: Period
+          allowed: ["1", "2", "3", "4", "5", "6", "7", "99"]
+        # Type：表 5.1.4-2 数据传输类型代码（p200）
+        - type: ENUM
+          field: Type
+          allowed: ["1", "2", "3"]
       "2101":
         # MainClass/SecondClass：表 5.1.3-1 业务类别代码规范（p199，与 1001 R1/R2 同源；Plan Batch2 Task 8）
         - type: ENUM
@@ -170,6 +178,14 @@ fep:
             YWTB: [ZHYW]
             ZFJS: [FZBMD]
             SYSTEM: [I0001]
+        # Period：表 5.1.4-1 数据传输周期代码（p200；Plan Batch2 Task 9）
+        - type: ENUM
+          field: Period
+          allowed: ["1", "2", "3", "4", "5", "6", "7", "99"]
+        # Type：表 5.1.4-2 数据传输类型代码（p200）
+        - type: ENUM
+          field: Type
+          allowed: ["1", "2", "3"]
       "1102":
         # MainClass/SecondClass：表 5.1.3-1 业务类别代码规范（p199，与 1001 R1/R2 同源；Plan Batch2 Task 8）
         - type: ENUM
@@ -188,6 +204,14 @@ fep:
             YWTB: [ZHYW]
             ZFJS: [FZBMD]
             SYSTEM: [I0001]
+        # Period：表 5.1.4-1 数据传输周期代码（p200；Plan Batch2 Task 9）
+        - type: ENUM
+          field: Period
+          allowed: ["1", "2", "3", "4", "5", "6", "7", "99"]
+        # Status：表 5.1.4-3 数据文件报送状态代码（p200）
+        - type: ENUM
+          field: Status
+          allowed: ["1", "2", "3", "4", "5", "6"]
       "1103":
         # MainClass/SecondClass：表 5.1.3-1 业务类别代码规范（p199，与 1001 R1/R2 同源；Plan Batch2 Task 8）
         - type: ENUM
@@ -257,6 +281,10 @@ fep:
                     "95006", "95007", "95008", "95009", "95010", "95011", "95012", "95013",
                     "95014", "95015", "95016", "95099", "28001", "28002", "28003", "28004",
                     "98001", "19001", "29002", "29999"]
+        # RecordResult：表 5.1.6-2 授权书备案结果代码（p201）
+        - type: ENUM
+          field: RecordResult
+          allowed: ["90000", "91000", "10001", "10002", "10003", "10004", "11001", "11002", "11003", "11004", "11005", "19999"]
       "2102":
         # Result（业务处理结果）：表 5.1.2-3 处理结果代码表全 52 码（p197-199；Plan 决策 4 统一取值域）
         - type: ENUM
@@ -285,6 +313,14 @@ fep:
             YWTB: [ZHYW]
             ZFJS: [FZBMD]
             SYSTEM: [I0001]
+        # Period：表 5.1.4-1 数据传输周期代码（p200；Plan Batch2 Task 9）
+        - type: ENUM
+          field: Period
+          allowed: ["1", "2", "3", "4", "5", "6", "7", "99"]
+        # Status：表 5.1.4-3 数据文件报送状态代码（p200）
+        - type: ENUM
+          field: Status
+          allowed: ["1", "2", "3", "4", "5", "6"]
       "2103":
         # Result（业务处理结果）：表 5.1.2-3 处理结果代码表全 52 码（p197-199；Plan 决策 4 统一取值域）
         - type: ENUM
@@ -313,6 +349,10 @@ fep:
             YWTB: [ZHYW]
             ZFJS: [FZBMD]
             SYSTEM: [I0001]
+        # QueryResult：表 5.1.6-1 企业信息查询结果代码（p201；规范 10002 重复笔误已去重）
+        - type: ENUM
+          field: QueryResult
+          allowed: ["90000", "10001", "10002", "10003", "10004", "10005", "10006", "10007", "10008", "19999"]
       "2104":
         # Result（业务处理结果）：表 5.1.2-3 处理结果代码表全 52 码（p197-199；Plan 决策 4 统一取值域）
         - type: ENUM
@@ -324,6 +364,10 @@ fep:
                     "95006", "95007", "95008", "95009", "95010", "95011", "95012", "95013",
                     "95014", "95015", "95016", "95099", "28001", "28002", "28003", "28004",
                     "98001", "19001", "29002", "29999"]
+        # RecordResult：表 5.1.6-2 授权书备案结果代码（p201）
+        - type: ENUM
+          field: RecordResult
+          allowed: ["90000", "91000", "10001", "10002", "10003", "10004", "11001", "11002", "11003", "11004", "11005", "19999"]
       "3002":
         # Result（业务处理结果）：表 5.1.2-3 处理结果代码表全 52 码（p197-199；Plan 决策 4 统一取值域）
         - type: ENUM
