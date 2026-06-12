@@ -31,6 +31,20 @@ class MockKeyServiceTest {
     }
 
     @Test
+    void getAuditKeyId_returnsMockKeyId() {
+        // GM S5: 审计 keyId 在 mock 域共用同一常量
+        assertThat(keyService.getAuditKeyId()).isEqualTo("mock-key-v1");
+    }
+
+    @Test
+    void getAuditVerifyPublicKeyHex_isParseableUncompressedPointHex() {
+        // GM S5 v0.3 C-NEW-1：AuditIntegrityServiceImpl.verifyEntry 的 parseHex 先于
+        // MockSignService 执行——mock 公钥必须为合法 130-hex，否则 dev /integrity 恒报假断点
+        assertThat(keyService.getAuditVerifyPublicKeyHex("any"))
+                .matches("04[0-9a-fA-F]{128}");
+    }
+
+    @Test
     void decryptLoginPassword_shouldBase64Decode() {
         String clearPassword = "Abc12345";
         String encrypted = Base64.getEncoder().encodeToString(clearPassword.getBytes(UTF_8));

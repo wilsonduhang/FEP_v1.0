@@ -50,6 +50,7 @@ public class SysOperationLogService {
      * @param module      功能模块（精确匹配），空白则不过滤
      * @param startTime   操作时间起始（含），可为 null
      * @param endTime     操作时间截止（含），可为 null
+     * @param traceId     链路追踪 ID（精确匹配，GM S5），空白则不过滤
      * @param pageNum     页码（1-based）
      * @param pageSize    每页大小
      * @return 分页日志响应列表
@@ -58,13 +59,15 @@ public class SysOperationLogService {
                                                    final String module,
                                                    final LocalDateTime startTime,
                                                    final LocalDateTime endTime,
+                                                   final String traceId,
                                                    final int pageNum,
                                                    final int pageSize) {
         String accountParam = (userAccount == null || userAccount.isBlank()) ? null : userAccount;
         String moduleParam = (module == null || module.isBlank()) ? null : module;
+        String traceParam = (traceId == null || traceId.isBlank()) ? null : traceId;
 
         Page<SysOperationLog> page = logRepository.search(
-                accountParam, moduleParam, startTime, endTime,
+                accountParam, moduleParam, startTime, endTime, traceParam,
                 PageRequest.of(pageNum - 1, pageSize));
 
         List<OperationLogResponse> records = page.getContent().stream()

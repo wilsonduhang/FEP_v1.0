@@ -3,7 +3,9 @@ package com.puchain.fep.security.impl.key;
 import com.puchain.fep.security.api.KeyService;
 import org.junit.jupiter.api.Test;
 
+import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,7 +21,7 @@ class KeyServiceImplTest {
     private static final String GBT_KEY_HEX = "0123456789abcdeffedcba9876543210";
     private static final String OLD_KEY_HEX = "fedcba98765432100123456789abcdef";
 
-    private KeyServiceImpl newService(final String activeKeyId, final Map<String, String> keys) {
+    private static KeyServiceImpl newService(final String activeKeyId, final Map<String, String> keys) {
         final FepSecurityKeyProperties props = new FepSecurityKeyProperties();
         props.setActiveKeyId(activeKeyId);
         props.setSm4Keys(keys);
@@ -49,7 +51,7 @@ class KeyServiceImplTest {
         return svc;
     }
 
-    private Map<String, String> keys(final String... kv) {
+    private static Map<String, String> keys(final String... kv) {
         final Map<String, String> m = new LinkedHashMap<>();
         for (int i = 0; i < kv.length; i += 2) {
             m.put(kv[i], kv[i + 1]);
@@ -123,7 +125,7 @@ class KeyServiceImplTest {
         final KeyService svc = newServiceWithSm2("sm2-login-v1",
                 Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
         assertThat(svc.getSm2LoginKeyId()).isEqualTo("sm2-login-v1");
-        final byte[] point = java.util.Base64.getDecoder().decode(svc.getSm2PublicKeyBase64());
+        final byte[] point = Base64.getDecoder().decode(svc.getSm2PublicKeyBase64());
         assertThat(point).hasSize(65);
         assertThat(point[0]).isEqualTo((byte) 0x04);
     }
@@ -183,8 +185,8 @@ class KeyServiceImplTest {
     void sm2LoginConfig_uppercaseHexKeyPair_passesValidation() {
         // 大写 hex 配置兼容（regex [0-9a-fA-F] + Hex.decode 双映射 + BigInteger(16) 大小写均解析）
         final KeyService svc = newServiceWithSm2("sm2-login-v1",
-                Sm2TestVectors.GBT_PRIVATE_KEY_HEX.toUpperCase(java.util.Locale.ROOT),
-                Sm2TestVectors.GBT_PUBLIC_KEY_HEX.toUpperCase(java.util.Locale.ROOT));
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX.toUpperCase(Locale.ROOT),
+                Sm2TestVectors.GBT_PUBLIC_KEY_HEX.toUpperCase(Locale.ROOT));
         assertThat(svc.getSm2LoginKeyId()).isEqualTo("sm2-login-v1");
     }
 
@@ -195,5 +197,67 @@ class KeyServiceImplTest {
         assertThatThrownBy(() -> newServiceWithSm2("sm2-login-v1",
                 Sm2TestVectors.GBT_PRIVATE_KEY_HEX, compressedPrefix))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("uncompressed");
+    }
+
+    private static KeyService newServiceWithAudit(final String keyId,
+            final String privHex, final String pubHex) {
+        final FepSecuritySm2Properties sm2 = new FepSecuritySm2Properties();
+        sm2.setAuditActiveKeyId(keyId);
+        final FepSecuritySm2Properties.LoginKeyPair pair = new FepSecuritySm2Properties.LoginKeyPair();
+        pair.setPrivateKeyHex(privHex);
+        pair.setPublicKeyHex(pubHex);
+        sm2.getAuditKeys().put(keyId, pair);
+        final FepSecurityKeyProperties sm4 = new FepSecurityKeyProperties();
+        sm4.setActiveKeyId("sm4-cred-v2");
+        sm4.getSm4Keys().put("sm4-cred-v2", GBT_KEY_HEX);
+        final KeyServiceImpl svc = new KeyServiceImpl(sm4, sm2);
+        svc.validateOnStartup();
+        return svc;
+    }
+
+    @Test
+    void auditKeys_valid_exposeKeyIdPrivateBytesAndPublicHex() {
+        final KeyService svc = newServiceWithAudit("sm2-audit-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThat(svc.getAuditKeyId()).isEqualTo("sm2-audit-v1");
+        assertThat(svc.getAuditSignPrivateKey()).hasSize(32);
+        assertThat(svc.getAuditVerifyPublicKeyHex("sm2-audit-v1"))
+                .isEqualTo(Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+    }
+
+    @Test
+    void auditSignPrivateKey_returnsDefensiveCopy() {
+        final KeyService svc = newServiceWithAudit("sm2-audit-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        final byte[] first = svc.getAuditSignPrivateKey();
+        first[0] = (byte) 0xFF;
+        assertThat(svc.getAuditSignPrivateKey()[0]).isNotEqualTo((byte) 0xFF);
+    }
+
+    @Test
+    void auditKeys_withoutConfig_throwIllegalState_loginUnaffected() {
+        final KeyService svc = newServiceWithSm2("sm2-login-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThatThrownBy(svc::getAuditSignPrivateKey)
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("not configured");
+        assertThatThrownBy(svc::getAuditKeyId).isInstanceOf(IllegalStateException.class);
+        assertThat(svc.getSm2LoginKeyId()).isEqualTo("sm2-login-v1");
+    }
+
+    @Test
+    void auditKeys_mismatchedPair_failsStartup() {
+        final String tampered = Sm2TestVectors.GBT_PUBLIC_KEY_HEX
+                .substring(0, Sm2TestVectors.GBT_PUBLIC_KEY_HEX.length() - 2) + "14";
+        assertThatThrownBy(() -> newServiceWithAudit("sm2-audit-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, tampered))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("key pair");
+    }
+
+    @Test
+    void auditVerifyPublicKeyHex_unknownKeyId_throwsIllegalArgument() {
+        final KeyService svc = newServiceWithAudit("sm2-audit-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThatThrownBy(() -> svc.getAuditVerifyPublicKeyHex("ghost"))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

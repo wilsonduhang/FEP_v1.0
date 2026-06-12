@@ -3,8 +3,8 @@ package com.puchain.fep.web.sysmgmt.log.aspect;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.TextUtil;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
+import com.puchain.fep.web.sysmgmt.log.audit.AuditChainWriter;
 import com.puchain.fep.web.sysmgmt.log.domain.SysOperationLog;
-import com.puchain.fep.web.sysmgmt.log.repository.SysOperationLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -18,6 +18,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 /**
  * 操作日志 AOP 切面，拦截标注了 {@link OperationLog} 注解的方法，自动记录审计日志。
@@ -45,15 +46,18 @@ public class OperationLogAspect {
     /** 服务器内部错误状态码。 */
     private static final int HTTP_INTERNAL_ERROR = 500;
 
-    private final SysOperationLogRepository operationLogRepository;
+    private final AuditChainWriter auditChainWriter;
 
     /**
-     * 构造 OperationLogAspect。
+     * 构造 OperationLogAspect（GM S5：落库经 AuditChainWriter 链式写入，架构 §1219）。
      *
-     * @param operationLogRepository 操作日志 Repository
+     * @param auditChainWriter 审计链式写入器
      */
-    public OperationLogAspect(final SysOperationLogRepository operationLogRepository) {
-        this.operationLogRepository = operationLogRepository;
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+            justification = "AuditChainWriter is a Spring-managed singleton collaborator "
+                    + "injected by DI, not internal mutable state exposed to callers")
+    public OperationLogAspect(final AuditChainWriter auditChainWriter) {
+        this.auditChainWriter = auditChainWriter;
     }
 
     /**
@@ -109,11 +113,12 @@ public class OperationLogAspect {
             entity.setResponseStatus(responseStatus);
             entity.setIpAddress(resolveClientIp(request));
             entity.setDurationMs(durationMs);
-            entity.setCreateTime(LocalDateTime.now());
+            // 截断到秒：canonical 与 DB TIMESTAMP（无小数位）往返一致（GM S5 抉择④）
+            entity.setCreateTime(LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS));
 
             fillCurrentUser(entity);
 
-            operationLogRepository.save(entity);
+            auditChainWriter.append(entity);
         } catch (Exception ex) {
             log.warn("OperationLogAspect: failed to save operation log, cause: {}", ex.getMessage());
         }

@@ -3,6 +3,8 @@ package com.puchain.fep.web.sysmgmt.log.controller;
 import com.puchain.fep.common.domain.ApiResult;
 import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
+import com.puchain.fep.web.sysmgmt.log.audit.AuditChainVerifier;
+import com.puchain.fep.web.sysmgmt.log.audit.ChainVerifyResult;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import com.puchain.fep.web.sysmgmt.log.dto.OperationLogResponse;
 import com.puchain.fep.web.sysmgmt.log.service.SysOperationLogService;
@@ -34,14 +36,18 @@ import java.time.LocalDateTime;
 public class SysOperationLogController {
 
     private final SysOperationLogService logService;
+    private final AuditChainVerifier auditChainVerifier;
 
     /**
      * 构造 SysOperationLogController。
      *
-     * @param logService 操作日志服务
+     * @param logService         操作日志服务
+     * @param auditChainVerifier 审计链篡改检测（GM S5）
      */
-    public SysOperationLogController(final SysOperationLogService logService) {
+    public SysOperationLogController(final SysOperationLogService logService,
+            final AuditChainVerifier auditChainVerifier) {
         this.logService = logService;
+        this.auditChainVerifier = auditChainVerifier;
     }
 
     /**
@@ -53,6 +59,7 @@ public class SysOperationLogController {
      * @param module      功能模块（可选，精确匹配）
      * @param startTime   操作时间起始（可选，ISO 日期时间格式）
      * @param endTime     操作时间截止（可选，ISO 日期时间格式）
+     * @param traceId     链路追踪 ID（可选，精确匹配，GM S5 架构 §1219）
      * @param pageNum     页码（1-based，默认 1）
      * @param pageSize    每页大小（默认 20）
      * @return 分页操作日志列表
@@ -72,11 +79,31 @@ public class SysOperationLogController {
             @Parameter(description = "操作时间截止（ISO 格式，如 2026-12-31T23:59:59）")
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) final LocalDateTime endTime,
+            @Parameter(description = "链路追踪 ID（精确匹配，GM S5）")
+            @RequestParam(required = false) final String traceId,
             @Parameter(description = "页码（1-based）")
             @RequestParam(defaultValue = "1") final int pageNum,
             @Parameter(description = "每页大小")
             @RequestParam(defaultValue = "20") final int pageSize) {
-        return ApiResult.success(logService.search(userAccount, module, startTime, endTime, pageNum, pageSize));
+        return ApiResult.success(logService.search(
+                userAccount, module, startTime, endTime, traceId, pageNum, pageSize));
+    }
+
+    /**
+     * 审计链完整性校验（GM S5，架构 §1219 篡改可检）。
+     *
+     * <p>分页重算 SM3 hash 链 + 逐行 SM2 验签，返回首断点；本端点自身经
+     * {@code @OperationLog} 入链。</p>
+     *
+     * @return 校验结果（intact / firstBreakSeq / breakType）
+     */
+    @GetMapping("/integrity")
+    @Operation(summary = "审计链完整性校验",
+            description = "重算 SM3 hash 链 + 逐行 SM2 验签，返回链完整性与首断点（架构 §1219）")
+    @ApiResponse(responseCode = "200", description = "校验完成（intact 字段标识链是否完整）")
+    @OperationLog(module = "日志管理", type = OperationType.QUERY, description = "审计链完整性校验")
+    public ApiResult<ChainVerifyResult> integrity() {
+        return ApiResult.success(auditChainVerifier.verifyChain());
     }
 
     /**

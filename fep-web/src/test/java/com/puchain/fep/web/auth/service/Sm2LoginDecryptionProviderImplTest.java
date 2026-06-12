@@ -6,6 +6,7 @@ import com.puchain.fep.security.api.HashService;
 import com.puchain.fep.security.api.KeyService;
 import com.puchain.fep.security.api.SignService;
 import com.puchain.fep.web.auth.domain.LoginRequest;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +88,7 @@ class Sm2LoginDecryptionProviderImplTest {
 
     @Test
     void hashService_alwaysOn_availableUnderImplProvider() {
-        assertThat(hashService.sm3Hex("abc".getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+        assertThat(hashService.sm3Hex("abc".getBytes(StandardCharsets.UTF_8)))
                 .isEqualTo("66c7f0f462eeedd9d1f2d46bdc10e4e24167c4875cf2f7a2297da02b8f4ba8e0");
     }
 }

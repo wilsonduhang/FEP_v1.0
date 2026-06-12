@@ -71,6 +71,12 @@ class SysOperationLogControllerTest {
     @Autowired
     private com.puchain.fep.common.security.PasswordHasher passwordHasher;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private com.puchain.fep.web.sysmgmt.log.audit.AuditChainWriter auditChainWriter;
+
     /** 每次测试插入的日志 ID，测试后清理。 */
     private String testLogId;
 
@@ -145,6 +151,33 @@ class SysOperationLogControllerTest {
     /**
      * 每个测试后：清理插入的日志记录，恢复 admin 账号，清空模拟 Redis。
      */
+    /**
+     * GM S5 T6 验收 7（v0.3 C-NEW-1/N-NEW-6）：mock 全 context 经 {@code @OperationLog}
+     * 端点真实写链 ≥3 行后调 {@code /integrity} → intact——钉死 dev 域恒验签链路毕通
+     * （parseHex(合法 mock 130-hex) → MockSignService true，无任何值判定旁路）。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    @org.junit.jupiter.api.Test
+    void integrity_afterAspectDrivenAppends_reportsIntact() throws Exception {
+        // 排他链段：清空共享 H2 既有链行并重锚 context writer（与 AuditChainVerifierTest 同权衡）
+        jdbcTemplate.update("DELETE FROM t_sys_operation_log WHERE seq IS NOT NULL");
+        auditChainWriter.recoverChainTail();
+        // 经切面真实写入 ≥3 行（search 端点带 @OperationLog）
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(get("/api/v1/sys/logs")
+                            .header("Authorization", "Bearer " + accessToken))
+                    .andExpect(status().isOk());
+        }
+        mockMvc.perform(get("/api/v1/sys/logs/integrity")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("200"))
+                .andExpect(jsonPath("$.data.intact").value(true))
+                .andExpect(jsonPath("$.data.totalChecked").value(
+                        org.hamcrest.Matchers.greaterThanOrEqualTo(3)));
+    }
+
     @AfterEach
     void tearDown() {
         logRepository.deleteById(testLogId);

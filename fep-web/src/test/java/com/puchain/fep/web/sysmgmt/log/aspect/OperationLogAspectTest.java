@@ -1,10 +1,11 @@
 package com.puchain.fep.web.sysmgmt.log.aspect;
 
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
+import com.puchain.fep.web.sysmgmt.log.audit.AuditChainWriter;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import com.puchain.fep.web.sysmgmt.log.domain.SysOperationLog;
-import com.puchain.fep.web.sysmgmt.log.repository.SysOperationLogRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -70,22 +71,41 @@ class OperationLogAspectTest {
     }
 
     /**
-     * 验证 {@link OperationLogAspect} 可使用 mock Repository 构造，无编译错误。
+     * 验证 {@link OperationLogAspect} 可使用 mock {@link AuditChainWriter} 构造
+     * （GM S5：落库依赖由 Repository 换为链式写入器）。
      *
-     * <p>完整的 AOP 拦截行为（切点触发、日志落库）待 Task 3 Controller 就绪后
-     * 通过 {@code @SpringBootTest + MockMvc} 集成测试验证。</p>
+     * <p>完整链路（切点触发 → append 链式落库）由 {@code AuditChainWriterTest} +
+     * T6 mock 全 context intact 用例覆盖。</p>
      */
     @Test
     void operationLogAspect_canBeConstructed() {
-        // 使用匿名 mock 仅做编译级验证；完整集成测试在 Task 3 中补充
-        SysOperationLogRepository mockRepo = new org.springframework.data.repository.support.Repositories(
-                new org.springframework.beans.factory.support.DefaultListableBeanFactory()
-        ).getRepositoryFor(SysOperationLog.class)
-                .map(r -> (SysOperationLogRepository) r)
-                .orElse(null);
-
-        // 构造可以接受 null（保存时会走 try-catch），编译正常即验证通过
-        OperationLogAspect aspect = new OperationLogAspect(mockRepo);
+        OperationLogAspect aspect = new OperationLogAspect(Mockito.mock(AuditChainWriter.class));
         assertNotNull(aspect);
+    }
+
+    /**
+     * 行为断言（Plan B-2）：around 经 AuditChainWriter.append 落库（非直写 Repository）。
+     */
+    @Test
+    void around_delegatesPersistenceToChainWriter() throws Throwable {
+        AuditChainWriter writer = Mockito.mock(AuditChainWriter.class);
+        OperationLogAspect aspect = new OperationLogAspect(writer);
+        org.springframework.mock.web.MockHttpServletRequest request =
+                new org.springframework.mock.web.MockHttpServletRequest("GET", "/api/v1/sys/logs");
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(
+                new org.springframework.web.context.request.ServletRequestAttributes(request));
+        try {
+            org.aspectj.lang.ProceedingJoinPoint joinPoint =
+                    Mockito.mock(org.aspectj.lang.ProceedingJoinPoint.class);
+            Mockito.when(joinPoint.proceed()).thenReturn("ok");
+            OperationLog annotation = Mockito.mock(OperationLog.class);
+            Mockito.when(annotation.module()).thenReturn("日志管理");
+            Mockito.when(annotation.type()).thenReturn(OperationType.QUERY);
+            Mockito.when(annotation.description()).thenReturn("");
+            assertEquals("ok", aspect.around(joinPoint, annotation));
+            Mockito.verify(writer).append(Mockito.any(SysOperationLog.class));
+        } finally {
+            org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
+        }
     }
 }

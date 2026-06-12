@@ -73,6 +73,16 @@ fep:
         sm2-login-v1:                           # map key 须字面值（YAML key 不解析 ${} 占位符），轮换时新增字面 key
           private-key-hex: ${FEP_SM2_LOGIN_PRIVATE_KEY_HEX}   # 32 字节标量 d（hex 64 字符）
           public-key-hex: ${FEP_SM2_LOGIN_PUBLIC_KEY_HEX}     # 04||x||y 65 字节（hex 130 字符）
+      # GM S5：SM2 审计签名密钥（审计 hash 链行签名，架构 §1219）。
+      # ⚠️ provider=impl 时必须同时配置本段，否则操作日志行将静默写失败
+      #（AuditChainWriter 启动期 WARN 告警，Plan 抉择⑪）。
+      # ⚠️ 审计 hash 链 = 单写者/单实例部署前提（AuditChainWriter synchronized；
+      #   多实例需先引入分布式链尾协调，归未来项）。
+      audit-active-key-id: ${FEP_SM2_AUDIT_ACTIVE_KEY_ID:sm2-audit-v1}
+      audit-keys:
+        sm2-audit-v1:                           # map key 须字面值，轮换时新增字面 key（历史行验签按 sign_key_id 路由）
+          private-key-hex: ${FEP_SM2_AUDIT_PRIVATE_KEY_HEX}   # 32 字节标量 d（hex 64 字符）
+          public-key-hex: ${FEP_SM2_AUDIT_PUBLIC_KEY_HEX}     # 04||x||y 65 字节（hex 130 字符）
 
 # 显式启用 Prometheus metrics 导出（生产）。基础 application.yml 仅配置 endpoint exposure，
 # 此处显式置 enabled=true 确保 request-state / outbound / callback gauge 与 counter 被
