@@ -100,6 +100,29 @@ class RuleTypesTest {
     }
 
     @Test
+    void groupCooccurrence_shouldDetectContainerElementAsUsed() {
+        // Plan Task 2 验收 1/2：容器元素（无直接文本）按元素存在判定
+        ValidationRule rule = new GroupCooccurrenceRule(List.of("RiskRate", "edUpdateDateTime"));
+        assertThat(rule.evaluate(ctx("<CFX><Body><RiskRate><a>1</a></RiskRate></Body></CFX>")))
+                .get().asString().contains("edUpdateDateTime");
+        assertThat(rule.evaluate(ctx("<CFX><Body><RiskRate><a>1</a></RiskRate>"
+                + "<edUpdateDateTime>20260611120000</edUpdateDateTime></Body></CFX>")))
+                .isEmpty();
+    }
+
+    @Test
+    void groupCooccurrence_headScope_shouldIgnoreBodySameNameElements() {
+        // Plan Task 2 验收 4：scope=HEAD 防 body 同名串扰（1102 核对项 FileName 形态）
+        ValidationRule rule = new GroupCooccurrenceRule(
+                List.of("FileName", "FileContentHash", "FileSize"), GroupCooccurrenceRule.Scope.HEAD);
+        assertThat(rule.evaluate(ctx("<CFX><HEAD><MsgNo>1102</MsgNo></HEAD>"
+                + "<MSG><Item><FileName>old.csv</FileName></Item></MSG></CFX>"))).isEmpty();
+        assertThat(rule.evaluate(ctx("<CFX><HEAD><FileName>a.zip</FileName><FileSize>10</FileSize></HEAD>"
+                + "<MSG><Body>x</Body></MSG></CFX>")))
+                .get().asString().contains("FileContentHash");
+    }
+
+    @Test
     void groupCooccurrence_rejectsGroupSmallerThanTwo() {
         org.assertj.core.api.Assertions.assertThatThrownBy(
                         () -> new GroupCooccurrenceRule(List.of("Only")))

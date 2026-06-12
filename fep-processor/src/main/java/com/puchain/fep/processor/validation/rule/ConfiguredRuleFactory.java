@@ -58,7 +58,9 @@ public class ConfiguredRuleFactory {
                     CrossFieldComparisonRule.Operator.valueOf(def.getOperator()));
             case "DEPENDENT_ENUM" -> new DependentEnumRule(
                     def.getField(), def.getKeyField(), def.getAllowedByKey());
-            case "GROUP_COOCCURRENCE" -> new GroupCooccurrenceRule(def.getGroupFields());
+            case "GROUP_COOCCURRENCE" -> new GroupCooccurrenceRule(def.getGroupFields(),
+                    def.getScope() == null ? GroupCooccurrenceRule.Scope.MESSAGE
+                            : GroupCooccurrenceRule.Scope.valueOf(def.getScope()));
             default -> throw new IllegalArgumentException("未知规则类型: " + def.getType());
         };
     }

@@ -155,7 +155,7 @@ public final class RuleContext {
      * @return 元素存在返回 true
      */
     public boolean hasElement(final String localName) {
-        return presentElements.contains(localName);
+        return localName != null && presentElements.contains(localName);
     }
 
     /**
@@ -167,6 +167,6 @@ public final class RuleContext {
      * @return HEAD 子树内存在返回 true
      */
     public boolean hasElementInHead(final String localName) {
-        return headElements.contains(localName);
+        return localName != null && headElements.contains(localName);
     }
 }
