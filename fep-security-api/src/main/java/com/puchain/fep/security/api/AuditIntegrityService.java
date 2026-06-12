@@ -13,7 +13,8 @@ package com.puchain.fep.security.api;
 public interface AuditIntegrityService {
 
     /** 链首前驱哈希（64 个 '0'）。 */
-    String GENESIS_PREV_HASH = "0".repeat(64);
+    String GENESIS_PREV_HASH =
+            "0000000000000000000000000000000000000000000000000000000000000000";
 
     /**
      * 计算链式行哈希。
