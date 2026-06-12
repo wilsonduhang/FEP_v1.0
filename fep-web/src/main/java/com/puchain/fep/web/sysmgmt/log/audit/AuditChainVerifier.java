@@ -81,16 +81,6 @@ public class AuditChainVerifier {
     }
 
     /**
-     * 默认入口：INCREMENTAL 增量校验（EFF-S5-1 起默认；FULL 经
-     * {@link #verifyChain(VerifyMode)} 显式选择）。
-     *
-     * @return 校验结果
-     */
-    public ChainVerifyResult verifyChain() {
-        return verifyChain(VerifyMode.INCREMENTAL);
-    }
-
-    /**
      * 链校验入口。
      *
      * @param mode FULL=GENESIS 起全链权威校验；INCREMENTAL=checkpoint 锚后增量
@@ -110,8 +100,8 @@ public class AuditChainVerifier {
             } else {
                 final AuditChainCheckpoint anchor = cp.get();
                 checkpointSeq = anchor.getVerifiedUntilSeq();
-                final String signedPayload = CHECKPOINT_SIGN_PREFIX
-                        + anchor.getVerifiedUntilSeq() + ":" + anchor.getAnchorHash();
+                final String signedPayload =
+                        checkpointPayload(anchor.getVerifiedUntilSeq(), anchor.getAnchorHash());
                 boolean cpSigValid;
                 try {
                     cpSigValid = auditIntegrityService.verifyEntry(
@@ -222,7 +212,7 @@ public class AuditChainVerifier {
      * @return 推进后的锚 seq；推进失败 null
      */
     private Long advanceCheckpoint(final long lastSeq, final String lastHash) {
-        final String payload = CHECKPOINT_SIGN_PREFIX + lastSeq + ":" + lastHash;
+        final String payload = checkpointPayload(lastSeq, lastHash);
         final AuditChainCheckpoint cp = checkpointRepository
                 .findById(AuditChainCheckpoint.SINGLETON_ID)
                 .orElseGet(AuditChainCheckpoint::new);
@@ -240,6 +230,11 @@ public class AuditChainVerifier {
         }
         checkpointSeqGauge.set(lastSeq);
         return lastSeq;
+    }
+
+    /** 域分隔签名 payload（签名/验签两侧唯一构造点——密码学契约，防两侧 drift）。 */
+    private static String checkpointPayload(final long seq, final String hash) {
+        return CHECKPOINT_SIGN_PREFIX + seq + ":" + hash;
     }
 
     /** 校验模式（EFF-S5-1）。 */

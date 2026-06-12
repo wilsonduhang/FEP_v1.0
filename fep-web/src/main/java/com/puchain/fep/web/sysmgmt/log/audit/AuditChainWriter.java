@@ -28,7 +28,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  * 才推进内存链尾——失败时链尾不动，下次复用同 seq，链无空洞。启动期从链尾行恢复。</p>
  *
  * <p>链尾 seq 经 Micrometer gauge {@code fep_audit_chain_tail_seq} 外锚（纯删尾截断
- * 攻击的监控侧告警线索，Plan 抉择⑩）。</p>
+ * 攻击的监控侧告警线索，Plan 抉择⑩；EFF-S5-1 后主检测已升级为持久化 checkpoint 锚的
+ * {@code TRUNCATION} 断点，本 gauge 降为回退/删锚联合攻击的兜底双外锚之一）。</p>
  *
  * @author FEP Team
  * @since 1.0.0

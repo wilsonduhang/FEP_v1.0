@@ -117,7 +117,8 @@ class SysOperationLogIntegrityColumnsTest {
         repository.saveAndFlush(newRow("t4log000000000000000000000000044", base + 3));
         // 相对断言：本用例 3 链行升序在场且 null-seq 行被过滤（共享 H2 既有链行允许共存）
         final java.util.List<Long> seqsAfterBase = repository
-                .findBySeqIsNotNullOrderBySeqAsc(org.springframework.data.domain.Pageable.unpaged())
+                .findBySeqGreaterThanEqualOrderBySeqAsc(
+                        1L, org.springframework.data.domain.Pageable.unpaged())
                 .getContent().stream()
                 .map(SysOperationLog::getSeq)
                 .filter(q -> q > base)
@@ -125,7 +126,7 @@ class SysOperationLogIntegrityColumnsTest {
         assertThat(seqsAfterBase).containsExactly(base + 1, base + 2, base + 3);
         // 分页形态：page size 受 Pageable 控制
         final Page<SysOperationLog> page = repository
-                .findBySeqIsNotNullOrderBySeqAsc(PageRequest.of(0, 2));
+                .findBySeqGreaterThanEqualOrderBySeqAsc(1L, PageRequest.of(0, 2));
         assertThat(page.getContent()).hasSize(2);
         assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(3);
     }

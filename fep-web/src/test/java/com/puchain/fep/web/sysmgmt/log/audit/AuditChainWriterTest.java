@@ -135,14 +135,14 @@ class AuditChainWriterTest {
         assertThat(pool.awaitTermination(120, TimeUnit.SECONDS)).isTrue();
         // 320 行 seq 连续无重复 + 逐行链重算全通
         final List<SysOperationLog> chain = repository
-                .findBySeqIsNotNullOrderBySeqAsc(
+                .findBySeqGreaterThanEqualOrderBySeqAsc(1L,
                         org.springframework.data.domain.Pageable.unpaged())
                 .getContent().stream()
                 .filter(r -> r.getSeq() > baseSeq)
                 .toList();
         assertThat(chain).hasSize(threads * perThread);
         String prev = baseSeq == 0 ? AuditIntegrityService.GENESIS_PREV_HASH
-                : repository.findBySeqIsNotNullOrderBySeqAsc(
+                : repository.findBySeqGreaterThanEqualOrderBySeqAsc(1L,
                         org.springframework.data.domain.Pageable.unpaged())
                         .getContent().stream()
                         .filter(r -> r.getSeq() == baseSeq)
