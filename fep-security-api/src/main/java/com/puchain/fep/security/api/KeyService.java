@@ -123,4 +123,38 @@ public interface KeyService {
      * @throws IllegalArgumentException if the key version is unknown/unavailable
      */
     byte[] getSm4CredentialMasterKey(String keyId);
+
+    /**
+     * 当前活跃 SM2 审计签名密钥版本号（GM S5 审计 hash 链行签名，落 sign_key_id 列）。
+     *
+     * <p>与 {@link #getKeyId()}（SM4 凭证）/{@link #getSm2LoginKeyId()}（SM2 登录）
+     * 三命名空间独立轮换。</p>
+     *
+     * @return 审计密钥版本号
+     * @throws IllegalStateException impl provider 下审计密钥段未配置
+     */
+    String getAuditKeyId();
+
+    /**
+     * 当前活跃 SM2 审计签名私钥（32 字节标量 d 原始字节，防御性副本）。
+     *
+     * <p>消费方 = {@code AuditIntegrityService.signEntryHash}（GM S5）。真实密钥
+     * 部署期 env 注入永不入 repo；dev/CI 用 GB/T 公开标准测试密钥。</p>
+     *
+     * @return 32 字节私钥标量（每次新副本）
+     * @throws IllegalStateException impl provider 下审计密钥段未配置
+     */
+    byte[] getAuditSignPrivateKey();
+
+    /**
+     * 按版本取 SM2 审计验签公钥（130 hex 未压缩裸点 04∥x∥y）。
+     *
+     * <p>历史行验签按行记录的 sign_key_id 路由（密钥轮换期多版本共存）。</p>
+     *
+     * @param keyId 签名时密钥版本，非 null
+     * @return 公钥 hex（130 字符）
+     * @throws IllegalArgumentException keyId 未知
+     * @throws IllegalStateException    impl provider 下审计密钥段未配置
+     */
+    String getAuditVerifyPublicKeyHex(String keyId);
 }

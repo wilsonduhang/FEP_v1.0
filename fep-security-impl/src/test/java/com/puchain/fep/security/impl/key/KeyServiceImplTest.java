@@ -196,4 +196,66 @@ class KeyServiceImplTest {
                 Sm2TestVectors.GBT_PRIVATE_KEY_HEX, compressedPrefix))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("uncompressed");
     }
+
+    private static KeyService newServiceWithAudit(final String keyId,
+            final String privHex, final String pubHex) {
+        final FepSecuritySm2Properties sm2 = new FepSecuritySm2Properties();
+        sm2.setAuditActiveKeyId(keyId);
+        final FepSecuritySm2Properties.LoginKeyPair pair = new FepSecuritySm2Properties.LoginKeyPair();
+        pair.setPrivateKeyHex(privHex);
+        pair.setPublicKeyHex(pubHex);
+        sm2.getAuditKeys().put(keyId, pair);
+        final FepSecurityKeyProperties sm4 = new FepSecurityKeyProperties();
+        sm4.setActiveKeyId("sm4-cred-v2");
+        sm4.getSm4Keys().put("sm4-cred-v2", GBT_KEY_HEX);
+        final KeyServiceImpl svc = new KeyServiceImpl(sm4, sm2);
+        svc.validateOnStartup();
+        return svc;
+    }
+
+    @Test
+    void auditKeys_valid_exposeKeyIdPrivateBytesAndPublicHex() {
+        final KeyService svc = newServiceWithAudit("sm2-audit-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThat(svc.getAuditKeyId()).isEqualTo("sm2-audit-v1");
+        assertThat(svc.getAuditSignPrivateKey()).hasSize(32);
+        assertThat(svc.getAuditVerifyPublicKeyHex("sm2-audit-v1"))
+                .isEqualTo(Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+    }
+
+    @Test
+    void auditSignPrivateKey_returnsDefensiveCopy() {
+        final KeyService svc = newServiceWithAudit("sm2-audit-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        final byte[] first = svc.getAuditSignPrivateKey();
+        first[0] = (byte) 0xFF;
+        assertThat(svc.getAuditSignPrivateKey()[0]).isNotEqualTo((byte) 0xFF);
+    }
+
+    @Test
+    void auditKeys_withoutConfig_throwIllegalState_loginUnaffected() {
+        final KeyService svc = newServiceWithSm2("sm2-login-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThatThrownBy(svc::getAuditSignPrivateKey)
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("not configured");
+        assertThatThrownBy(svc::getAuditKeyId).isInstanceOf(IllegalStateException.class);
+        assertThat(svc.getSm2LoginKeyId()).isEqualTo("sm2-login-v1");
+    }
+
+    @Test
+    void auditKeys_mismatchedPair_failsStartup() {
+        final String tampered = Sm2TestVectors.GBT_PUBLIC_KEY_HEX
+                .substring(0, Sm2TestVectors.GBT_PUBLIC_KEY_HEX.length() - 2) + "14";
+        assertThatThrownBy(() -> newServiceWithAudit("sm2-audit-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, tampered))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("key pair");
+    }
+
+    @Test
+    void auditVerifyPublicKeyHex_unknownKeyId_throwsIllegalArgument() {
+        final KeyService svc = newServiceWithAudit("sm2-audit-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThatThrownBy(() -> svc.getAuditVerifyPublicKeyHex("ghost"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }

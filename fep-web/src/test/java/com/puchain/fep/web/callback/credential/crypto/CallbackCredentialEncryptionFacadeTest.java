@@ -133,6 +133,23 @@ class CallbackCredentialEncryptionFacadeTest {
             }
 
             @Override
+            public String getAuditKeyId() {
+                return "k-new";
+            }
+
+            @Override
+            public byte[] getAuditSignPrivateKey() {
+                return new byte[32];
+            }
+
+            @Override
+            public String getAuditVerifyPublicKeyHex(final String keyId) {
+                // 合法 130-hex（GB/T 公开标准公钥字面值，v0.3 C-NEW-1）
+                return "0409f9df311e5421a150dd7d161e4bc5c672179fad1833fc076bb08ff356f35020"
+                        + "ccea490ce26775a52dc6ea718cc1aa600aed05fbf35e084a6632f6072da9ad13";
+            }
+
+            @Override
             public String decryptLoginPassword(final String e, final String id) {
                 return e;
             }

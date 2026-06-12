@@ -25,6 +25,12 @@ public class FepSecuritySm2Properties {
     /** keyId → 登录密钥对（多版本，轮换期共存）。 */
     private Map<String, LoginKeyPair> loginKeys = new LinkedHashMap<>();
 
+    /** 当前活跃审计签名密钥版本号（GM S5 审计 hash 链行签名使用）。 */
+    private String auditActiveKeyId;
+
+    /** keyId → 审计签名密钥对（多版本，轮换期历史行验签）。 */
+    private Map<String, LoginKeyPair> auditKeys = new LinkedHashMap<>();
+
     /**
      * 当前活跃登录密钥版本号。
      *
@@ -64,6 +70,47 @@ public class FepSecuritySm2Properties {
      */
     public void setLoginKeys(final Map<String, LoginKeyPair> loginKeys) {
         this.loginKeys = new LinkedHashMap<>(loginKeys);
+    }
+
+    /**
+     * 当前活跃审计签名密钥版本号。
+     *
+     * @return 活跃审计密钥版本号
+     */
+    public String getAuditActiveKeyId() {
+        return auditActiveKeyId;
+    }
+
+    /**
+     * 设置活跃审计签名密钥版本号。
+     *
+     * @param auditActiveKeyId 活跃审计密钥版本号
+     */
+    public void setAuditActiveKeyId(final String auditActiveKeyId) {
+        this.auditActiveKeyId = auditActiveKeyId;
+    }
+
+    /**
+     * 审计密钥多版本映射。Spring relaxed binding 需 live 引用填充（红线
+     * feedback_configurationproperties_collection_getter_ei_expose）；
+     * 下游 KeyServiceImpl 构造期拷贝，无 live 泄漏。
+     *
+     * @return keyId → 审计密钥对 map（live 引用）
+     */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP",
+            justification = "Spring relaxed binding mutates via live getter; "
+                    + "KeyServiceImpl copies on construction, no live reference escapes")
+    public Map<String, LoginKeyPair> getAuditKeys() {
+        return auditKeys;
+    }
+
+    /**
+     * 设置审计密钥多版本映射（防御拷贝 + null guard，与 setSm4Keys 对称）。
+     *
+     * @param auditKeys keyId → 审计密钥对
+     */
+    public void setAuditKeys(final Map<String, LoginKeyPair> auditKeys) {
+        this.auditKeys = auditKeys == null ? new LinkedHashMap<>() : new LinkedHashMap<>(auditKeys);
     }
 
     /**

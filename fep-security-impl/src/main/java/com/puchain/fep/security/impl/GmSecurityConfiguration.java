@@ -20,7 +20,8 @@ import org.springframework.context.annotation.Configuration;
  * <p>默认/dev 不激活（走 fep-security-mock 的 {@code @ConditionalOnProperty(provider=mock,
  * matchIfMissing=true)}），保证零回归 + 任一时刻单 {@link CryptoService}/{@link KeyService} bean。</p>
  *
- * <p>impl 实现类（{@link CryptoServiceImpl}/{@link KeyServiceImpl}/{@link BouncyCastleGmProviderConfig}）
+ * <p>impl 实现类（{@link CryptoServiceImpl}/{@link KeyServiceImpl}/{@link SignServiceImpl}/
+ * {@link BouncyCastleGmProviderConfig}）
  * 不带 Spring stereotype，统一经本类 {@code @Bean} 注册，避免被 fep-web 广扫
  * （{@code FepApplication @ComponentScan("com.puchain.fep")}）在 provider≠impl 时误装配，
  * 并规避命名约定 ArchUnit（{@code *Impl}/{@code *Config} 非 {@code *Service}/{@code *Configuration}）。</p>

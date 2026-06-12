@@ -43,16 +43,22 @@ public class KeyServiceImpl implements KeyService {
     private static final String SM2_LOGIN_NOT_CONFIGURED =
             "SM2 login keys not configured (fep.security.sm2.login-active-key-id / login-keys)";
 
+    /** SM2 审计密钥未配置提示。 */
+    private static final String SM2_AUDIT_NOT_CONFIGURED =
+            "SM2 audit keys not configured (fep.security.sm2.audit-active-key-id / audit-keys)";
+
     private final String activeKeyId;
     private final Map<String, byte[]> keysByVersion;
     private final String loginActiveKeyId;
     private final Map<String, FepSecuritySm2Properties.LoginKeyPair> loginKeys;
+    private final String auditActiveKeyId;
+    private final Map<String, FepSecuritySm2Properties.LoginKeyPair> auditKeys;
 
     /**
-     * 从配置构造：SM4 hex 密钥解码 + SM2 登录密钥对拷贝。
+     * 从配置构造：SM4 hex 密钥解码 + SM2 登录/审计密钥对拷贝。
      *
      * @param props    SM4 密钥配置，非 null
-     * @param sm2Props SM2 登录密钥配置，非 null（内容可为空 = 未配置）
+     * @param sm2Props SM2 登录/审计密钥配置，非 null（各段内容可为空 = 未配置）
      */
     public KeyServiceImpl(final FepSecurityKeyProperties props,
                           final FepSecuritySm2Properties sm2Props) {
@@ -65,6 +71,8 @@ public class KeyServiceImpl implements KeyService {
         this.keysByVersion = decoded;
         this.loginActiveKeyId = sm2Props.getLoginActiveKeyId();
         this.loginKeys = new LinkedHashMap<>(sm2Props.getLoginKeys());
+        this.auditActiveKeyId = sm2Props.getAuditActiveKeyId();
+        this.auditKeys = new LinkedHashMap<>(sm2Props.getAuditKeys());
     }
 
     /**
@@ -86,33 +94,54 @@ public class KeyServiceImpl implements KeyService {
                         + SM4_KEY_LENGTH + " bytes (hex 32 chars), got " + key.length);
             }
         });
-        if (loginActiveKeyId != null || !loginKeys.isEmpty()) {
-            if (loginActiveKeyId == null || !loginKeys.containsKey(loginActiveKeyId)) {
-                throw new IllegalStateException("fep.security.sm2.login-active-key-id ["
-                        + loginActiveKeyId + "] not present in loginKeys");
-            }
-            loginKeys.forEach((keyId, pair) -> {
-                final String priv = pair.getPrivateKeyHex();
-                final String pub = pair.getPublicKeyHex();
-                if (priv == null || !priv.matches("[0-9a-fA-F]{64}")) {
-                    throw new IllegalStateException("SM2 login private key [" + keyId
-                            + "] must be 64 hex chars (32-byte scalar)");
-                }
-                final BigInteger d = new BigInteger(priv, 16);
-                if (d.signum() <= 0 || d.compareTo(Sm2LoginCipher.DOMAIN.getN()) >= 0) {
-                    throw new IllegalStateException("SM2 login private key [" + keyId
-                            + "] scalar out of range (require 1 <= d <= n-1)");
-                }
-                if (pub == null || !pub.matches("04[0-9a-fA-F]{128}")) {
-                    throw new IllegalStateException("SM2 login public key [" + keyId
-                            + "] must be 130 hex chars starting with 04 (uncompressed point)");
-                }
-                if (!Sm2LoginCipher.isMatchingKeyPair(priv, pub)) {
-                    throw new IllegalStateException("SM2 login key pair [" + keyId
-                            + "] mismatch: [d]G does not equal configured public key");
-                }
-            });
+        validateSm2KeySection("login", "fep.security.sm2.login-active-key-id",
+                loginActiveKeyId, loginKeys);
+        validateSm2KeySection("audit", "fep.security.sm2.audit-active-key-id",
+                auditActiveKeyId, auditKeys);
+    }
+
+    /**
+     * SM2 密钥段校验（login/audit 完全对称——红线 mapper_helper_trim_consistency 精神）：
+     * 段空 = 未配置跳过；否则 activeId 须在 map、私钥 64 hex 且 1 ≤ d ≤ n-1、
+     * 公钥 130 hex 未压缩裸点、[d]G 与公钥点配对一致。
+     *
+     * @param sectionName   段名（入异常消息定位）
+     * @param activeIdProp  activeId 配置键名（入异常消息）
+     * @param sectionActive 段活跃版本号
+     * @param sectionKeys   段密钥对 map
+     * @throws IllegalStateException 配置非法
+     */
+    private static void validateSm2KeySection(final String sectionName, final String activeIdProp,
+            final String sectionActive,
+            final Map<String, FepSecuritySm2Properties.LoginKeyPair> sectionKeys) {
+        if (sectionActive == null && sectionKeys.isEmpty()) {
+            return;
         }
+        if (sectionActive == null || !sectionKeys.containsKey(sectionActive)) {
+            throw new IllegalStateException(activeIdProp + " ["
+                    + sectionActive + "] not present in " + sectionName + " keys");
+        }
+        sectionKeys.forEach((keyId, pair) -> {
+            final String priv = pair.getPrivateKeyHex();
+            final String pub = pair.getPublicKeyHex();
+            if (priv == null || !priv.matches("[0-9a-fA-F]{64}")) {
+                throw new IllegalStateException("SM2 " + sectionName + " private key [" + keyId
+                        + "] must be 64 hex chars (32-byte scalar)");
+            }
+            final BigInteger d = new BigInteger(priv, 16);
+            if (d.signum() <= 0 || d.compareTo(Sm2LoginCipher.DOMAIN.getN()) >= 0) {
+                throw new IllegalStateException("SM2 " + sectionName + " private key [" + keyId
+                        + "] scalar out of range (require 1 <= d <= n-1)");
+            }
+            if (pub == null || !pub.matches("04[0-9a-fA-F]{128}")) {
+                throw new IllegalStateException("SM2 " + sectionName + " public key [" + keyId
+                        + "] must be 130 hex chars starting with 04 (uncompressed point)");
+            }
+            if (!Sm2LoginCipher.isMatchingKeyPair(priv, pub)) {
+                throw new IllegalStateException("SM2 " + sectionName + " key pair [" + keyId
+                        + "] mismatch: [d]G does not equal configured public key");
+            }
+        });
     }
 
     @Override
@@ -162,10 +191,39 @@ public class KeyServiceImpl implements KeyService {
         throw new UnsupportedOperationException(S2B_PENDING);
     }
 
+    @Override
+    public String getAuditKeyId() {
+        return requireAuditConfigured();
+    }
+
+    @Override
+    public byte[] getAuditSignPrivateKey() {
+        final FepSecuritySm2Properties.LoginKeyPair active = auditKeys.get(requireAuditConfigured());
+        // parseHex 每次新建数组 = 防御副本
+        return HexFormat.of().parseHex(active.getPrivateKeyHex());
+    }
+
+    @Override
+    public String getAuditVerifyPublicKeyHex(final String keyId) {
+        requireAuditConfigured();
+        final FepSecuritySm2Properties.LoginKeyPair pair = auditKeys.get(keyId);
+        if (pair == null) {
+            throw new IllegalArgumentException("Unknown SM2 audit keyId: " + keyId);
+        }
+        return pair.getPublicKeyHex();
+    }
+
     private String requireLoginConfigured() {
         if (loginActiveKeyId == null || loginKeys.isEmpty()) {
             throw new IllegalStateException(SM2_LOGIN_NOT_CONFIGURED);
         }
         return loginActiveKeyId;
+    }
+
+    private String requireAuditConfigured() {
+        if (auditActiveKeyId == null || auditKeys.isEmpty()) {
+            throw new IllegalStateException(SM2_AUDIT_NOT_CONFIGURED);
+        }
+        return auditActiveKeyId;
     }
 }

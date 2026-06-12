@@ -29,6 +29,16 @@ public class MockKeyService implements KeyService {
     public static final String MOCK_KEY_ID = "mock-key-v1";
 
     /**
+     * GM S5 mock 审计验签公钥（合法 130-hex 未压缩裸点 = GB/T 32918.5-2017 附录 A
+     * 公开标准公钥字面值——v0.3 C-NEW-1：AuditIntegrityServiceImpl.verifyEntry 的
+     * parseHex 先于 MockSignService 执行，非 hex 串会致 dev /integrity 恒报假断点；
+     * MockSignService 忽略密钥内容，仅需可解析）。
+     */
+    public static final String MOCK_AUDIT_PUBLIC_KEY_HEX =
+            "0409f9df311e5421a150dd7d161e4bc5c672179fad1833fc076bb08ff356f35020"
+                    + "ccea490ce26775a52dc6ea718cc1aa600aed05fbf35e084a6632f6072da9ad13";
+
+    /**
      * ⚠️ 仅 dev/CI 用，固定 32 字节 mock SM2 私钥（PKCS#8 占位，非真实国密私钥）。
      * 真实实现由 ③ 安全工程师在 fep-security-impl 编写（⛔ Mode E）。
      */
@@ -64,6 +74,24 @@ public class MockKeyService implements KeyService {
     public String getSm2LoginKeyId() {
         // GM S2a: mock 域 SM2 登录 keyId 与 SM4 凭证 keyId 共用同一常量
         return MOCK_KEY_ID;
+    }
+
+    @Override
+    public String getAuditKeyId() {
+        // GM S5: 审计 keyId 在 mock 域共用同一常量
+        return MOCK_KEY_ID;
+    }
+
+    @Override
+    public byte[] getAuditSignPrivateKey() {
+        // 防御性 clone；MockSignService 忽略内容，⚠️ 仅 dev/CI 用
+        return MOCK_SIGN_PRIVATE_KEY.clone();
+    }
+
+    @Override
+    public String getAuditVerifyPublicKeyHex(final String keyId) {
+        // 任意 keyId 返回合法 130-hex（v0.3 C-NEW-1）；MockSignService 验签恒 true
+        return MOCK_AUDIT_PUBLIC_KEY_HEX;
     }
 
     @Override
