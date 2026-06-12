@@ -193,7 +193,7 @@ class InboundMessageDispatcherTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </BatchHead2102>
                 <DataTransferCheckResponse2102>
                   <DataTransferResult>
@@ -227,7 +227,7 @@ class InboundMessageDispatcherTest {
                   <SendOrgCode>12345678901234</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </BatchHead2103>
                 <CompanyInfoBatchResponse2103>
                   <CompanyInfo>
@@ -237,7 +237,7 @@ class InboundMessageDispatcherTest {
                     <MainClass>MainA01</MainClass>
                     <SecondClass>SubA0101</SecondClass>
                     <AuthOrgCode>12345678901234</AuthOrgCode>
-                    <QueryResult>00000</QueryResult>
+                    <QueryResult>90000</QueryResult>
                   </CompanyInfo>
                 </CompanyInfoBatchResponse2103>
               </MSG>
@@ -258,7 +258,7 @@ class InboundMessageDispatcherTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260509</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </BatchHead2104>
                 <CompanyAuthFileBatchResponse2104>
                   <CompanyAuthFileResponse>
@@ -270,7 +270,7 @@ class InboundMessageDispatcherTest {
                     <AuthNo>AUTH2026050500001</AuthNo>
                     <AuthOrgCode>12345678901234</AuthOrgCode>
                     <IsUpdate>0</IsUpdate>
-                    <RecordResult>00000</RecordResult>
+                    <RecordResult>90000</RecordResult>
                   </CompanyAuthFileResponse>
                 </CompanyAuthFileBatchResponse2104>
               </MSG>

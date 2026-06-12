@@ -36,7 +36,7 @@ import org.springframework.test.context.TestPropertySource;
  *   <li>断言产物 envelope 含 {@code <BatchHead9120>} 元素（BatchHead +
  *       ResponseBusinessHead 类目，{@code OutboundWireShapeDispatcher.BATCH_HEAD_RESPONSE_MSG_NOS}
  *       含 9120）+ {@code <MsgReturn9120>} body 元素 + {@code <MsgNo>9120</MsgNo>} CommonHead
- *       + {@code <Result>00000</Result>} 占位（ResponseBusinessHead requiresResultCode=true）。</li>
+ *       + {@code <Result>90000</Result>} 占位（ResponseBusinessHead requiresResultCode=true）。</li>
  *   <li>本 IT 在 T1+T2 之前会 FAIL（5107/5108）；T1+T2 后 PASS，作为缺口闭合的
  *       <b>回归基准</b>。T1+T2 已 ship，本 IT 直接 PASS 证明装配段已通。</li>
  * </ol></p>
@@ -46,7 +46,7 @@ import org.springframework.test.context.TestPropertySource;
  * {@code BODY_XML_9120_ACK} 字段值满足 9120.xsd MsgReturn9120 sequence：
  * OriMsgNo MsgNo {@code length=4} numeric + Debug Text optional。envelope HEAD 由
  * 5-25 P0 fix 的 {@code BodyMsgIdGenerator} 注入 20 数字 MsgId + {@code CommonHeadComposer}
- * 注入 CorrMsgId 20 零 + App=HNDEMP；BatchHead9120 ResponseHead 含 Result="00000"
+ * 注入 CorrMsgId 20 零 + App=HNDEMP；BatchHead9120 ResponseHead 含 Result="90000"
  * placeholder（{@code OutboundCfxEnvelopeBuilder} 装配段）。与 sibling
  * {@link OutboundEnvelopeXsdComplianceTest} 同 cache key（统一 ApplicationContext 复用）。</p>
  *
@@ -118,7 +118,7 @@ class Outbound9120AckEnvelopeBuilderTest {
                 .contains("<MsgNo>9120</MsgNo>");
         assertThat(envelope)
                 .as("9120 ack envelope BatchHead9120 必含 Result 占位（ResponseBusinessHead requiresResultCode=true）")
-                .contains("<Result>00000</Result>");
+                .contains("<Result>90000</Result>");
         assertThat(envelope)
                 .as("9120 ack envelope 必含 CFX 外层封装（marshalToString 完整 envelope 产物）")
                 .contains("</CFX>");

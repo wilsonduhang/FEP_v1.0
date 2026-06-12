@@ -23,7 +23,7 @@ class CompanyAuthFileResponse2004Test {
         original.setAuthNo("AUTH2026041100001");
         original.setAuthOrgCode("10000000000001");
         original.setIsUpdate("0");
-        original.setRecordResult("00000");
+        original.setRecordResult("90000");
         original.setRecordAddWord("备案成功");
 
         String xml = JaxbRoundtripSupport.marshal(original);
@@ -37,7 +37,7 @@ class CompanyAuthFileResponse2004Test {
                 .contains("<AuthNo>AUTH2026041100001</AuthNo>")
                 .contains("<AuthOrgCode>10000000000001</AuthOrgCode>")
                 .contains("<IsUpdate>0</IsUpdate>")
-                .contains("<RecordResult>00000</RecordResult>")
+                .contains("<RecordResult>90000</RecordResult>")
                 .contains("<RecordAddWord>备案成功</RecordAddWord>");
 
         CompanyAuthFileResponse2004 parsed =
@@ -49,7 +49,7 @@ class CompanyAuthFileResponse2004Test {
         assertThat(parsed.getAuthNo()).isEqualTo("AUTH2026041100001");
         assertThat(parsed.getAuthOrgCode()).isEqualTo("10000000000001");
         assertThat(parsed.getIsUpdate()).isEqualTo("0");
-        assertThat(parsed.getRecordResult()).isEqualTo("00000");
+        assertThat(parsed.getRecordResult()).isEqualTo("90000");
         assertThat(parsed.getRecordAddWord()).isEqualTo("备案成功");
     }
 
@@ -62,7 +62,7 @@ class CompanyAuthFileResponse2004Test {
         minimal.setAuthEndDate("20261231");
         minimal.setAuthNo("AUTH-MIN");
         minimal.setAuthOrgCode("10000000000002");
-        minimal.setRecordResult("00000");
+        minimal.setRecordResult("90000");
 
         String xml = JaxbRoundtripSupport.marshal(minimal);
 

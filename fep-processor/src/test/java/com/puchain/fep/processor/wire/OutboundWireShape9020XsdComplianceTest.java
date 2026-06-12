@@ -114,7 +114,7 @@ class OutboundWireShape9020XsdComplianceTest {
                   <SendOrgCode>10000000000001</SendOrgCode>
                   <EntrustDate>20260421</EntrustDate>
                   <TransitionNo>00000010</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </RealHead9020>
                 """ + bodyXml);
     }

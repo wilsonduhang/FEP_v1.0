@@ -75,7 +75,7 @@ class AsyncPipelineIntegrationTest {
                 <SendOrgCode>12345678901234</SendOrgCode>
                 <EntrustDate>20260417</EntrustDate>
                 <TransitionNo>00000001</TransitionNo>
-                <Result>00000</Result>""";
+                <Result>90000</Result>""";
 
     /** 30-char SerialNo (Text, length=30). */
     private static final String SERIAL_NO = "SN2026041700000000000000000001";

@@ -57,7 +57,7 @@ public class XsdComplianceHelper {
             "<SendOrgCode>" + SEND_ORG_CODE + "</SendOrgCode>"
             + "<EntrustDate>" + ENTRUST_DATE + "</EntrustDate>"
             + "<TransitionNo>" + TRANSITION_NO + "</TransitionNo>"
-            + "<Result>00000</Result>";
+            + "<Result>90000</Result>";
 
     private final XsdValidator validator;
 

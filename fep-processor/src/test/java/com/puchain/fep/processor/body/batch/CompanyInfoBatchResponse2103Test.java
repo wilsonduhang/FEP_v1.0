@@ -27,7 +27,7 @@ class CompanyInfoBatchResponse2103Test {
         item.setEndDate("20260411");
         item.setAuthOrgCode("10000000000001");
         item.setFileName("RESULT-20260505-0001.zip");
-        item.setQueryResult("00000");
+        item.setQueryResult("90000");
         item.setQueryAddWord("查询成功");
 
         CompanyInfoBatchResponse2103 response = new CompanyInfoBatchResponse2103();
@@ -47,7 +47,7 @@ class CompanyInfoBatchResponse2103Test {
                 .contains("<EndDate>20260411</EndDate>")
                 .contains("<AuthOrgCode>10000000000001</AuthOrgCode>")
                 .contains("<FileName>RESULT-20260505-0001.zip</FileName>")
-                .contains("<QueryResult>00000</QueryResult>")
+                .contains("<QueryResult>90000</QueryResult>")
                 .contains("<QueryAddWord>查询成功</QueryAddWord>");
 
         CompanyInfoBatchResponse2103 parsed =
@@ -63,7 +63,7 @@ class CompanyInfoBatchResponse2103Test {
         assertThat(p.getEndDate()).isEqualTo("20260411");
         assertThat(p.getAuthOrgCode()).isEqualTo("10000000000001");
         assertThat(p.getFileName()).isEqualTo("RESULT-20260505-0001.zip");
-        assertThat(p.getQueryResult()).isEqualTo("00000");
+        assertThat(p.getQueryResult()).isEqualTo("90000");
         assertThat(p.getQueryAddWord()).isEqualTo("查询成功");
     }
 
@@ -79,7 +79,7 @@ class CompanyInfoBatchResponse2103Test {
                     it.setMainClass("MainA01");
                     it.setSecondClass("SubA0101");
                     it.setAuthOrgCode("10000000000001");
-                    it.setQueryResult("00000");
+                    it.setQueryResult("90000");
                     return it;
                 }).toList());
 

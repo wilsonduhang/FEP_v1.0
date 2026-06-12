@@ -95,7 +95,7 @@ class PzInfoTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260421</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </RealHead3004>
                 %s
               </MSG>

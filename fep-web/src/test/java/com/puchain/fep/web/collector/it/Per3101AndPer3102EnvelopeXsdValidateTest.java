@@ -76,7 +76,7 @@ class Per3101AndPer3102EnvelopeXsdValidateTest {
                 <SendOrgCode>12345678901234</SendOrgCode>
                 <EntrustDate>20260501</EntrustDate>
                 <TransitionNo>00000001</TransitionNo>
-                <Result>00000</Result>""";
+                <Result>90000</Result>""";
 
     private static XsdValidator validator;
     private static ContractInfo3101FieldMapper contract3101Mapper;

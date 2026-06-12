@@ -24,8 +24,8 @@ class RuleMasterGroupCooccurrenceTest {
     void headFileGroup_partialUse_shouldViolate_onAnyMessage() throws IOException {
         // 验收 1：任意报文（9005 样本）HEAD 含 FileName+FileSize 缺 FileContentHash → 违规
         String xml = "<CFX><HEAD><MsgNo>9005</MsgNo><FileName>a.zip</FileName>"
-                + "<FileSize>10</FileSize></HEAD><MSG><EchoTest9005><SerialNo>1</SerialNo>"
-                + "</EchoTest9005></MSG></CFX>";
+                + "<FileSize>10</FileSize></HEAD><MSG><RealHead9005>"
+                + "<TransitionNo>20260612</TransitionNo></RealHead9005></MSG></CFX>";
         ValidationResult r = RuleMasterTestSupport.validate("9005", xml);
         assertThat(r.valid()).isFalse();
         assertThat(r.errors().get(0)).contains("FileContentHash");
@@ -48,8 +48,8 @@ class RuleMasterGroupCooccurrenceTest {
     @Test
     void group3000And3004_signElementWithoutKlzrfSign_shouldViolate() throws IOException {
         // 验收 3：pzInfo 凭证签名组（共享结构）在 3000 与 3004 均注册
-        String xml3000 = "<CFX><MSG><pzRegister3000><pzInfo><SignElement>hxqyName|pzNo</SignElement>"
-                + "</pzInfo></pzRegister3000></MSG></CFX>";
+        String xml3000 = "<CFX><MSG><dzpzInfo3000><pzInfo><SignElement>hxqyName|pzNo</SignElement>"
+                + "</pzInfo></dzpzInfo3000></MSG></CFX>";
         ValidationResult r3000 = RuleMasterTestSupport.validate("3000", xml3000);
         assertThat(r3000.valid()).isFalse();
         assertThat(String.join(";", r3000.errors())).contains("klzrfSign");
@@ -72,9 +72,9 @@ class RuleMasterGroupCooccurrenceTest {
     @Test
     void msg3105_signInfoSignElementAlone_shouldPass_groupNotRegistered() throws IOException {
         // 验收 5（负向）：3105 SignInfo.SignElement 为 required，分组未注册 → 不得误拒
-        String xml = "<CFX><MSG><RzApply3105><SignInfo>"
+        String xml = "<CFX><MSG><rzApplyInfo3105><SignInfo>"
                 + "<SignElement>hxqyName|rzqyName|rzAmt</SignElement>"
-                + "</SignInfo></RzApply3105></MSG></CFX>";
+                + "</SignInfo></rzApplyInfo3105></MSG></CFX>";
         assertThat(RuleMasterTestSupport.validate("3105", xml).valid()).isTrue();
     }
 
@@ -93,9 +93,9 @@ class RuleMasterGroupCooccurrenceTest {
     void msg1102_bodyFileNameWithoutHeadFileFields_shouldPass_headScope() throws IOException {
         // 验收 7（决策 5 防误伤回归）：1102 核对项 body FileName（历史已报送文件名）不触发 HEAD 组
         String xml = "<CFX><HEAD><MsgNo>1102</MsgNo></HEAD><MSG><BatchHead1102>"
-                + "<TransitionNo>20260612</TransitionNo></BatchHead1102><DataCheckRequest1102>"
+                + "<TransitionNo>20260612</TransitionNo></BatchHead1102><DataTransferCheckRequest1102>"
                 + "<Item><FileName>history-20260601.csv</FileName></Item>"
-                + "</DataCheckRequest1102></MSG></CFX>";
+                + "</DataTransferCheckRequest1102></MSG></CFX>";
         assertThat(RuleMasterTestSupport.validate("1102", xml).valid()).isTrue();
     }
 

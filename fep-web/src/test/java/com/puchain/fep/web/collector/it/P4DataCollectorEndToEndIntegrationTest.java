@@ -770,7 +770,7 @@ class P4DataCollectorEndToEndIntegrationTest {
                 + "<SendOrgCode>" + head.getSendOrgCode() + "</SendOrgCode>"
                 + "<EntrustDate>" + head.getEntrustDate() + "</EntrustDate>"
                 + "<TransitionNo>" + head.getTransitionNo() + "</TransitionNo>"
-                + "<Result>00000</Result>"
+                + "<Result>90000</Result>"
                 + "</BatchHead3101>";
 
         // 4. Concatenate into a complete CFX envelope.

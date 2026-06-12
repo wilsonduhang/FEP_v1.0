@@ -27,7 +27,7 @@ class CompanyAuthFileBatchResponse2104Test {
         item.setAuthNo("AUTH2026050500001");
         item.setAuthOrgCode("12345678901234");
         item.setIsUpdate("0");
-        item.setRecordResult("00000");
+        item.setRecordResult("90000");
         item.setRecordAddWord("OK");
 
         CompanyAuthFileBatchResponse2104 wrapper = new CompanyAuthFileBatchResponse2104();
@@ -42,7 +42,7 @@ class CompanyAuthFileBatchResponse2104Test {
                 .contains("<AuthNo>AUTH2026050500001</AuthNo>")
                 .contains("<AuthOrgCode>12345678901234</AuthOrgCode>")
                 .contains("<IsUpdate>0</IsUpdate>")
-                .contains("<RecordResult>00000</RecordResult>")
+                .contains("<RecordResult>90000</RecordResult>")
                 .contains("<RecordAddWord>OK</RecordAddWord>");
 
         CompanyAuthFileBatchResponse2104 parsed = JaxbRoundtripSupport.unmarshal(
@@ -56,7 +56,7 @@ class CompanyAuthFileBatchResponse2104Test {
         assertThat(p.getAuthNo()).isEqualTo("AUTH2026050500001");
         assertThat(p.getAuthOrgCode()).isEqualTo("12345678901234");
         assertThat(p.getIsUpdate()).isEqualTo("0");
-        assertThat(p.getRecordResult()).isEqualTo("00000");
+        assertThat(p.getRecordResult()).isEqualTo("90000");
         assertThat(p.getRecordAddWord()).isEqualTo("OK");
     }
 
@@ -73,7 +73,7 @@ class CompanyAuthFileBatchResponse2104Test {
                     it.setAuthEndDate("20261231");
                     it.setAuthNo("AUTH-" + i);
                     it.setAuthOrgCode("12345678901234");
-                    it.setRecordResult("00000");
+                    it.setRecordResult("90000");
                     return it;
                 }).toList());
 
@@ -87,7 +87,7 @@ class CompanyAuthFileBatchResponse2104Test {
         assertThat(parsed.getItems())
                 .extracting(CompanyAuthFileBatchItem2104::getRecordResult)
                 .as("all items must preserve RecordResult through roundtrip")
-                .containsOnly("00000");
+                .containsOnly("90000");
     }
 
     @Test

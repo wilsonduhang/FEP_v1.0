@@ -16,7 +16,7 @@
             <SendOrgCode>10000000000001</SendOrgCode>
             <EntrustDate>20260421</EntrustDate>
             <TransitionNo>00000005</TransitionNo>
-            <Result>00000</Result>
+            <Result>90000</Result>
         </RealHead9009>
         <LogoutResponse9009>
             <Status>0</Status>

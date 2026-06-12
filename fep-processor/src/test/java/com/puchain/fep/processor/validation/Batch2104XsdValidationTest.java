@@ -34,7 +34,7 @@ class Batch2104XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260505</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </BatchHead2104>
                 <CompanyAuthFileBatchResponse2104>
                   <CompanyAuthFileResponse>
@@ -46,7 +46,7 @@ class Batch2104XsdValidationTest extends AbstractXsdValidationTest {
                     <AuthNo>AUTH2026050500001</AuthNo>
                     <AuthOrgCode>12345678901234</AuthOrgCode>
                     <IsUpdate>0</IsUpdate>
-                    <RecordResult>00000</RecordResult>
+                    <RecordResult>90000</RecordResult>
                   </CompanyAuthFileResponse>
                 </CompanyAuthFileBatchResponse2104>""");
         ValidationResult result = validator.validate(MessageType.MSG_2104,
@@ -64,7 +64,7 @@ class Batch2104XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260505</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </BatchHead2104>
                 <CompanyAuthFileBatchResponse2104>
                   <CompanyAuthFileResponse>

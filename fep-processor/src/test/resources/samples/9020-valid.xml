@@ -16,7 +16,7 @@
             <SendOrgCode>10000000000001</SendOrgCode>
             <EntrustDate>20260421</EntrustDate>
             <TransitionNo>00000006</TransitionNo>
-            <Result>00000</Result>
+            <Result>90000</Result>
         </RealHead9020>
         <MsgReturn9020>
             <OriMsgNo>9000</OriMsgNo>

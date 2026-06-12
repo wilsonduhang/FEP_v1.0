@@ -49,7 +49,7 @@ final class XsdTestSupport {
                     + "<SendOrgCode>A1000143000104</SendOrgCode>"
                     + "<EntrustDate>20260424</EntrustDate>"
                     + "<TransitionNo>88888888</TransitionNo>"
-                    + "<Result>00000</Result>"
+                    + "<Result>90000</Result>"
                     + "</BatchHead3115>"
                     + "<PlatPay3115>"
                     + "<SerialNo>SN2026042410500000000000000111</SerialNo>"

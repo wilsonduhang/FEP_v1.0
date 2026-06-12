@@ -203,7 +203,7 @@ class InboundAck9120BatchWireTest {
             default -> "BatchHead" + code;
         };
         final boolean responseHead = "3103".equals(code) || "3113".equals(code);
-        final String resultElement = responseHead ? "<Result>00000</Result>" : "";
+        final String resultElement = responseHead ? "<Result>90000</Result>" : "";
         return "<" + elementName + ">"
                 + "<SendOrgCode>12345678901234</SendOrgCode>"
                 + "<EntrustDate>20260526</EntrustDate>"

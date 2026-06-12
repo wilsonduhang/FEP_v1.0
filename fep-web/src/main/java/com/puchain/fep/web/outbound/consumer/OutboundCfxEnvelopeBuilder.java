@@ -55,10 +55,12 @@ import java.util.Objects;
  * wireHeadClass, bodyClass)}。{@link JaxbContextCache} 以 unordered Set 为 key，命中跨多次
  * 调用共享 context（建池开销 50-300ms 一次性）。</p>
  *
- * <p><b>3101 Result 元素</b>：3101 wire-shape head 是 {@link ResponseBusinessHead}，含必填
- * {@code <Result>} 5 位数字字段。空值不会被 marshal 输出（JAXB {@code required=true} 不强制
- * marshal null 字段），故本组装器在 desc.requiresResultCode() 路径下注入 5 位占位
- * {@code "00000"}（业务真值由后续 P5 T6 / 业务流程注入）。</p>
+ * <p><b>Result 元素占位</b>：RESPONSE 类 wire-shape head（{@link ResponseBusinessHead}，
+ * dispatcher RESPONSE 集合 15 报文）含必填 {@code <Result>} 5 位数字字段。空值不会被 marshal
+ * 输出（JAXB {@code required=true} 不强制 marshal null 字段），故本组装器在
+ * desc.requiresResultCode() 路径下注入占位 {@code "90000"}（表 5.1.2-3 业务处理成功，
+ * 2026-06-12 muzhou 拍板由 "00000" 改为码表合法值以兼容 Result 业务规则；
+ * 业务真值注入仍由后续 P5 T6 / 业务流程承接）。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -66,8 +68,8 @@ import java.util.Objects;
 @Component
 public class OutboundCfxEnvelopeBuilder {
 
-    /** 3101 wire-shape head Result 占位 5 位（业务真值由后续阶段注入）。 */
-    static final String RESULT_PLACEHOLDER = "00000";
+    /** RESPONSE 类 wire-shape head Result 占位（表 5.1.2-3 合法码 90000；业务真值由后续阶段注入）。 */
+    static final String RESULT_PLACEHOLDER = "90000";
 
     private final OutboundWireShapeDispatcher dispatcher;
     private final BodyClassRegistry bodyClassRegistry;
@@ -174,12 +176,12 @@ public class OutboundCfxEnvelopeBuilder {
     public record EnvelopeBuildResult(String envelope, String msgId) { }
 
     /**
-     * 将 {@link OutboundHeadFields} 三字段灌注到 wire-shape head；3101 ResponseBusinessHead
+     * 将 {@link OutboundHeadFields} 三字段灌注到 wire-shape head；RESPONSE 类 ResponseBusinessHead
      * 额外注入 5 位 Result 占位。
      *
      * @param wireHead              通过反射构造的 head 实例
      * @param hf                    head 字段载体
-     * @param requiresResultCode    是否要求 Result（仅 3101 true）
+     * @param requiresResultCode    是否要求 Result（dispatcher RESPONSE 集合 15 报文 true）
      */
     private void populateWireHead(
             final RequestBusinessHead wireHead,

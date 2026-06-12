@@ -34,7 +34,7 @@ class Batch2102XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260505</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </BatchHead2102>
                 <DataTransferCheckResponse2102>
                   <DataTransferResult>
@@ -62,7 +62,7 @@ class Batch2102XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260505</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </BatchHead2102>
                 <DataTransferCheckResponse2102>
                   <DataTransferResult>
