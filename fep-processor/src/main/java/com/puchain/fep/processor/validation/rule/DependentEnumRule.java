@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.validation.rule;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,16 +40,19 @@ public final class DependentEnumRule implements ValidationRule {
 
     @Override
     public Optional<String> evaluate(final RuleContext ctx) {
-        final Optional<String> key = ctx.first(keyField);
-        final Optional<String> value = ctx.first(field);
-        if (key.isEmpty() || value.isEmpty()) {
-            return Optional.empty();
+        final List<String> keys = ctx.values(keyField);
+        final List<String> vals = ctx.values(field);
+        // 按文档顺序成对 (key[i], value[i])；次数不等时只校验共同前缀，超出部分由 XSD minOccurs 兜底
+        final int n = Math.min(keys.size(), vals.size());
+        final List<String> violations = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            final Set<String> allowed = allowedByKey.get(keys.get(i));
+            if (allowed != null && !allowed.contains(vals.get(i))) {
+                violations.add("字段 " + field + " 值 [" + vals.get(i) + "] 在 "
+                        + keyField + "=[" + keys.get(i) + "] 下不在允许集合 " + allowed);
+            }
         }
-        final Set<String> allowed = allowedByKey.get(key.get());
-        if (allowed == null || allowed.contains(value.get())) {
-            return Optional.empty();
-        }
-        return Optional.of("字段 " + field + " 值 [" + value.get() + "] 在 "
-                + keyField + "=[" + key.get() + "] 下不在允许集合 " + allowed);
+        return violations.isEmpty() ? Optional.empty()
+                : Optional.of(String.join("; ", violations));
     }
 }

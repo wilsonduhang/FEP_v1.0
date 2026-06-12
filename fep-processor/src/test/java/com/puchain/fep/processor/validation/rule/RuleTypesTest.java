@@ -94,6 +94,33 @@ class RuleTypesTest {
     }
 
     @Test
+    void dependentEnum_shouldValidatePairwiseAcrossRepeatedItems() {
+        // Plan Task 4 验收 1/2：重复项按序成对 (key[i], value[i]) 校验
+        ValidationRule rule = new DependentEnumRule("SecondClass", "MainClass",
+                Map.of("GYL", List.of("HX01"), "EAST", List.of("V50")));
+        assertThat(rule.evaluate(ctx("<CFX><Item><MainClass>GYL</MainClass><SecondClass>HX01</SecondClass></Item>"
+                + "<Item><MainClass>EAST</MainClass><SecondClass>BAD</SecondClass></Item></CFX>")))
+                .get().asString().contains("BAD", "EAST");
+        assertThat(rule.evaluate(ctx("<CFX><Item><MainClass>GYL</MainClass><SecondClass>HX01</SecondClass></Item>"
+                + "<Item><MainClass>EAST</MainClass><SecondClass>V50</SecondClass></Item></CFX>")))
+                .isEmpty();
+    }
+
+    @Test
+    void dependentEnum_unequalOccurrenceCounts_shouldPairUpToMin() {
+        // Plan Task 4 验收 3：key/value 次数不等 → 按 min 成对，超出部分不误报（XSD minOccurs 兜底）
+        ValidationRule rule = new DependentEnumRule("SecondClass", "MainClass",
+                Map.of("EAST", List.of("V50")));
+        // 2 个 key、1 个 value：仅校验 (EAST, V50) → 通过，第 2 个 key 无配对不误报
+        assertThat(rule.evaluate(ctx("<CFX><Item><MainClass>EAST</MainClass><SecondClass>V50</SecondClass></Item>"
+                + "<Item><MainClass>EAST</MainClass></Item></CFX>"))).isEmpty();
+        // 配对内非法仍要抓：1 个 key、2 个 value → 校验 (EAST, BAD)
+        assertThat(rule.evaluate(ctx("<CFX><Item><MainClass>EAST</MainClass><SecondClass>BAD</SecondClass></Item>"
+                + "<Item><SecondClass>V50</SecondClass></Item></CFX>")))
+                .get().asString().contains("BAD");
+    }
+
+    @Test
     void dependentEnum_defensivelyCopiesConstructorMaps() {
         java.util.Map<String, java.util.List<String>> src = new java.util.HashMap<>();
         java.util.List<String> vals = new java.util.ArrayList<>();
