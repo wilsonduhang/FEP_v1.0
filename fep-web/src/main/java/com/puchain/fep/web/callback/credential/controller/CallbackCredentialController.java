@@ -3,6 +3,7 @@ package com.puchain.fep.web.callback.credential.controller;
 import com.puchain.fep.common.domain.ApiResult;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialCreateRequest;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
+import com.puchain.fep.web.callback.credential.dto.CallbackCredentialSweepResponse;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialUpdateRequest;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialAdminService;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
@@ -131,6 +132,22 @@ public class CallbackCredentialController {
     public ApiResult<CallbackCredentialResponse> rotateKey(
             @Parameter(description = "输出接口 ID") @PathVariable final String interfaceId) {
         return ApiResult.success(service.rotateKey(interfaceId));
+    }
+
+    /**
+     * 批量迁移 legacy 明文凭证（冷接口收口；运维 DB 备份后触发）。
+     *
+     * @return 迁移/失败/剩余计数（不回显凭证内容）
+     */
+    @PostMapping("/migrate-legacy")
+    @OperationLog(module = "回调凭证管理", type = OperationType.UPDATE,
+            description = "批量迁移 legacy 明文凭证")
+    @Operation(summary = "批量迁移 legacy 明文凭证",
+            description = "逐行 REQUIRES_NEW 重加密为活跃 SM4 主密钥；单行失败不阻断，计数披露。"
+                    + "迁移有损回退（回滚窗口=首行迁移前），触发前须 DB 备份")
+    @ApiResponse(responseCode = "200", description = "扫描完成（含失败计数）")
+    public ApiResult<CallbackCredentialSweepResponse> migrateLegacy() {
+        return ApiResult.success(service.migrateLegacy());
     }
 
     /**
