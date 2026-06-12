@@ -62,4 +62,33 @@ class RuleContextTest {
                 + "<MSG><body><WorkDate>20260605</WorkDate></body></MSG></CFX>");
         assertThat(ctx.values("WorkDate")).containsExactly("20260601", "20260605");
     }
+
+    @Test
+    void hasElement_shouldDetectContainerElementWithoutDirectText() {
+        RuleContext ctx = of("<CFX><Body><RiskRate><a>1</a></RiskRate></Body></CFX>");
+        assertThat(ctx.hasElement("RiskRate")).isTrue();
+        assertThat(ctx.has("RiskRate")).isFalse();
+    }
+
+    @Test
+    void hasElement_shouldReturnFalseForAbsentElement() {
+        RuleContext ctx = of("<CFX><Body><a>1</a></Body></CFX>");
+        assertThat(ctx.hasElement("RiskRate")).isFalse();
+    }
+
+    @Test
+    void hasElement_shouldDetectBlankLeafElement() {
+        RuleContext ctx = of("<CFX><Body><f>  </f></Body></CFX>");
+        assertThat(ctx.hasElement("f")).isTrue();
+        assertThat(ctx.has("f")).isFalse();
+    }
+
+    @Test
+    void hasElementInHead_shouldScopeToHeadSubtreeOnly() {
+        RuleContext ctx = of("<CFX><HEAD><FileName>a.zip</FileName></HEAD>"
+                + "<MSG><Item><FileName>b.csv</FileName><FileSize>9</FileSize></Item></MSG></CFX>");
+        assertThat(ctx.hasElementInHead("FileName")).isTrue();
+        assertThat(ctx.hasElementInHead("FileSize")).isFalse();
+        assertThat(ctx.hasElement("FileSize")).isTrue();
+    }
 }

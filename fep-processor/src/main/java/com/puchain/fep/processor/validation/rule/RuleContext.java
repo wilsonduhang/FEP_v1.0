@@ -12,9 +12,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 报文字段的只读解析视图，供业务校验规则按 local-name 读取字段值。
@@ -23,13 +25,25 @@ import java.util.Optional;
  * 同名元素（明细列表）按文档顺序保留全部文本值。</p>
  *
  * <p>解析时启用 XXE 防护（禁用 DOCTYPE / 外部实体），与 {@code XsdSchemaRegistry} 守护一致。</p>
+ *
+ * <p>除文本值索引外，另维护两个元素存在性索引：全报文（{@link #hasElement}，容器元素亦可探测）
+ * 与报文头 HEAD 子树（{@link #hasElementInHead}，供 HEAD 作用域分组规则防 body 同名串扰）。</p>
  */
 public final class RuleContext {
 
-    private final Map<String, List<String>> fields;
+    /** 报文头元素本地名（报文规范表 2.2.2.2-1，CFX 直属子元素）。 */
+    private static final String HEAD_LOCAL_NAME = "HEAD";
 
-    private RuleContext(final Map<String, List<String>> fields) {
+    private final Map<String, List<String>> fields;
+    private final Set<String> presentElements;
+    private final Set<String> headElements;
+
+    private RuleContext(final Map<String, List<String>> fields,
+                        final Set<String> presentElements,
+                        final Set<String> headElements) {
         this.fields = fields;
+        this.presentElements = presentElements;
+        this.headElements = headElements;
     }
 
     /**
@@ -53,8 +67,10 @@ public final class RuleContext {
             final DocumentBuilder builder = dbf.newDocumentBuilder();
             final Document doc = builder.parse(new ByteArrayInputStream(xml));
             final Map<String, List<String>> collected = new HashMap<>();
-            collect(doc.getDocumentElement(), collected);
-            return new RuleContext(collected);
+            final Set<String> present = new HashSet<>();
+            final Set<String> head = new HashSet<>();
+            collect(doc.getDocumentElement(), collected, present, head, false);
+            return new RuleContext(collected, Set.copyOf(present), Set.copyOf(head));
         } catch (final ValidationException ex) {
             throw ex;
         } catch (final Exception ex) {
@@ -62,19 +78,26 @@ public final class RuleContext {
         }
     }
 
-    private static void collect(final Node node, final Map<String, List<String>> out) {
+    private static void collect(final Node node, final Map<String, List<String>> out,
+                                final Set<String> present, final Set<String> head,
+                                final boolean inHead) {
         if (node == null || node.getNodeType() != Node.ELEMENT_NODE) {
             return;
         }
         final Element el = (Element) node;
         final String localName = el.getLocalName() != null ? el.getLocalName() : el.getTagName();
+        present.add(localName);
+        final boolean nowInHead = inHead || HEAD_LOCAL_NAME.equals(localName);
+        if (nowInHead) {
+            head.add(localName);
+        }
         final String text = directTextOf(el);
         if (text != null && !text.isBlank()) {
             out.computeIfAbsent(localName, k -> new ArrayList<>()).add(text.trim());
         }
         final NodeList children = el.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
-            collect(children.item(i), out);
+            collect(children.item(i), out, present, head, nowInHead);
         }
     }
 
@@ -121,5 +144,29 @@ public final class RuleContext {
      */
     public boolean has(final String localName) {
         return first(localName).isPresent();
+    }
+
+    /**
+     * 元素是否出现在报文中（不要求有文本，容器元素亦可探测）。
+     *
+     * <p>对应报文规范 §2.1.3.1 分组可选字段的"使用"语义。</p>
+     *
+     * @param localName 元素本地名
+     * @return 元素存在返回 true
+     */
+    public boolean hasElement(final String localName) {
+        return presentElements.contains(localName);
+    }
+
+    /**
+     * 元素是否出现在报文头 HEAD 子树内（报文规范表 2.2.2.2-1）。
+     *
+     * <p>供 HEAD 作用域分组规则使用，避免与 body 内同名元素串扰。</p>
+     *
+     * @param localName 元素本地名
+     * @return HEAD 子树内存在返回 true
+     */
+    public boolean hasElementInHead(final String localName) {
+        return headElements.contains(localName);
     }
 }
