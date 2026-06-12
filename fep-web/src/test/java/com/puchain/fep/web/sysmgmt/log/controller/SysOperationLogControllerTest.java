@@ -160,11 +160,10 @@ class SysOperationLogControllerTest {
      */
     @org.junit.jupiter.api.Test
     void integrity_afterAspectDrivenAppends_reportsIntact() throws Exception {
-        // 排他链段：清空共享 H2 既有链行并重锚 context writer（与 AuditChainVerifierTest 同权衡）；
-        // checkpoint 同步清空——别类推进的锚指向已删链行，残留致 incremental 假断点（Plan B1）
-        jdbcTemplate.update("DELETE FROM t_sys_operation_log WHERE seq IS NOT NULL");
-        jdbcTemplate.update("DELETE FROM audit_chain_checkpoint");
-        auditChainWriter.recoverChainTail();
+        // 排他链段 + checkpoint 清空 + 重锚（Plan B1；池② util 收编——别类推进的锚指向
+        // 已删链行，残留致 incremental 假断点）
+        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
+                .resetChain(jdbcTemplate, auditChainWriter);
         // 经切面真实写入 ≥3 行（search 端点带 @OperationLog）
         for (int i = 0; i < 3; i++) {
             mockMvc.perform(get("/api/v1/sys/logs")
@@ -189,16 +188,16 @@ class SysOperationLogControllerTest {
      */
     @org.junit.jupiter.api.Test
     void integrity_withFullMode_reportsFullVerification() throws Exception {
-        jdbcTemplate.update("DELETE FROM t_sys_operation_log WHERE seq IS NOT NULL");
-        jdbcTemplate.update("DELETE FROM audit_chain_checkpoint");
-        auditChainWriter.recoverChainTail();
+        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
+                .resetChain(jdbcTemplate, auditChainWriter);
         for (int i = 0; i < 3; i++) {
             mockMvc.perform(get("/api/v1/sys/logs")
                             .header("Authorization", "Bearer " + accessToken))
                     .andExpect(status().isOk());
         }
+        // 小写入参（断言 mode=FULL 同时直接覆盖大小写不敏感路径，T3 spec MINOR-1）
         mockMvc.perform(get("/api/v1/sys/logs/integrity")
-                        .param("mode", "FULL")
+                        .param("mode", "full")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
@@ -218,7 +217,8 @@ class SysOperationLogControllerTest {
         mockMvc.perform(get("/api/v1/sys/logs/integrity")
                         .param("mode", "bogus")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PARAM_4002"));
     }
 
     @AfterEach
