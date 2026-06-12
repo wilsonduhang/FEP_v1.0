@@ -55,7 +55,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                   <pzrzState>1</pzrzState>
                   <pzrzStatusInfo>
                     <pzNo>PZ20260513000000000001</pzNo>
-                    <rzPhaseCode>01</rzPhaseCode>
+                    <rzPhaseCode>11</rzPhaseCode>
                     <BankNodeCode>A1000142000001</BankNodeCode>
                   </pzrzStatusInfo>
                   <ExtInfo>
@@ -83,7 +83,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                   <pzrzState>1</pzrzState>
                   <pzrzStatusInfo>
                     <pzNo>PZ20260513000000000002</pzNo>
-                    <rzPhaseCode>01</rzPhaseCode>
+                    <rzPhaseCode>11</rzPhaseCode>
                     <BankNodeCode>A1000142000001</BankNodeCode>
                   </pzrzStatusInfo>
                 </pzInfoReturn3004>""");
@@ -107,7 +107,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                   <pzrzState>1</pzrzState>
                   <pzrzStatusInfo>
                     <pzNo>PZ20260513000000000003</pzNo>
-                    <rzPhaseCode>01</rzPhaseCode>
+                    <rzPhaseCode>11</rzPhaseCode>
                     <BankNodeCode>A1000142000001</BankNodeCode>
                   </pzrzStatusInfo>
                 </pzInfoReturn3004>""");

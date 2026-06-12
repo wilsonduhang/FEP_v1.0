@@ -7,11 +7,6 @@ import com.puchain.fep.processor.validation.rule.ConfiguredRuleFactory;
 import com.puchain.fep.processor.validation.rule.MessageRuleRegistry;
 import com.puchain.fep.processor.validation.rule.RuleDefinitionProperties;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.context.properties.bind.Binder;
-import org.springframework.boot.env.YamlPropertySourceLoader;
-import org.springframework.core.env.PropertySource;
-import org.springframework.core.env.StandardEnvironment;
-import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,13 +33,7 @@ class RuleMasterMainClass1001Test {
             "STATS", "YWTB", "ZFJS", "SYSTEM", "GENERAL");
 
     private static RuleDefinitionProperties bindProductionRules() throws IOException {
-        YamlPropertySourceLoader loader = new YamlPropertySourceLoader();
-        List<PropertySource<?>> sources =
-                loader.load("application", new ClassPathResource("application.yml"));
-        StandardEnvironment env = new StandardEnvironment();
-        sources.forEach(env.getPropertySources()::addFirst);
-        return Binder.get(env).bind("fep.validation", RuleDefinitionProperties.class)
-                .orElseGet(RuleDefinitionProperties::new);
+        return RuleMasterTestSupport.bindProductionRules();
     }
 
     private static byte[] msg1001(String mainClass) {

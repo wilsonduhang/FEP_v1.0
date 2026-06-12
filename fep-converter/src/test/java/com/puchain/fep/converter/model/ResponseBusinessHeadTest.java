@@ -13,10 +13,10 @@ class ResponseBusinessHeadTest {
         h.setSendOrgCode("12345678901234");
         h.setEntrustDate("20260410");
         h.setTransitionNo("00000001");
-        h.setResult("00000");
+        h.setResult("90000");
         h.setAddWord("业务受理成功");
         assertThat(h.getSendOrgCode()).isEqualTo("12345678901234");
-        assertThat(h.getResult()).isEqualTo("00000");
+        assertThat(h.getResult()).isEqualTo("90000");
         assertThat(h.getAddWord()).isEqualTo("业务受理成功");
     }
 

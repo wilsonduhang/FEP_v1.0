@@ -75,7 +75,7 @@ class MsgReturn9120Test {
                 + "            <SendOrgCode>10000000000001</SendOrgCode>\n"
                 + "            <EntrustDate>20260416</EntrustDate>\n"
                 + "            <TransitionNo>00000001</TransitionNo>\n"
-                + "            <Result>00000</Result>\n"
+                + "            <Result>90000</Result>\n"
                 + "        </BatchHead9120>\n"
                 + "        <MsgReturn9120>\n"
                 + "            <OriMsgNo>3001</OriMsgNo>\n"

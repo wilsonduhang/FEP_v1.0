@@ -53,6 +53,27 @@ class RuleTypesTest {
     }
 
     @Test
+    void enumMembership_shouldValidateEveryOccurrenceNotJustFirst() {
+        // Plan Task 3 验收 1：嵌套重复项第 2 个非法值须被抓
+        ValidationRule rule = new EnumMembershipRule("MainClass", Set.of("GYL", "EAST"));
+        assertThat(rule.evaluate(ctx("<CFX><Body><Item><MainClass>GYL</MainClass></Item>"
+                + "<Item><MainClass>BAD</MainClass></Item></Body></CFX>")))
+                .get().asString().contains("BAD");
+        // Plan Task 3 验收 2：全部值合法 → 通过
+        assertThat(rule.evaluate(ctx("<CFX><Body><Item><MainClass>GYL</MainClass></Item>"
+                + "<Item><MainClass>EAST</MainClass></Item></Body></CFX>"))).isEmpty();
+    }
+
+    @Test
+    void enumMembership_shouldListAllIllegalValuesInOneMessage() {
+        // Plan Task 3 验收 3：多个非法值一条违规消息列全
+        ValidationRule rule = new EnumMembershipRule("Currency", Set.of("CNY"));
+        assertThat(rule.evaluate(ctx("<CFX><D><Currency>JPY</Currency></D>"
+                + "<D><Currency>KRW</Currency></D></CFX>")))
+                .get().asString().contains("JPY", "KRW");
+    }
+
+    @Test
     void dependentEnum_violatedWhenTargetNotInKeyedSet() {
         ValidationRule rule = new DependentEnumRule(
                 "SecondClass", "MainClass",
@@ -70,6 +91,33 @@ class RuleTypesTest {
         assertThat(rule.evaluate(ctx("<CFX><SecondClass>V50</SecondClass></CFX>"))).isEmpty();
         // 验收 5：目标缺失 → 通过
         assertThat(rule.evaluate(ctx("<CFX><MainClass>EAST</MainClass></CFX>"))).isEmpty();
+    }
+
+    @Test
+    void dependentEnum_shouldValidatePairwiseAcrossRepeatedItems() {
+        // Plan Task 4 验收 1/2：重复项按序成对 (key[i], value[i]) 校验
+        ValidationRule rule = new DependentEnumRule("SecondClass", "MainClass",
+                Map.of("GYL", List.of("HX01"), "EAST", List.of("V50")));
+        assertThat(rule.evaluate(ctx("<CFX><Item><MainClass>GYL</MainClass><SecondClass>HX01</SecondClass></Item>"
+                + "<Item><MainClass>EAST</MainClass><SecondClass>BAD</SecondClass></Item></CFX>")))
+                .get().asString().contains("BAD", "EAST");
+        assertThat(rule.evaluate(ctx("<CFX><Item><MainClass>GYL</MainClass><SecondClass>HX01</SecondClass></Item>"
+                + "<Item><MainClass>EAST</MainClass><SecondClass>V50</SecondClass></Item></CFX>")))
+                .isEmpty();
+    }
+
+    @Test
+    void dependentEnum_unequalOccurrenceCounts_shouldPairUpToMin() {
+        // Plan Task 4 验收 3：key/value 次数不等 → 按 min 成对，超出部分不误报（XSD minOccurs 兜底）
+        ValidationRule rule = new DependentEnumRule("SecondClass", "MainClass",
+                Map.of("EAST", List.of("V50")));
+        // 2 个 key、1 个 value：仅校验 (EAST, V50) → 通过，第 2 个 key 无配对不误报
+        assertThat(rule.evaluate(ctx("<CFX><Item><MainClass>EAST</MainClass><SecondClass>V50</SecondClass></Item>"
+                + "<Item><MainClass>EAST</MainClass></Item></CFX>"))).isEmpty();
+        // 配对内非法仍要抓：1 个 key、2 个 value → 校验 (EAST, BAD)
+        assertThat(rule.evaluate(ctx("<CFX><Item><MainClass>EAST</MainClass><SecondClass>BAD</SecondClass></Item>"
+                + "<Item><SecondClass>V50</SecondClass></Item></CFX>")))
+                .get().asString().contains("BAD");
     }
 
     @Test
@@ -100,9 +148,39 @@ class RuleTypesTest {
     }
 
     @Test
+    void groupCooccurrence_shouldDetectContainerElementAsUsed() {
+        // Plan Task 2 验收 1/2：容器元素（无直接文本）按元素存在判定
+        ValidationRule rule = new GroupCooccurrenceRule(List.of("RiskRate", "edUpdateDateTime"));
+        assertThat(rule.evaluate(ctx("<CFX><Body><RiskRate><a>1</a></RiskRate></Body></CFX>")))
+                .get().asString().contains("edUpdateDateTime");
+        assertThat(rule.evaluate(ctx("<CFX><Body><RiskRate><a>1</a></RiskRate>"
+                + "<edUpdateDateTime>20260611120000</edUpdateDateTime></Body></CFX>")))
+                .isEmpty();
+    }
+
+    @Test
+    void groupCooccurrence_headScope_shouldIgnoreBodySameNameElements() {
+        // Plan Task 2 验收 4：scope=HEAD 防 body 同名串扰（1102 核对项 FileName 形态）
+        ValidationRule rule = new GroupCooccurrenceRule(
+                List.of("FileName", "FileContentHash", "FileSize"), GroupCooccurrenceRule.Scope.HEAD);
+        assertThat(rule.evaluate(ctx("<CFX><HEAD><MsgNo>1102</MsgNo></HEAD>"
+                + "<MSG><Item><FileName>old.csv</FileName></Item></MSG></CFX>"))).isEmpty();
+        assertThat(rule.evaluate(ctx("<CFX><HEAD><FileName>a.zip</FileName><FileSize>10</FileSize></HEAD>"
+                + "<MSG><Body>x</Body></MSG></CFX>")))
+                .get().asString().contains("FileContentHash");
+    }
+
+    @Test
     void groupCooccurrence_rejectsGroupSmallerThanTwo() {
         org.assertj.core.api.Assertions.assertThatThrownBy(
                         () -> new GroupCooccurrenceRule(List.of("Only")))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void groupCooccurrence_rejectsNullScope() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> new GroupCooccurrenceRule(List.of("A", "B"), null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

@@ -16,7 +16,7 @@
             <SendOrgCode>A1000143000104</SendOrgCode>
             <EntrustDate>20260424</EntrustDate>
             <TransitionNo>00000082</TransitionNo>
-            <Result>00000</Result>
+            <Result>90000</Result>
         </BatchHead3108>
         <pzCheckQueryReturn3108>
             <SerialNo>SN2026042410350000000000000082</SerialNo>
@@ -27,7 +27,7 @@
             <pzCheckReturn>
                 <hxqyName>湖南某某核心企业MA</hxqyName>
                 <hxqyCode>91430100MA00000031</hxqyCode>
-                <RetCode>00000</RetCode>
+                <RetCode>90000</RetCode>
                 <RetMemo>核对成功</RetMemo>
                 <pzCountAll>50</pzCountAll>
                 <pzAmtAll>500000.00</pzAmtAll>

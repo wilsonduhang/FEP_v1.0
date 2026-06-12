@@ -41,7 +41,7 @@ class CompanyAuthFileResponse2004XsdValidationTest extends AbstractXsdValidation
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                   <AddWord>处理成功</AddWord>
                 </RealHead2004>
                 <CompanyAuthFileResponse2004>
@@ -52,7 +52,7 @@ class CompanyAuthFileResponse2004XsdValidationTest extends AbstractXsdValidation
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
                   <IsUpdate>0</IsUpdate>
-                  <RecordResult>00000</RecordResult>
+                  <RecordResult>90000</RecordResult>
                   <RecordAddWord>备案成功</RecordAddWord>
                 </CompanyAuthFileResponse2004>""");
 
@@ -63,7 +63,7 @@ class CompanyAuthFileResponse2004XsdValidationTest extends AbstractXsdValidation
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </RealHead2004>
                 <CompanyAuthFileResponse2004>
                   <CompanyName>测试企业有限公司</CompanyName>
@@ -72,7 +72,7 @@ class CompanyAuthFileResponse2004XsdValidationTest extends AbstractXsdValidation
                   <AuthEndDate>20271231</AuthEndDate>
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
-                  <RecordResult>00000</RecordResult>
+                  <RecordResult>90000</RecordResult>
                 </CompanyAuthFileResponse2004>""");
 
     /**
@@ -96,7 +96,7 @@ class CompanyAuthFileResponse2004XsdValidationTest extends AbstractXsdValidation
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </RealHead2004>
                 <CompanyAuthFileResponse2004>
                   <CompanyName>测试企业有限公司</CompanyName>

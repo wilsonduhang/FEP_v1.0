@@ -79,7 +79,7 @@ class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
                   <CreditInfo>
                     <hxqyName>核心企业测试有限公司</hxqyName>
                     <hxqyCode>91110000ABCDEFGH12</hxqyCode>
-                    <RetCode>00000</RetCode>
+                    <RetCode>90000</RetCode>
                     <RetMemo>授信信息可用</RetMemo>
                     <CreditInfoMx>
                       <BankNodeCode>B1000142000001</BankNodeCode>
@@ -120,7 +120,7 @@ class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
                   <CreditInfo>
                     <hxqyName>核心企业测试有限公司</hxqyName>
                     <hxqyCode>91110000ABCDEFGH12</hxqyCode>
-                    <RetCode>00000</RetCode>
+                    <RetCode>90000</RetCode>
                   </CreditInfo>
                 </hxqyCreditAmt3113>""");
 

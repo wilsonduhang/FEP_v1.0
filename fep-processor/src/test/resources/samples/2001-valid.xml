@@ -16,14 +16,14 @@
             <SendOrgCode>A1000143000104</SendOrgCode>
             <EntrustDate>20260411</EntrustDate>
             <TransitionNo>00000001</TransitionNo>
-            <Result>00000</Result>
+            <Result>90000</Result>
         </RealHead2001>
         <CompanyInfoResponse2001>
             <CompanyName>湖南示例实业有限公司</CompanyName>
             <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
             <MainClass>MainA01</MainClass>
             <SecondClass>SubA0101</SecondClass>
-            <QueryResult>00000</QueryResult>
+            <QueryResult>90000</QueryResult>
         </CompanyInfoResponse2001>
     </MSG>
 </CFX>

@@ -16,7 +16,7 @@
             <SendOrgCode>A1000143000104</SendOrgCode>
             <EntrustDate>20260411</EntrustDate>
             <TransitionNo>00000004</TransitionNo>
-            <Result>00000</Result>
+            <Result>90000</Result>
         </RealHead2004>
         <CompanyAuthFileResponse2004>
             <CompanyName>湖南示例实业有限公司</CompanyName>
@@ -25,7 +25,7 @@
             <AuthEndDate>20261231</AuthEndDate>
             <AuthNo>AUTH2026041100004</AuthNo>
             <AuthOrgCode>10000000000001</AuthOrgCode>
-            <RecordResult>00000</RecordResult>
+            <RecordResult>90000</RecordResult>
         </CompanyAuthFileResponse2004>
     </MSG>
 </CFX>

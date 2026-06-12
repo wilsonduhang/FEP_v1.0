@@ -39,7 +39,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                   <AddWord>处理成功</AddWord>
                 </RealHead2001>
                 <CompanyInfoResponse2001>
@@ -49,7 +49,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                   <SecondClass>QYXX01</SecondClass>
                   <BeginDate>20260101</BeginDate>
                   <EndDate>20260511</EndDate>
-                  <QueryResult>00000</QueryResult>
+                  <QueryResult>90000</QueryResult>
                   <QueryAddWord>查询成功</QueryAddWord>
                 </CompanyInfoResponse2001>""");
 
@@ -60,14 +60,14 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </RealHead2001>
                 <CompanyInfoResponse2001>
                   <CompanyName>测试企业有限公司</CompanyName>
                   <CompanyCode>91110000ABCDEFGH12</CompanyCode>
                   <MainClass>QYXX</MainClass>
                   <SecondClass>QYXX01</SecondClass>
-                  <QueryResult>00000</QueryResult>
+                  <QueryResult>90000</QueryResult>
                 </CompanyInfoResponse2001>""");
 
     /**
@@ -92,7 +92,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </RealHead2001>
                 <CompanyInfoResponse2001>
                   <CompanyName>测试企业有限公司</CompanyName>
@@ -162,7 +162,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
     void invalid2001_queryResultWrongLength_shouldFail() {
         // DataType.xsd Result type length=5 实测，violation 用 4 位
         String xml = VALID_FULL_FIELDS_XML.replace(
-                "<QueryResult>00000</QueryResult>",
+                "<QueryResult>90000</QueryResult>",
                 "<QueryResult>0000</QueryResult>");
 
         ValidationResult result = validator.validate(MessageType.MSG_2001,

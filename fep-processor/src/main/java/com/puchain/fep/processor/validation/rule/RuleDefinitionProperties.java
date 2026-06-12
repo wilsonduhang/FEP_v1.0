@@ -42,6 +42,7 @@ public class RuleDefinitionProperties {
         private String keyField;
         private Map<String, List<String>> allowedByKey = Map.of();
         private List<String> groupFields = new ArrayList<>();
+        private String scope;
 
         /** @return 规则类型 */
         public String getType() {
@@ -131,6 +132,16 @@ public class RuleDefinitionProperties {
         /** @param groupFields 分组共现字段列表 */
         public void setGroupFields(final List<String> groupFields) {
             this.groupFields = groupFields;
+        }
+
+        /** @return 分组探测作用域（GROUP_COOCCURRENCE 用，MESSAGE/HEAD，缺省 MESSAGE） */
+        public String getScope() {
+            return scope;
+        }
+
+        /** @param scope 分组探测作用域 */
+        public void setScope(final String scope) {
+            this.scope = scope;
         }
     }
 }

@@ -22,7 +22,7 @@ class CompanyInfoResponse2001Test {
         original.setSecondClass("SubA0101");
         original.setBeginDate("20260101");
         original.setEndDate("20260411");
-        original.setQueryResult("00000");
+        original.setQueryResult("90000");
         original.setQueryAddWord("查询成功");
 
         String xml = JaxbRoundtripSupport.marshal(original);
@@ -35,7 +35,7 @@ class CompanyInfoResponse2001Test {
                 .contains("<SecondClass>SubA0101</SecondClass>")
                 .contains("<BeginDate>20260101</BeginDate>")
                 .contains("<EndDate>20260411</EndDate>")
-                .contains("<QueryResult>00000</QueryResult>")
+                .contains("<QueryResult>90000</QueryResult>")
                 .contains("<QueryAddWord>查询成功</QueryAddWord>");
 
         CompanyInfoResponse2001 parsed = JaxbRoundtripSupport.unmarshal(xml, CompanyInfoResponse2001.class);
@@ -45,7 +45,7 @@ class CompanyInfoResponse2001Test {
         assertThat(parsed.getSecondClass()).isEqualTo("SubA0101");
         assertThat(parsed.getBeginDate()).isEqualTo("20260101");
         assertThat(parsed.getEndDate()).isEqualTo("20260411");
-        assertThat(parsed.getQueryResult()).isEqualTo("00000");
+        assertThat(parsed.getQueryResult()).isEqualTo("90000");
         assertThat(parsed.getQueryAddWord()).isEqualTo("查询成功");
     }
 

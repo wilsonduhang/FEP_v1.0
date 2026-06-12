@@ -8,6 +8,9 @@ import java.util.Set;
 
 /**
  * 将配置规则定义装配为 {@link ValidationRule} 并注册到 {@link MessageRuleRegistry}（启动期一次）。
+ *
+ * <p>报文号支持 {@code "*"} 通配（yaml 键须写 {@code "[*]"} 防 relaxed binding 剥字符）：
+ * 该键下规则注册到全部 {@link MessageType}，用于全报文通用约束（如报文头分组）。</p>
  */
 @Component
 public class ConfiguredRuleFactory {
@@ -25,6 +28,9 @@ public class ConfiguredRuleFactory {
         this.registry = registry;
     }
 
+    /** 通配报文号键（yaml 中写 "[*]"）。 */
+    private static final String WILDCARD_MSG_NO = "*";
+
     /**
      * 启动期把配置规则注册到注册表。
      *
@@ -33,6 +39,15 @@ public class ConfiguredRuleFactory {
     @PostConstruct
     public void registerConfiguredRules() {
         properties.getRules().forEach((msgNo, defs) -> {
+            if (WILDCARD_MSG_NO.equals(msgNo)) {
+                defs.forEach(def -> {
+                    final ValidationRule rule = build(def);
+                    for (final MessageType t : MessageType.values()) {
+                        registry.register(t, rule);
+                    }
+                });
+                return;
+            }
             final MessageType type = MessageType.byMsgNo(msgNo)
                     .orElseThrow(() -> new IllegalArgumentException(
                             "未知报文号配置 fep.validation.rules: " + msgNo));
@@ -58,7 +73,9 @@ public class ConfiguredRuleFactory {
                     CrossFieldComparisonRule.Operator.valueOf(def.getOperator()));
             case "DEPENDENT_ENUM" -> new DependentEnumRule(
                     def.getField(), def.getKeyField(), def.getAllowedByKey());
-            case "GROUP_COOCCURRENCE" -> new GroupCooccurrenceRule(def.getGroupFields());
+            case "GROUP_COOCCURRENCE" -> new GroupCooccurrenceRule(def.getGroupFields(),
+                    def.getScope() == null ? GroupCooccurrenceRule.Scope.MESSAGE
+                            : GroupCooccurrenceRule.Scope.valueOf(def.getScope()));
             default -> throw new IllegalArgumentException("未知规则类型: " + def.getType());
         };
     }

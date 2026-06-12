@@ -304,7 +304,7 @@ class SupplyChainBody3003_3004Test {
 
         PzrzStatusInfo statusInfo = new PzrzStatusInfo();
         statusInfo.setPzNo("PZ20260416MIN");
-        statusInfo.setRzPhaseCode("01");
+        statusInfo.setRzPhaseCode("11");
         statusInfo.setBankNodeCode("B1000143000199");
         minimal.setPzrzStatusInfo(statusInfo);
 
@@ -365,7 +365,7 @@ class SupplyChainBody3003_3004Test {
     private static PzInfoReturn3004 buildCompleteResponse() {
         PzrzStatusInfo status = new PzrzStatusInfo();
         status.setPzNo("PZ20260421000001");
-        status.setRzPhaseCode("01");
+        status.setRzPhaseCode("11");
         status.setBankNodeCode("10000000000001");
 
         PzFlowInfo flow = new PzFlowInfo();

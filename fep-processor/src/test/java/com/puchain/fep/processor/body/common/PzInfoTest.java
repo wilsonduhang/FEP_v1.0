@@ -67,7 +67,7 @@ class PzInfoTest {
         body.setPzrzState("01");
         PzrzStatusInfo status = new PzrzStatusInfo();
         status.setPzNo("PZ20260421000001");
-        status.setRzPhaseCode("01");
+        status.setRzPhaseCode("11");
         status.setBankNodeCode("10000000000001");
         body.setPzrzStatusInfo(status);
         body.setPzInfo(pz);
@@ -95,7 +95,7 @@ class PzInfoTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260421</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>00000</Result>
+                  <Result>90000</Result>
                 </RealHead3004>
                 %s
               </MSG>

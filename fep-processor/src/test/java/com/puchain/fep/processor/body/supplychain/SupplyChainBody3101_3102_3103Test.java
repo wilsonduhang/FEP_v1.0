@@ -327,7 +327,7 @@ class SupplyChainBody3101_3102_3103Test {
         original.setSerialNo("SN3103-001");
         original.setSendNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setDesNodeCode("B1001010203");
-        original.setCreationRetCode("01");
+        original.setCreationRetCode("11");
         original.setCreationRetInfo("建档成功");
         original.setHxqyName("湖南某某核心企业");
         original.setHxqyCode("91430000MA4L7DXY01");
@@ -351,7 +351,7 @@ class SupplyChainBody3101_3102_3103Test {
                 .contains("<SerialNo>SN3103-001</SerialNo>")
                 .contains("<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>")
                 .contains("<DesNodeCode>B1001010203</DesNodeCode>")
-                .contains("<CreationRetCode>01</CreationRetCode>")
+                .contains("<CreationRetCode>11</CreationRetCode>")
                 .contains("<CreationRetInfo>建档成功</CreationRetInfo>")
                 .contains("<hxqyName>湖南某某核心企业</hxqyName>")
                 .contains("<hxqyCode>91430000MA4L7DXY01</hxqyCode>")
@@ -374,7 +374,7 @@ class SupplyChainBody3101_3102_3103Test {
         assertThat(parsed.getSerialNo()).isEqualTo("SN3103-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getDesNodeCode()).isEqualTo("B1001010203");
-        assertThat(parsed.getCreationRetCode()).isEqualTo("01");
+        assertThat(parsed.getCreationRetCode()).isEqualTo("11");
         assertThat(parsed.getCreationRetInfo()).isEqualTo("建档成功");
         assertThat(parsed.getHxqyName()).isEqualTo("湖南某某核心企业");
         assertThat(parsed.getHxqyCode()).isEqualTo("91430000MA4L7DXY01");

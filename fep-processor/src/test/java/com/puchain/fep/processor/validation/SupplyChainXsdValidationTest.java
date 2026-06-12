@@ -49,7 +49,7 @@ class SupplyChainXsdValidationTest {
                 <SendOrgCode>12345678901234</SendOrgCode>
                 <EntrustDate>20260417</EntrustDate>
                 <TransitionNo>00000001</TransitionNo>
-                <Result>00000</Result>""";
+                <Result>90000</Result>""";
 
     /** 30-char SerialNo (Text, length=30). */
     private static final String SERIAL_NO = "SN2026041700000000000000000001";
@@ -155,7 +155,7 @@ class SupplyChainXsdValidationTest {
                     <pzrzState>1</pzrzState>
                     <pzrzStatusInfo>
                         <pzNo>PZ202604170001</pzNo>
-                        <rzPhaseCode>01</rzPhaseCode>
+                        <rzPhaseCode>11</rzPhaseCode>
                         <BankNodeCode>12345678901234</BankNodeCode>
                     </pzrzStatusInfo>
                     <zpzAllInfo>
@@ -193,7 +193,7 @@ class SupplyChainXsdValidationTest {
                     <SendOrgCode>A1000143000104</SendOrgCode>
                     <EntrustDate>20260421</EntrustDate>
                     <TransitionNo>00000001</TransitionNo>
-                    <Result>00000</Result>
+                    <Result>90000</Result>
                 </RealHead3004>
                 <pzInfoReturn3004>
                     <SerialNo>""" + SERIAL_NO + """
@@ -207,7 +207,7 @@ class SupplyChainXsdValidationTest {
                     <pzrzState>01</pzrzState>
                     <pzrzStatusInfo>
                         <pzNo>PZ20260421000001</pzNo>
-                        <rzPhaseCode>01</rzPhaseCode>
+                        <rzPhaseCode>11</rzPhaseCode>
                         <BankNodeCode>10000000000001</BankNodeCode>
                     </pzrzStatusInfo>
                     <pzInfo>
@@ -425,7 +425,7 @@ class SupplyChainXsdValidationTest {
                     <pzrzState>1</pzrzState>
                     <pzrzStatusInfo>
                         <pzNo>PZ202604170001</pzNo>
-                        <rzPhaseCode>01</rzPhaseCode>
+                        <rzPhaseCode>11</rzPhaseCode>
                     </pzrzStatusInfo>
                 </pzInfoReturn3004>""");
 
