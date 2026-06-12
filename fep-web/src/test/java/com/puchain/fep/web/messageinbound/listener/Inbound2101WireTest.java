@@ -62,8 +62,8 @@ import static org.awaitility.Awaitility.await;
  * {@code @MockBean XsdValidator}，由 Spring context 注入真实 bean。fixture
  * {@code buildCfxEnvelope2101} 字段值满足 2101.xsd + Base.xsd 完整约束：
  * HEAD CorrMsgId 20 零（MsgId length=20）、BatchHead2101 RequestHead 含
- * SendOrgCode/EntrustDate/TransitionNo、DataTransfer2101 含 MainClass Token
- * "FINANCE"（2-16）、SecondClass Token "LOAN001"（2-16 / 无下划线）、Period/Type
+ * SendOrgCode/EntrustDate/TransitionNo、DataTransfer2101 含 MainClass "GYL"
+ * + SecondClass "HX01"（表 5.1.3-1 合法对，兼容 Task 8 业务规则）、Period/Type
  * Number 1-2、FileDate Date yyyyMMdd。与 sibling
  * {@link Inbound3112WireTest}/{@link InboundAck9120BatchWireTest} 同 cache key
  * （R-NEW-1 统一 cache）。</p>
@@ -188,8 +188,8 @@ class Inbound2101WireTest {
                 + "<TransitionNo>" + cfxMsgId.substring(cfxMsgId.length() - 8) + "</TransitionNo>"
                 + "</BatchHead2101>"
                 + "<DataTransfer2101>"
-                + "<MainClass>FINANCE</MainClass>"
-                + "<SecondClass>LOAN001</SecondClass>"
+                + "<MainClass>GYL</MainClass>"
+                + "<SecondClass>HX01</SecondClass>"
                 + "<Period>1</Period>"
                 + "<Type>1</Type>"
                 + "<FileDate>20260511</FileDate>"

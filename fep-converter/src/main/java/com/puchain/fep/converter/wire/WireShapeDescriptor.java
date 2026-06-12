@@ -18,14 +18,14 @@ import java.util.Objects;
  * <p>3 类 wire-shape:</p>
  * <ul>
  *   <li>{@code RealHead3009} + {@link RequestBusinessHead}（仅 3009）</li>
- *   <li>{@code BatchHead3101} + ResponseBusinessHead 含 Result（仅 3101）</li>
+ *   <li>{@code BatchHead3101} + ResponseBusinessHead 含 Result（RESPONSE 类报文）</li>
  *   <li>{@code BatchHead{msgNo}} + RequestBusinessHead（其余 6: 3102/3105/3107/3109/3112/3116）</li>
  * </ul>
  *
  * @param headElementName  XML head 元素名（如 {@code "RealHead3009"} / {@code "BatchHead3101"}）
  * @param headClass        head POJO 类（{@link RequestBusinessHead} 或其子类
  *                         {@code ResponseBusinessHead}）
- * @param requiresResultCode 是否要求 head 含 ResultCode（仅 3101 true）
+ * @param requiresResultCode 是否要求 head 含 ResultCode（dispatcher RESPONSE 集合 15 报文 true）
  *
  * @author FEP Team
  * @since 1.0.0
