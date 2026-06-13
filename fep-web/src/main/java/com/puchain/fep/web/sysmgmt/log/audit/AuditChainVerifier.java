@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,7 +25,8 @@ import org.springframework.stereotype.Component;
  * impl 域占位/篡改签名诚实报断点）。
  *
  * <p>EFF-S5-1 增量化：持久化 SM2 签名 checkpoint 锚（单行表）。INCREMENTAL 模式
- * 锚三查（签名 → 链尾截断比较 → 锚行在场且 hash 匹配）后仅校验锚后新增行；
+ * 锚三查（签名 → 锚行在场 → 锚行 hash 匹配；删尾经锚行缺失即 TRUNCATION，
+ * EFF-CAND-1 合并冗余链尾查询——findBySeq 已覆盖全部截断检测）后仅校验锚后新增行；
  * intact 推进锚至本次校验末行。纯删尾截断由 {@link BreakType#TRUNCATION} 可检
  * （S5 抉择⑩ 升级）——前提是攻击者无法删除或回填旧 checkpoint：回退/删锚+删尾
  * 联合攻击使检测退回 S5 基线（非低于），由双 gauge 外锚兜底
@@ -116,12 +117,6 @@ public class AuditChainVerifier {
                     return ChainVerifyResult.broken(0, anchor.getVerifiedUntilSeq(),
                             BreakType.CHECKPOINT_INVALID, mode, checkpointSeq);
                 }
-                final Optional<SysOperationLog> tail =
-                        repository.findTopBySeqIsNotNullOrderBySeqDesc();
-                if (tail.isEmpty() || tail.get().getSeq() < anchor.getVerifiedUntilSeq()) {
-                    return ChainVerifyResult.broken(0, anchor.getVerifiedUntilSeq(),
-                            BreakType.TRUNCATION, mode, checkpointSeq);
-                }
                 final Optional<SysOperationLog> anchorRow =
                         repository.findBySeq(anchor.getVerifiedUntilSeq());
                 if (anchorRow.isEmpty()) {
@@ -150,11 +145,11 @@ public class AuditChainVerifier {
         String expectedPrev = startPrev;
         long lastSeq = startSeq - 1;
         String lastHash = startPrev;
-        int page = 0;
+        long cursor = startSeq;
         while (true) {
-            final Page<SysOperationLog> batch = repository
-                    .findBySeqGreaterThanEqualOrderBySeqAsc(startSeq,
-                            PageRequest.of(page, PAGE_SIZE));
+            final Slice<SysOperationLog> batch = repository
+                    .findBySeqGreaterThanEqualOrderBySeqAsc(cursor,
+                            PageRequest.of(0, PAGE_SIZE));
             for (final SysOperationLog row : batch.getContent()) {
                 final long seq = row.getSeq();
                 if (seq != expectedSeq) {
@@ -192,7 +187,10 @@ public class AuditChainVerifier {
                 lastSeq = seq;
                 lastHash = row.getHash();
             }
-            if (!batch.hasNext()) {
+            // 死循环防御（EFF-CAND-2 密码学加固）：非空批次必使 lastSeq 前进，
+            // 空批次即终止——keyset 改写引入的新失效模式（现状 offset page++ 无条件
+            // 前进无此风险；防御异常 Slice 空 content 但 hasNext()=true 致 cursor 卡死）
+            if (!batch.hasNext() || batch.getContent().isEmpty()) {
                 if (checked == 0) {
                     // 空链 / 零新增行：无新锚可立，不重签不推进（Plan C5）
                     return ChainVerifyResult.intact(0, mode, checkpointSeq);
@@ -201,7 +199,7 @@ public class AuditChainVerifier {
                 return ChainVerifyResult.intact(checked, mode,
                         advanced != null ? advanced : checkpointSeq);
             }
-            page++;
+            cursor = lastSeq + 1;
         }
     }
 

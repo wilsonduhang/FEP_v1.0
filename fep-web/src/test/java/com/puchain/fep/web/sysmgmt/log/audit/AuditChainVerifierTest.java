@@ -306,4 +306,31 @@ class AuditChainVerifierTest {
         assertThat(after.getCheckpointSignature()).isEqualTo(before.getCheckpointSignature());
         assertThat(after.getVerifiedAt()).isEqualTo(before.getVerifiedAt());
     }
+
+    // ===== EFF-CAND-2 keyset+Slice 跨页边界（PAGE_SIZE=500） =====
+
+    @Test
+    void fullChainAcrossPageBoundary_verifiesAllRowsViaKeyset() {
+        seedChain(501); // > PAGE_SIZE(500)：跨 2 个 keyset 窗口
+        final ChainVerifyResult result =
+                verifier.verifyChain(AuditChainVerifier.VerifyMode.FULL);
+        assertThat(result.intact()).isTrue();
+        assertThat(result.totalChecked()).isEqualTo(501);
+        assertThat(result.checkpointSeq()).isEqualTo(501L);
+    }
+
+    @Test
+    void tamperedRowInSecondKeysetWindow_reportsSignatureInvalidAtThatSeq() {
+        seedChain(501); // seq 501 落第二 keyset 窗口（cursor 跨页推进后）
+        // 合法 Base64 假签名（r∥s 伪值）篡改第二窗口内行 → 证跨页逐行恒验签无旁路（B-1）
+        final String fakeSig = java.util.Base64.getEncoder().encodeToString(new byte[64]);
+        jdbcTemplate.update(
+                "UPDATE t_sys_operation_log SET signature = ? WHERE seq = 501", fakeSig);
+        final ChainVerifyResult result =
+                verifier.verifyChain(AuditChainVerifier.VerifyMode.FULL);
+        assertThat(result.intact()).isFalse();
+        assertThat(result.firstBreakSeq()).isEqualTo(501);
+        assertThat(result.breakType())
+                .isEqualTo(AuditChainVerifier.BreakType.SIGNATURE_INVALID);
+    }
 }

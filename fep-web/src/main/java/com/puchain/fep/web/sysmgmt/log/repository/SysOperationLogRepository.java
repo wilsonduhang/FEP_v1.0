@@ -3,6 +3,7 @@ package com.puchain.fep.web.sysmgmt.log.repository;
 import com.puchain.fep.web.sysmgmt.log.domain.SysOperationLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -65,11 +66,13 @@ public interface SysOperationLogRepository extends JpaRepository<SysOperationLog
     Optional<SysOperationLog> findBySeq(Long seq);
 
     /**
-     * 自 seq 起链上行分页升序读取（EFF-S5-1 incremental 锚后增量段扫描用）。
+     * 自 seq 起链上行分页升序读取（EFF-S5-1 incremental 锚后增量段扫描用；
+     * EFF-CAND-2 keyset 游标：调用方每轮以 lastSeq+1 推进 seq 下限，固定 page 0，
+     * Slice 省 count 查询）。
      *
      * @param seq      起始链序号（含）
-     * @param pageable 分页参数
-     * @return 链上行（seq 升序）
+     * @param pageable 固定 PageRequest.of(0, PAGE_SIZE)
+     * @return 该游标窗口的链上行切片（seq 升序）
      */
-    Page<SysOperationLog> findBySeqGreaterThanEqualOrderBySeqAsc(Long seq, Pageable pageable);
+    Slice<SysOperationLog> findBySeqGreaterThanEqualOrderBySeqAsc(Long seq, Pageable pageable);
 }
