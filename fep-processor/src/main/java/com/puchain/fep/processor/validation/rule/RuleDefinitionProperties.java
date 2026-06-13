@@ -36,6 +36,8 @@ public class RuleDefinitionProperties {
         private String type;
         private String field;
         private String triggerField;
+        private String triggerOperator;
+        private List<String> triggerValues = new ArrayList<>();
         private String compareField;
         private String operator;
         private List<String> allowed = new ArrayList<>();
@@ -72,6 +74,26 @@ public class RuleDefinitionProperties {
         /** @param triggerField 触发字段 local-name */
         public void setTriggerField(final String triggerField) {
             this.triggerField = triggerField;
+        }
+
+        /** @return 触发算子（CONDITIONAL_REQUIRED 用，对应 {@link TriggerOperator}；null 时回落 legacy 存在性判定） */
+        public String getTriggerOperator() {
+            return triggerOperator;
+        }
+
+        /** @param triggerOperator 触发算子 */
+        public void setTriggerOperator(final String triggerOperator) {
+            this.triggerOperator = triggerOperator;
+        }
+
+        /** @return 触发值集（CONDITIONAL_REQUIRED 用；EQUALS/NOT_EQUALS 须 1 个，IN/NOT_IN 须 ≥1 个） */
+        public List<String> getTriggerValues() {
+            return triggerValues;
+        }
+
+        /** @param triggerValues 触发值集 */
+        public void setTriggerValues(final List<String> triggerValues) {
+            this.triggerValues = triggerValues;
         }
 
         /** @return 比较字段 local-name（CROSS_FIELD 用） */
