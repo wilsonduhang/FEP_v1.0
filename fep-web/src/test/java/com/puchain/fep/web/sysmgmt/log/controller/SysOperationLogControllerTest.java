@@ -160,16 +160,7 @@ class SysOperationLogControllerTest {
      */
     @org.junit.jupiter.api.Test
     void integrity_afterAspectDrivenAppends_reportsIntact() throws Exception {
-        // 排他链段 + checkpoint 清空 + 重锚（Plan B1；池② util 收编——别类推进的锚指向
-        // 已删链行，残留致 incremental 假断点）
-        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
-                .resetChain(jdbcTemplate, auditChainWriter);
-        // 经切面真实写入 ≥3 行（search 端点带 @OperationLog）
-        for (int i = 0; i < 3; i++) {
-            mockMvc.perform(get("/api/v1/sys/logs")
-                            .header("Authorization", "Bearer " + accessToken))
-                    .andExpect(status().isOk());
-        }
+        seedExclusiveIntegrityChain();
         mockMvc.perform(get("/api/v1/sys/logs/integrity")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
@@ -188,13 +179,7 @@ class SysOperationLogControllerTest {
      */
     @org.junit.jupiter.api.Test
     void integrity_withFullMode_reportsFullVerification() throws Exception {
-        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
-                .resetChain(jdbcTemplate, auditChainWriter);
-        for (int i = 0; i < 3; i++) {
-            mockMvc.perform(get("/api/v1/sys/logs")
-                            .header("Authorization", "Bearer " + accessToken))
-                    .andExpect(status().isOk());
-        }
+        seedExclusiveIntegrityChain();
         // 小写入参（断言 mode=FULL 同时直接覆盖大小写不敏感路径，T3 spec MINOR-1）
         mockMvc.perform(get("/api/v1/sys/logs/integrity")
                         .param("mode", "full")
@@ -234,6 +219,27 @@ class SysOperationLogControllerTest {
         userRepository.save(admin);
 
         TestRedisConfiguration.getStore().clear();
+        // integrity 用例写入审计链行 + 推进 checkpoint → 清场防 shared-H2 泄漏后续类
+        // （红线 feedback_shared_h2_topn_aggregation_test_isolation 同型隐患）
+        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
+                .resetChain(jdbcTemplate, auditChainWriter);
+    }
+
+    /**
+     * integrity 用例排他链段准备（D-1 消两 integrity 用例重复）：清场 + 重锚后
+     * 经 {@code @OperationLog} 切面真实写入 3 链行（search 端点带切面）。
+     *
+     * @throws Exception MockMvc 请求异常
+     */
+    private void seedExclusiveIntegrityChain() throws Exception {
+        // 排他链段 + checkpoint 清空 + 重锚（Plan B1；别类推进的锚指向已删链行致假断点）
+        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
+                .resetChain(jdbcTemplate, auditChainWriter);
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(get("/api/v1/sys/logs")
+                            .header("Authorization", "Bearer " + accessToken))
+                    .andExpect(status().isOk());
+        }
     }
 
     /**

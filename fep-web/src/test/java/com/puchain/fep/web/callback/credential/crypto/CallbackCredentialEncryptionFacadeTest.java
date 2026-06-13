@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.puchain.fep.security.api.CryptoService;
 import com.puchain.fep.security.api.KeyService;
+import com.puchain.fep.security.mock.MockKeyService;
 import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade.EncryptedCredential;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
@@ -145,7 +146,7 @@ class CallbackCredentialEncryptionFacadeTest {
             @Override
             public String getAuditVerifyPublicKeyHex(final String keyId) {
                 // 收编 mock 常量（池⑤：GB/T 公开标准公钥，v0.3 C-NEW-1）
-                return com.puchain.fep.security.mock.MockKeyService.MOCK_AUDIT_PUBLIC_KEY_HEX;
+                return MockKeyService.MOCK_AUDIT_PUBLIC_KEY_HEX;
             }
 
             @Override

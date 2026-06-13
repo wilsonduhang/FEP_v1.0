@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,10 +124,10 @@ class SysOperationLogIntegrityColumnsTest {
                 .filter(q -> q > base)
                 .toList();
         assertThat(seqsAfterBase).containsExactly(base + 1, base + 2, base + 3);
-        // 分页形态：page size 受 Pageable 控制
-        final Page<SysOperationLog> page = repository
+        // 分页形态：page size 受 Pageable 控制（Slice 无 totalElements；hasNext 间接证总数 > size）
+        final Slice<SysOperationLog> slice = repository
                 .findBySeqGreaterThanEqualOrderBySeqAsc(1L, PageRequest.of(0, 2));
-        assertThat(page.getContent()).hasSize(2);
-        assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(3);
+        assertThat(slice.getContent()).hasSize(2);
+        assertThat(slice.hasNext()).isTrue();
     }
 }
