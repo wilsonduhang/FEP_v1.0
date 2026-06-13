@@ -22,6 +22,9 @@ import java.util.List;
  */
 final class RuleMasterTestSupport {
 
+    /** 生产 yaml 不可变 → 绑定结果与校验器全套静态缓存（EFF：消除每用例重复解析/重建，实测单类 ~107s→秒级）。 */
+    private static BusinessRuleValidator cachedValidator;
+
     private RuleMasterTestSupport() {
     }
 
@@ -50,10 +53,36 @@ final class RuleMasterTestSupport {
      * @throws IOException 读取 classpath 配置失败
      */
     static ValidationResult validate(String msgNo, String envelopeXml) throws IOException {
-        MessageRuleRegistry registry = new MessageRuleRegistry();
-        new ConfiguredRuleFactory(bindProductionRules(), registry).registerConfiguredRules();
         MessageType type = MessageType.byMsgNo(msgNo).orElseThrow();
-        return new BusinessRuleValidator(registry)
-                .validate(type, envelopeXml.getBytes(StandardCharsets.UTF_8));
+        return validator().validate(type, envelopeXml.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static synchronized BusinessRuleValidator validator() throws IOException {
+        if (cachedValidator == null) {
+            MessageRuleRegistry registry = new MessageRuleRegistry();
+            new ConfiguredRuleFactory(bindProductionRules(), registry).registerConfiguredRules();
+            cachedValidator = new BusinessRuleValidator(registry);
+        }
+        return cachedValidator;
+    }
+
+    /** 构造单字段最小 envelope（共享自 BatchTransfer/SupplyChain 测试，REUSE F1 下沉）。 */
+    static String envelope(String msgNo, String body, String field, String value) {
+        return "<CFX><HEAD><MsgNo>" + msgNo + "</MsgNo></HEAD><MSG><" + body + ">"
+                + "<" + field + ">" + value + "</" + field + ">"
+                + "</" + body + "></MSG></CFX>";
+    }
+
+    /** 合法值通过 + 非法值违规（含字段名）成对断言（REUSE F1 下沉）。 */
+    static void assertRule(String msgNo, String body, String field,
+                           String legal, String illegal) throws IOException {
+        org.assertj.core.api.Assertions.assertThat(validate(msgNo,
+                envelope(msgNo, body, field, legal)).valid())
+                .as("%s %s=%s legal", msgNo, field, legal).isTrue();
+        ValidationResult bad = validate(msgNo, envelope(msgNo, body, field, illegal));
+        org.assertj.core.api.Assertions.assertThat(bad.valid())
+                .as("%s %s=%s illegal", msgNo, field, illegal).isFalse();
+        org.assertj.core.api.Assertions.assertThat(String.join(";", bad.errors()))
+                .contains(field);
     }
 }

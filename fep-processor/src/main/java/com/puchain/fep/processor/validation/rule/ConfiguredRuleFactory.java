@@ -15,6 +15,9 @@ import java.util.Set;
 @Component
 public class ConfiguredRuleFactory {
 
+    /** 通配报文号键（yaml 中写 "[*]"）。 */
+    private static final String WILDCARD_MSG_NO = "*";
+
     private final RuleDefinitionProperties properties;
     private final MessageRuleRegistry registry;
 
@@ -27,9 +30,6 @@ public class ConfiguredRuleFactory {
         this.properties = properties;
         this.registry = registry;
     }
-
-    /** 通配报文号键（yaml 中写 "[*]"）。 */
-    private static final String WILDCARD_MSG_NO = "*";
 
     /**
      * 启动期把配置规则注册到注册表。

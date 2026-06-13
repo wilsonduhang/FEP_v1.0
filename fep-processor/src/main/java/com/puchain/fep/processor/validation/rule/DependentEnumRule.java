@@ -15,6 +15,9 @@ import java.util.Set;
  *
  * <p>边界语义：key 缺失 / 目标缺失 / key 未在映射表中（如自由定义的 GENERAL 大类）
  * 均不违规；key 已映射且目标不在该集合时违规。key 自身合法性由独立 {@link EnumMembershipRule} 把关。</p>
+ *
+ * <p>同名字段重复出现（批量报文嵌套明细项）时按文档顺序成对 (key[i], value[i]) 逐对校验；
+ * 两侧出现次数不等时仅校验共同前缀（超出部分由 XSD minOccurs 兜底，不误报）。</p>
  */
 public final class DependentEnumRule implements ValidationRule {
 

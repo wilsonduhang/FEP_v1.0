@@ -18,23 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class RuleMasterSupplyChainCodesTest {
 
-    private static String envelope(String msgNo, String body, String field, String value) {
-        return "<CFX><HEAD><MsgNo>" + msgNo + "</MsgNo></HEAD><MSG><" + body + ">"
-                + "<" + field + ">" + value + "</" + field + ">"
-                + "</" + body + "></MSG></CFX>";
-    }
-
-    private static void assertRule(String msgNo, String body, String field,
-                                   String legal, String illegal) throws IOException {
-        assertThat(RuleMasterTestSupport.validate(msgNo,
-                envelope(msgNo, body, field, legal)).valid())
-                .as("%s %s=%s legal", msgNo, field, legal).isTrue();
-        ValidationResult bad = RuleMasterTestSupport.validate(msgNo,
-                envelope(msgNo, body, field, illegal));
-        assertThat(bad.valid()).as("%s %s=%s illegal", msgNo, field, illegal).isFalse();
-        assertThat(String.join(";", bad.errors())).contains(field);
-    }
-
     @ParameterizedTest
     @CsvSource({
             // msgNo, body, field, legal, illegal — 值集源见类 Javadoc 与 yaml 注释
@@ -64,7 +47,7 @@ class RuleMasterSupplyChainCodesTest {
     void supplyChainAndNodeStatusCodes_shouldEnforce(
             String msgNo, String body, String field, String legal, String illegal)
             throws IOException {
-        assertRule(msgNo, body, field, legal, illegal);
+        RuleMasterTestSupport.assertRule(msgNo, body, field, legal, illegal);
     }
 
     @Test
@@ -91,10 +74,10 @@ class RuleMasterSupplyChainCodesTest {
     void creationRetCode_archiveSegmentExcludes10_rzPhaseIncludes10() throws IOException {
         // 表 5.1.7-3 两段差异：开户建档段无 "10"（0-未申请仅凭证融资段有），凭证融资段含 "10"
         assertThat(RuleMasterTestSupport.validate("3103",
-                envelope("3103", "ArchiveReturnInfo3103", "CreationRetCode", "10")).valid())
+                RuleMasterTestSupport.envelope("3103", "ArchiveReturnInfo3103", "CreationRetCode", "10")).valid())
                 .as("3103 CreationRetCode=10 须违规").isFalse();
         assertThat(RuleMasterTestSupport.validate("3004",
-                envelope("3004", "pzInfoReturn3004", "rzPhaseCode", "10")).valid())
+                RuleMasterTestSupport.envelope("3004", "pzInfoReturn3004", "rzPhaseCode", "10")).valid())
                 .as("3004 rzPhaseCode=10 须合法").isTrue();
     }
 }
