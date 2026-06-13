@@ -234,6 +234,10 @@ class SysOperationLogControllerTest {
         userRepository.save(admin);
 
         TestRedisConfiguration.getStore().clear();
+        // integrity 用例写入审计链行 + 推进 checkpoint → 清场防 shared-H2 泄漏后续类
+        // （红线 feedback_shared_h2_topn_aggregation_test_isolation 同型隐患）
+        com.puchain.fep.web.sysmgmt.log.audit.AuditIntegrityTestSupport
+                .resetChain(jdbcTemplate, auditChainWriter);
     }
 
     /**
