@@ -13,8 +13,11 @@ import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -34,6 +37,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  */
 @SpringBootTest
 @ActiveProfiles("dev")
+@ExtendWith(OutputCaptureExtension.class)
 class AuditChainVerifierTest {
 
     @Autowired
@@ -217,13 +221,15 @@ class AuditChainVerifierTest {
     }
 
     @Test
-    void incremental_withoutCheckpoint_degradesToFullScan() {
+    void incremental_withoutCheckpoint_degradesToFullScan(final CapturedOutput output) {
         seedChain(3);
         final ChainVerifyResult result =
                 verifier.verifyChain(AuditChainVerifier.VerifyMode.INCREMENTAL);
         assertThat(result.intact()).isTrue();
         assertThat(result.totalChecked()).isEqualTo(3);
         assertThat(result.checkpointSeq()).isEqualTo(3L);
+        // C1：缺锚退化 full 记 WARN 一条（Plan 抉择⑥）
+        assertThat(output.getOut()).contains("degrading to full scan");
     }
 
     @Test
@@ -253,6 +259,8 @@ class AuditChainVerifierTest {
         assertThat(result.breakType())
                 .isEqualTo(AuditChainVerifier.BreakType.HASH_MISMATCH);
         assertThat(result.firstBreakSeq()).isEqualTo(3L);
+        // broken 不推进：锚保持 FULL 后原值（AC7，对齐 truncatedTail）
+        assertThat(checkpointRow().getVerifiedUntilSeq()).isEqualTo(3L);
     }
 
     @Test
@@ -268,6 +276,8 @@ class AuditChainVerifierTest {
         assertThat(result.breakType())
                 .isEqualTo(AuditChainVerifier.BreakType.TRUNCATION);
         assertThat(result.firstBreakSeq()).isEqualTo(3L);
+        // broken 不推进：锚保持 FULL 后原值（AC7）
+        assertThat(checkpointRow().getVerifiedUntilSeq()).isEqualTo(3L);
     }
 
     @Test
@@ -332,5 +342,28 @@ class AuditChainVerifierTest {
         assertThat(result.firstBreakSeq()).isEqualTo(501);
         assertThat(result.breakType())
                 .isEqualTo(AuditChainVerifier.BreakType.SIGNATURE_INVALID);
+    }
+
+    // ===== Q-D4 C2：advanceCheckpoint 首建竞争 DataIntegrityViolationException 自愈 =====
+
+    @Test
+    void advanceCheckpointConcurrentInsertRace_resultIntactButNotAdvanced() {
+        seedChain(3);
+        // mock checkpoint 仓储模拟首建竞争：findById 空（触发首建）+ save 抛 DIVE（PK 撞）
+        final AuditChainCheckpointRepository racingCpRepo =
+                org.mockito.Mockito.mock(AuditChainCheckpointRepository.class);
+        org.mockito.Mockito.when(racingCpRepo.findById(AuditChainCheckpoint.SINGLETON_ID))
+                .thenReturn(java.util.Optional.empty());
+        org.mockito.Mockito.when(racingCpRepo.save(org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException(
+                        "duplicate singleton checkpoint"));
+        final AuditChainVerifier racingVerifier = new AuditChainVerifier(
+                repository, integrity, racingCpRepo, new SimpleMeterRegistry());
+        final ChainVerifyResult result =
+                racingVerifier.verifyChain(AuditChainVerifier.VerifyMode.FULL);
+        // C2：DIVE 被 catch，校验结果不受影响；锚未推进（下轮自愈）
+        assertThat(result.intact()).isTrue();
+        assertThat(result.totalChecked()).isEqualTo(3);
+        assertThat(result.checkpointSeq()).isNull();
     }
 }
