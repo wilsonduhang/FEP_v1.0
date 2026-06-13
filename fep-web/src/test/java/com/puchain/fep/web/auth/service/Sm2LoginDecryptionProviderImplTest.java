@@ -31,10 +31,9 @@ import org.springframework.test.context.TestPropertySource;
         "fep.security.sm4.sm4-keys.sm4-cred-v1=0123456789abcdeffedcba9876543210",
         "fep.security.sm2.login-active-key-id=sm2-login-v1",
         "fep.security.sm2.login-keys.sm2-login-v1.private-key-hex="
-                + "3945208f7b2144b13f36e38ac6d39f95889393692860b51a42fb81ef4df7c5b8",
+                + com.puchain.fep.web.support.Sm2WebTestVectors.GBT_PRIV,
         "fep.security.sm2.login-keys.sm2-login-v1.public-key-hex="
-                + "0409f9df311e5421a150dd7d161e4bc5c672179fad1833fc076bb08ff356f35020"
-                + "ccea490ce26775a52dc6ea718cc1aa600aed05fbf35e084a6632f6072da9ad13"
+                + com.puchain.fep.web.support.Sm2WebTestVectors.GBT_PUB
 })
 class Sm2LoginDecryptionProviderImplTest {
 
