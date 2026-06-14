@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -145,5 +146,75 @@ class ConfiguredRuleFactoryTest {
         bad.setScope("head");
         assertThatThrownBy(() -> ConfiguredRuleFactory.build(bad))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // ── Phase 3: CONDITIONAL_REQUIRED direction-aware trigger predicate ──
+
+    private static RuleContext ctx(String xml) {
+        return RuleContext.parse(xml.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static RuleDefinitionProperties.RuleDef conditionalDef(String operator, List<String> values) {
+        RuleDefinitionProperties.RuleDef def = new RuleDefinitionProperties.RuleDef();
+        def.setType("CONDITIONAL_REQUIRED");
+        def.setField("ResultMsg");
+        def.setTriggerField("ResultCode");
+        def.setTriggerOperator(operator);
+        def.setTriggerValues(values);
+        return def;
+    }
+
+    @Test
+    void build_conditionalRequired_withNotInOperator_evaluatesDirectionAware() {
+        // 验收 1：行为级 — 谓词正确接线（NOT_IN {0,00}）
+        ValidationRule rule = ConfiguredRuleFactory.build(conditionalDef("NOT_IN", List.of("0", "00")));
+        assertThat(rule).isInstanceOf(ConditionalRequiredRule.class);
+        assertThat(rule.evaluate(ctx("<CFX><ResultCode>99</ResultCode></CFX>")))
+                .get().asString().contains("ResultMsg");
+        assertThat(rule.evaluate(ctx("<CFX><ResultCode>0</ResultCode></CFX>"))).isEmpty();
+        assertThat(rule.evaluate(ctx("<CFX><ResultCode>99</ResultCode><ResultMsg>x</ResultMsg></CFX>")))
+                .isEmpty();
+    }
+
+    @Test
+    void build_conditionalRequired_withoutOperator_keepsLegacyPresenceBehavior() {
+        // 验收 2：operator 缺省 → legacy「触发字段存在即要求目标」
+        ValidationRule rule = ConfiguredRuleFactory.build(conditionalDef(null, List.of()));
+        assertThat(rule.evaluate(ctx("<CFX><ResultCode>0</ResultCode></CFX>")))
+                .get().asString().contains("ResultMsg");
+        assertThat(rule.evaluate(ctx("<CFX><ResultCode>0</ResultCode><ResultMsg>x</ResultMsg></CFX>")))
+                .isEmpty();
+    }
+
+    @Test
+    void build_conditionalRequired_equalsWithTwoValues_failsFast() {
+        // 验收 3：透传 TriggerOperator fail-fast
+        assertThatThrownBy(() -> ConfiguredRuleFactory.build(conditionalDef("EQUALS", List.of("A", "B"))))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void build_conditionalRequired_unknownOperator_failsFast() {
+        // 验收 4：非法 operator
+        assertThatThrownBy(() -> ConfiguredRuleFactory.build(conditionalDef("BOGUS", List.of("0"))))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void conditionalRequired_relaxedBinding_bindsOperatorAndValues() {
+        // 验收 5：kebab-case trigger-operator/trigger-values 经 Binder 绑定
+        StandardEnvironment env = new StandardEnvironment();
+        env.getPropertySources().addFirst(new MapPropertySource("t", Map.of(
+                "fep.validation.rules.3009[0].type", "CONDITIONAL_REQUIRED",
+                "fep.validation.rules.3009[0].field", "ResultMsg",
+                "fep.validation.rules.3009[0].trigger-field", "ResultCode",
+                "fep.validation.rules.3009[0].trigger-operator", "NOT_IN",
+                "fep.validation.rules.3009[0].trigger-values[0]", "0",
+                "fep.validation.rules.3009[0].trigger-values[1]", "00")));
+        RuleDefinitionProperties bound = Binder.get(env)
+                .bind("fep.validation", RuleDefinitionProperties.class).get();
+        RuleDefinitionProperties.RuleDef def = bound.getRules().get("3009").get(0);
+        assertThat(def.getTriggerOperator()).isEqualTo("NOT_IN");
+        assertThat(def.getTriggerValues()).containsExactly("0", "00");
     }
 }

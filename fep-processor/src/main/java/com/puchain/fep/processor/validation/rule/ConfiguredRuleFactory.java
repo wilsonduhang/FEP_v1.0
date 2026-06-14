@@ -5,6 +5,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * 将配置规则定义装配为 {@link ValidationRule} 并注册到 {@link MessageRuleRegistry}（启动期一次）。
@@ -65,9 +66,8 @@ public class ConfiguredRuleFactory {
     public static ValidationRule build(final RuleDefinitionProperties.RuleDef def) {
         return switch (def.getType()) {
             case "ENUM" -> new EnumMembershipRule(def.getField(), Set.copyOf(def.getAllowed()));
-            // Phase 1：触发谓词简化为"触发字段非空即要求目标字段"；完整谓词表达式 DSL 留 Phase 2。
             case "CONDITIONAL_REQUIRED" -> new ConditionalRequiredRule(
-                    def.getField(), def.getTriggerField(), v -> !v.isBlank());
+                    def.getField(), def.getTriggerField(), conditionalTrigger(def));
             case "CROSS_FIELD" -> new CrossFieldComparisonRule(
                     def.getField(), def.getCompareField(),
                     CrossFieldComparisonRule.Operator.valueOf(def.getOperator()));
@@ -78,5 +78,24 @@ public class ConfiguredRuleFactory {
                             : GroupCooccurrenceRule.Scope.valueOf(def.getScope()));
             default -> throw new IllegalArgumentException("未知规则类型: " + def.getType());
         };
+    }
+
+    /**
+     * 构建 CONDITIONAL_REQUIRED 规则的触发谓词。
+     *
+     * <p>{@code triggerOperator} 为空时回落 Phase 1 legacy 语义（触发字段存在即要求目标）；
+     * 否则由 {@link TriggerOperator} 按算子与值集构建方向感知谓词。</p>
+     *
+     * @param def 规则定义
+     * @return 触发谓词
+     * @throws IllegalArgumentException triggerOperator 非法或 triggerValues 个数不满足算子约束
+     */
+    private static Predicate<String> conditionalTrigger(
+            final RuleDefinitionProperties.RuleDef def) {
+        final String op = def.getTriggerOperator();
+        if (op == null || op.isBlank()) {
+            return v -> !v.isBlank();
+        }
+        return TriggerOperator.valueOf(op).toPredicate(def.getTriggerValues());
     }
 }
