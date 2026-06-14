@@ -4,6 +4,7 @@ import com.puchain.fep.common.exception.GlobalExceptionHandler;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialSweepResponse;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialAdminService;
+import com.puchain.fep.web.callback.http.CallbackConnectivityProbe;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,8 @@ class CallbackCredentialControllerTest {
     @BeforeEach
     void setUp() {
         service = mock(CallbackCredentialAdminService.class);
-        mvc = MockMvcBuilders.standaloneSetup(new CallbackCredentialController(service))
+        final CallbackConnectivityProbe connectivityProbe = mock(CallbackConnectivityProbe.class);
+        mvc = MockMvcBuilders.standaloneSetup(new CallbackCredentialController(service, connectivityProbe))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }

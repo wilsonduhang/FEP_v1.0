@@ -2,6 +2,7 @@ package com.puchain.fep.web.callback.http;
 
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialResolver;
+import com.puchain.fep.web.callback.credential.service.CallbackCredentialResolver.AuthHeader;
 import com.puchain.fep.web.submission.outputinterface.domain.InterfaceAuthType;
 import com.puchain.fep.web.submission.outputinterface.domain.SubOutputInterface;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -16,6 +17,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * 行内 RESTful 回调 HTTP 客户端。
@@ -47,6 +49,7 @@ public class CallbackHttpClient {
     private static final int HTTP_OK_MIN = 200;
     private static final int HTTP_OK_MAX = 299;
     private static final int HTTP_UNAUTHORIZED = 401;
+    private static final long NANOS_PER_MILLI = 1_000_000L;
 
     /**
      * 单例 HttpClient，共享底层连接池，线程安全。
@@ -145,5 +148,55 @@ public class CallbackHttpClient {
                 .ifPresent(h -> builder.header(h.name(), h.value()));
 
         return builder.build();
+    }
+
+    /**
+     * 凭证感知连通性探测：解析鉴权头（验证 TOKEN 解密 / OAUTH2 取 token 真生效）后对目标接口
+     * URL 发 HEAD 探测，返回可达性 + 状态码 + 鉴权是否应用 + 耗时。不 POST 业务载荷
+     * （避免对行内系统产生副作用）。所有失败翻译为 {@link CallbackProbeResult}，不抛出。
+     *
+     * @param target 目标输出接口配置，非空（含 authType / interfaceId / interfaceUrl / timeoutSeconds）
+     * @return 探测结果，永不为 null
+     */
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "non-literal String log args wrapped by LogSanitizer.sanitize; "
+                    + "find-sec-bugs cannot detect user-defined sanitizer")
+    public CallbackProbeResult probe(final SubOutputInterface target) {
+        final long startNanos = System.nanoTime();
+        final Optional<AuthHeader> auth;
+        try {
+            auth = credentialResolver.resolveAuthHeader(target);
+        } catch (final RuntimeException ex) {
+            LOG.warn("connectivity probe auth resolution failed interfaceId={} reason={}",
+                    LogSanitizer.sanitize(target.getInterfaceId()),
+                    LogSanitizer.sanitize(ex.getClass().getSimpleName()));
+            return new CallbackProbeResult(false, 0, false,
+                    elapsedMillis(startNanos), "auth: " + ex.getClass().getSimpleName());
+        }
+        final boolean authApplied = auth.isPresent();
+        final HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(target.getInterfaceUrl()))
+                .timeout(Duration.ofSeconds(target.getTimeoutSeconds()))
+                .method("HEAD", HttpRequest.BodyPublishers.noBody());
+        auth.ifPresent(h -> builder.header(h.name(), h.value()));
+        try {
+            final HttpResponse<Void> response =
+                    httpClient.send(builder.build(), HttpResponse.BodyHandlers.discarding());
+            final int statusCode = response.statusCode();
+            final boolean reachable = statusCode >= HTTP_OK_MIN && statusCode <= HTTP_OK_MAX;
+            return new CallbackProbeResult(reachable, statusCode, authApplied,
+                    elapsedMillis(startNanos), reachable ? "ok" : "http " + statusCode);
+        } catch (final IOException e) {
+            return new CallbackProbeResult(false, 0, authApplied,
+                    elapsedMillis(startNanos), "io: " + e.getClass().getSimpleName());
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new CallbackProbeResult(false, 0, authApplied,
+                    elapsedMillis(startNanos), "interrupted");
+        }
+    }
+
+    private static long elapsedMillis(final long startNanos) {
+        return (System.nanoTime() - startNanos) / NANOS_PER_MILLI;
     }
 }
