@@ -51,11 +51,6 @@
 - [ ] 已通过 santa-method 二次评审，报告链接：
 - [ ] 已通过 code-reviewer agent 评审，报告链接：
 
-## PR 大小确认
-
-- [ ] 本 PR 新增代码行数 ≤ 400 行（不含 docs/xml/pom.xml）
-- [ ] 若超过 400 行，已向 reviewer 说明拆分困难的原因
-
 ## 本地质量门禁
 
 - [ ] `./mvnw verify` 本地通过（Checkstyle / SpotBugs / JaCoCo / ArchUnit 零违规）
