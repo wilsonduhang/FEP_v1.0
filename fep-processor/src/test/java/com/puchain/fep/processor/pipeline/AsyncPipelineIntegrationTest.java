@@ -94,20 +94,7 @@ class AsyncPipelineIntegrationTest {
 
     @Test
     void asyncFlow_3001_3002_shouldCompleteSuccessfully() {
-        byte[] requestXml = toBytes(cfx("3001", """
-                <RealHead3001>
-            """ + REQUEST_HEAD + """
-                </RealHead3001>
-                <ProgressQuery3001>
-                    <SerialNo>""" + SERIAL_NO + """
-            </SerialNo>
-                    <SendNodeCode>12345678901234</SendNodeCode>
-                    <DesNodeCode>A1000143000104</DesNodeCode>
-                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
-                    <hxqyCode>123456789012345678</hxqyCode>
-                    <QueryType>1</QueryType>
-                    <QueryKey>KEY001</QueryKey>
-                </ProgressQuery3001>"""));
+        byte[] requestXml = request3001();
 
         MessageProcessRecord inbound = service.processAsyncInbound(
                 MessageType.MSG_3001, "TN001", requestXml);
@@ -115,21 +102,7 @@ class AsyncPipelineIntegrationTest {
         assertThat(inbound.getStatus()).isEqualTo(MessageProcessStatus.PROCESSING);
         assertThat(inbound.getErrorCode()).isNull();
 
-        byte[] responseXml = toBytes(cfx("3002", """
-                <RealHead3002>
-            """ + RESPONSE_HEAD + """
-                </RealHead3002>
-                <ProgressQueryReturn3002>
-                    <SerialNo>""" + SERIAL_NO + """
-            </SerialNo>
-                    <SendNodeCode>12345678901234</SendNodeCode>
-                    <DesNodeCode>A1000143000104</DesNodeCode>
-                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
-                    <hxqyCode>123456789012345678</hxqyCode>
-                    <QueryType>1</QueryType>
-                    <QueryKey>KEY001</QueryKey>
-                    <ReturnCode>01</ReturnCode>
-                </ProgressQueryReturn3002>"""));
+        byte[] responseXml = response3002();
 
         MessageProcessRecord completed = service.completeWithResponse(
                 "TN001", MessageType.MSG_3002, responseXml);
@@ -301,20 +274,7 @@ class AsyncPipelineIntegrationTest {
             "Wall-clock perf gate is sensitive to macOS host scheduler/GC variance "
                     + "(see @implNote). GHA Ubuntu CI provides the steady baseline.")
     void performanceBaseline_100AsyncInbound_shouldHaveP95LessThan15ms() {
-        byte[] validXml = toBytes(cfx("3001", """
-                <RealHead3001>
-            """ + REQUEST_HEAD + """
-                </RealHead3001>
-                <ProgressQuery3001>
-                    <SerialNo>""" + SERIAL_NO + """
-            </SerialNo>
-                    <SendNodeCode>12345678901234</SendNodeCode>
-                    <DesNodeCode>A1000143000104</DesNodeCode>
-                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
-                    <hxqyCode>123456789012345678</hxqyCode>
-                    <QueryType>1</QueryType>
-                    <QueryKey>KEY001</QueryKey>
-                </ProgressQuery3001>"""));
+        byte[] validXml = request3001();
 
         // Warmup: 5 iterations to prime XSD schema cache
         for (int i = 0; i < 5; i++) {
@@ -352,20 +312,7 @@ class AsyncPipelineIntegrationTest {
     void asyncRequest_businessRuleViolation_shouldFailWithProc8507() {
         ruleRegistry.register(MessageType.MSG_3001,
                 ctx -> Optional.of("forced async request violation"));
-        byte[] requestXml = toBytes(cfx("3001", """
-                <RealHead3001>
-            """ + REQUEST_HEAD + """
-                </RealHead3001>
-                <ProgressQuery3001>
-                    <SerialNo>""" + SERIAL_NO + """
-            </SerialNo>
-                    <SendNodeCode>12345678901234</SendNodeCode>
-                    <DesNodeCode>A1000143000104</DesNodeCode>
-                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
-                    <hxqyCode>123456789012345678</hxqyCode>
-                    <QueryType>1</QueryType>
-                    <QueryKey>KEY001</QueryKey>
-                </ProgressQuery3001>"""));
+        byte[] requestXml = request3001();
 
         MessageProcessRecord record = service.processAsyncInbound(
                 MessageType.MSG_3001, "TN-RULE-REQ", requestXml);
@@ -380,35 +327,8 @@ class AsyncPipelineIntegrationTest {
         // 请求段无规则正常停 PROCESSING；应答类型 3002 注册强制违规 → 应答段 FAILED
         ruleRegistry.register(MessageType.MSG_3002,
                 ctx -> Optional.of("forced async response violation"));
-        byte[] requestXml = toBytes(cfx("3001", """
-                <RealHead3001>
-            """ + REQUEST_HEAD + """
-                </RealHead3001>
-                <ProgressQuery3001>
-                    <SerialNo>""" + SERIAL_NO + """
-            </SerialNo>
-                    <SendNodeCode>12345678901234</SendNodeCode>
-                    <DesNodeCode>A1000143000104</DesNodeCode>
-                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
-                    <hxqyCode>123456789012345678</hxqyCode>
-                    <QueryType>1</QueryType>
-                    <QueryKey>KEY001</QueryKey>
-                </ProgressQuery3001>"""));
-        byte[] responseXml = toBytes(cfx("3002", """
-                <RealHead3002>
-            """ + RESPONSE_HEAD + """
-                </RealHead3002>
-                <ProgressQueryReturn3002>
-                    <SerialNo>""" + SERIAL_NO + """
-            </SerialNo>
-                    <SendNodeCode>12345678901234</SendNodeCode>
-                    <DesNodeCode>A1000143000104</DesNodeCode>
-                    <hxqyName>\u6D4B\u8BD5\u6838\u5FC3\u4F01\u4E1A</hxqyName>
-                    <hxqyCode>123456789012345678</hxqyCode>
-                    <QueryType>1</QueryType>
-                    <QueryKey>KEY001</QueryKey>
-                    <ReturnCode>01</ReturnCode>
-                </ProgressQueryReturn3002>"""));
+        byte[] requestXml = request3001();
+        byte[] responseXml = response3002();
 
         MessageProcessRecord inbound = service.processAsyncInbound(
                 MessageType.MSG_3001, "TN-RULE-RSP", requestXml);
@@ -426,7 +346,28 @@ class AsyncPipelineIntegrationTest {
     void asyncFlow_businessRulesPass_shouldCompleteAsBeforehand() {
         ruleRegistry.register(MessageType.MSG_3001, ctx -> Optional.empty());
         ruleRegistry.register(MessageType.MSG_3002, ctx -> Optional.empty());
-        byte[] requestXml = toBytes(cfx("3001", """
+        byte[] requestXml = request3001();
+        byte[] responseXml = response3002();
+
+        MessageProcessRecord inbound = service.processAsyncInbound(
+                MessageType.MSG_3001, "TN-RULE-OK", requestXml);
+        assertThat(inbound.getStatus()).isEqualTo(MessageProcessStatus.PROCESSING);
+
+        MessageProcessRecord completed = service.completeWithResponse(
+                "TN-RULE-OK", MessageType.MSG_3002, responseXml);
+        assertThat(completed.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
+        assertThat(completed.getErrorCode()).isNull();
+    }
+
+    // ── helpers ─────────────────────────────────────────────────────────
+
+    /**
+     * Canonical 3001 ProgressQuery request envelope (used by 5 test methods).
+     * Byte-identical to the previously-inlined literal; extracted to remove
+     * 4 duplicate copies (REUSE-R2 Simplify drain).
+     */
+    private static byte[] request3001() {
+        return toBytes(cfx("3001", """
                 <RealHead3001>
             """ + REQUEST_HEAD + """
                 </RealHead3001>
@@ -440,7 +381,15 @@ class AsyncPipelineIntegrationTest {
                     <QueryType>1</QueryType>
                     <QueryKey>KEY001</QueryKey>
                 </ProgressQuery3001>"""));
-        byte[] responseXml = toBytes(cfx("3002", """
+    }
+
+    /**
+     * Canonical 3002 ProgressQueryReturn response envelope (used by 3 test methods).
+     * Byte-identical to the previously-inlined literal; extracted to remove
+     * 2 duplicate copies (REUSE-R2 Simplify drain).
+     */
+    private static byte[] response3002() {
+        return toBytes(cfx("3002", """
                 <RealHead3002>
             """ + RESPONSE_HEAD + """
                 </RealHead3002>
@@ -455,18 +404,7 @@ class AsyncPipelineIntegrationTest {
                     <QueryKey>KEY001</QueryKey>
                     <ReturnCode>01</ReturnCode>
                 </ProgressQueryReturn3002>"""));
-
-        MessageProcessRecord inbound = service.processAsyncInbound(
-                MessageType.MSG_3001, "TN-RULE-OK", requestXml);
-        assertThat(inbound.getStatus()).isEqualTo(MessageProcessStatus.PROCESSING);
-
-        MessageProcessRecord completed = service.completeWithResponse(
-                "TN-RULE-OK", MessageType.MSG_3002, responseXml);
-        assertThat(completed.getStatus()).isEqualTo(MessageProcessStatus.COMPLETED);
-        assertThat(completed.getErrorCode()).isNull();
     }
-
-    // ── helpers ─────────────────────────────────────────────────────────
 
     /**
      * Wraps MSG content into a complete CFX envelope.
