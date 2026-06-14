@@ -31,6 +31,17 @@ class RuleContextTest {
     }
 
     @Test
+    void values_returnedListShouldBeUnmodifiable() {
+        // 契约保护（EFF-P3-1 零拷贝优化前后均须成立）：values() 返回不可修改列表，
+        // 外部不得经返回值篡改内部字段视图。present 与 absent 两路均须不可修改。
+        RuleContext ctx = of("<CFX><D><Amt>10.00</Amt></D></CFX>");
+        assertThatThrownBy(() -> ctx.values("Amt").add("x"))
+                .isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> ctx.values("Missing").add("x"))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
     void first_shouldBeEmptyWhenFieldAbsent() {
         RuleContext ctx = of("<CFX><SerialNo>SN001</SerialNo></CFX>");
         assertThat(ctx.first("Missing")).isEmpty();
