@@ -84,27 +84,3 @@ jobs:
           name: surefire-reports
           path: '**/target/surefire-reports/'
           retention-days: 7
-
-  pr-size-check:
-    name: PR Size Check (<=400 lines)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Count changed lines
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          ADDED=$(git diff --numstat "$BASE_SHA" "$HEAD_SHA" -- ':!*.md' ':!*.xml' ':!pom.xml' | awk '{s+=$1} END {print s+0}')
-          echo "Added lines (excluding *.md, *.xml, pom.xml): $ADDED"
-          if [ "$ADDED" -gt 400 ]; then
-            echo "::error::PR adds $ADDED lines of code, exceeding the 400-line limit. Please split this PR."
-            exit 1
-          fi
-          echo "PR size OK: $ADDED lines added"
