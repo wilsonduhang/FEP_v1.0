@@ -49,7 +49,7 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.2.5</version>
+            <version>5.5.1</version>
         </dependency>
 
         <!-- P4 T5: ESB 适配器 HTTP 调用 — Spring RestClient 在 spring-web 中
