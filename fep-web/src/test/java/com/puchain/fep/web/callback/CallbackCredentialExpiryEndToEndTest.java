@@ -100,6 +100,9 @@ class CallbackCredentialExpiryEndToEndTest {
 
     @BeforeEach
     void setUp() throws IOException {
+        // 防御性前置清场：消除对 peer @SpringBootTest tearDown 完整性的隐式依赖，确保共享 H2
+        // 下 msgNo=2103 队列行查询无歧义（红线 shared_h2_topn_aggregation_test_isolation）。
+        callbackQueueRepository.deleteAll();
         bankHits.set(0);
         mockServer = HttpServer.create(new InetSocketAddress(0), 0);
         mockServer.createContext("/callback", exchange -> {

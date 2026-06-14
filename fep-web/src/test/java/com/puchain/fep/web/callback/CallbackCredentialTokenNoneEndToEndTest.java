@@ -103,6 +103,9 @@ class CallbackCredentialTokenNoneEndToEndTest {
 
     @BeforeEach
     void setUp() throws IOException {
+        // 防御性前置清场：消除对 peer @SpringBootTest tearDown 完整性的隐式依赖，确保
+        // statusOf2103() findFirst() 在共享 H2 下无歧义（红线 shared_h2_topn_aggregation_test_isolation）。
+        callbackQueueRepository.deleteAll();
         tokenHeaders = new CopyOnWriteArrayList<>();
         authHeaders = new CopyOnWriteArrayList<>();
         mockServer = HttpServer.create(new InetSocketAddress(0), 0);
