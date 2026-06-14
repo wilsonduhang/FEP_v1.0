@@ -60,6 +60,12 @@
 
         <!-- Caffeine cache (P3a T3 — DynamicMessageDirectionMap) -->
         <caffeine.version>3.1.8</caffeine.version>
+
+        <!-- override: SB 3.5.15 BOM pins commons-lang3 3.17.0 (< CVE-2025-48924 fix 3.18).
+             REMOVE this override when SB parent BOM pins commons-lang3 >= 3.18.0
+             (re-check via override-vs-BOM table on next Spring Boot upgrade —
+              redline feedback_parent_bom_upgrade_must_clean_superseded_overrides). -->
+        <commons-lang3.version>3.20.0</commons-lang3.version>
     </properties>
 
     <dependencyManagement>
