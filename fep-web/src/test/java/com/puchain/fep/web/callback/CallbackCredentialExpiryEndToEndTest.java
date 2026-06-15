@@ -3,8 +3,6 @@ package com.puchain.fep.web.callback;
 import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.event.InboundMessageProcessedEvent;
-import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade;
-import com.puchain.fep.web.callback.credential.crypto.CallbackCredentialEncryptionFacade.EncryptedCredential;
 import com.puchain.fep.web.callback.credential.domain.CallbackCredentialEntity;
 import com.puchain.fep.web.callback.credential.repository.CallbackCredentialRepository;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialAdminService;
@@ -83,8 +81,6 @@ class CallbackCredentialExpiryEndToEndTest {
     private SubOutputInterfaceRepository subOutputInterfaceRepository;
     @Autowired
     private CallbackQueueRunner callbackQueueRunner;
-    @Autowired
-    private CallbackCredentialEncryptionFacade encryptionFacade;
     @Autowired
     private CallbackCredentialRepository credentialRepository;
     @Autowired
@@ -171,13 +167,14 @@ class CallbackCredentialExpiryEndToEndTest {
         iface.setCallCount(0L);
         subOutputInterfaceRepository.save(iface);
 
-        // 直接构造过期凭证落库（绕过 create 的将来校验）。expiresAt 取 1 年前——解析器
-        // ensureNotExpired 用注入的 Clock（实测为 UTC，与本地 +8 墙钟有偏移；减 1 小时会被
-        // UTC clock 误判为未过期），1 年余量彻底消除任何时钟/时区脆弱性，明确已过期。
-        final EncryptedCredential enc = encryptionFacade.encrypt("expired-tok");
+        // 直接构造过期凭证落库（绕过 create 将来校验 + 不依赖 credential.crypto facade —— 避免
+        // ArchUnit R8「credential.crypto 仅限 credential 包内使用」违规，本 callback 包测试不可依赖
+        // crypto facade）。解析器 ensureNotExpired 先于解密执行，故 cipher 字节/keyId 内容不影响
+        // 过期判定。expiresAt 取 1 年前：解析器 Clock 时区与本地墙钟有偏移（减 1 小时会被误判未
+        // 过期），1 年余量彻底消除任何时钟/时区脆弱性，明确已过期。
         final CallbackCredentialEntity expired = CallbackCredentialEntity.newToken(
-                seededInterfaceId, enc.ciphertext(), "X-Api-Token", enc.keyId(),
-                LocalDateTime.now().minusYears(1));
+                seededInterfaceId, "expired-token-cipher".getBytes(StandardCharsets.UTF_8),
+                "X-Api-Token", "mock-key-v1", LocalDateTime.now().minusYears(1));
         credentialRepository.save(expired);
     }
 
