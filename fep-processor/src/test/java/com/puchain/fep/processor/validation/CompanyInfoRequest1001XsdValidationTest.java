@@ -43,8 +43,8 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
                 <CompanyInfoRequest1001>
                   <CompanyName>测试企业有限公司</CompanyName>
                   <CompanyCode>91110000ABCDEFGH12</CompanyCode>
-                  <MainClass>QYXX</MainClass>
-                  <SecondClass>QYXX01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <BeginDate>20260101</BeginDate>
                   <EndDate>20260511</EndDate>
                   <AuthNo>AUTH20260511000001</AuthNo>
@@ -62,8 +62,8 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
                 </RealHead1001>
                 <CompanyInfoRequest1001>
                   <CompanyCode>91110000ABCDEFGH12</CompanyCode>
-                  <MainClass>QYXX</MainClass>
-                  <SecondClass>QYXX01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
                 </CompanyInfoRequest1001>""");
@@ -79,8 +79,8 @@ class CompanyInfoRequest1001XsdValidationTest extends AbstractXsdValidationTest 
                 <CompanyInfoRequest1001>
                   <CompanyName>测试企业有限公司</CompanyName>
                   <CompanyCode>91110000ABCDEFGH12</CompanyCode>
-                  <MainClass>QYXX</MainClass>
-                  <SecondClass>QYXX01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <AuthNo>AUTH20260511000001</AuthNo>
                   <AuthOrgCode>30500000000099</AuthOrgCode>
                 </CompanyInfoRequest1001>""");

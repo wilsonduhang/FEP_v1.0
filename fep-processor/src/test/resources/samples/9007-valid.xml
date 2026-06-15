@@ -19,7 +19,7 @@
             <Result>90000</Result>
         </RealHead9007>
         <LoginResponse9007>
-            <Status>0</Status>
+            <Status>1</Status>
         </LoginResponse9007>
     </MSG>
 </CFX>

@@ -147,7 +147,7 @@ class SupplyChainBody3112_3113Test {
         CreditInfo c1 = new CreditInfo();
         c1.setHxqyName("湖南某某核心企业A");
         c1.setHxqyCode("91430100MA00000001");
-        c1.setRetCode("00");
+        c1.setRetCode("90000");
         c1.setRetMemo("查询成功");
         c1.setCreditInfoMx(List.of(bank1, bank2));
 
@@ -155,7 +155,7 @@ class SupplyChainBody3112_3113Test {
         CreditInfo c2 = new CreditInfo();
         c2.setHxqyName("湖南某某核心企业B");
         c2.setHxqyCode("91430100MA00000002");
-        c2.setRetCode("01");
+        c2.setRetCode("90001");
         // RetMemo omitted (optional)
         // CreditInfoMx omitted (optional)
 
@@ -180,7 +180,7 @@ class SupplyChainBody3112_3113Test {
                 .contains("<QueryDate>20260424</QueryDate>")
                 .contains("<CreditInfoNum>2</CreditInfoNum>")
                 .contains("<CreditInfo>")
-                .contains("<RetCode>00</RetCode>")
+                .contains("<RetCode>90000</RetCode>")
                 .contains("<RetMemo>查询成功</RetMemo>")
                 .contains("<CreditInfoMx>")
                 .contains("<BankNodeCode>B1001010203</BankNodeCode>")
@@ -189,7 +189,7 @@ class SupplyChainBody3112_3113Test {
                 .contains("<sxBalance>18000000.00</sxBalance>")
                 .contains("<QueryReturnTime>20260424103500</QueryReturnTime>")
                 .contains("<BankNodeCode>B1001020304</BankNodeCode>")
-                .contains("<RetCode>01</RetCode>")
+                .contains("<RetCode>90001</RetCode>")
                 .contains("<ExtInfo>")
                 .contains("<ExtData>3113回执扩展</ExtData>");
 
@@ -206,7 +206,7 @@ class SupplyChainBody3112_3113Test {
         CreditInfo p1 = cs.get(0);
         assertThat(p1.getHxqyName()).isEqualTo("湖南某某核心企业A");
         assertThat(p1.getHxqyCode()).isEqualTo("91430100MA00000001");
-        assertThat(p1.getRetCode()).isEqualTo("00");
+        assertThat(p1.getRetCode()).isEqualTo("90000");
         assertThat(p1.getRetMemo()).isEqualTo("查询成功");
 
         List<CreditInfoBank> banks = p1.getCreditInfoMx();
@@ -225,7 +225,7 @@ class SupplyChainBody3112_3113Test {
         CreditInfo p2 = cs.get(1);
         assertThat(p2.getHxqyName()).isEqualTo("湖南某某核心企业B");
         assertThat(p2.getHxqyCode()).isEqualTo("91430100MA00000002");
-        assertThat(p2.getRetCode()).isEqualTo("01");
+        assertThat(p2.getRetCode()).isEqualTo("90001");
         assertThat(p2.getRetMemo()).isNull();
         assertThat(p2.getCreditInfoMx()).isNull();
 

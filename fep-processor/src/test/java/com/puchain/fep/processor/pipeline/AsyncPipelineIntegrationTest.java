@@ -214,7 +214,7 @@ class AsyncPipelineIntegrationTest {
                     <DesNodeCode>A1000143000104</DesNodeCode>
                     <qyAccName>\u6D4B\u8BD5\u4F01\u4E1A\u8D26\u6237</qyAccName>
                     <qyAccCode>1234567890123456</qyAccCode>
-                    <AccReturnCode>01</AccReturnCode>
+                    <AccReturnCode>1</AccReturnCode>
                 </qyAccQueryReturn3006>"""));
 
         MessageProcessRecord completed = service.completeWithResponse(

@@ -40,7 +40,7 @@ class Batch1102XsdValidationTest extends AbstractXsdValidationTest {
                     <ItemId>1</ItemId>
                     <MainClass>COINFO</MainClass>
                     <SecondClass>I1001</SecondClass>
-                    <Period>01</Period>
+                    <Period>1</Period>
                     <FileDate>20260505</FileDate>
                   </DataTransferCheck>
                 </DataTransferCheckRequest1102>""");
@@ -65,7 +65,7 @@ class Batch1102XsdValidationTest extends AbstractXsdValidationTest {
                   <DataTransferCheck>
                     <MainClass>COINFO</MainClass>
                     <SecondClass>I1001</SecondClass>
-                    <Period>01</Period>
+                    <Period>1</Period>
                     <FileDate>20260505</FileDate>
                   </DataTransferCheck>
                 </DataTransferCheckRequest1102>""");

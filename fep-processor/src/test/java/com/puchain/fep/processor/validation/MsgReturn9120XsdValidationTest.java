@@ -53,7 +53,7 @@ class MsgReturn9120XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                   <AddWord>处理成功</AddWord>
                 </BatchHead9120>
                 <MsgReturn9120>
@@ -67,7 +67,7 @@ class MsgReturn9120XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </BatchHead9120>
                 <MsgReturn9120>
                   <Debug>missing OriMsgNo on purpose</Debug>

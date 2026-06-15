@@ -85,7 +85,7 @@ class CompanyAuthFileResponse2004XsdValidationTest extends AbstractXsdValidation
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
-                  <Result>99999</Result>
+                  <Result>29999</Result>
                   <AddWord>授权书已存在，请勿重复提交</AddWord>
                 </RealHead2004>""");
 

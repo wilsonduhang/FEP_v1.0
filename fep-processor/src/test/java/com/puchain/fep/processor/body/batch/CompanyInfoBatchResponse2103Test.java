@@ -102,7 +102,7 @@ class CompanyInfoBatchResponse2103Test {
         minimal.setMainClass("COINFO");
         minimal.setSecondClass("I1001");
         minimal.setAuthOrgCode("10000000000002");
-        minimal.setQueryResult("99999");
+        minimal.setQueryResult("90000");
 
         CompanyInfoBatchResponse2103 response = new CompanyInfoBatchResponse2103();
         response.setItems(List.of(minimal));

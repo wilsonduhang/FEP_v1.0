@@ -106,16 +106,16 @@ class CommonBodyTest {
     @Test
     void loginResponse9007_jaxbRoundtrip_shouldPreserveStatus() throws Exception {
         LoginResponse9007 original = new LoginResponse9007();
-        original.setStatus("01");
+        original.setStatus("1");
 
         String xml = JaxbRoundtripSupport.marshal(original);
 
         assertThat(xml)
                 .contains("<LoginResponse9007")
-                .contains("<Status>01</Status>");
+                .contains("<Status>1</Status>");
 
         LoginResponse9007 parsed = JaxbRoundtripSupport.unmarshal(xml, LoginResponse9007.class);
-        assertThat(parsed.getStatus()).isEqualTo("01");
+        assertThat(parsed.getStatus()).isEqualTo("1");
     }
 
     // ── LogoutRequest9008 ──────────────────────────────────
@@ -157,16 +157,16 @@ class CommonBodyTest {
     @Test
     void logoutResponse9009_jaxbRoundtrip_shouldPreserveStatus() throws Exception {
         LogoutResponse9009 original = new LogoutResponse9009();
-        original.setStatus("02");
+        original.setStatus("2");
 
         String xml = JaxbRoundtripSupport.marshal(original);
 
         assertThat(xml)
                 .contains("<LogoutResponse9009")
-                .contains("<Status>02</Status>");
+                .contains("<Status>2</Status>");
 
         LogoutResponse9009 parsed = JaxbRoundtripSupport.unmarshal(xml, LogoutResponse9009.class);
-        assertThat(parsed.getStatus()).isEqualTo("02");
+        assertThat(parsed.getStatus()).isEqualTo("2");
     }
 
     // ── Forward9000 ────────────────────────────────────────

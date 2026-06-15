@@ -153,9 +153,9 @@ class SupplyChainBody3101_3102_3103Test {
         baseInfo.setQyCreditCode("ZZ20260424001");
         baseInfo.setZjRgstDate("20200101");
         baseInfo.setZjExpDate("20300101");
-        baseInfo.setQyType("01");
+        baseInfo.setQyType("1");
         baseInfo.setQyClass("F66");
-        baseInfo.setQySize("0001");
+        baseInfo.setQySize("SC00");
         baseInfo.setRegAddr("长沙市岳麓区某某路1号");
         baseInfo.setPostAddr("长沙市岳麓区某某路1号A栋");
         baseInfo.setMailAddr("contact@example.com");
@@ -240,9 +240,9 @@ class SupplyChainBody3101_3102_3103Test {
                 .contains("<qyCreditCode>ZZ20260424001</qyCreditCode>")
                 .contains("<zjRgstDate>20200101</zjRgstDate>")
                 .contains("<zjExpDate>20300101</zjExpDate>")
-                .contains("<qyType>01</qyType>")
+                .contains("<qyType>1</qyType>")
                 .contains("<qyClass>F66</qyClass>")
-                .contains("<qySize>0001</qySize>")
+                .contains("<qySize>SC00</qySize>")
                 .contains("<RegAddr>长沙市岳麓区某某路1号</RegAddr>")
                 .contains("<rzqyAccInfo>")
                 .contains("<AccName>湖南某某融资企业</AccName>")
@@ -280,9 +280,9 @@ class SupplyChainBody3101_3102_3103Test {
         assertThat(parsedBase.getQyCreditCode()).isEqualTo("ZZ20260424001");
         assertThat(parsedBase.getZjRgstDate()).isEqualTo("20200101");
         assertThat(parsedBase.getZjExpDate()).isEqualTo("20300101");
-        assertThat(parsedBase.getQyType()).isEqualTo("01");
+        assertThat(parsedBase.getQyType()).isEqualTo("1");
         assertThat(parsedBase.getQyClass()).isEqualTo("F66");
-        assertThat(parsedBase.getQySize()).isEqualTo("0001");
+        assertThat(parsedBase.getQySize()).isEqualTo("SC00");
         assertThat(parsedBase.getRegAddr()).isEqualTo("长沙市岳麓区某某路1号");
         assertThat(parsedBase.getPostAddr()).isEqualTo("长沙市岳麓区某某路1号A栋");
         assertThat(parsedBase.getMailAddr()).isEqualTo("contact@example.com");

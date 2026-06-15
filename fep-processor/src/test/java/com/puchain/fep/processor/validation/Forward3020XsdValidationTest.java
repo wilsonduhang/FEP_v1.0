@@ -70,7 +70,7 @@ class Forward3020XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead3020>
                 <Forward3020>
                   <SerialNo>SN302000000000000000000000002A</SerialNo>

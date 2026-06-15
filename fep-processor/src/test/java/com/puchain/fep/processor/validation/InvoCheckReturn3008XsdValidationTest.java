@@ -45,7 +45,7 @@ class InvoCheckReturn3008XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                   <AddWord>核验成功</AddWord>
                 </RealHead3008>
                 <InvoCheckReturn3008>
@@ -70,7 +70,7 @@ class InvoCheckReturn3008XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead3008>
                 <InvoCheckReturn3008>
                   <SerialNo>SN300800000000000000000000002A</SerialNo>
