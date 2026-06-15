@@ -128,9 +128,9 @@ class InboundListenerWireTest {
                     <ItemId>1</ItemId>
                     <MainClass>COINFO</MainClass>
                     <SecondClass>I1001</SecondClass>
-                    <Period>01</Period>
+                    <Period>1</Period>
                     <FileDate>20260509</FileDate>
-                    <Status>01</Status>
+                    <Status>1</Status>
                   </DataTransferResult>
                 </DataTransferCheckResponse2102>
               </MSG>
