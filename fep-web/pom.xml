@@ -129,6 +129,13 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- B-8: Dashboard 关键告警 WebSocket 实时推送（FR-WEB-DASH-REFRESH, PRD §5.2.5 实时更新层）。
+             原生 TextWebSocketHandler 单向 server→client；版本由 spring-boot-dependencies BOM 管理。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- Note: spring-security-test will be added when network is available.
              Current tests use MockMvc with Spring Security auto-configured. -->
 
