@@ -1,4 +1,11 @@
-# Q-F1 MainClass/SecondClass Fixture 值域合规修复
+# Q-F1 → 全量夹具母本值域合规审计
+
+> ⚠️ 范围演进（2026-06-15 muzhou 三次拍板）：原票仅 MainClass/SecondClass=MainA01/SubA0101
+> → 预扫发现同类占位 LSDX/FZMD/QYXX/MainB01/YWTB01（muzhou「扩全部 Category A」）
+> → 再发现 Period/Type/Status/Result/RetCode/QueryResult/RecordResult/QueryType/ApplyMode/
+>   AccReturnCode/CreationRetCode/rzPhaseCode/qyType/qySize 等多字段广泛不合规
+> → muzhou「本 PR：全量夹具母本审计」。本 Plan §3.5 起为审计扩展。
+
 
 > 类型：测试夹具值域合规修复（test-only，0 生产代码变更）
 > 模式：A（AI 主导）
@@ -63,6 +70,33 @@
 - 不新增 production 代码 / 不改母本 yml。
 - 不新增冗余 guard 测试（母本拒绝非法 MainClass 已由 `RuleMasterMainClass1001Test`/`RuleMasterMainSecondClassBatchTest` 覆盖）——如 muzhou 要求绑生产 yml 的 canonical-pair guard，可加 T3（fep-web）。
 - 不触碰别会话 WIP（#95 credential / #96 tracking-tables）。
+
+## 3.5 全量审计结果（muzhou「本 PR 全量夹具母本审计」）
+
+逐字段对照生产 application.yml 母本（§5.8）扫描两模块全部正向夹具，母本-illegal 值
+按母本映射规范化（保留全部负向/边界测试）。
+
+**值映射（母本-cited）**
+- MainClass/SecondClass：MainA01/SubA0101、MainB01/SubB0101 → GYL/HX01；LSDX/LSDX01 → STATS/LSD01（STATS 允许 LSD01）；FZMD/FZMD01 → ZFJS/FZBMD；QYXX/QYXX01 → COINFO/I1001；YWTB01 → ZHYW（YWTB 仅允许 ZHYW）
+- Period（1101/2101/1102/2102，允许 1-7,99）：01 → 1
+- Type（1101/2101，允许 1,2,3）：01/99 → 1
+- Status（1102/2102 允许 1-6；9007/9009 允许 1,2,3,99）：01 → 1；NodeStatus 0/01 → 1，2-char 边界场景 → 99（母本-legal 且保留 maxLength=2 演示意图）
+- Result/RetCode（52 码）：10000/20000/00/01 → 90000（多项保持区分用 90001）；99999（错误回执）→ 29999
+- QueryType（3001/3002 允许 1,2）：01/02 → 1/2
+- ApplyMode（3000 允许 1,2）：01/02 → 1/2
+- AccReturnCode（3006 允许 0,1,2,3,4,9）：00/01 → 0/1
+- CreationRetCode（3103 允许 11,21,22,23,91,92,93,99）：0/1 → 11
+- QueryResult（2103 允许 90000,10001-10008,19999）：99999 → 90000
+- RecordResult（2104）：99999 → 90000
+- qyType（3102 允许 1-6）：01 → 1；qySize（3102 允许 SC00-03）：0001 → SC00
+
+**保留的负向/边界/合成测试（未改）**
+- XSD facet 负例：MainClass `L`（minLength=2）、SecondClass `LSDX0123456789ABZ`（maxLength=16）、QueryResult `0000`（length=5）
+- 母本拒绝负例：RuleTypesTest `BAD`/`anything`(GENERAL 不约束)、RuleMaster*Test `BAD`/`12345`、BusinessRuleValidatorTest 合成引擎 `Status=9`（内联规则非生产母本）
+- 文档化 XSD 边界：OutboundEnvelopeXsdComplianceTest `EA`/`EA01`（Javadoc 明示 minLength=2）
+- samples/invalid/ 整目录负例（缺必填字段，码值附带）
+
+**覆盖文件**：fep-processor 42 文件（body realtime/batch/supplychain/common + validation XSD + samples）+ fep-web ~6 文件（dispatcher/wire/listener）。每次替换用全限定字符串（含 `<tag>`/setter/getter 上下文）规避子串碰撞与 DEPENDENT_ENUM 配对错配；逐文件 git diff + 残留 grep + 全模块回归核验。
 
 ## 7. PRD 追溯
 
