@@ -6,6 +6,8 @@ import com.puchain.fep.web.callback.credential.dto.CallbackCredentialResponse;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialSweepResponse;
 import com.puchain.fep.web.callback.credential.dto.CallbackCredentialUpdateRequest;
 import com.puchain.fep.web.callback.credential.service.CallbackCredentialAdminService;
+import com.puchain.fep.web.callback.http.CallbackConnectivityProbe;
+import com.puchain.fep.web.callback.http.CallbackProbeResult;
 import com.puchain.fep.web.sysmgmt.log.annotation.OperationLog;
 import com.puchain.fep.web.sysmgmt.log.domain.OperationType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -43,16 +45,20 @@ import java.util.List;
 public class CallbackCredentialController {
 
     private final CallbackCredentialAdminService service;
+    private final CallbackConnectivityProbe connectivityProbe;
 
     /**
      * 构造凭证管理控制器。
      *
-     * @param service 凭证管理服务
+     * @param service           凭证管理服务
+     * @param connectivityProbe 凭证感知连通性探测编排
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-            justification = "Spring-managed singleton stored by reference per container contract")
-    public CallbackCredentialController(final CallbackCredentialAdminService service) {
+            justification = "Spring-managed singletons stored by reference per container contract")
+    public CallbackCredentialController(final CallbackCredentialAdminService service,
+                                        final CallbackConnectivityProbe connectivityProbe) {
         this.service = service;
+        this.connectivityProbe = connectivityProbe;
     }
 
     /**
@@ -164,5 +170,23 @@ public class CallbackCredentialController {
             @Parameter(description = "输出接口 ID") @PathVariable final String interfaceId) {
         service.delete(interfaceId);
         return ApiResult.success();
+    }
+
+    /**
+     * 凭证感知连通性测试：解析鉴权头（验证 TOKEN 解密 / OAUTH2 取 token 真生效）后
+     * HEAD 探测目标接口 URL。结果不含任何凭证明文/密文。
+     *
+     * @param interfaceId 输出接口 ID
+     * @return 探测结果（reachable / statusCode / authApplied / latencyMs / message）
+     */
+    @PostMapping("/{interfaceId}/test-connectivity")
+    @OperationLog(module = "回调凭证管理", type = OperationType.QUERY, description = "凭证感知连通性测试")
+    @Operation(summary = "凭证感知连通性测试",
+            description = "解析鉴权头(验 TOKEN 解密/OAUTH2 取 token 真生效)后 HEAD 探测目标 URL，结果不回显凭证")
+    @ApiResponse(responseCode = "200", description = "测试完成")
+    @ApiResponse(responseCode = "404", description = "接口不存在")
+    public ApiResult<CallbackProbeResult> testConnectivity(
+            @Parameter(description = "输出接口 ID") @PathVariable final String interfaceId) {
+        return ApiResult.success(connectivityProbe.probe(interfaceId));
     }
 }
