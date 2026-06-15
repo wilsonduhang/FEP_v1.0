@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  build 容器专用 Maven 配置：国内网络走阿里云镜像。
+  通过 docker-compose 只读挂载到容器 /root/.m2/settings.xml。
+  与宿主机 ~/.m2/settings.xml 内容一致，二者独立维护。
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              https://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>aliyun-central</id>
+      <name>Aliyun Maven Central Mirror</name>
+      <mirrorOf>central</mirrorOf>
+      <url>https://maven.aliyun.com/repository/central</url>
+    </mirror>
+  </mirrors>
+</settings>

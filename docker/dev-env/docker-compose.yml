@@ -1,0 +1,67 @@
+# FEP 本地开发 / 测试环境编排
+# ----------------------------------------------------------------------------
+# 提供两件事：
+#   1) fep-redis  —— 与 application-dev.yml / CI(ci.yml) 完全一致的 Redis 实例
+#                    (redis:7-alpine, 端口 6379, 容器名 fep-redis)
+#   2) build      —— 可复现的 Maven 构建容器 (maven:3.9-eclipse-temurin-17)
+#                    与 CI 同一 JDK / Maven 基线，避免「本机能跑 CI 不过」
+#
+# 单元测试用 TestRedisConfiguration(内存 Mock) 跑，无需真 Redis；
+# 真 Redis 仅 dev 运行时 + P7.1 E2E 冒烟需要。
+#
+# 用法见同目录 README.md。
+# ----------------------------------------------------------------------------
+
+name: fep-dev
+
+services:
+  # === Redis：与 application-dev.yml 中 host=localhost port=6379 db=0 对齐 ===
+  redis:
+    image: redis:7-alpine
+    container_name: fep-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - fep-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fep-dev
+
+  # === Maven 构建容器：CI 式可复现构建 (默认不启动，需 --profile build) ===
+  build:
+    image: maven:3.9-eclipse-temurin-17
+    container_name: fep-build
+    profiles: ["build"]
+    working_dir: /workspace
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      # 容器内连 Redis 走 compose 服务名，而非 localhost
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - MAVEN_OPTS=-Dmaven.repo.local=/root/.m2/repository
+    volumes:
+      - ../..:/workspace               # 挂载整个 FEP_v1.0 仓库
+      - fep-maven-repo:/root/.m2       # 持久化 Maven 本地仓库，加速重复构建
+      - ./maven-settings.xml:/root/.m2/settings.xml:ro   # 阿里云镜像（国内加速）
+    networks:
+      - fep-dev
+    # 默认仅打印版本；真正构建用 `docker compose run --rm build mvn ...`
+    command: ["mvn", "-version"]
+
+volumes:
+  fep-redis-data:
+    name: fep-redis-data       # 复用手工创建容器时的同名卷，数据不丢
+  fep-maven-repo:
+    name: fep-maven-repo
+
+networks:
+  fep-dev:
+    name: fep-dev
