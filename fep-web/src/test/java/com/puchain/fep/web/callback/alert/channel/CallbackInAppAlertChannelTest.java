@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -86,6 +87,35 @@ class CallbackInAppAlertChannelTest {
         verify(eventPublisher).publishEvent(evt.capture());
         assertThat(evt.getValue().userId()).isEqualTo("u1");
         assertThat(evt.getValue().notificationId()).isEqualTo(cap.getValue().getNotificationId());
+    }
+
+    @Test
+    void send_shouldPublishOneEventPerAdmin() {
+        SysRole admin = mock(SysRole.class);
+        when(admin.getRoleId()).thenReturn("r-admin");
+        when(roleRepo.findByRoleCode("ADMIN")).thenReturn(Optional.of(admin));
+        SysUserRole ur1 = mock(SysUserRole.class);
+        when(ur1.getUserId()).thenReturn("u1");
+        SysUserRole ur2 = mock(SysUserRole.class);
+        when(ur2.getUserId()).thenReturn("u2");
+        when(userRoleRepo.findByRoleId("r-admin")).thenReturn(List.of(ur1, ur2));
+        SysUser u1 = mock(SysUser.class);
+        when(u1.getUserId()).thenReturn("u1");
+        SysUser u2 = mock(SysUser.class);
+        when(u2.getUserId()).thenReturn("u2");
+        when(userRepo.findAllById(List.of("u1", "u2"))).thenReturn(List.of(u1, u2));
+        when(notifRepo.save(any(CallbackNotificationEntity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        new CallbackInAppAlertChannel(roleRepo, userRoleRepo, userRepo, notifRepo, eventPublisher).send(msg());
+
+        // 每个 ADMIN 各落一条通知 + 发布一个事件（循环不变量：one event per admin）。
+        verify(notifRepo, times(2)).save(any(CallbackNotificationEntity.class));
+        ArgumentCaptor<InAppNotificationCreatedEvent> evt =
+                ArgumentCaptor.forClass(InAppNotificationCreatedEvent.class);
+        verify(eventPublisher, times(2)).publishEvent(evt.capture());
+        assertThat(evt.getAllValues().stream().map(InAppNotificationCreatedEvent::userId).toList())
+                .containsExactlyInAnyOrder("u1", "u2");
     }
 
     @Test
