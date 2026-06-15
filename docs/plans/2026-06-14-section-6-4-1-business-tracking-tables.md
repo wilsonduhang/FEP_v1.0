@@ -259,6 +259,12 @@ git grep -nE "3020|9000|9100|3120|Forward|forward" -- 'fep-web/**/*.java' 'fep-p
 
 **Step 3: Commit**（按 Step 2 结果，footer 同 Task 1）
 
+### ✅ T4 调研结论与决议（2026-06-14 实施）
+
+**调研实测**（git grep）：转发 4 报文 3020/9000/3120/9100 均为 `MessageDirection.BIDIRECTIONAL`、**不在 `InboundMessageDispatcher.BODY_TYPE_REGISTRY`**、**无任何转发 listener/service**（仅 body POJO Forward9000/9100/3020/3120 + 通用 `MessageProcessRecordEntity`）。dispatcher 不为未注册报文发布带 body 的 `InboundMessageProcessedEvent` → **无干净 event hook**。
+
+**决议（muzhou 2026-06-14 拍板）：T4 两张转发表完全 deferred —— 不建空表/实体/repo**（偏离 Plan 原述「仅建表」，muzhou 选更 honest 路线）。理由：转发为透传无业务字段沉淀点；强行注册 Forward body 仅为写记录会触 `feedback_registered_inbound_body_must_implement_serialnobearing` 红线 + 臆造 hook；建无 writer/reader 的空 schema = YAGNI/「建了没人用」。待转发流程未来提供真实 hook 再建。已在 Daily Report + PRD 矩阵显式记录。
+
 ---
 
 ## Task 5（closing）：worktree 闭环 + 矩阵更新
