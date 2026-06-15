@@ -13,6 +13,7 @@ import {
 
 const POLL_INTERVAL_MS = 30_000;
 
+/** 判断是否为服务端 notification 帧（{@code type === 'notification'}）。 */
 function isNotificationFrame(data: unknown): boolean {
   return (
     typeof data === 'object' &&
@@ -71,6 +72,8 @@ export const useNotificationStore = defineStore('callbackNotification', {
               void this.fetchList();
             }
           },
+          // WS 断开时显式确保轮询基线在运行（startPolling 幂等；表达「WS 是增强非替代」意图）。
+          onFallback: () => this.startPolling(),
         }),
       );
       this.wsClient.connect();

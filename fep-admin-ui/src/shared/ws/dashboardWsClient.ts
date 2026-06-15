@@ -8,6 +8,10 @@
  *  - 断开/出错自动重连（指数退避，上限 `maxReconnectDelayMs` 默认 2min），并触发
  *    `onFallback` 让调用方回退既有轮询（WS 是增强非替代，断开不破坏现状）。
  *  - `disconnect()` 显式关闭，阻止后续重连。
+ *
+ * 注意：若 `token()` 始终返回 null（未登录），连接会反复 open→close→退避重连，
+ * 始终无法认证——此时实时层不可用，由调用方的轮询基线兜底。调用方应在持有有效
+ * 凭证时才 `subscribeRealtime()`（NotificationBell 仅在已认证布局内挂载，故凭证必在）。
  */
 export interface DashboardWsClientOptions {
   /** WebSocket URL（ws:// 或 wss://）。 */
