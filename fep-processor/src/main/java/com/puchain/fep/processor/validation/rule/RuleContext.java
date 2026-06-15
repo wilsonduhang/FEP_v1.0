@@ -11,6 +11,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -122,7 +123,10 @@ public final class RuleContext {
      * @return 不可修改的值列表；字段不存在时为空 List
      */
     public List<String> values(final String localName) {
-        return List.copyOf(fields.getOrDefault(localName, List.of()));
+        // RuleContext 构造后只读（见类 Javadoc，parse 完成后 fields 及内部 List 不再变更），
+        // 返回零拷贝不可修改视图而非 List.copyOf，省去每报文×规则×字段一次数组克隆
+        // （Simplify efficiency EFF-P3-1，镜像 MessageRuleRegistry#rulesFor F1）。
+        return Collections.unmodifiableList(fields.getOrDefault(localName, List.of()));
     }
 
     /**
