@@ -57,7 +57,10 @@ public class SecurityConfiguration {
             // P5 T8: Prometheus scrape 端点暴露给监控系统抓取（FR-MSG-OUTBOUND-METRICS）。
             // Plan §AC3 reality-check 修订：原 P0.5 PUBLIC_PATHS 不含 prometheus，本 Task 显式补全。
             // 内网部署：Prometheus server 走 service-mesh / VPC ACL 限制源 IP；不依赖 JWT。
-            "/actuator/prometheus"
+            "/actuator/prometheus",
+            // B-8: Dashboard 实时告警 WebSocket 握手端点放行（鉴权由 DashboardWebSocketHandler
+            // 首帧 JWT 自管，规避浏览器原生 WebSocket 无法设 Authorization header，FR-WEB-DASH-REFRESH）。
+            "/ws/dashboard"
     };
 
     private final JwtAuthFilter jwtAuthFilter;

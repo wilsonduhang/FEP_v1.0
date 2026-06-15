@@ -129,5 +129,16 @@
 | 角色 | 谁 | 结论 | 日期 |
 |---|---|---|---|
 | Plan 作者 | Claude Code (mode A/B) | 起草 v0.1（含 §5.2.5 实测重定位为告警实时层 + 复用既有通知系统 + WS 鉴权三方案） | 2026-06-15 |
-| santa 评审 | Claude Code (santa-method) | ⏳ 待评审 | - |
-| **Plan 批准者** | **muzhou** | **⏳ 待签字**（须确认：WS 鉴权方案 a/b/c + 原生 vs STOMP + 集群 deferred） | - |
+| santa 评审 | Claude Code (santa-method) | ✅ PASS-WITH-MINOR（无 BLOCKER；所有事实声明逐条 grep 实测属实：PRD §5.2.5:987 确为 WebSocket、8 大既有组件全核验、greenfield 确认、V32 已存无需新 migration；6 条 MINOR 加固建议均属实施细节折叠进 Task） | 2026-06-15 |
+| **Plan 批准者** | **muzhou** | **✅ APPROVED**（3 设计点拍板：WS 鉴权 = **(a) 首帧 token**[60s 未认证 server close] / 协议 = **原生 TextWebSocketHandler** / 集群 = **单实例 MVP**[registry 接口化 + TODO 指向 Redis pub/sub P2，多实例 deferred]） | 2026-06-15 |
+
+### santa MINOR 加固清单（折叠进实施，每条标对应 Task）
+
+1. **[T1]** AUTH_TIMEOUT_SECONDS 参数化（默认 60s，可配置）+ 超时会话定时清理（@Scheduled / 连接级）
+2. **[T1]** WS handler 日志严禁打印完整 JWT；仅记 userId + jti（`extractJti`）经 LogSanitizer + `@SuppressFBWarnings(CRLF_INJECTION_LOGS)`；失败认证记审计日志
+3. **[T1]** `afterConnectionEstablished` 临时存未认证会话等首帧；`afterConnectionClosed` 原子清理 registry
+4. **[T1]** registry 接口化（`WebSocketSessionRegistry` 接口 + `InMemorySessionRegistry` 实现）+ TODO 注释指向 Redis pub/sub P2
+5. **[T3]** 前端自动重连指数退避上限（如 2min max backoff）；WS 断开降级回退既有轮询不破坏现状
+6. **[T4]** E2E 若环境成本高则 deferred + 文档记录，后端 IT + 前端单测兜底
+
+> **API 实测订正（T1 实施按此）**：`JwtTokenProvider` 实际方法为 `parse(token) → Claims`（非 Plan 正文写的 `validate`），取 userId 用 `parse(token).getSubject()`；jti 用 `extractJti(token)`。

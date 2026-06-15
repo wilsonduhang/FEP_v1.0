@@ -3,6 +3,7 @@ package com.puchain.fep.web.callback.alert.channel;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.callback.alert.CallbackAlertMessage;
 import com.puchain.fep.web.callback.notification.domain.CallbackNotificationEntity;
+import com.puchain.fep.web.callback.notification.event.InAppNotificationCreatedEvent;
 import com.puchain.fep.web.callback.notification.repository.CallbackNotificationRepository;
 import com.puchain.fep.web.sysmgmt.config.alert.domain.NotifyMethod;
 import com.puchain.fep.web.sysmgmt.rel.domain.SysUserRole;
@@ -14,10 +15,12 @@ import com.puchain.fep.web.sysmgmt.user.repository.SysUserRepository;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,22 +49,26 @@ public class CallbackInAppAlertChannel implements CallbackAlertChannel {
     private final SysUserRoleRepository userRoleRepo;
     private final SysUserRepository userRepo;
     private final CallbackNotificationRepository notifRepo;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * @param roleRepo     角色仓储
-     * @param userRoleRepo 用户-角色关联仓储
-     * @param userRepo     用户仓储
-     * @param notifRepo    站内通知仓储
+     * @param roleRepo       角色仓储
+     * @param userRoleRepo   用户-角色关联仓储
+     * @param userRepo       用户仓储
+     * @param notifRepo      站内通知仓储
+     * @param eventPublisher 应用事件发布器（B-8 站内通知创建事件 → WebSocket 实时推送）
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-            justification = "Spring-managed repository singletons stored by reference per container contract")
+            justification = "Spring-managed repository/publisher singletons stored by reference per container contract")
     public CallbackInAppAlertChannel(final SysRoleRepository roleRepo,
             final SysUserRoleRepository userRoleRepo, final SysUserRepository userRepo,
-            final CallbackNotificationRepository notifRepo) {
+            final CallbackNotificationRepository notifRepo,
+            final ApplicationEventPublisher eventPublisher) {
         this.roleRepo = roleRepo;
         this.userRoleRepo = userRoleRepo;
         this.userRepo = userRepo;
         this.notifRepo = notifRepo;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -87,9 +94,13 @@ public class CallbackInAppAlertChannel implements CallbackAlertChannel {
         }
         final List<SysUser> admins = userRepo.findAllById(adminUserIds);
         for (final SysUser u : admins) {
-            notifRepo.save(CallbackNotificationEntity.of(
+            final CallbackNotificationEntity saved = notifRepo.save(CallbackNotificationEntity.of(
                     u.getUserId(), CATEGORY_DLQ, message.level(),
                     message.title(), message.body(), message.refId(), message.refType()));
+            // B-8: 通知落库后发布事件，由 DashboardNotificationPushListener
+            // 在事务提交后（AFTER_COMMIT）经 WebSocket 实时推送到该用户活跃会话。
+            eventPublisher.publishEvent(new InAppNotificationCreatedEvent(
+                    saved.getUserId(), saved.getNotificationId(), Instant.now()));
         }
     }
 }

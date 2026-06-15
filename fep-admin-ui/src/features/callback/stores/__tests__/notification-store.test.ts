@@ -5,6 +5,20 @@ import { useNotificationStore } from '../notification-store';
 
 vi.mock('../../api/callbackNotification');
 
+const { wsConnect, wsDisconnect, captured } = vi.hoisted(() => ({
+  wsConnect: vi.fn(),
+  wsDisconnect: vi.fn(),
+  captured: { onMessage: undefined as undefined | ((d: unknown) => void) },
+}));
+
+vi.mock('@/shared/ws/dashboardWsClient', () => ({
+  resolveDashboardWsUrl: () => 'ws://test/ws/dashboard',
+  createDashboardWsClient: (opts: { onMessage: (d: unknown) => void }) => {
+    captured.onMessage = opts.onMessage;
+    return { connect: wsConnect, disconnect: wsDisconnect };
+  },
+}));
+
 const sample = {
   notificationId: 'N1',
   category: 'CALLBACK_DLQ',
@@ -88,5 +102,55 @@ describe('notification-store', () => {
     vi.advanceTimersByTime(90_000);
     // only the single immediate call from startPolling — interval was cleared
     expect(callbackNotificationApi.unreadCount).toHaveBeenCalledTimes(1);
+  });
+
+  it('subscribeRealtime connects WS and keeps polling baseline', () => {
+    vi.useFakeTimers();
+    vi.mocked(callbackNotificationApi.unreadCount).mockResolvedValue(0);
+    const store = useNotificationStore();
+
+    store.subscribeRealtime();
+
+    expect(wsConnect).toHaveBeenCalledTimes(1);
+    expect(store.timer).not.toBeNull(); // 轮询基线仍启用（WS 是增强非替代）
+    expect(store.wsClient).not.toBeNull();
+
+    store.subscribeRealtime(); // idempotent — 不重复建连
+    expect(wsConnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('a realtime notification frame refreshes count and list', () => {
+    vi.mocked(callbackNotificationApi.unreadCount).mockResolvedValue(5);
+    vi.mocked(callbackNotificationApi.listUnread).mockResolvedValue([sample]);
+    const store = useNotificationStore();
+    store.subscribeRealtime();
+
+    captured.onMessage?.({ type: 'notification', notificationId: 'N1' });
+
+    expect(callbackNotificationApi.unreadCount).toHaveBeenCalled();
+    expect(callbackNotificationApi.listUnread).toHaveBeenCalled();
+  });
+
+  it('ignores non-notification frames (no list refresh)', () => {
+    vi.mocked(callbackNotificationApi.unreadCount).mockResolvedValue(0);
+    const store = useNotificationStore();
+    store.subscribeRealtime();
+
+    captured.onMessage?.({ type: 'heartbeat' });
+
+    expect(callbackNotificationApi.listUnread).not.toHaveBeenCalled();
+  });
+
+  it('unsubscribeRealtime disconnects WS and stops polling', () => {
+    vi.useFakeTimers();
+    vi.mocked(callbackNotificationApi.unreadCount).mockResolvedValue(0);
+    const store = useNotificationStore();
+    store.subscribeRealtime();
+
+    store.unsubscribeRealtime();
+
+    expect(wsDisconnect).toHaveBeenCalledTimes(1);
+    expect(store.wsClient).toBeNull();
+    expect(store.timer).toBeNull();
   });
 });

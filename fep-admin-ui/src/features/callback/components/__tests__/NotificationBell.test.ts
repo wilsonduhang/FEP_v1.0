@@ -7,6 +7,16 @@ import { callbackNotificationApi } from '../../api/callbackNotification';
 
 vi.mock('../../api/callbackNotification');
 
+const { wsConnect, wsDisconnect } = vi.hoisted(() => ({
+  wsConnect: vi.fn(),
+  wsDisconnect: vi.fn(),
+}));
+
+vi.mock('@/shared/ws/dashboardWsClient', () => ({
+  resolveDashboardWsUrl: () => 'ws://test/ws/dashboard',
+  createDashboardWsClient: () => ({ connect: wsConnect, disconnect: wsDisconnect }),
+}));
+
 /**
  * NotificationBell renders an el-badge over a bell icon inside an el-popover.
  *
@@ -44,5 +54,17 @@ describe('NotificationBell', () => {
     mount(NotificationBell, { global: { plugins: [ElementPlus] }, attachTo: container });
     await flushPromises();
     expect(callbackNotificationApi.unreadCount).toHaveBeenCalled();
+  });
+
+  it('subscribes to realtime WebSocket on mount and disconnects on unmount', async () => {
+    const wrapper = mount(NotificationBell, {
+      global: { plugins: [ElementPlus] },
+      attachTo: container,
+    });
+    await flushPromises();
+    expect(wsConnect).toHaveBeenCalled();
+
+    wrapper.unmount();
+    expect(wsDisconnect).toHaveBeenCalled();
   });
 });
