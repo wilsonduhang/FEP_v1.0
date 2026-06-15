@@ -21,8 +21,8 @@ class CompanyInfoBatchRequest1103Test {
         item.setItemId("ITEM-0001");
         item.setCompanyName("湖南示例实业有限公司");
         item.setCompanyCode("91430100MA4L5XXXX1");
-        item.setMainClass("MainA01");
-        item.setSecondClass("SubA0101");
+        item.setMainClass("COINFO");
+        item.setSecondClass("I1001");
         item.setBeginDate("20260101");
         item.setEndDate("20260411");
         item.setAuthNo("AUTH2026041100001");
@@ -40,8 +40,8 @@ class CompanyInfoBatchRequest1103Test {
                 .contains("<ItemId>ITEM-0001</ItemId>")
                 .contains("<CompanyName>湖南示例实业有限公司</CompanyName>")
                 .contains("<CompanyCode>91430100MA4L5XXXX1</CompanyCode>")
-                .contains("<MainClass>MainA01</MainClass>")
-                .contains("<SecondClass>SubA0101</SecondClass>")
+                .contains("<MainClass>COINFO</MainClass>")
+                .contains("<SecondClass>I1001</SecondClass>")
                 .contains("<BeginDate>20260101</BeginDate>")
                 .contains("<EndDate>20260411</EndDate>")
                 .contains("<AuthNo>AUTH2026041100001</AuthNo>")
@@ -55,8 +55,8 @@ class CompanyInfoBatchRequest1103Test {
         assertThat(p.getItemId()).isEqualTo("ITEM-0001");
         assertThat(p.getCompanyName()).isEqualTo("湖南示例实业有限公司");
         assertThat(p.getCompanyCode()).isEqualTo("91430100MA4L5XXXX1");
-        assertThat(p.getMainClass()).isEqualTo("MainA01");
-        assertThat(p.getSecondClass()).isEqualTo("SubA0101");
+        assertThat(p.getMainClass()).isEqualTo("COINFO");
+        assertThat(p.getSecondClass()).isEqualTo("I1001");
         assertThat(p.getBeginDate()).isEqualTo("20260101");
         assertThat(p.getEndDate()).isEqualTo("20260411");
         assertThat(p.getAuthNo()).isEqualTo("AUTH2026041100001");
@@ -73,8 +73,8 @@ class CompanyInfoBatchRequest1103Test {
                     it.setItemId("ITEM-" + String.format("%04d", i));
                     it.setCompanyName("企业" + i);
                     it.setCompanyCode("9143010000000000" + i + "X");
-                    it.setMainClass("MainA01");
-                    it.setSecondClass("SubA0101");
+                    it.setMainClass("COINFO");
+                    it.setSecondClass("I1001");
                     it.setAuthNo("AUTH-" + i);
                     it.setAuthOrgCode("10000000000001");
                     return it;
@@ -97,8 +97,8 @@ class CompanyInfoBatchRequest1103Test {
         minimal.setItemId("ITEM-MIN");
         minimal.setCompanyName("最小测试");
         minimal.setCompanyCode("91000000MA0000000X");
-        minimal.setMainClass("MainB01");
-        minimal.setSecondClass("SubB0101");
+        minimal.setMainClass("COINFO");
+        minimal.setSecondClass("I1001");
         minimal.setAuthNo("AUTH-MIN");
         minimal.setAuthOrgCode("10000000000002");
 

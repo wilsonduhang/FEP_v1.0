@@ -20,8 +20,8 @@ class DataTransferCheckBatchRequest1102Test {
     void jaxbRoundtrip_singleItem_shouldPreserveAllFields() throws Exception {
         DataTransferCheckBatchItem1102 item = new DataTransferCheckBatchItem1102();
         item.setItemId("1");
-        item.setMainClass("MainA01");
-        item.setSecondClass("SubA0101");
+        item.setMainClass("COINFO");
+        item.setSecondClass("I1001");
         item.setPeriod("01");
         item.setFileName("data_20260505.csv");
         item.setFileDate("20260505");
@@ -32,8 +32,8 @@ class DataTransferCheckBatchRequest1102Test {
 
         String xml = JaxbRoundtripSupport.marshal(wrapper);
         assertThat(xml).contains("<ItemId>1</ItemId>")
-                .contains("<MainClass>MainA01</MainClass>")
-                .contains("<SecondClass>SubA0101</SecondClass>")
+                .contains("<MainClass>COINFO</MainClass>")
+                .contains("<SecondClass>I1001</SecondClass>")
                 .contains("<Period>01</Period>")
                 .contains("<FileName>data_20260505.csv</FileName>")
                 .contains("<FileDate>20260505</FileDate>")
@@ -43,8 +43,8 @@ class DataTransferCheckBatchRequest1102Test {
                 xml, DataTransferCheckBatchRequest1102.class);
         DataTransferCheckBatchItem1102 p = parsed.getItems().get(0);
         assertThat(p.getItemId()).isEqualTo("1");
-        assertThat(p.getMainClass()).isEqualTo("MainA01");
-        assertThat(p.getSecondClass()).isEqualTo("SubA0101");
+        assertThat(p.getMainClass()).isEqualTo("COINFO");
+        assertThat(p.getSecondClass()).isEqualTo("I1001");
         assertThat(p.getPeriod()).isEqualTo("01");
         assertThat(p.getFileName()).isEqualTo("data_20260505.csv");
         assertThat(p.getFileDate()).isEqualTo("20260505");
@@ -58,8 +58,8 @@ class DataTransferCheckBatchRequest1102Test {
                 .mapToObj(i -> {
                     DataTransferCheckBatchItem1102 it = new DataTransferCheckBatchItem1102();
                     it.setItemId(String.valueOf(i));
-                    it.setMainClass("MainA01");
-                    it.setSecondClass("SubA0101");
+                    it.setMainClass("COINFO");
+                    it.setSecondClass("I1001");
                     it.setPeriod("01");
                     it.setFileDate("20260505");
                     return it;
@@ -78,8 +78,8 @@ class DataTransferCheckBatchRequest1102Test {
     void optionalFields_shouldBeOmittedWhenNull() throws Exception {
         DataTransferCheckBatchItem1102 minimal = new DataTransferCheckBatchItem1102();
         minimal.setItemId("99");
-        minimal.setMainClass("MainA01");
-        minimal.setSecondClass("SubA0101");
+        minimal.setMainClass("COINFO");
+        minimal.setSecondClass("I1001");
         minimal.setPeriod("01");
         minimal.setFileDate("20260505");
         // FileName + Status null (both optional per XSD)

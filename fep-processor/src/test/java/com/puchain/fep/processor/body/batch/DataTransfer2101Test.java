@@ -16,22 +16,22 @@ class DataTransfer2101Test {
     @Test
     void jaxbRoundtrip_allRequiredFields_shouldPreserveAllFields() throws Exception {
         DataTransfer2101 body = new DataTransfer2101();
-        body.setMainClass("LSDX");
-        body.setSecondClass("LSDX01");
+        body.setMainClass("COINFO");
+        body.setSecondClass("I1001");
         body.setPeriod("01");
         body.setType("01");
         body.setFileDate("20260509");
 
         String xml = JaxbRoundtripSupport.marshal(body);
-        assertThat(xml).contains("<MainClass>LSDX</MainClass>")
-                .contains("<SecondClass>LSDX01</SecondClass>")
+        assertThat(xml).contains("<MainClass>COINFO</MainClass>")
+                .contains("<SecondClass>I1001</SecondClass>")
                 .contains("<Period>01</Period>")
                 .contains("<Type>01</Type>")
                 .contains("<FileDate>20260509</FileDate>");
 
         DataTransfer2101 parsed = JaxbRoundtripSupport.unmarshal(xml, DataTransfer2101.class);
-        assertThat(parsed.getMainClass()).isEqualTo("LSDX");
-        assertThat(parsed.getSecondClass()).isEqualTo("LSDX01");
+        assertThat(parsed.getMainClass()).isEqualTo("COINFO");
+        assertThat(parsed.getSecondClass()).isEqualTo("I1001");
         assertThat(parsed.getPeriod()).isEqualTo("01");
         assertThat(parsed.getType()).isEqualTo("01");
         assertThat(parsed.getFileDate()).isEqualTo("20260509");
@@ -49,8 +49,8 @@ class DataTransfer2101Test {
     @Test
     void jaxbMarshal_noParametersInOutput() throws Exception {
         DataTransfer2101 body = new DataTransfer2101();
-        body.setMainClass("FZMD");
-        body.setSecondClass("FZMD01");
+        body.setMainClass("COINFO");
+        body.setSecondClass("I1001");
         body.setPeriod("1");
         body.setType("1");
         body.setFileDate("20260509");

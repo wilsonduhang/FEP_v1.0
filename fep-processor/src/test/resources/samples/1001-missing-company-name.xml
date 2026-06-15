@@ -19,8 +19,8 @@
         </RealHead1001>
         <CompanyInfoRequest1001>
             <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
-            <MainClass>MainA01</MainClass>
-            <SecondClass>SubA0101</SecondClass>
+            <MainClass>COINFO</MainClass>
+            <SecondClass>I1001</SecondClass>
             <AuthNo>AUTH2026041100001</AuthNo>
             <AuthOrgCode>10000000000001</AuthOrgCode>
         </CompanyInfoRequest1001>

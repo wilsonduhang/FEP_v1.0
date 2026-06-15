@@ -39,8 +39,8 @@ class Batch2102XsdValidationTest extends AbstractXsdValidationTest {
                 <DataTransferCheckResponse2102>
                   <DataTransferResult>
                     <ItemId>1</ItemId>
-                    <MainClass>MainA01</MainClass>
-                    <SecondClass>SubA0101</SecondClass>
+                    <MainClass>COINFO</MainClass>
+                    <SecondClass>I1001</SecondClass>
                     <Period>01</Period>
                     <FileDate>20260505</FileDate>
                     <Status>01</Status>
@@ -67,8 +67,8 @@ class Batch2102XsdValidationTest extends AbstractXsdValidationTest {
                 <DataTransferCheckResponse2102>
                   <DataTransferResult>
                     <ItemId>1</ItemId>
-                    <MainClass>MainA01</MainClass>
-                    <SecondClass>SubA0101</SecondClass>
+                    <MainClass>COINFO</MainClass>
+                    <SecondClass>I1001</SecondClass>
                     <Period>01</Period>
                     <FileDate>20260505</FileDate>
                   </DataTransferResult>

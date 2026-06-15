@@ -20,8 +20,8 @@
         <CompanyInfoRequest1001>
             <CompanyName>湖南示例实业有限公司</CompanyName>
             <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
-            <MainClass>MainA01</MainClass>
-            <SecondClass>SubA0101</SecondClass>
+            <MainClass>COINFO</MainClass>
+            <SecondClass>I1001</SecondClass>
             <BeginDate>20261340</BeginDate>
             <AuthNo>AUTH2026041100001</AuthNo>
             <AuthOrgCode>10000000000001</AuthOrgCode>
