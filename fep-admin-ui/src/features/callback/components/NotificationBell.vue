@@ -35,8 +35,8 @@ function onRead(id: string) {
   void store.markRead(id);
 }
 
-onMounted(() => store.startPolling());
-onUnmounted(() => store.stopPolling());
+onMounted(() => store.subscribeRealtime());
+onUnmounted(() => store.unsubscribeRealtime());
 </script>
 
 <style scoped>
