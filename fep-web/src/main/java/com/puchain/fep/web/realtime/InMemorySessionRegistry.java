@@ -4,7 +4,6 @@ import com.puchain.fep.common.util.LogSanitizer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -21,15 +20,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * 同一用户可有多条会话（多标签页/多设备）。推送时对每条会话 {@code synchronized}
  * 串行化 {@code sendMessage}（{@link WebSocketSession} 不保证并发发送安全）。</p>
  *
- * <p><b>TODO（P2，多实例 deferred）</b>：当前注册表仅在单实例进程内有效。多实例
- * 部署时一个用户的会话可能分散在不同实例，需替换为 {@code RedisPubSubSessionRegistry}
- * ——本地内存保活会话 + Redis pub/sub 跨实例广播 {@code sendToUser} 消息。接口
- * {@link WebSocketSessionRegistry} 已为此预留替换点（muzhou 2026-06-15 签字：单实例 MVP）。</p>
+ * <p><b>多实例（DEF-1）</b>：本实现仅在单实例进程内有效；多实例部署经
+ * {@link RedisPubSubSessionRegistry} 复用本类持本实例会话 + Redis pub/sub 跨实例广播。
+ * 二者由 {@link DashboardWebSocketRegistryConfiguration} 经
+ * {@code fep.dashboard.ws.registry}（默认 {@code memory}）择一装配——故本类<b>不带</b>
+ * stereotype（{@code @Component} 已移除），避免 {@code @ComponentScan} 广扫绕过
+ * {@code @ConditionalOnProperty} 致双 bean / 命名约束冲突（红线
+ * provider_switch_impl_no_stereotype_bean_registration）。</p>
  *
  * @author FEP Team
  * @since 1.0.0
  */
-@Component
 @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
         justification = "userId/reason passed through LogSanitizer.sanitize() prior to LOG; sessionId is framework-generated")
 public class InMemorySessionRegistry implements WebSocketSessionRegistry {
