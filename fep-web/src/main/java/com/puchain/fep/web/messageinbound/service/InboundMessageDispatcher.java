@@ -4,7 +4,10 @@ import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.model.CfxMessage;
+import com.puchain.fep.converter.model.CommonHead;
+import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.model.SerialNoBearing;
+import com.puchain.fep.converter.sign.MessageVerifier;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.converter.xml.JaxbContextCache;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
@@ -41,12 +44,14 @@ import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -118,12 +123,9 @@ public class InboundMessageDispatcher {
      * 3009/3103/3105 P4-MSG-K → 3107/3108 P3 Phase 2 → 3112 P4-MSG-J → 3113 P4-MSG-K
      * → 3115/3116 P3 Phase 2 → 9007/9009 P4-MSG-L → 9020 P4-MSG-M）。
      *
-     * <p>详细注册项见包级 Javadoc {@code <ul>} 列表（与本字段 1:1 对齐）。</p>
-     *
-     * <p>使用 {@link Map#ofEntries} 不限 entry 数（P4-MSG-D T0 起，从 {@link Map#of}
-     * 9/10 上限 refactor — Roadmap §3 强制约束，为后续 inbound Plan
-     * append-only 增长留出空间）。{@code Map.ofEntries} 与 {@code Map.of} 同样产
-     * 出不可变 Map，性能与 hash 行为一致。</p>
+     * <p>详细注册项见包级 Javadoc {@code <ul>} 列表（与本字段 1:1 对齐）。使用
+     * {@link Map#ofEntries}（不限 entry 数，P4-MSG-D T0 从 {@link Map#of} 9/10 上限 refactor）
+     * 产出不可变 Map，为后续 inbound Plan append-only 增长留出空间。</p>
      */
     private static final Map<String, Class<?>> BODY_TYPE_REGISTRY = Map.ofEntries(
             Map.entry(MessageType.MSG_2101.msgNo(), DataTransfer2101.class),
@@ -153,17 +155,27 @@ public class InboundMessageDispatcher {
 
     private final SyncMessageProcessorService syncProcessor;
     private final ApplicationEventPublisher eventPublisher;
+    private final MessageVerifier messageVerifier;
+    private final boolean verifyInbound;
 
     /**
      * Spring 构造注入。
      *
-     * @param syncProcessor  同步流水线，非空
-     * @param eventPublisher Spring 事件发布器，非空
+     * @param syncProcessor   同步流水线，非空
+     * @param eventPublisher  Spring 事件发布器，非空
+     * @param messageVerifier 报文验签编排器（converter 协议层，经 MessageSignPort 路由），非空
+     * @param verifyInbound   入站验签开关（GM S2b，默认 false 放行；prod cutover 时开，prod-gate R3）。
+     *                        落 fep-web 域 {@code @Value}（非 security.impl properties，与本 dispatcher 同模块）
      */
     public InboundMessageDispatcher(final SyncMessageProcessorService syncProcessor,
-                                    final ApplicationEventPublisher eventPublisher) {
+                                    final ApplicationEventPublisher eventPublisher,
+                                    final MessageVerifier messageVerifier,
+                                    @Value("${fep.security.verify-inbound:false}")
+                                    final boolean verifyInbound) {
         this.syncProcessor = Objects.requireNonNull(syncProcessor, "syncProcessor");
         this.eventPublisher = Objects.requireNonNull(eventPublisher, "eventPublisher");
+        this.messageVerifier = Objects.requireNonNull(messageVerifier, "messageVerifier");
+        this.verifyInbound = verifyInbound;
     }
 
     /**
@@ -194,6 +206,8 @@ public class InboundMessageDispatcher {
                         FepErrorCode.MSG_INBOUND_INVALID_TYPE,
                         "messageType=" + LogSanitizer.sanitize(messageType)));
 
+        verifyInboundSignature(type, xml);
+
         final MessageProcessRecord record = syncProcessor.processInbound(type, transitionNo, xml);
 
         boolean eventPublished = false;
@@ -216,6 +230,51 @@ public class InboundMessageDispatcher {
         }
 
         return new InboundMessageResponse(record.getId(), record.getStatus().name(), eventPublished);
+    }
+
+    /**
+     * GM S2b 入站验签关（PRD §3.3.3）：{@code verify-inbound=true} 时在 processInbound 之前解析头
+     * SrcNode → 经 {@link MessageVerifier} 按 SrcNode 路由对端公钥验签（带尾注释原文）→ 失败抛
+     * {@link FepErrorCode#PROC_8508} 使事务回滚。{@code false}（默认）直接返回，历史行为逐字节不变。
+     *
+     * @param type 入站报文类型（入异常消息），非空
+     * @param xml  原始报文字节（带尾签名注释），非空
+     * @throws FepBusinessException PROC_8508 验签失败 / SrcNode 不可解析
+     */
+    private void verifyInboundSignature(final MessageType type, final byte[] xml) {
+        if (!verifyInbound) {
+            return;
+        }
+        final String srcNode = extractSrcNode(type, xml);
+        if (!messageVerifier.verify(new String(xml, StandardCharsets.UTF_8), srcNode)) {
+            throw new FepBusinessException(FepErrorCode.PROC_8508,
+                    "inbound signature verification failed, msg=" + type.msgNo()
+                            + " srcNode=" + LogSanitizer.sanitize(srcNode));
+        }
+    }
+
+    /**
+     * 解析头 SrcNode（PRD §3.3.3 步骤 1 路由键），复用 {@link JaxbContextCache} CfxMessage 上下文
+     * （head=CommonHead；body lax DOM 与 msgNo 无关；尾注释为 epilog 不干扰）。
+     *
+     * @param type 报文类型（入异常消息），非空
+     * @param xml  原始报文字节，非空
+     * @return SrcNode（可空，下游 port 按缺配置处理）
+     * @throws FepBusinessException PROC_8508 报文头不可解析
+     */
+    private String extractSrcNode(final MessageType type, final byte[] xml) {
+        try {
+            final JAXBContext ctx =
+                    JaxbContextCache.getForClasses(CfxMessage.class, RequestBusinessHead.class);
+            final Unmarshaller u = ctx.createUnmarshaller();
+            u.setEventHandler(event -> false);
+            final CfxMessage msg = (CfxMessage) u.unmarshal(new ByteArrayInputStream(xml));
+            final CommonHead head = msg.getHead();
+            return head == null ? null : head.getSrcNode();
+        } catch (JAXBException | IllegalStateException e) {
+            throw new FepBusinessException(FepErrorCode.PROC_8508,
+                    "inbound verify: cannot parse SrcNode for msg=" + type.msgNo(), e);
+        }
     }
 
     /**
