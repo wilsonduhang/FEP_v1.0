@@ -93,6 +93,17 @@ class RedisPubSubSessionRegistryTest {
     }
 
     @Test
+    void onMessage_blankPayload_isIgnored() throws Exception {
+        final WebSocketSession s1 = openSession("s1");
+        registry.register("user-1", s1);
+        final String envelope = "{\"userId\":\"user-1\",\"payload\":\"\"}";
+
+        registry.onMessage(envelope);
+
+        verify(s1, never()).sendMessage(any()); // 缺 payload 不推空帧
+    }
+
+    @Test
     void onMessage_malformedJson_isIgnored() {
         registry.onMessage("not-json"); // 不抛
         assertThat(registry.sessionCount()).isZero();

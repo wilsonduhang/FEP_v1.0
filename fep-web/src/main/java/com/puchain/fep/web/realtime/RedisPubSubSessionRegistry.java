@@ -119,8 +119,8 @@ public final class RedisPubSubSessionRegistry implements WebSocketSessionRegistr
         }
         final String userId = node.path(FIELD_USER_ID).asText("");
         final String payload = node.path(FIELD_PAYLOAD).asText("");
-        if (userId.isBlank()) {
-            return; // 信封缺 userId，忽略
+        if (userId.isBlank() || payload.isBlank()) {
+            return; // 信封缺必填字段（userId/payload），忽略——不向会话推空帧。
         }
         local.sendToUser(userId, payload);
     }
