@@ -5,8 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -86,6 +89,68 @@ class InMemorySessionRegistryTest {
 
         registry.unregister(s1);
 
+        assertThat(registry.sessionCount()).isZero();
+    }
+
+    // ---- DEF-2 反向索引（sessionId→userId）不变量测试 ----
+
+    @Test
+    void unregister_removesSessionWithoutAffectingOtherUsers() {
+        final WebSocketSession s1 = openSession("s1");
+        final WebSocketSession s2 = openSession("s2");
+        registry.register("user-1", s1);
+        registry.register("user-2", s2);
+
+        registry.unregister(s1);
+
+        // 仅 user-2 的 s2 残留；反向 O(1) 定位不误删他人。
+        assertThat(registry.sessionCount()).isEqualTo(1);
+    }
+
+    @Test
+    void unregister_lastSessionOfUser_thenReRegisterSameSessionId_isConsistent() {
+        final WebSocketSession s1 = openSession("s1");
+        registry.register("user-1", s1);
+        registry.unregister(s1);
+        assertThat(registry.sessionCount()).isZero();
+
+        // 反向条目须已清，重注册同 sessionId 不受残留干扰。
+        registry.register("user-1", s1);
+        assertThat(registry.sessionCount()).isEqualTo(1);
+    }
+
+    @Test
+    void sendToUser_droppingClosedSession_alsoClearsReverseIndex() {
+        // 第一惰性丢弃点：isOpen()==false。
+        final WebSocketSession closed = mock(WebSocketSession.class);
+        when(closed.getId()).thenReturn("s1");
+        when(closed.isOpen()).thenReturn(false);
+        registry.register("user-1", closed);
+
+        registry.sendToUser("user-1", "{}"); // 触发 isOpen()==false 丢弃
+
+        // 反向索引须已清：再 unregister 幂等不抛、count 一致。
+        registry.unregister(closed);
+        assertThat(registry.sessionCount()).isZero();
+    }
+
+    @Test
+    void sendToUser_ioErrorDroppingSession_alsoClearsReverseIndex() throws Exception {
+        // 第二惰性丢弃点：isOpen()==true 但 sendMessage 抛 IOException → catch 分支丢弃。
+        final WebSocketSession s1 = openSession("s1"); // isOpen()==true
+        doThrow(new IOException("boom")).when(s1).sendMessage(any());
+        registry.register("user-1", s1);
+
+        registry.sendToUser("user-1", "{}"); // 触发 IOException catch 丢弃
+
+        registry.unregister(s1); // 反向索引须已清，幂等不抛
+        assertThat(registry.sessionCount()).isZero();
+    }
+
+    @Test
+    void unregister_unknownSession_isSilentlyIgnored() {
+        final WebSocketSession unknown = openSession("nope");
+        registry.unregister(unknown); // 未注册会话静默忽略，不抛
         assertThat(registry.sessionCount()).isZero();
     }
 }

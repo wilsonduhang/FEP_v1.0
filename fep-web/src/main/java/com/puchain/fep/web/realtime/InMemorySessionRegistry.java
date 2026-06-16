@@ -39,18 +39,37 @@ public class InMemorySessionRegistry implements WebSocketSessionRegistry {
     /** userId → 该用户的活跃会话集合（线程安全 Set）。 */
     private final Map<String, Set<WebSocketSession>> sessionsByUser = new ConcurrentHashMap<>();
 
+    /**
+     * sessionId → userId 反向索引（DEF-2）。
+     *
+     * <p>使 {@link #unregister} 由遍历全部用户会话集（O(U)）降为按 sessionId 直接
+     * 定位归属用户（O(1)）。<b>不变量</b>：本表 key 集合恒等于 {@link #sessionsByUser}
+     * 所有会话的 sessionId 集合——故 {@code register} / {@code unregister} /
+     * {@code sendToUser} 两处惰性丢弃均须同步维护本表，缺一即漂移。</p>
+     */
+    private final Map<String, String> userIdBySessionId = new ConcurrentHashMap<>();
+
     @Override
     public void register(final String userId, final WebSocketSession session) {
         Objects.requireNonNull(userId, "userId");
         Objects.requireNonNull(session, "session");
         sessionsByUser.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(session);
+        userIdBySessionId.put(session.getId(), userId);
     }
 
     @Override
     public void unregister(final WebSocketSession session) {
         Objects.requireNonNull(session, "session");
-        sessionsByUser.values().forEach(set -> set.remove(session));
-        sessionsByUser.entrySet().removeIf(e -> e.getValue().isEmpty());
+        final String userId = userIdBySessionId.remove(session.getId());
+        if (userId == null) {
+            return; // 未注册会话静默忽略（幂等契约）。
+        }
+        final Set<WebSocketSession> sessions = sessionsByUser.get(userId);
+        if (sessions != null) {
+            sessions.remove(session);
+            // 原子清理空集条目（computeIfPresent 在 bin 锁内重映射，best-effort 等价旧 removeIf）。
+            sessionsByUser.computeIfPresent(userId, (k, set) -> set.isEmpty() ? null : set);
+        }
     }
 
     @Override
@@ -65,6 +84,7 @@ public class InMemorySessionRegistry implements WebSocketSessionRegistry {
         for (final WebSocketSession session : sessions) {
             if (!session.isOpen()) {
                 sessions.remove(session);
+                userIdBySessionId.remove(session.getId()); // 同步反向索引（惰性丢弃点①）
                 continue;
             }
             try {
@@ -76,8 +96,11 @@ public class InMemorySessionRegistry implements WebSocketSessionRegistry {
                         LogSanitizer.sanitize(userId), session.getId(),
                         LogSanitizer.sanitize(ex.getClass().getSimpleName()));
                 sessions.remove(session);
+                userIdBySessionId.remove(session.getId()); // 同步反向索引（惰性丢弃点②）
             }
         }
+        // 丢弃可能清空该用户会话集，原子清理空条目（与 unregister 同语义）。
+        sessionsByUser.computeIfPresent(userId, (k, set) -> set.isEmpty() ? null : set);
     }
 
     @Override
