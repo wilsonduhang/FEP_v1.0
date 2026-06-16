@@ -39,8 +39,8 @@ class Batch2103XsdValidationTest extends AbstractXsdValidationTest {
                     <ItemId>1</ItemId>
                     <CompanyName>湖南示例实业有限公司</CompanyName>
                     <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
-                    <MainClass>MainA01</MainClass>
-                    <SecondClass>SubA0101</SecondClass>
+                    <MainClass>COINFO</MainClass>
+                    <SecondClass>I1001</SecondClass>
                     <AuthOrgCode>12345678901234</AuthOrgCode>
                     <QueryResult>90000</QueryResult>
                   </CompanyInfo>
@@ -70,8 +70,8 @@ class Batch2103XsdValidationTest extends AbstractXsdValidationTest {
                     <ItemId>1</ItemId>
                     <CompanyName>缺 QueryResult 测试</CompanyName>
                     <CompanyCode>91430100MA4L5XXXX2</CompanyCode>
-                    <MainClass>MainA01</MainClass>
-                    <SecondClass>SubA0101</SecondClass>
+                    <MainClass>COINFO</MainClass>
+                    <SecondClass>I1001</SecondClass>
                     <AuthOrgCode>12345678901234</AuthOrgCode>
                   </CompanyInfo>
                 </CompanyInfoBatchResponse2103>""");

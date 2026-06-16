@@ -165,8 +165,8 @@ class InboundMessageDispatcherTest {
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead2101>
                 <DataTransfer2101>
-                  <MainClass>LSDX</MainClass>
-                  <SecondClass>LSDX01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <Period>01</Period>
                   <Type>01</Type>
                   <FileDate>20260509</FileDate>
@@ -198,8 +198,8 @@ class InboundMessageDispatcherTest {
                 <DataTransferCheckResponse2102>
                   <DataTransferResult>
                     <ItemId>1</ItemId>
-                    <MainClass>MainA01</MainClass>
-                    <SecondClass>SubA0101</SecondClass>
+                    <MainClass>COINFO</MainClass>
+                    <SecondClass>I1001</SecondClass>
                     <Period>01</Period>
                     <FileDate>20260509</FileDate>
                     <Status>01</Status>
@@ -234,8 +234,8 @@ class InboundMessageDispatcherTest {
                     <ItemId>1</ItemId>
                     <CompanyName>湖南示例实业有限公司</CompanyName>
                     <CompanyCode>91430100MA4L5XXXX1</CompanyCode>
-                    <MainClass>MainA01</MainClass>
-                    <SecondClass>SubA0101</SecondClass>
+                    <MainClass>COINFO</MainClass>
+                    <SecondClass>I1001</SecondClass>
                     <AuthOrgCode>12345678901234</AuthOrgCode>
                     <QueryResult>90000</QueryResult>
                   </CompanyInfo>
@@ -864,8 +864,8 @@ class InboundMessageDispatcherTest {
                 .as("dispatcher must publish typed DataTransfer2101 body (P4-MSG-D T4)")
                 .isInstanceOf(DataTransfer2101.class);
         final DataTransfer2101 body = (DataTransfer2101) event.body();
-        assertThat(body.getMainClass()).isEqualTo("LSDX");
-        assertThat(body.getSecondClass()).isEqualTo("LSDX01");
+        assertThat(body.getMainClass()).isEqualTo("COINFO");
+        assertThat(body.getSecondClass()).isEqualTo("I1001");
         assertThat(body.getPeriod()).isEqualTo("01");
         assertThat(body.getType()).isEqualTo("01");
         assertThat(body.getFileDate()).isEqualTo("20260509");

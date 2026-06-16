@@ -18,8 +18,8 @@ class CompanyInfoRequest1001Test {
         CompanyInfoRequest1001 original = new CompanyInfoRequest1001();
         original.setCompanyName("湖南示例实业有限公司");
         original.setCompanyCode("91430100MA4L5XXXX1");
-        original.setMainClass("MainA01");
-        original.setSecondClass("SubA0101");
+        original.setMainClass("COINFO");
+        original.setSecondClass("I1001");
         original.setBeginDate("20260101");
         original.setEndDate("20260411");
         original.setAuthNo("AUTH2026041100001");
@@ -32,8 +32,8 @@ class CompanyInfoRequest1001Test {
                 .contains("<CompanyInfoRequest1001")
                 .contains("<CompanyName>湖南示例实业有限公司</CompanyName>")
                 .contains("<CompanyCode>91430100MA4L5XXXX1</CompanyCode>")
-                .contains("<MainClass>MainA01</MainClass>")
-                .contains("<SecondClass>SubA0101</SecondClass>")
+                .contains("<MainClass>COINFO</MainClass>")
+                .contains("<SecondClass>I1001</SecondClass>")
                 .contains("<BeginDate>20260101</BeginDate>")
                 .contains("<EndDate>20260411</EndDate>")
                 .contains("<AuthNo>AUTH2026041100001</AuthNo>")
@@ -43,8 +43,8 @@ class CompanyInfoRequest1001Test {
         CompanyInfoRequest1001 parsed = JaxbRoundtripSupport.unmarshal(xml, CompanyInfoRequest1001.class);
         assertThat(parsed.getCompanyName()).isEqualTo("湖南示例实业有限公司");
         assertThat(parsed.getCompanyCode()).isEqualTo("91430100MA4L5XXXX1");
-        assertThat(parsed.getMainClass()).isEqualTo("MainA01");
-        assertThat(parsed.getSecondClass()).isEqualTo("SubA0101");
+        assertThat(parsed.getMainClass()).isEqualTo("COINFO");
+        assertThat(parsed.getSecondClass()).isEqualTo("I1001");
         assertThat(parsed.getBeginDate()).isEqualTo("20260101");
         assertThat(parsed.getEndDate()).isEqualTo("20260411");
         assertThat(parsed.getAuthNo()).isEqualTo("AUTH2026041100001");
@@ -57,8 +57,8 @@ class CompanyInfoRequest1001Test {
         CompanyInfoRequest1001 minimal = new CompanyInfoRequest1001();
         minimal.setCompanyName("最小测试");
         minimal.setCompanyCode("91000000MA0000000X");
-        minimal.setMainClass("MainB01");
-        minimal.setSecondClass("SubB0101");
+        minimal.setMainClass("COINFO");
+        minimal.setSecondClass("I1001");
         minimal.setAuthNo("AUTH-MIN");
         minimal.setAuthOrgCode("10000000000002");
 
