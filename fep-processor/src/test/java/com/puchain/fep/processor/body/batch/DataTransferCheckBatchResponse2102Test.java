@@ -83,7 +83,7 @@ class DataTransferCheckBatchResponse2102Test {
         minimal.setSecondClass("I1001");
         minimal.setPeriod("1");
         minimal.setFileDate("20260505");
-        minimal.setStatus("99");
+        minimal.setStatus("1");
         // 仅 FileName null（2102 中 FileName 是唯一 optional field）
 
         DataTransferCheckBatchResponse2102 wrapper = new DataTransferCheckBatchResponse2102();
