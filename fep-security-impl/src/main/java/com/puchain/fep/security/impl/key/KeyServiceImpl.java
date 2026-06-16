@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -24,8 +25,10 @@ import java.util.Objects;
  * 专项 review。真实密钥材料由密码设备生成、部署期注入，本类仅做加载/路由/校验/
  * 登录解密门面（SM2 原语在 {@link Sm2LoginCipher}）。</p>
  *
- * <p><strong>S2b 边界:</strong> {@link #getSignPrivateKey()}（SM2 报文签名私钥）抛
- * {@link UnsupportedOperationException}，待架构 §0.3 决策门定调。</p>
+ * <p><strong>GM S2b（形态 C-ev，ADR 2026-06-12）:</strong> {@link #getSignPrivateKey()}
+ * 返回当前活跃报文签名私钥（32 字节标量 d），消费方经 {@code MessageSignPort} 隔离形态依赖；
+ * 形态 A（外部签名验签服务器 1818）下私钥驻留外部设备，本方法不适用。{@code peer-verify-keys}
+ * 段（SrcNode → 对端验签公钥列表）在启动期校验曲线点合法性。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -35,9 +38,13 @@ public class KeyServiceImpl implements KeyService {
     /** SM4 密钥长度（字节）。 */
     private static final int SM4_KEY_LENGTH = 16;
 
-    /** S2b 边界提示（仅余报文签名私钥）。 */
-    private static final String S2B_PENDING =
-            "SM2 message-sign key operations are pending S2b (roadmap §0.3 sign-verify form decision)";
+    /** SM2 报文签名密钥未配置提示。 */
+    private static final String MSG_SIGN_NOT_CONFIGURED =
+            "SM2 message-sign keys not configured "
+                    + "(fep.security.sm2.msg-sign-active-key-id / msg-sign-keys)";
+
+    /** 未压缩裸点 hex 形态正则（04∥x∥y，130 字符）。 */
+    private static final String UNCOMPRESSED_POINT_HEX = "04[0-9a-fA-F]{128}";
 
     /** SM2 登录密钥未配置提示。 */
     private static final String SM2_LOGIN_NOT_CONFIGURED =
@@ -53,12 +60,15 @@ public class KeyServiceImpl implements KeyService {
     private final Map<String, FepSecuritySm2Properties.LoginKeyPair> loginKeys;
     private final String auditActiveKeyId;
     private final Map<String, FepSecuritySm2Properties.LoginKeyPair> auditKeys;
+    private final String msgSignActiveKeyId;
+    private final Map<String, FepSecuritySm2Properties.LoginKeyPair> msgSignKeys;
+    private final Map<String, List<String>> peerVerifyKeys;
 
     /**
-     * 从配置构造：SM4 hex 密钥解码 + SM2 登录/审计密钥对拷贝。
+     * 从配置构造：SM4 hex 密钥解码 + SM2 登录/审计/报文签名密钥对拷贝 + 对端公钥深拷贝。
      *
      * @param props    SM4 密钥配置，非 null
-     * @param sm2Props SM2 登录/审计密钥配置，非 null（各段内容可为空 = 未配置）
+     * @param sm2Props SM2 登录/审计/报文签名/对端公钥配置，非 null（各段内容可为空 = 未配置）
      */
     public KeyServiceImpl(final FepSecurityKeyProperties props,
                           final FepSecuritySm2Properties sm2Props) {
@@ -73,6 +83,12 @@ public class KeyServiceImpl implements KeyService {
         this.loginKeys = new LinkedHashMap<>(sm2Props.getLoginKeys());
         this.auditActiveKeyId = sm2Props.getAuditActiveKeyId();
         this.auditKeys = new LinkedHashMap<>(sm2Props.getAuditKeys());
+        this.msgSignActiveKeyId = sm2Props.getMsgSignActiveKeyId();
+        this.msgSignKeys = new LinkedHashMap<>(sm2Props.getMsgSignKeys());
+        final Map<String, List<String>> peers = new LinkedHashMap<>();
+        sm2Props.getPeerVerifyKeys().forEach((srcNode, hexes) ->
+                peers.put(srcNode, hexes == null ? List.of() : List.copyOf(hexes)));
+        this.peerVerifyKeys = peers;
     }
 
     /**
@@ -98,6 +114,35 @@ public class KeyServiceImpl implements KeyService {
                 loginActiveKeyId, loginKeys);
         validateSm2KeySection("audit", "fep.security.sm2.audit-active-key-id",
                 auditActiveKeyId, auditKeys);
+        validateSm2KeySection("msg-sign", "fep.security.sm2.msg-sign-active-key-id",
+                msgSignActiveKeyId, msgSignKeys);
+        validatePeerVerifyKeys();
+    }
+
+    /**
+     * 对端验签公钥段校验（GM S2b，密码学 MAJOR-1）：每个 SrcNode 至少一个公钥，
+     * 每个 hex 须未压缩裸点形态（{@value #UNCOMPRESSED_POINT_HEX}）且为 sm2p256v1
+     * 曲线合法点（decodePoint 探活）。坏值启动期 fail-fast，区别于运行期验签失败。
+     *
+     * @throws IllegalStateException 对端公钥配置非法
+     */
+    private void validatePeerVerifyKeys() {
+        peerVerifyKeys.forEach((srcNode, hexes) -> {
+            if (hexes.isEmpty()) {
+                throw new IllegalStateException(
+                        "peer-verify-keys [" + srcNode + "] has no public key configured");
+            }
+            hexes.forEach(hex -> {
+                if (hex == null || !hex.matches(UNCOMPRESSED_POINT_HEX)) {
+                    throw new IllegalStateException("peer public key for [" + srcNode
+                            + "] must be 130 hex chars starting with 04 (uncompressed point)");
+                }
+                if (!Sm2LoginCipher.isValidCurvePoint(hex)) {
+                    throw new IllegalStateException("peer public key for [" + srcNode
+                            + "] is not a valid sm2p256v1 curve point");
+                }
+            });
+        });
     }
 
     /**
@@ -133,7 +178,7 @@ public class KeyServiceImpl implements KeyService {
                 throw new IllegalStateException("SM2 " + sectionName + " private key [" + keyId
                         + "] scalar out of range (require 1 <= d <= n-1)");
             }
-            if (pub == null || !pub.matches("04[0-9a-fA-F]{128}")) {
+            if (pub == null || !pub.matches(UNCOMPRESSED_POINT_HEX)) {
                 throw new IllegalStateException("SM2 " + sectionName + " public key [" + keyId
                         + "] must be 130 hex chars starting with 04 (uncompressed point)");
             }
@@ -188,7 +233,12 @@ public class KeyServiceImpl implements KeyService {
 
     @Override
     public byte[] getSignPrivateKey() {
-        throw new UnsupportedOperationException(S2B_PENDING);
+        if (msgSignActiveKeyId == null || msgSignKeys.isEmpty()) {
+            throw new IllegalStateException(MSG_SIGN_NOT_CONFIGURED);
+        }
+        final FepSecuritySm2Properties.LoginKeyPair active = msgSignKeys.get(msgSignActiveKeyId);
+        // parseHex 每次新建数组 = 防御副本（私钥 32 字节标量 d）
+        return HexFormat.of().parseHex(active.getPrivateKeyHex());
     }
 
     @Override

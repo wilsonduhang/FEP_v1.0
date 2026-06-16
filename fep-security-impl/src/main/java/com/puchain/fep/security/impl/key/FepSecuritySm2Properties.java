@@ -1,7 +1,9 @@
 package com.puchain.fep.security.impl.key;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -30,6 +32,18 @@ public class FepSecuritySm2Properties {
 
     /** keyId → 审计签名密钥对（多版本，轮换期历史行验签）。 */
     private Map<String, LoginKeyPair> auditKeys = new LinkedHashMap<>();
+
+    /** 当前活跃报文签名密钥版本号（GM S2b 出站报文 SM2 加签使用）。 */
+    private String msgSignActiveKeyId;
+
+    /** keyId → 报文签名密钥对（多版本，本节点报文签名身份轮换期共存）。 */
+    private Map<String, LoginKeyPair> msgSignKeys = new LinkedHashMap<>();
+
+    /**
+     * SrcNode 节点代码 → 对端验签公钥 hex 列表（GM S2b 入站报文按发起方路由公钥；
+     * list 抗轮换——HNDEMP 换证期新旧公钥共存 try-each，PRD §3.3.3 步骤 1）。
+     */
+    private Map<String, List<String>> peerVerifyKeys = new LinkedHashMap<>();
 
     /**
      * 当前活跃登录密钥版本号。
@@ -111,6 +125,76 @@ public class FepSecuritySm2Properties {
      */
     public void setAuditKeys(final Map<String, LoginKeyPair> auditKeys) {
         this.auditKeys = auditKeys == null ? new LinkedHashMap<>() : new LinkedHashMap<>(auditKeys);
+    }
+
+    /**
+     * 当前活跃报文签名密钥版本号。
+     *
+     * @return 活跃报文签名密钥版本号
+     */
+    public String getMsgSignActiveKeyId() {
+        return msgSignActiveKeyId;
+    }
+
+    /**
+     * 设置活跃报文签名密钥版本号。
+     *
+     * @param msgSignActiveKeyId 活跃报文签名密钥版本号
+     */
+    public void setMsgSignActiveKeyId(final String msgSignActiveKeyId) {
+        this.msgSignActiveKeyId = msgSignActiveKeyId;
+    }
+
+    /**
+     * 报文签名密钥多版本映射。Spring relaxed binding 需 live 引用填充（红线
+     * feedback_configurationproperties_collection_getter_ei_expose）；
+     * 下游 KeyServiceImpl 构造期拷贝，无 live 泄漏。
+     *
+     * @return keyId → 报文签名密钥对 map（live 引用）
+     */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP",
+            justification = "Spring relaxed binding mutates via live getter; "
+                    + "KeyServiceImpl copies on construction, no live reference escapes")
+    public Map<String, LoginKeyPair> getMsgSignKeys() {
+        return msgSignKeys;
+    }
+
+    /**
+     * 设置报文签名密钥多版本映射（防御拷贝 + null guard，与 setLoginKeys 对称）。
+     *
+     * @param msgSignKeys keyId → 报文签名密钥对
+     */
+    public void setMsgSignKeys(final Map<String, LoginKeyPair> msgSignKeys) {
+        this.msgSignKeys = msgSignKeys == null
+                ? new LinkedHashMap<>() : new LinkedHashMap<>(msgSignKeys);
+    }
+
+    /**
+     * SrcNode → 对端验签公钥 hex 列表。Spring relaxed binding 需 live 引用填充（红线
+     * feedback_configurationproperties_collection_getter_ei_expose）；
+     * 下游 KeyServiceImpl/BcMessageSignPort 构造期深拷贝，无 live 泄漏。
+     *
+     * @return SrcNode → 公钥 hex 列表 map（live 引用）
+     */
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP",
+            justification = "Spring relaxed binding mutates via live getter; "
+                    + "consumers deep-copy on construction, no live reference escapes")
+    public Map<String, List<String>> getPeerVerifyKeys() {
+        return peerVerifyKeys;
+    }
+
+    /**
+     * 设置 SrcNode → 对端验签公钥列表映射（深拷贝 + null guard，对称防御）。
+     *
+     * @param peerVerifyKeys SrcNode → 公钥 hex 列表
+     */
+    public void setPeerVerifyKeys(final Map<String, List<String>> peerVerifyKeys) {
+        final Map<String, List<String>> copy = new LinkedHashMap<>();
+        if (peerVerifyKeys != null) {
+            peerVerifyKeys.forEach((srcNode, hexes) ->
+                    copy.put(srcNode, hexes == null ? new ArrayList<>() : new ArrayList<>(hexes)));
+        }
+        this.peerVerifyKeys = copy;
     }
 
     /**

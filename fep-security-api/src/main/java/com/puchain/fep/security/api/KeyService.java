@@ -7,8 +7,8 @@ package com.puchain.fep.security.api;
  * and server-side decryption during login.</p>
  *
  * <p><strong>Security note:</strong> 🔓 2026-06-07 muzhou 解禁国密域——SM4 凭证密钥
- * （S1）与 SM2 登录密钥（S2a）的真实实现由 AI 编写 + 密码学专项 review；
- * {@link #getSignPrivateKey()}（SM2 报文签名）仍属 S2b，待架构 §0.3 决策门定调。
+ * （S1）、SM2 登录密钥（S2a）与 SM2 报文签名密钥（S2b，{@link #getSignPrivateKey()}，
+ * 形态 C-ev 经 {@code MessageSignPort}）的真实实现由 AI 编写 + 密码学专项 review。
  * 真实密钥材料永不入 repo，部署期注入。</p>
  *
  * @author FEP Team
@@ -72,17 +72,25 @@ public interface KeyService {
     String decryptLoginPassword(String encryptedPassword, String keyId);
 
     /**
-     * Returns the SM2 private key used for outbound message signing (PKCS#8 encoded).
+     * Returns the current active SM2 private key used for outbound message signing
+     * (32-byte scalar {@code d} raw bytes — same wire form as {@link #getAuditSignPrivateKey()},
+     * NOT PKCS#8).
      *
-     * <p>Consumed by {@code OutboundSignAdapter} (P5 T5) to compute the SM3withSM2
-     * signature that is embedded as an XML comment immediately before {@code </CFX>}.</p>
+     * <p><strong>GM S2b（形态 C-ev，ADR 2026-06-12）:</strong> consumed via
+     * {@code MessageSignPort} (the form-agnostic seam), which the converter protocol layer
+     * uses to compute the SM3withSM2 signature embedded as an XML comment immediately
+     * <em>after</em> {@code </CFX>} (PRD §3.2.1 sample). Under form B (in-process BouncyCastle,
+     * current default) the impl reads the configured {@code msg-sign-keys} active scalar;
+     * under future form A (external sign-verify server 1818) the private key resides in the
+     * external device and this method is not applicable — consumers must depend on
+     * {@code MessageSignPort}, not this method.</p>
      *
-     * <p><strong>S2b 边界（🔓 2026-06-07 解禁治理）:</strong> 真实实现待 roadmap §0.3
-     * 决策门（外部签名验签服务器 1818 vs 进程内 BC）定调后由 AI 实施 + 密码学专项
-     * review；KeyServiceImpl 当前抛 UnsupportedOperationException。真实密钥材料
-     * 部署期注入，永不入 repo。</p>
+     * <p>{@code KeyServiceImpl} throws {@link IllegalStateException} when the
+     * {@code fep.security.sm2.msg-sign-*} section is not configured. Real key material is
+     * injected at deploy time and never enters the repo; dev/CI use GB/T test keys.</p>
      *
-     * @return PKCS#8-encoded SM2 private key bytes (never {@code null})
+     * @return 32-byte SM2 message-sign private key scalar (defensive copy, never {@code null})
+     * @throws IllegalStateException if message-sign keys are not configured (impl provider)
      */
     byte[] getSignPrivateKey();
 
