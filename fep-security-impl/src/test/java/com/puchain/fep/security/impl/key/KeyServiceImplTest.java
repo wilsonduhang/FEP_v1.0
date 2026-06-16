@@ -4,11 +4,14 @@ import com.puchain.fep.security.api.KeyService;
 import org.junit.jupiter.api.Test;
 
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -108,7 +111,7 @@ class KeyServiceImplTest {
     }
 
     @Test
-    void sm2LoginMethods_withoutSm2Config_throwIllegalState_andSignKeyStaysS2b() {
+    void sm2LoginAndMsgSignMethods_withoutConfig_throwIllegalState() {
         final KeyService svc = newService("sm4-cred-v2", keys("sm4-cred-v2", GBT_KEY_HEX));
         assertThatThrownBy(svc::getSm2PublicKeyBase64)
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("not configured");
@@ -116,8 +119,10 @@ class KeyServiceImplTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> svc.decryptLoginPassword("00", "any"))
                 .isInstanceOf(IllegalStateException.class);
+        // S2b 实装：未配置 msg-sign 段时 getSignPrivateKey 抛 IllegalStateException
+        // （不再是 UnsupportedOperationException）。
         assertThatThrownBy(svc::getSignPrivateKey)
-                .isInstanceOf(UnsupportedOperationException.class);
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("msg-sign");
     }
 
     @Test
@@ -259,5 +264,117 @@ class KeyServiceImplTest {
                 Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
         assertThatThrownBy(() -> svc.getAuditVerifyPublicKeyHex("ghost"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // ----- GM S2b: 报文签名私钥段（msg-sign）+ SrcNode 对端验签公钥段（peer-verify） -----
+
+    private static KeyService newServiceWithMsgSign(final String keyId,
+            final String privHex, final String pubHex) {
+        return newServiceWithMsgSignRaw(keyId, keyId, privHex, pubHex);
+    }
+
+    private static KeyService newServiceWithMsgSignRaw(final String activeId, final String keyId,
+            final String privHex, final String pubHex) {
+        final FepSecuritySm2Properties sm2 = new FepSecuritySm2Properties();
+        sm2.setMsgSignActiveKeyId(activeId);
+        final FepSecuritySm2Properties.LoginKeyPair pair = new FepSecuritySm2Properties.LoginKeyPair();
+        pair.setPrivateKeyHex(privHex);
+        pair.setPublicKeyHex(pubHex);
+        sm2.getMsgSignKeys().put(keyId, pair);
+        final KeyServiceImpl svc = new KeyServiceImpl(sm4Props(), sm2);
+        svc.validateOnStartup();
+        return svc;
+    }
+
+    private static KeyService newServiceWithPeer(final String srcNode, final List<String> pubHexes) {
+        final FepSecuritySm2Properties sm2 = new FepSecuritySm2Properties();
+        sm2.getPeerVerifyKeys().put(srcNode, pubHexes);
+        final KeyServiceImpl svc = new KeyServiceImpl(sm4Props(), sm2);
+        svc.validateOnStartup();
+        return svc;
+    }
+
+    private static FepSecurityKeyProperties sm4Props() {
+        final FepSecurityKeyProperties sm4 = new FepSecurityKeyProperties();
+        sm4.setActiveKeyId("sm4-cred-v2");
+        sm4.getSm4Keys().put("sm4-cred-v2", GBT_KEY_HEX);
+        return sm4;
+    }
+
+    @Test
+    void msgSignConfigured_getSignPrivateKeyReturnsActiveScalar() {
+        final KeyService svc = newServiceWithMsgSign("sm2-msgsign-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        assertThat(svc.getSignPrivateKey())
+                .hasSize(32)
+                .isEqualTo(HexFormat.of().parseHex(Sm2TestVectors.GBT_PRIVATE_KEY_HEX));
+    }
+
+    @Test
+    void getSignPrivateKey_returnsDefensiveCopy() {
+        final KeyService svc = newServiceWithMsgSign("sm2-msgsign-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX);
+        final byte[] first = svc.getSignPrivateKey();
+        first[0] = (byte) 0xFF;
+        assertThat(svc.getSignPrivateKey()[0]).isNotEqualTo((byte) 0xFF);
+    }
+
+    @Test
+    void msgSignAbsent_getSignPrivateKeyThrowsIse() {
+        final KeyService svc = newService("sm4-cred-v2", keys("sm4-cred-v2", GBT_KEY_HEX));
+        assertThatThrownBy(svc::getSignPrivateKey)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("msg-sign");
+    }
+
+    @Test
+    void msgSignActiveIdWithoutEntry_failsValidation() {
+        assertThatThrownBy(() -> newServiceWithMsgSignRaw("sm2-msgsign-v9", "sm2-msgsign-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void msgSignMismatchedKeyPair_failsStartup() {
+        final String tampered = Sm2TestVectors.GBT_PUBLIC_KEY_HEX
+                .substring(0, Sm2TestVectors.GBT_PUBLIC_KEY_HEX.length() - 2) + "14";
+        assertThatThrownBy(() -> newServiceWithMsgSign("sm2-msgsign-v1",
+                Sm2TestVectors.GBT_PRIVATE_KEY_HEX, tampered))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("key pair");
+    }
+
+    @Test
+    void peerVerifyKeyValidPoint_passesStartup() {
+        assertThatCode(() -> newServiceWithPeer("A1000143000104",
+                List.of(Sm2TestVectors.GBT_PUBLIC_KEY_HEX)))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void peerVerifyKeyMultipleRotation_passesStartup() {
+        // 换证期 list 含两个合法公钥（try-each 抗轮换）
+        assertThatCode(() -> newServiceWithPeer("A1000143000104",
+                List.of(Sm2TestVectors.GBT_PUBLIC_KEY_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX)))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void peerVerifyKeyBadFormat_failsStartup() {
+        assertThatThrownBy(() -> newServiceWithPeer("A1000143000104", List.of("DEADBEEF")))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("peer");
+    }
+
+    @Test
+    void peerVerifyKeyNotOnCurve_failsStartup() {
+        // 130 hex 04 前缀格式合法，但 y 坐标被篡改 → 非曲线点（decodePoint 探活拒绝）
+        final String notOnCurve = Sm2TestVectors.GBT_PUBLIC_KEY_HEX.substring(0, 128) + "0000";
+        assertThatThrownBy(() -> newServiceWithPeer("A1000143000104", List.of(notOnCurve)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void peerVerifyKeyEmptyList_failsStartup() {
+        assertThatThrownBy(() -> newServiceWithPeer("A1000143000104", List.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

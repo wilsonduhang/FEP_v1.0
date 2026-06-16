@@ -3,6 +3,7 @@ package com.puchain.fep.web.messageinbound.service;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.FepConstants;
+import com.puchain.fep.converter.sign.MessageVerifier;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.body.batch.CompanyAuthFileBatchResponse2104;
 import com.puchain.fep.processor.body.batch.CompanyInfoBatchResponse2103;
@@ -46,6 +47,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -563,13 +565,99 @@ class InboundMessageDispatcherTest {
 
     private SyncMessageProcessorService syncProcessor;
     private ApplicationEventPublisher eventPublisher;
+    private MessageVerifier messageVerifier;
     private InboundMessageDispatcher dispatcher;
 
     @BeforeEach
     void setUp() {
         syncProcessor = mock(SyncMessageProcessorService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
-        dispatcher = new InboundMessageDispatcher(syncProcessor, eventPublisher);
+        messageVerifier = mock(MessageVerifier.class);
+        // 默认 dispatcher：verify-inbound=false（历史行为，验签关跳过）
+        dispatcher = new InboundMessageDispatcher(
+                syncProcessor, eventPublisher, messageVerifier, false);
+    }
+
+    // ----- GM S2b T5: 入站验签关（verify-inbound 开关 × verified true/false 四象限）-----
+
+    @Test
+    @DisplayName("verify-inbound=true + verified=true → proceeds to processInbound + publishes")
+    void dispatch_verifyInboundTrue_verified_proceeds() {
+        final byte[] xml = VALID_3116_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-v01abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3116, "20260428", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3116), eq("20260428"), eq(xml)))
+                .thenReturn(completed);
+        final MessageVerifier mv = mock(MessageVerifier.class);
+        when(mv.verify(any(), any())).thenReturn(true);
+
+        final InboundMessageResponse response = new InboundMessageDispatcher(
+                syncProcessor, eventPublisher, mv, true).dispatch("3116", "20260428", xml);
+
+        assertThat(response.status()).isEqualTo("COMPLETED");
+        verify(mv).verify(any(), eq(FepConstants.HNDEMP_NODE_CODE));
+        verify(syncProcessor).processInbound(eq(MessageType.MSG_3116), eq("20260428"), eq(xml));
+    }
+
+    @Test
+    @DisplayName("verify-inbound=true + verified=false → PROC_8508, processInbound NOT called")
+    void dispatch_verifyInboundTrue_verifyFails_throwsProc8508() {
+        final byte[] xml = VALID_3116_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageVerifier mv = mock(MessageVerifier.class);
+        when(mv.verify(any(), any())).thenReturn(false);
+
+        final InboundMessageDispatcher d =
+                new InboundMessageDispatcher(syncProcessor, eventPublisher, mv, true);
+        assertThatThrownBy(() -> d.dispatch("3116", "20260428", xml))
+                .isInstanceOf(FepBusinessException.class)
+                .satisfies(ex -> assertThat(((FepBusinessException) ex).getErrorCode())
+                        .isEqualTo(FepErrorCode.PROC_8508));
+
+        verify(syncProcessor, never()).processInbound(any(), any(), any());
+        verify(eventPublisher, never()).publishEvent(any(InboundMessageProcessedEvent.class));
+    }
+
+    @Test
+    @DisplayName("verify-inbound=false → verifier never consulted, dispatch proceeds")
+    void dispatch_verifyInboundFalse_skipsVerification() {
+        final byte[] xml = VALID_3116_XML_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-v02abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3116, "20260428", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3116), eq("20260428"), eq(xml)))
+                .thenReturn(completed);
+
+        // setUp dispatcher 用 verify-inbound=false + messageVerifier mock
+        final InboundMessageResponse response = dispatcher.dispatch("3116", "20260428", xml);
+
+        assertThat(response.status()).isEqualTo("COMPLETED");
+        verifyNoInteractions(messageVerifier);
+    }
+
+    @Test
+    @DisplayName("verify-inbound=true + signed payload (trailing comment) → SrcNode parsed, routed to verify")
+    void dispatch_verifyInboundTrue_signedPayloadTrailingComment_parsesSrcNodeAndVerifies() {
+        // 真对端报文形态：</CFX> 之后带签名注释 epilog（JAXB 头解析须忽略）
+        final byte[] xml = (VALID_3116_XML_TEMPLATE + "<!--MOCKSIG==-->")
+                .getBytes(StandardCharsets.UTF_8);
+        final MessageProcessRecord completed = MessageProcessRecord.initial(
+                        "rec-v03abcdef0123456789abcdef01230000",
+                        MessageType.MSG_3116, "20260428", Instant.now())
+                .withStatus(MessageProcessStatus.COMPLETED, Instant.now());
+        when(syncProcessor.processInbound(eq(MessageType.MSG_3116), eq("20260428"), eq(xml)))
+                .thenReturn(completed);
+        final MessageVerifier mv = mock(MessageVerifier.class);
+        // 仅当 SrcNode 正确解析为 HNDEMP（HEAD 内值，尾注释不干扰）时验签 stub 命中
+        when(mv.verify(any(), eq(FepConstants.HNDEMP_NODE_CODE))).thenReturn(true);
+
+        final InboundMessageResponse response = new InboundMessageDispatcher(
+                syncProcessor, eventPublisher, mv, true).dispatch("3116", "20260428", xml);
+
+        assertThat(response.status()).isEqualTo("COMPLETED");
+        verify(mv).verify(any(), eq(FepConstants.HNDEMP_NODE_CODE));
     }
 
     @Test

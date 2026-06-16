@@ -2,12 +2,14 @@ package com.puchain.fep.security.impl;
 
 import com.puchain.fep.security.api.CryptoService;
 import com.puchain.fep.security.api.KeyService;
+import com.puchain.fep.security.api.MessageSignPort;
 import com.puchain.fep.security.api.SignService;
 import com.puchain.fep.security.impl.crypto.BouncyCastleGmProviderConfig;
 import com.puchain.fep.security.impl.crypto.CryptoServiceImpl;
 import com.puchain.fep.security.impl.key.FepSecurityKeyProperties;
 import com.puchain.fep.security.impl.key.FepSecuritySm2Properties;
 import com.puchain.fep.security.impl.key.KeyServiceImpl;
+import com.puchain.fep.security.impl.sign.BcMessageSignPort;
 import com.puchain.fep.security.impl.sign.SignServiceImpl;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -75,5 +77,21 @@ public class GmSecurityConfiguration {
     @Bean
     public SignService signService() {
         return new SignServiceImpl();
+    }
+
+    /**
+     * 报文签验 port B 形态（进程内 BC；形态 C-ev，ADR 2026-06-12）。私钥经 KeyService 单源，
+     * 按 SrcNode 路由 peer-verify-keys 验签。
+     *
+     * @param signService SM2 签验原语
+     * @param keyService  报文签名私钥单源（getSignPrivateKey）
+     * @param sm2Props    peer-verify-keys 配置
+     * @return MessageSignPort 实现
+     */
+    @Bean
+    public MessageSignPort messageSignPort(final SignService signService,
+                                           final KeyService keyService,
+                                           final FepSecuritySm2Properties sm2Props) {
+        return new BcMessageSignPort(signService, keyService, sm2Props);
     }
 }

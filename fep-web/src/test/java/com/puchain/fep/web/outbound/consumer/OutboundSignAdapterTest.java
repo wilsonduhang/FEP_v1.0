@@ -2,8 +2,8 @@ package com.puchain.fep.web.outbound.consumer;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
-import com.puchain.fep.security.api.KeyService;
-import com.puchain.fep.security.api.SignService;
+import com.puchain.fep.converter.exception.MessageConverterException;
+import com.puchain.fep.converter.sign.MessageSigner;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,89 +16,56 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- * P5 T5 — {@link OutboundSignAdapter} 单元测试（PRD v1.3 §3.1 报文鉴权）。
+ * {@link OutboundSignAdapter} 单元测试（GM S2b T4，PRD v1.3 §3.1 / §3.2.1）。
  *
- * <p>覆盖：</p>
- * <ul>
- *   <li>happy-path: 在 {@code </CFX>} 之前嵌入 {@code <!-- signature: BASE64 -->} 注释</li>
- *   <li>边界 (a): 输入缺失 {@code </CFX>} → 抛出 OUTBOUND_5103，消息含
- *       "无法定位 </CFX> 闭合标签"</li>
- *   <li>边界 (b): {@link SignService#sign(byte[], byte[])} 抛 RuntimeException → 包装为
- *       OUTBOUND_5103，原因链保留</li>
- *   <li>边界 (c): 输入含多个 {@code </CFX>} 子串 → {@code lastIndexOf} 在最后一个之前插入注释</li>
- * </ul>
+ * <p>S2b 起本适配器委托 {@link MessageSigner}；本测试以 mock MessageSigner 覆盖
+ * 委托透传 + 异常映射（OUTBOUND_5103）。真 wire 形态（{@code </CFX><!--B64-->}）+ 真验签
+ * roundtrip 见 {@code OutboundSignWireRoundtripImplTest}（impl provider 全 context）。</p>
  *
  * <p><b>FR-ID:</b> FR-MSG-OUTBOUND-SIGN</p>
- *
- * @author FEP Team
- * @since 1.0.0
  */
 @ExtendWith(MockitoExtension.class)
 class OutboundSignAdapterTest {
 
     @Mock
-    private SignService signService;
-
-    @Mock
-    private KeyService keyService;
+    private MessageSigner messageSigner;
 
     @InjectMocks
     private OutboundSignAdapter adapter;
 
     @Test
-    void embedSignatureAsComment_should_insert_before_closing_CFX() {
-        when(keyService.getSignPrivateKey()).thenReturn(new byte[32]);
-        when(signService.sign(any(), any())).thenReturn("ABC123==");
-
+    void embedSignatureAsComment_delegatesToMessageSigner_commentAfterClosingCfx() {
         final String input = "<CFX><HEAD/></CFX>";
+        // MessageSigner 产物：注释置 </CFX> 之后、格式 <!--B64-->（G1 修复后形态）
+        when(messageSigner.sign(input)).thenReturn("<CFX><HEAD/></CFX><!--ABC123==-->");
+
         final String output = adapter.embedSignatureAsComment(input);
 
-        assertThat(output).contains("<!-- signature: ABC123== -->");
-        assertThat(output).matches(".*<!-- signature: [^>]+ -->\\s*</CFX>$");
+        assertThat(output).isEqualTo("<CFX><HEAD/></CFX><!--ABC123==-->");
+        assertThat(output).endsWith("</CFX><!--ABC123==-->");
+        // G1 旧缺陷格式不再出现
+        assertThat(output).doesNotContain("<!-- signature:");
     }
 
     @Test
-    void embedSignatureAsComment_should_throw_OUTBOUND_5103_when_closing_tag_missing() {
-        when(keyService.getSignPrivateKey()).thenReturn(new byte[32]);
-        when(signService.sign(any(), any())).thenReturn("ABC123==");
+    void embedSignatureAsComment_wrapsConverterException_asOutbound5103() {
+        when(messageSigner.sign(any()))
+                .thenThrow(new MessageConverterException(FepErrorCode.CONV_8004, "no </CFX>"));
 
-        final String malformedInput = "<CFX><HEAD/>";  // 缺失 </CFX>
-
-        assertThatThrownBy(() -> adapter.embedSignatureAsComment(malformedInput))
-                .isInstanceOf(FepBusinessException.class)
-                .hasMessageContaining("无法定位 </CFX> 闭合标签")
-                .extracting(e -> ((FepBusinessException) e).getErrorCode())
-                .isEqualTo(FepErrorCode.OUTBOUND_5103_SIGN_FAILURE);
-    }
-
-    @Test
-    void embedSignatureAsComment_should_wrap_signService_exception_as_OUTBOUND_5103() {
-        when(keyService.getSignPrivateKey()).thenReturn(new byte[32]);
-        final RuntimeException rootCause = new RuntimeException("SM2 sign failed: invalid key");
-        when(signService.sign(any(), any())).thenThrow(rootCause);
-
-        assertThatThrownBy(() -> adapter.embedSignatureAsComment("<CFX/></CFX>"))
+        assertThatThrownBy(() -> adapter.embedSignatureAsComment("<CFX><HEAD/>"))
                 .isInstanceOf(FepBusinessException.class)
                 .hasMessageContaining("加签失败")
-                .hasCause(rootCause)
                 .extracting(e -> ((FepBusinessException) e).getErrorCode())
                 .isEqualTo(FepErrorCode.OUTBOUND_5103_SIGN_FAILURE);
     }
 
     @Test
-    void embedSignatureAsComment_should_use_lastIndexOf_when_input_has_multiple_closing_tags() {
-        when(keyService.getSignPrivateKey()).thenReturn(new byte[32]);
-        when(signService.sign(any(), any())).thenReturn("SIG==");
+    void embedSignatureAsComment_passesThroughExistingFepBusinessException() {
+        final FepBusinessException pre =
+                new FepBusinessException(FepErrorCode.OUTBOUND_5103_SIGN_FAILURE, "pre-existing");
+        when(messageSigner.sign(any())).thenThrow(pre);
 
-        // 防御性场景：恶意/畸形输入含多个 </CFX> 子串
-        // 期望行为：lastIndexOf 命中最后一个，注释插在最后一个之前
-        final String input = "<CFX>nested-</CFX>-trailing</CFX>";
-        final String output = adapter.embedSignatureAsComment(input);
-
-        assertThat(output).isEqualTo("<CFX>nested-</CFX>-trailing<!-- signature: SIG== --></CFX>");
-        // 进一步确认：第一个 </CFX> 之前不应有 signature 注释
-        final int commentIdx = output.indexOf("<!-- signature:");
-        final int firstCfxClose = output.indexOf("</CFX>");
-        assertThat(commentIdx).isGreaterThan(firstCfxClose);
+        assertThatThrownBy(() -> adapter.embedSignatureAsComment("<CFX/></CFX>"))
+                .isSameAs(pre);
     }
 }

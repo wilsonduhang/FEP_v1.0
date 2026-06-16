@@ -54,6 +54,22 @@ final class Sm2LoginCipher {
     }
 
     /**
+     * 校验 hex 是否为曲线 sm2p256v1 上的合法未压缩点（GM S2b peer 对端公钥启动探活，
+     * 密码学 MAJOR-1）。仅做曲线点合法性判定，不验证密钥归属。
+     *
+     * @param publicKeyHex 公钥裸点 hex（130 字符，04 开头）
+     * @return 合法曲线点返回 true；hex 非法 / 不在曲线上返回 false
+     */
+    static boolean isValidCurvePoint(final String publicKeyHex) {
+        try {
+            DOMAIN.getCurve().decodePoint(Hex.decode(publicKeyHex));
+            return true;
+        } catch (final IllegalArgumentException | DecoderException e) {
+            return false;
+        }
+    }
+
+    /**
      * 解密前端线格式 SM2 密文（sm-crypto C1C3C2，hex，无 04 前缀——
      * fep-admin-ui sm2-cipher.ts 契约，内部统一补 0x04 后喂 BC SM2Engine）。
      *

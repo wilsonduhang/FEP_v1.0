@@ -2,34 +2,26 @@ package com.puchain.fep.web.outbound.consumer;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.exception.FepBusinessException;
-import com.puchain.fep.security.api.KeyService;
-import com.puchain.fep.security.api.SignService;
+import com.puchain.fep.converter.sign.MessageSigner;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
- * P5 T5 — 出站报文 SM3withSM2 加签适配器（PRD v1.3 §3.1 报文鉴权）。
+ * 出站报文 SM3withSM2 加签适配器（PRD v1.3 §3.1 报文鉴权 / §3.2.1 / §3.3.2）。
  *
- * <p>职责：</p>
- * <ol>
- *   <li>从 {@link KeyService#getSignPrivateKey()} 拉取 SM2 签名私钥（PKCS#8）</li>
- *   <li>调用 {@link SignService#sign(byte[], byte[])} 计算 Base64 签名值</li>
- *   <li>在 CFX 报文 {@code </CFX>} 闭合标签前嵌入 {@code <!-- signature: BASE64 -->} 注释</li>
- *   <li>任意失败抛 {@link FepErrorCode#OUTBOUND_5103_SIGN_FAILURE}（保留 cause）</li>
- * </ol>
+ * <p><strong>GM S2b（形态 C-ev）瘦身为委托 converter 协议层 {@link MessageSigner}:</strong>
+ * 签名范围（首个 {@code <} 至最后 {@code </CFX>}）+ Base64 裸签注释 {@code <!--B64-->} 置于
+ * {@code </CFX>} <strong>之后</strong>（PRD §3.2.1 样例）。私钥由 {@code MessageSignPort} 经
+ * KeyService 单源取，形态依赖（进程内 BC / 外部 1818）被 port 隔离。</p>
  *
- * <p><strong>🔓 2026-06-07 解禁治理:</strong> 本适配器仅做编排（orchestration），
- * 不直接实现任何国密密码学原语。所有 SM2/SM3 计算委托给 {@link SignService} 接口（真实实现
- * {@code SignServiceImpl}，GM S5 已实装 + 密码学专项 review）；私钥来源委托给
- * {@link KeyService} 接口（{@code KeyServiceImpl}，S1/S2a 已实装）。SM2 报文签验 wiring
- * 与落地形态（外部签名验签服务器 1818 vs 进程内）待架构 §0.3 决策门定调（S2b）。
- * 真实密钥材料部署期注入，永不入 repo。</p>
+ * <p><strong>修正既有 G1 缺陷:</strong> 旧实现签<em>全文</em>（未走范围提取）+ 注释置 {@code </CFX>}
+ * <em>之前</em> + 格式 {@code <!-- signature: B64 -->}（与 PRD 样例及 {@code SignatureCommentCodec}
+ * 不一致，对 HNDEMP 真验签必失败）。mock 期未暴露。</p>
  *
- * <p><strong>注释嵌入策略:</strong> 使用 {@code lastIndexOf("</CFX>")} 而非
- * {@code indexOf}，避免畸形/嵌套报文中靠前的子串干扰；签名注释始终插入在最后一个
- * {@code </CFX>}（即文档真正的根闭合标签）之前。</p>
+ * <p>方法名 {@link #embedSignatureAsComment(String)} 与 {@link FepErrorCode#OUTBOUND_5103_SIGN_FAILURE}
+ * 异常面保留——调用方 {@code OutboundQueueRunnerImpl} 零改动。底层 {@code MessageConverterException}
+ * （CONV_8004：范围提取失败 / 签名空）统一映射为 OUTBOUND_5103。</p>
  *
  * <p><strong>FR-ID:</strong> FR-MSG-OUTBOUND-SIGN</p>
  *
@@ -39,57 +31,29 @@ import java.util.Objects;
 @Component
 public class OutboundSignAdapter {
 
-    private static final String CFX_CLOSING_TAG = "</CFX>";
-
-    private final SignService signService;
-    private final KeyService keyService;
+    private final MessageSigner messageSigner;
 
     /**
-     * 构造函数注入 SM2 签名服务与密钥服务。
+     * 构造函数注入 converter 协议层加签器。
      *
-     * @param signService SM2 签名服务（{@link SignService} 接口，真实实现 SignServiceImpl S5 已实装；报文签验 wiring 待 §0.3/S2b）
-     * @param keyService  密钥服务（{@link KeyService} 接口，真实实现 KeyServiceImpl S1/S2a 已实装）
-     * @throws NullPointerException 如任一参数为 null
+     * @param messageSigner 报文加签编排器（{@link MessageSigner}，依赖 MessageSignPort）
+     * @throws NullPointerException 如参数为 null
      */
-    public OutboundSignAdapter(final SignService signService, final KeyService keyService) {
-        this.signService = Objects.requireNonNull(signService, "signService 不可为 null");
-        this.keyService = Objects.requireNonNull(keyService, "keyService 不可为 null");
+    public OutboundSignAdapter(final MessageSigner messageSigner) {
+        this.messageSigner = Objects.requireNonNull(messageSigner, "messageSigner 不可为 null");
     }
 
     /**
-     * 在 CFX 报文 {@code </CFX>} 闭合标签前嵌入 {@code <!-- signature: BASE64 -->} 注释。
+     * 委托 {@link MessageSigner#sign(String)} 加签：范围提取 → SM2 裸签 → 末端
+     * {@code </CFX><!--B64-->} 注释。
      *
-     * <p>处理流程：</p>
-     * <ol>
-     *   <li>调 {@link KeyService#getSignPrivateKey()} 取私钥（PKCS#8 byte[]）</li>
-     *   <li>对 UTF-8 编码的 xml 字节调 {@link SignService#sign(byte[], byte[])}</li>
-     *   <li>用 {@code lastIndexOf("</CFX>")} 定位闭合标签位置</li>
-     *   <li>在该位置之前插入注释；返回拼接后的新 XML 字符串</li>
-     * </ol>
-     *
-     * <p>失败模式（统一抛 {@link FepErrorCode#OUTBOUND_5103_SIGN_FAILURE}）：</p>
-     * <ul>
-     *   <li>输入缺失 {@code </CFX>} → 业务异常，消息 "无法定位 </CFX> 闭合标签"</li>
-     *   <li>{@link KeyService}/{@link SignService} 抛任意 {@link Exception} → 包装为业务异常，
-     *       cause 链保留</li>
-     *   <li>已是 {@link FepBusinessException} → 直接透传，避免双重包装（保留原错误码）</li>
-     * </ul>
-     *
-     * @param xml 完整的 CFX XML 报文字符串（必须以 {@code </CFX>} 结尾）
-     * @return 嵌入签名注释后的 XML 字符串
-     * @throws FepBusinessException 加签失败（错误码 OUTBOUND_5103）
+     * @param xml 完整 CFX XML 报文
+     * @return 末端嵌入签名注释的 XML 字符串
+     * @throws FepBusinessException 加签失败（错误码 OUTBOUND_5103，保留 cause）
      */
     public String embedSignatureAsComment(final String xml) {
         try {
-            final byte[] privateKey = keyService.getSignPrivateKey();
-            final String signature = signService.sign(xml.getBytes(StandardCharsets.UTF_8), privateKey);
-            final String comment = "<!-- signature: " + signature + " -->";
-            final int idx = xml.lastIndexOf(CFX_CLOSING_TAG);
-            if (idx < 0) {
-                throw new FepBusinessException(FepErrorCode.OUTBOUND_5103_SIGN_FAILURE,
-                        "无法定位 </CFX> 闭合标签");
-            }
-            return xml.substring(0, idx) + comment + xml.substring(idx);
+            return messageSigner.sign(xml);
         } catch (FepBusinessException e) {
             throw e;
         } catch (Exception e) {

@@ -71,7 +71,7 @@ public class MessageDecoder {
         }
         boolean verified = true;
         if (opts.isSign()) {
-            verified = verifier.verify(current, opts.getSignPublicKey());
+            verified = verifier.verify(current, opts.getSrcNode());
         }
         final String body = commentCodec.extractBody(current);
         final CfxMessage msg = xmlCodec.unmarshal(body);

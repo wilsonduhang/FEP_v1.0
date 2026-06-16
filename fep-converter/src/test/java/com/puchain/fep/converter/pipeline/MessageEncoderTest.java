@@ -20,6 +20,8 @@ import static org.mockito.Mockito.when;
 /**
  * {@link MessageEncoder} 单元测试：验证 PRD §3.4.2 所规定的
  * marshal → sign → compress → encrypt 顺序及各开关分支。
+ *
+ * <p>GM S2b 形态 C-ev：加签私钥不再经 opts 穿参，{@code signer.sign(xml)} 单参。</p>
  */
 class MessageEncoderTest {
 
@@ -32,7 +34,6 @@ class MessageEncoderTest {
         opts.setSign(true);
         opts.setZip(true);
         opts.setEncrypt(true);
-        opts.setSignPrivateKey(new byte[]{1});
         opts.setEncryptKey(new byte[16]);
         return opts;
     }
@@ -45,7 +46,7 @@ class MessageEncoderTest {
         MessageEncryptor encryptor = mock(MessageEncryptor.class);
 
         when(xml.marshal(any())).thenReturn("XML");
-        when(signer.sign(eq("XML"), any())).thenReturn("XML<!--SIG-->");
+        when(signer.sign("XML")).thenReturn("XML<!--SIG-->");
         when(compressor.compress("XML<!--SIG-->")).thenReturn("ZIPPED");
         when(encryptor.encrypt(eq("ZIPPED"), any())).thenReturn("ENCRYPTED");
 
@@ -58,7 +59,7 @@ class MessageEncoderTest {
 
         InOrder ord = inOrder(xml, signer, compressor, encryptor);
         ord.verify(xml).marshal(any());
-        ord.verify(signer).sign(eq("XML"), any());
+        ord.verify(signer).sign("XML");
         ord.verify(compressor).compress("XML<!--SIG-->");
         ord.verify(encryptor).encrypt(eq("ZIPPED"), any());
     }
@@ -71,13 +72,12 @@ class MessageEncoderTest {
         MessageEncryptor encryptor = mock(MessageEncryptor.class);
 
         when(xml.marshal(any())).thenReturn("XML");
-        when(signer.sign(eq("XML"), any())).thenReturn("XML<!--SIG-->");
+        when(signer.sign("XML")).thenReturn("XML<!--SIG-->");
 
         MessageEncoder encoder = new MessageEncoder(xml, signer, compressor, encryptor);
 
         MessagePipelineOptions opts = new MessagePipelineOptions();
         opts.setSign(true);
-        opts.setSignPrivateKey(new byte[]{1});
 
         EncodeResult r = encoder.encode(sampleMessage(), opts);
         assertThat(r.getPayload()).isEqualTo("XML<!--SIG-->");
@@ -94,13 +94,12 @@ class MessageEncoderTest {
         MessageEncryptor encryptor = mock(MessageEncryptor.class);
 
         when(xml.marshal(any())).thenReturn("XML");
-        when(signer.sign(any(), any())).thenReturn("XML<!--SIG-->");
+        when(signer.sign(any())).thenReturn("XML<!--SIG-->");
         when(encryptor.encrypt(eq("XML<!--SIG-->"), any())).thenReturn("ENCRYPTED");
 
         MessagePipelineOptions opts = new MessagePipelineOptions();
         opts.setSign(true);
         opts.setEncrypt(true);
-        opts.setSignPrivateKey(new byte[]{1});
         opts.setEncryptKey(new byte[16]);
 
         MessageEncoder encoder = new MessageEncoder(xml, signer, compressor, encryptor);
