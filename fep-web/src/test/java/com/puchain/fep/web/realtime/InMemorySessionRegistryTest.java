@@ -105,6 +105,8 @@ class InMemorySessionRegistryTest {
 
         // 仅 user-2 的 s2 残留；反向 O(1) 定位不误删他人。
         assertThat(registry.sessionCount()).isEqualTo(1);
+        // 不变量：反向索引与正向集恒等，无孤儿泄漏。
+        assertThat(registry.reverseIndexSize()).isEqualTo(registry.sessionCount());
     }
 
     @Test
@@ -117,6 +119,7 @@ class InMemorySessionRegistryTest {
         // 反向条目须已清，重注册同 sessionId 不受残留干扰。
         registry.register("user-1", s1);
         assertThat(registry.sessionCount()).isEqualTo(1);
+        assertThat(registry.reverseIndexSize()).isEqualTo(1);
     }
 
     @Test
@@ -129,7 +132,9 @@ class InMemorySessionRegistryTest {
 
         registry.sendToUser("user-1", "{}"); // 触发 isOpen()==false 丢弃
 
-        // 反向索引须已清：再 unregister 幂等不抛、count 一致。
+        // 丢弃点①须同步清反向索引——否则此处残留孤儿（sessionCount 漏检，reverseIndexSize 揪出）。
+        assertThat(registry.reverseIndexSize()).isZero();
+        // 反向索引已清：再 unregister 幂等不抛、count 一致。
         registry.unregister(closed);
         assertThat(registry.sessionCount()).isZero();
     }
@@ -143,14 +148,18 @@ class InMemorySessionRegistryTest {
 
         registry.sendToUser("user-1", "{}"); // 触发 IOException catch 丢弃
 
-        registry.unregister(s1); // 反向索引须已清，幂等不抛
+        // 丢弃点②须同步清反向索引（catch 分支），否则孤儿残留。
+        assertThat(registry.reverseIndexSize()).isZero();
+        registry.unregister(s1); // 反向索引已清，幂等不抛
         assertThat(registry.sessionCount()).isZero();
     }
 
     @Test
-    void unregister_unknownSession_isSilentlyIgnored() {
+    void unregister_unknownSession_isSilentlyIgnored_andIdempotent() {
         final WebSocketSession unknown = openSession("nope");
         registry.unregister(unknown); // 未注册会话静默忽略，不抛
+        registry.unregister(unknown); // 重复 unregister 仍幂等不抛
         assertThat(registry.sessionCount()).isZero();
+        assertThat(registry.reverseIndexSize()).isZero();
     }
 }

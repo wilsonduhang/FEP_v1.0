@@ -107,4 +107,16 @@ public class InMemorySessionRegistry implements WebSocketSessionRegistry {
     public int sessionCount() {
         return sessionsByUser.values().stream().mapToInt(Set::size).sum();
     }
+
+    /**
+     * 反向索引当前条目数，用于测试/监控直接核验不变量。
+     *
+     * <p>正常状态下应恒等于 {@link #sessionCount()}——二者不等即反向索引与正向集
+     * 发生漂移（孤儿条目泄漏）。仅 {@code sessionCount} 观测正向集会漏掉此类泄漏。</p>
+     *
+     * @return {@code userIdBySessionId} 条目数
+     */
+    int reverseIndexSize() {
+        return userIdBySessionId.size();
+    }
 }
