@@ -18,20 +18,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RouteRegistryTest {
 
     private static final Set<String> EXPECTED_MESSAGE_TYPES = Set.of(
-            "3009", "3101", "3102", "3105", "3107", "3109", "3112", "3116");
+            "3000", "3009", "3101", "3102", "3105", "3107", "3109", "3112", "3116");
 
     @Test
-    void registryShouldContainExactly8RoutesFromMode2AndMode3() {
+    void registryShouldContainExactly9RoutesFromMode2AndMode3() {
         final RouteRegistry registry = new RouteRegistry(
                 List.of(new Mode2Routes(), new Mode3Routes()));
 
         assertThat(registry.size())
-                .as("8 routes (4 Mode2 + 4 Mode3)")
-                .isEqualTo(8);
+                .as("9 routes (4 Mode2 + 5 Mode3)")
+                .isEqualTo(9);
     }
 
     @Test
-    void allMessageTypesShouldBeIn8DataMartUpstreamSet() {
+    void allMessageTypesShouldBeIn9DataMartUpstreamSet() {
         final RouteRegistry registry = new RouteRegistry(
                 List.of(new Mode2Routes(), new Mode3Routes()));
 
@@ -40,8 +40,20 @@ class RouteRegistryTest {
             actual.add(r.messageType());
         }
         assertThat(actual)
-                .as("all 8 messageTypes ∈ {3009,3101,3102,3105,3107,3109,3112,3116}")
+                .as("all 9 messageTypes ∈ {3000,3009,3101,3102,3105,3107,3109,3112,3116}")
                 .isEqualTo(EXPECTED_MESSAGE_TYPES);
+    }
+
+    @Test
+    void lookupShouldReturnDzpz3000Route() {
+        final RouteRegistry registry = new RouteRegistry(
+                List.of(new Mode2Routes(), new Mode3Routes()));
+
+        final AssemblerRoute route = registry.lookup(Mode3Routes.PAYLOAD_TYPE_DZPZ_3000);
+        assertThat(route).isNotNull();
+        assertThat(route.messageType()).isEqualTo("3000");
+        assertThat(route.fieldMapperClass())
+                .isEqualTo(com.puchain.fep.collector.assembler.mapper.DzpzInfo3000FieldMapper.class);
     }
 
     @Test
