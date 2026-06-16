@@ -40,8 +40,8 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead2101>
                 <DataTransfer2101>
-                  <MainClass>STATS</MainClass>
-                  <SecondClass>LSD01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <Period>1</Period>
                   <Type>1</Type>
                   <FileDate>20260509</FileDate>
@@ -56,8 +56,8 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead2101>
                 <DataTransfer2101>
-                  <MainClass>STATS</MainClass>
-                  <SecondClass>LSD01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <Period>1</Period>
                   <Type>1</Type>
                 </DataTransfer2101>""");
@@ -86,7 +86,7 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
     @Test
     void invalid2101_mainClassShorterThanMinLength_shouldFail() {
         String xml = VALID_2101_XML.replace(
-                "<MainClass>STATS</MainClass>",
+                "<MainClass>COINFO</MainClass>",
                 "<MainClass>L</MainClass>");
 
         ValidationResult result = validator.validate(MessageType.MSG_2101,
@@ -102,7 +102,7 @@ class DataTransfer2101XsdValidationTest extends AbstractXsdValidationTest {
     @Test
     void invalid2101_secondClassLongerThanMaxLength_shouldFail() {
         String xml = VALID_2101_XML.replace(
-                "<SecondClass>LSD01</SecondClass>",
+                "<SecondClass>I1001</SecondClass>",
                 "<SecondClass>LSDX0123456789ABZ</SecondClass>");
 
         ValidationResult result = validator.validate(MessageType.MSG_2101,

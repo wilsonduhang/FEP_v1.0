@@ -41,8 +41,8 @@ class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead1101>
                 <DataTransfer1101>
-                  <MainClass>STATS</MainClass>
-                  <SecondClass>LSD01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <Period>1</Period>
                   <Type>1</Type>
                   <FileDate>20260509</FileDate>
@@ -58,8 +58,8 @@ class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead1101>
                 <DataTransfer1101>
-                  <MainClass>YWTB</MainClass>
-                  <SecondClass>ZHYW</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <Period>1</Period>
                   <Type>1</Type>
                   <FileDate>20260509</FileDate>
@@ -74,7 +74,7 @@ class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
                   <TransitionNo>20260509</TransitionNo>
                 </BatchHead1101>
                 <DataTransfer1101>
-                  <SecondClass>LSD01</SecondClass>
+                  <SecondClass>I1001</SecondClass>
                   <Period>1</Period>
                   <Type>1</Type>
                   <FileDate>20260509</FileDate>
@@ -113,7 +113,7 @@ class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
     @Test
     void invalid1101_mainClassShorterThanMinLength_shouldFail() {
         String xml = VALID_FULL_FIELDS_XML.replace(
-                "<MainClass>STATS</MainClass>",
+                "<MainClass>COINFO</MainClass>",
                 "<MainClass>L</MainClass>");
 
         ValidationResult result = validator.validate(MessageType.MSG_1101,
@@ -129,7 +129,7 @@ class DataTransfer1101XsdValidationTest extends AbstractXsdValidationTest {
     @Test
     void invalid1101_secondClassLongerThanMaxLength_shouldFail() {
         String xml = VALID_FULL_FIELDS_XML.replace(
-                "<SecondClass>LSD01</SecondClass>",
+                "<SecondClass>I1001</SecondClass>",
                 "<SecondClass>LSDX0123456789ABZ</SecondClass>");
 
         ValidationResult result = validator.validate(MessageType.MSG_1101,
