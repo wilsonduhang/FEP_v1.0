@@ -108,7 +108,7 @@ class SupplyChainBody3005_3006Test {
         original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setQyAccName("湖南测试企业有限公司");
         original.setQyAccCode("123456789012345678");
-        original.setAccReturnCode("00");
+        original.setAccReturnCode("0");
         original.setAccReturnMemo("查询成功");
 
         ExtInfo ext = new ExtInfo();
@@ -124,7 +124,7 @@ class SupplyChainBody3005_3006Test {
                 .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<qyAccName>湖南测试企业有限公司</qyAccName>")
                 .contains("<qyAccCode>123456789012345678</qyAccCode>")
-                .contains("<AccReturnCode>00</AccReturnCode>")
+                .contains("<AccReturnCode>0</AccReturnCode>")
                 .contains("<AccReturnMemo>查询成功</AccReturnMemo>")
                 .contains("<ExtInfo>")
                 .contains("<ExtData>3006附加数据</ExtData>");
@@ -135,7 +135,7 @@ class SupplyChainBody3005_3006Test {
         assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getQyAccName()).isEqualTo("湖南测试企业有限公司");
         assertThat(parsed.getQyAccCode()).isEqualTo("123456789012345678");
-        assertThat(parsed.getAccReturnCode()).isEqualTo("00");
+        assertThat(parsed.getAccReturnCode()).isEqualTo("0");
         assertThat(parsed.getAccReturnMemo()).isEqualTo("查询成功");
         assertThat(parsed.getExtInfo()).isNotNull();
         assertThat(parsed.getExtInfo().getExtData()).isEqualTo("3006附加数据");
@@ -149,7 +149,7 @@ class SupplyChainBody3005_3006Test {
         minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setQyAccName("最小测试企业");
         minimal.setQyAccCode("123456789012345678");
-        minimal.setAccReturnCode("01");
+        minimal.setAccReturnCode("1");
 
         String xml = marshal(minimal);
 

@@ -56,7 +56,7 @@ class PzCheckQueryReturn3108XsdValidationTest extends AbstractXsdValidationTest 
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                   <AddWord>对账成功</AddWord>
                 </BatchHead3108>
                 <pzCheckQueryReturn3108>
@@ -86,7 +86,7 @@ class PzCheckQueryReturn3108XsdValidationTest extends AbstractXsdValidationTest 
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </BatchHead3108>
                 <pzCheckQueryReturn3108>
                   <SerialNo>SN310800000000000000000000002A</SerialNo>
@@ -103,7 +103,7 @@ class PzCheckQueryReturn3108XsdValidationTest extends AbstractXsdValidationTest 
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </BatchHead3108>
                 <pzCheckQueryReturn3108>
                   <SerialNo>SN310800000000000000000000003A</SerialNo>

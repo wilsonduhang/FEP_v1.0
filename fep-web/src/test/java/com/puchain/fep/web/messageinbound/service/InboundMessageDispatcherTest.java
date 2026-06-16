@@ -167,8 +167,8 @@ class InboundMessageDispatcherTest {
                 <DataTransfer2101>
                   <MainClass>COINFO</MainClass>
                   <SecondClass>I1001</SecondClass>
-                  <Period>01</Period>
-                  <Type>01</Type>
+                  <Period>1</Period>
+                  <Type>1</Type>
                   <FileDate>20260509</FileDate>
                 </DataTransfer2101>
               </MSG>
@@ -200,9 +200,9 @@ class InboundMessageDispatcherTest {
                     <ItemId>1</ItemId>
                     <MainClass>COINFO</MainClass>
                     <SecondClass>I1001</SecondClass>
-                    <Period>01</Period>
+                    <Period>1</Period>
                     <FileDate>20260509</FileDate>
-                    <Status>01</Status>
+                    <Status>1</Status>
                   </DataTransferResult>
                 </DataTransferCheckResponse2102>
               </MSG>
@@ -532,7 +532,7 @@ class InboundMessageDispatcherTest {
             + "<SerialNo>SN20260525A3103</SerialNo>"
             + "<SendNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</SendNodeCode>"
             + "<DesNodeCode>12345678901234</DesNodeCode>"
-            + "<CreationRetCode>0</CreationRetCode>"
+            + "<CreationRetCode>11</CreationRetCode>"
             + "<hxqyName>核心企业</hxqyName><hxqyCode>91110000100000000X</hxqyCode>"
             + "<rzqyName>融资企业</rzqyName><rzqyCode>91110000200000000Y</rzqyCode>"
             + "</ArchiveReturnInfo3103></MSG></CFX>";
@@ -866,8 +866,8 @@ class InboundMessageDispatcherTest {
         final DataTransfer2101 body = (DataTransfer2101) event.body();
         assertThat(body.getMainClass()).isEqualTo("COINFO");
         assertThat(body.getSecondClass()).isEqualTo("I1001");
-        assertThat(body.getPeriod()).isEqualTo("01");
-        assertThat(body.getType()).isEqualTo("01");
+        assertThat(body.getPeriod()).isEqualTo("1");
+        assertThat(body.getType()).isEqualTo("1");
         assertThat(body.getFileDate()).isEqualTo("20260509");
     }
 

@@ -130,7 +130,7 @@ class SupplyChainBody3107_3108Test {
         PzCheckReturn r1 = new PzCheckReturn();
         r1.setHxqyName("湖南某某核心企业A");
         r1.setHxqyCode("91430100MA00000001");
-        r1.setRetCode("00");
+        r1.setRetCode("90000");
         r1.setRetMemo("核对成功");
         r1.setPzCountAll("128");
         r1.setPzAmtAll("10240000.00");
@@ -139,7 +139,7 @@ class SupplyChainBody3107_3108Test {
         PzCheckReturn r2 = new PzCheckReturn();
         r2.setHxqyName("湖南某某核心企业B");
         r2.setHxqyCode("91430100MA00000002");
-        r2.setRetCode("01");
+        r2.setRetCode("90001");
         // RetMemo omitted (optional)
         r2.setPzCountAll("0");
         r2.setPzAmtAll("0.00");
@@ -166,12 +166,12 @@ class SupplyChainBody3107_3108Test {
                 .contains("<CheckDate>20260424</CheckDate>")
                 .contains("<hxqyNum>2</hxqyNum>")
                 .contains("<pzCheckReturn>")
-                .contains("<RetCode>00</RetCode>")
+                .contains("<RetCode>90000</RetCode>")
                 .contains("<RetMemo>核对成功</RetMemo>")
                 .contains("<pzCountAll>128</pzCountAll>")
                 .contains("<pzAmtAll>10240000.00</pzAmtAll>")
                 .contains("<pzFilename>pz-A-20260424.zip</pzFilename>")
-                .contains("<RetCode>01</RetCode>")
+                .contains("<RetCode>90001</RetCode>")
                 .contains("<ExtInfo>")
                 .contains("<ExtData>3108回执扩展</ExtData>");
 
@@ -188,7 +188,7 @@ class SupplyChainBody3107_3108Test {
         PzCheckReturn p1 = rs.get(0);
         assertThat(p1.getHxqyName()).isEqualTo("湖南某某核心企业A");
         assertThat(p1.getHxqyCode()).isEqualTo("91430100MA00000001");
-        assertThat(p1.getRetCode()).isEqualTo("00");
+        assertThat(p1.getRetCode()).isEqualTo("90000");
         assertThat(p1.getRetMemo()).isEqualTo("核对成功");
         assertThat(p1.getPzCountAll()).isEqualTo("128");
         assertThat(p1.getPzAmtAll()).isEqualTo("10240000.00");
@@ -197,7 +197,7 @@ class SupplyChainBody3107_3108Test {
         PzCheckReturn p2 = rs.get(1);
         assertThat(p2.getHxqyName()).isEqualTo("湖南某某核心企业B");
         assertThat(p2.getHxqyCode()).isEqualTo("91430100MA00000002");
-        assertThat(p2.getRetCode()).isEqualTo("01");
+        assertThat(p2.getRetCode()).isEqualTo("90001");
         assertThat(p2.getRetMemo()).isNull();
         assertThat(p2.getPzCountAll()).isEqualTo("0");
         assertThat(p2.getPzAmtAll()).isEqualTo("0.00");

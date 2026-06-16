@@ -39,7 +39,7 @@ class QyAccQueryReturn3006XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                   <AddWord>查询成功</AddWord>
                 </RealHead3006>
                 <qyAccQueryReturn3006>
@@ -62,7 +62,7 @@ class QyAccQueryReturn3006XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead3006>
                 <qyAccQueryReturn3006>
                   <SerialNo>SN300600000000000000000000002A</SerialNo>
@@ -80,7 +80,7 @@ class QyAccQueryReturn3006XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead3006>
                 <qyAccQueryReturn3006>
                   <SerialNo>SN300600000000000000000000003A</SerialNo>

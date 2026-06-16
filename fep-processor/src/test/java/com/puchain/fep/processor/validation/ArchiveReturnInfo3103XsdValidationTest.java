@@ -47,14 +47,14 @@ class ArchiveReturnInfo3103XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                   <AddWord>建档成功</AddWord>
                 </BatchHead3103>
                 <ArchiveReturnInfo3103>
                   <SerialNo>SN310300000000000000000000001A</SerialNo>
                   <SendNodeCode>A1000143000104</SendNodeCode>
                   <DesNodeCode>A1000142000001</DesNodeCode>
-                  <CreationRetCode>1</CreationRetCode>
+                  <CreationRetCode>11</CreationRetCode>
                   <CreationRetInfo>建档完成</CreationRetInfo>
                   <hxqyName>核心企业测试有限公司</hxqyName>
                   <hxqyCode>91110000ABCDEFGH12</hxqyCode>
@@ -74,13 +74,13 @@ class ArchiveReturnInfo3103XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </BatchHead3103>
                 <ArchiveReturnInfo3103>
                   <SerialNo>SN310300000000000000000000002A</SerialNo>
                   <SendNodeCode>A1000143000104</SendNodeCode>
                   <DesNodeCode>A1000142000001</DesNodeCode>
-                  <CreationRetCode>1</CreationRetCode>
+                  <CreationRetCode>11</CreationRetCode>
                   <hxqyName>核心企业测试有限公司</hxqyName>
                   <hxqyCode>91110000ABCDEFGH12</hxqyCode>
                   <rzqyName>融资企业测试有限公司</rzqyName>
@@ -94,13 +94,13 @@ class ArchiveReturnInfo3103XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260514</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </BatchHead3103>
                 <ArchiveReturnInfo3103>
                   <SerialNo>SN310300000000000000000000003A</SerialNo>
                   <SendNodeCode>A1000143000104</SendNodeCode>
                   <DesNodeCode>A1000142000001</DesNodeCode>
-                  <CreationRetCode>1</CreationRetCode>
+                  <CreationRetCode>11</CreationRetCode>
                   <hxqyName>核心企业测试有限公司</hxqyName>
                   <hxqyCode>91110000ABCDEFGH12</hxqyCode>
                   <rzqyName>融资企业测试有限公司</rzqyName>

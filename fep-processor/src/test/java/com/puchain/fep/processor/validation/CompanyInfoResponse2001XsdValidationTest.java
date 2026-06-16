@@ -45,8 +45,8 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                 <CompanyInfoResponse2001>
                   <CompanyName>测试企业有限公司</CompanyName>
                   <CompanyCode>91110000ABCDEFGH12</CompanyCode>
-                  <MainClass>QYXX</MainClass>
-                  <SecondClass>QYXX01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <BeginDate>20260101</BeginDate>
                   <EndDate>20260511</EndDate>
                   <QueryResult>90000</QueryResult>
@@ -65,8 +65,8 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                 <CompanyInfoResponse2001>
                   <CompanyName>测试企业有限公司</CompanyName>
                   <CompanyCode>91110000ABCDEFGH12</CompanyCode>
-                  <MainClass>QYXX</MainClass>
-                  <SecondClass>QYXX01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                   <QueryResult>90000</QueryResult>
                 </CompanyInfoResponse2001>""");
 
@@ -81,7 +81,7 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260511</EntrustDate>
                   <TransitionNo>20260511</TransitionNo>
-                  <Result>99999</Result>
+                  <Result>29999</Result>
                   <AddWord>查询授权过期，请重新申请授权</AddWord>
                 </RealHead2001>""");
 
@@ -97,8 +97,8 @@ class CompanyInfoResponse2001XsdValidationTest extends AbstractXsdValidationTest
                 <CompanyInfoResponse2001>
                   <CompanyName>测试企业有限公司</CompanyName>
                   <CompanyCode>91110000ABCDEFGH12</CompanyCode>
-                  <MainClass>QYXX</MainClass>
-                  <SecondClass>QYXX01</SecondClass>
+                  <MainClass>COINFO</MainClass>
+                  <SecondClass>I1001</SecondClass>
                 </CompanyInfoResponse2001>""");
 
     @Test

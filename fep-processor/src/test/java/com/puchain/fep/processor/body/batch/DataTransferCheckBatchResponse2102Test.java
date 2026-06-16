@@ -22,10 +22,10 @@ class DataTransferCheckBatchResponse2102Test {
         item.setItemId("1");
         item.setMainClass("COINFO");
         item.setSecondClass("I1001");
-        item.setPeriod("01");
+        item.setPeriod("1");
         item.setFileName("data_20260505.csv");
         item.setFileDate("20260505");
-        item.setStatus("01");  // 2102 Status required per XSD
+        item.setStatus("1");  // 2102 Status required per XSD
 
         DataTransferCheckBatchResponse2102 wrapper = new DataTransferCheckBatchResponse2102();
         wrapper.setItems(List.of(item));
@@ -34,10 +34,10 @@ class DataTransferCheckBatchResponse2102Test {
         assertThat(xml).contains("<ItemId>1</ItemId>")
                 .contains("<MainClass>COINFO</MainClass>")
                 .contains("<SecondClass>I1001</SecondClass>")
-                .contains("<Period>01</Period>")
+                .contains("<Period>1</Period>")
                 .contains("<FileName>data_20260505.csv</FileName>")
                 .contains("<FileDate>20260505</FileDate>")
-                .contains("<Status>01</Status>");
+                .contains("<Status>1</Status>");
 
         DataTransferCheckBatchResponse2102 parsed = JaxbRoundtripSupport.unmarshal(
                 xml, DataTransferCheckBatchResponse2102.class);
@@ -45,10 +45,10 @@ class DataTransferCheckBatchResponse2102Test {
         assertThat(p.getItemId()).isEqualTo("1");
         assertThat(p.getMainClass()).isEqualTo("COINFO");
         assertThat(p.getSecondClass()).isEqualTo("I1001");
-        assertThat(p.getPeriod()).isEqualTo("01");
+        assertThat(p.getPeriod()).isEqualTo("1");
         assertThat(p.getFileName()).isEqualTo("data_20260505.csv");
         assertThat(p.getFileDate()).isEqualTo("20260505");
-        assertThat(p.getStatus()).isEqualTo("01");
+        assertThat(p.getStatus()).isEqualTo("1");
     }
 
     @Test
@@ -60,9 +60,9 @@ class DataTransferCheckBatchResponse2102Test {
                     it.setItemId(String.valueOf(i));
                     it.setMainClass("COINFO");
                     it.setSecondClass("I1001");
-                    it.setPeriod("01");
+                    it.setPeriod("1");
                     it.setFileDate("20260505");
-                    it.setStatus("01");
+                    it.setStatus("1");
                     return it;
                 }).toList());
 
@@ -81,9 +81,9 @@ class DataTransferCheckBatchResponse2102Test {
         minimal.setItemId("99");
         minimal.setMainClass("COINFO");
         minimal.setSecondClass("I1001");
-        minimal.setPeriod("01");
+        minimal.setPeriod("1");
         minimal.setFileDate("20260505");
-        minimal.setStatus("99");
+        minimal.setStatus("1");
         // 仅 FileName null（2102 中 FileName 是唯一 optional field）
 
         DataTransferCheckBatchResponse2102 wrapper = new DataTransferCheckBatchResponse2102();
@@ -125,7 +125,7 @@ class DataTransferCheckBatchResponse2102Test {
         item.setItemId("1");
         item.setMainClass("COINFO");
         item.setSecondClass("I1001");
-        item.setPeriod("01");
+        item.setPeriod("1");
         item.setFileDate("20260505");
         // status is required=true but intentionally null
 

@@ -67,7 +67,7 @@ class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                   <AddWord>查询成功</AddWord>
                 </BatchHead3113>
                 <hxqyCreditAmt3113>
@@ -100,7 +100,7 @@ class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>20000</Result>
+                  <Result>90000</Result>
                   <AddWord>无授信信息</AddWord>
                 </BatchHead3113>""");
 
@@ -110,7 +110,7 @@ class HxqyCreditAmt3113XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260519</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </BatchHead3113>
                 <hxqyCreditAmt3113>
                   <SendNodeCode>A1000143000104</SendNodeCode>

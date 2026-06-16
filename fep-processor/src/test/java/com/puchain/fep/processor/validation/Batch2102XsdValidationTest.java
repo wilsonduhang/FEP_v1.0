@@ -41,9 +41,9 @@ class Batch2102XsdValidationTest extends AbstractXsdValidationTest {
                     <ItemId>1</ItemId>
                     <MainClass>COINFO</MainClass>
                     <SecondClass>I1001</SecondClass>
-                    <Period>01</Period>
+                    <Period>1</Period>
                     <FileDate>20260505</FileDate>
-                    <Status>01</Status>
+                    <Status>1</Status>
                   </DataTransferResult>
                 </DataTransferCheckResponse2102>""");
         ValidationResult result = validator.validate(MessageType.MSG_2102,
@@ -69,7 +69,7 @@ class Batch2102XsdValidationTest extends AbstractXsdValidationTest {
                     <ItemId>1</ItemId>
                     <MainClass>COINFO</MainClass>
                     <SecondClass>I1001</SecondClass>
-                    <Period>01</Period>
+                    <Period>1</Period>
                     <FileDate>20260505</FileDate>
                   </DataTransferResult>
                 </DataTransferCheckResponse2102>""");

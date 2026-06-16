@@ -53,7 +53,7 @@ class DzpzInfo3000XsdValidationTest {
                   <SerialNo>SN2026050800000000000000000001</SerialNo>
                   <SendNodeCode>12345678901234</SendNodeCode>
                   <DesNodeCode>A1000143000104</DesNodeCode>
-                  <ApplyMode>01</ApplyMode>
+                  <ApplyMode>1</ApplyMode>
                 </dzpzInfo3000>""");
 
         ValidationResult result = validator.validate(MessageType.MSG_3000,

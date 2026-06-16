@@ -51,7 +51,7 @@ class SupplyChainBody3000Test {
         original.setSerialNo("SN3000-001");
         original.setSendNodeCode("B1001010203");
         original.setDesNodeCode("A1000143000104");
-        original.setApplyMode("01");
+        original.setApplyMode("1");
 
         PzInfo pz = new PzInfo();
         pz.setPlatShortName("某平台简称");
@@ -86,7 +86,7 @@ class SupplyChainBody3000Test {
                 .contains("<SerialNo>SN3000-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
                 .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
-                .contains("<ApplyMode>01</ApplyMode>")
+                .contains("<ApplyMode>1</ApplyMode>")
                 .contains("<pzInfo>")
                 .contains("<PlatShortName>某平台简称</PlatShortName>")
                 .contains("<pzNo>PZ20260508000001</pzNo>")
@@ -98,7 +98,7 @@ class SupplyChainBody3000Test {
         assertThat(parsed.getSerialNo()).isEqualTo("SN3000-001");
         assertThat(parsed.getSendNodeCode()).isEqualTo("B1001010203");
         assertThat(parsed.getDesNodeCode()).isEqualTo("A1000143000104");
-        assertThat(parsed.getApplyMode()).isEqualTo("01");
+        assertThat(parsed.getApplyMode()).isEqualTo("1");
         assertThat(parsed.getPzInfo()).isNotNull();
         assertThat(parsed.getPzInfo().getPzNo()).isEqualTo("PZ20260508000001");
         assertThat(parsed.getPzInfo().getPzAmt()).isEqualTo("100000.00");
@@ -113,19 +113,19 @@ class SupplyChainBody3000Test {
         original.setSerialNo("SN3000-002");
         original.setSendNodeCode("B1001010203");
         original.setDesNodeCode("A1000143000104");
-        original.setApplyMode("02");
+        original.setApplyMode("2");
         // pzInfo + ExtInfo deliberately null
 
         String xml = marshal(original);
         assertThat(xml)
                 .contains("<SerialNo>SN3000-002</SerialNo>")
-                .contains("<ApplyMode>02</ApplyMode>")
+                .contains("<ApplyMode>2</ApplyMode>")
                 .doesNotContain("<pzInfo>")
                 .doesNotContain("<ExtInfo>");
 
         DzpzInfo3000 parsed = unmarshal(xml, DzpzInfo3000.class);
         assertThat(parsed.getSerialNo()).isEqualTo("SN3000-002");
-        assertThat(parsed.getApplyMode()).isEqualTo("02");
+        assertThat(parsed.getApplyMode()).isEqualTo("2");
         assertThat(parsed.getPzInfo()).isNull();
         assertThat(parsed.getExtInfo()).isNull();
     }
@@ -136,7 +136,7 @@ class SupplyChainBody3000Test {
         original.setSerialNo("SN");
         original.setSendNodeCode("SNC");
         original.setDesNodeCode("DNC");
-        original.setApplyMode("01");
+        original.setApplyMode("1");
 
         String xml = marshal(original);
         int idxSerial = xml.indexOf("<SerialNo>");

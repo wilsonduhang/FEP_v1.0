@@ -34,9 +34,9 @@
                 <qyCreditCode>ZZ20260424001</qyCreditCode>
                 <zjRgstDate>20200101</zjRgstDate>
                 <zjExpDate>20300101</zjExpDate>
-                <qyType>01</qyType>
+                <qyType>1</qyType>
                 <qyClass>F66</qyClass>
-                <qySize>0001</qySize>
+                <qySize>SC00</qySize>
                 <RegAddr>长沙市岳麓区某某路1号</RegAddr>
                 <PostAddr>长沙市岳麓区某某路1号A栋</PostAddr>
                 <MailAddr>contact@example.com</MailAddr>

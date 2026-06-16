@@ -22,7 +22,7 @@
             <DesNodeCode>A1000143000104</DesNodeCode>
             <hxqyName>核心企业湖南示例</hxqyName>
             <hxqyCode>91430100MA4L5XXXX1</hxqyCode>
-            <QueryType>01</QueryType>
+            <QueryType>1</QueryType>
             <QueryKey>BIZ20260411000001</QueryKey>
         </ProgressQuery3001>
     </MSG>

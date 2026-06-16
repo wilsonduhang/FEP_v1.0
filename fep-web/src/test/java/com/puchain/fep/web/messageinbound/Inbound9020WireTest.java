@@ -196,7 +196,7 @@ class Inbound9020WireTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260601</EntrustDate>
                   <TransitionNo>00910020</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead9020>
                 """ + bodyXml);
     }

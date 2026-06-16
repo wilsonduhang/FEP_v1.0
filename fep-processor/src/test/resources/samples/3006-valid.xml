@@ -24,7 +24,7 @@
             <DesNodeCode>10000000000001</DesNodeCode>
             <qyAccName>湖南示例实业有限公司基本账户</qyAccName>
             <qyAccCode>6228480000000000001</qyAccCode>
-            <AccReturnCode>01</AccReturnCode>
+            <AccReturnCode>1</AccReturnCode>
         </qyAccQueryReturn3006>
     </MSG>
 </CFX>

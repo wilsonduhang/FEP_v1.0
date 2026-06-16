@@ -41,7 +41,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                   <AddWord>查询成功</AddWord>
                 </RealHead3004>
                 <pzInfoReturn3004>
@@ -70,7 +70,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead3004>
                 <pzInfoReturn3004>
                   <SerialNo>SN300400000000000000000000002A</SerialNo>
@@ -95,7 +95,7 @@ class PzInfoReturn3004XsdValidationTest extends AbstractXsdValidationTest {
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead3004>
                 <pzInfoReturn3004>
                   <SerialNo>SN300400000000000000000000003A</SerialNo>

@@ -39,7 +39,7 @@ class ProgressQueryReturn3002XsdValidationTest extends AbstractXsdValidationTest
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000001</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                   <AddWord>查询成功</AddWord>
                 </RealHead3002>
                 <ProgressQueryReturn3002>
@@ -64,7 +64,7 @@ class ProgressQueryReturn3002XsdValidationTest extends AbstractXsdValidationTest
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000002</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead3002>
                 <ProgressQueryReturn3002>
                   <SerialNo>SN300200000000000000000000002A</SerialNo>
@@ -84,7 +84,7 @@ class ProgressQueryReturn3002XsdValidationTest extends AbstractXsdValidationTest
                   <SendOrgCode>30500000000000</SendOrgCode>
                   <EntrustDate>20260513</EntrustDate>
                   <TransitionNo>00000003</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead3002>
                 <ProgressQueryReturn3002>
                   <SerialNo>SN300200000000000000000000003A</SerialNo>

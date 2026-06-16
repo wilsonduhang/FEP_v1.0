@@ -38,7 +38,7 @@ class SupplyChainBody3001_3002Test {
         original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setHxqyName("湖南核心企业有限公司");
         original.setHxqyCode("123456789012345678");
-        original.setQueryType("01");
+        original.setQueryType("1");
         original.setQueryKey("KEY20260416001");
 
         ExtInfo ext = new ExtInfo();
@@ -55,7 +55,7 @@ class SupplyChainBody3001_3002Test {
                 .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<hxqyName>湖南核心企业有限公司</hxqyName>")
                 .contains("<hxqyCode>123456789012345678</hxqyCode>")
-                .contains("<QueryType>01</QueryType>")
+                .contains("<QueryType>1</QueryType>")
                 .contains("<QueryKey>KEY20260416001</QueryKey>")
                 .contains("<ExtInfo>")
                 .contains("<ExtData>附加数据</ExtData>")
@@ -67,7 +67,7 @@ class SupplyChainBody3001_3002Test {
         assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getHxqyName()).isEqualTo("湖南核心企业有限公司");
         assertThat(parsed.getHxqyCode()).isEqualTo("123456789012345678");
-        assertThat(parsed.getQueryType()).isEqualTo("01");
+        assertThat(parsed.getQueryType()).isEqualTo("1");
         assertThat(parsed.getQueryKey()).isEqualTo("KEY20260416001");
         assertThat(parsed.getExtInfo()).isNotNull();
         assertThat(parsed.getExtInfo().getExtData()).isEqualTo("附加数据");
@@ -82,7 +82,7 @@ class SupplyChainBody3001_3002Test {
         minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setHxqyName("最小测试企业");
         minimal.setHxqyCode("123456789012345678");
-        minimal.setQueryType("02");
+        minimal.setQueryType("2");
         minimal.setQueryKey("KEY20260416002");
 
         String xml = marshalWithExtInfo(minimal);
@@ -105,7 +105,7 @@ class SupplyChainBody3001_3002Test {
         original.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         original.setHxqyName("湖南核心企业有限公司");
         original.setHxqyCode("123456789012345678");
-        original.setQueryType("01");
+        original.setQueryType("1");
         original.setQueryKey("KEY20260416001");
         original.setReturnCode("0000");
         original.setReturnMemo("查询成功");
@@ -123,7 +123,7 @@ class SupplyChainBody3001_3002Test {
                 .contains("<DesNodeCode>" + FepConstants.HNDEMP_NODE_CODE + "</DesNodeCode>")
                 .contains("<hxqyName>湖南核心企业有限公司</hxqyName>")
                 .contains("<hxqyCode>123456789012345678</hxqyCode>")
-                .contains("<QueryType>01</QueryType>")
+                .contains("<QueryType>1</QueryType>")
                 .contains("<QueryKey>KEY20260416001</QueryKey>")
                 .contains("<ReturnCode>0000</ReturnCode>")
                 .contains("<ReturnMemo>查询成功</ReturnMemo>")
@@ -136,7 +136,7 @@ class SupplyChainBody3001_3002Test {
         assertThat(parsed.getDesNodeCode()).isEqualTo(FepConstants.HNDEMP_NODE_CODE);
         assertThat(parsed.getHxqyName()).isEqualTo("湖南核心企业有限公司");
         assertThat(parsed.getHxqyCode()).isEqualTo("123456789012345678");
-        assertThat(parsed.getQueryType()).isEqualTo("01");
+        assertThat(parsed.getQueryType()).isEqualTo("1");
         assertThat(parsed.getQueryKey()).isEqualTo("KEY20260416001");
         assertThat(parsed.getReturnCode()).isEqualTo("0000");
         assertThat(parsed.getReturnMemo()).isEqualTo("查询成功");
@@ -152,7 +152,7 @@ class SupplyChainBody3001_3002Test {
         minimal.setDesNodeCode(FepConstants.HNDEMP_NODE_CODE);
         minimal.setHxqyName("最小测试企业");
         minimal.setHxqyCode("123456789012345678");
-        minimal.setQueryType("02");
+        minimal.setQueryType("2");
         minimal.setQueryKey("KEY20260416003");
         minimal.setReturnCode("9999");
 

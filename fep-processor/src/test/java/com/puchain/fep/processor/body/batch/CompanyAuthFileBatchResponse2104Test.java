@@ -100,7 +100,7 @@ class CompanyAuthFileBatchResponse2104Test {
         minimal.setAuthEndDate("20261231");
         minimal.setAuthNo("AUTHMIN");
         minimal.setAuthOrgCode("12345678901234");
-        minimal.setRecordResult("99999");
+        minimal.setRecordResult("90000");
         // IsUpdate + RecordAddWord null (both optional per XSD)
 
         CompanyAuthFileBatchResponse2104 wrapper = new CompanyAuthFileBatchResponse2104();

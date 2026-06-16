@@ -106,13 +106,13 @@ class Inbound9007And9009WireTest {
     }
 
     @Test
-    @DisplayName("9007 Status='01' (2 chars) → 真 XsdValidator PASS")
+    @DisplayName("9007 Status='99' (2 chars) → 真 XsdValidator PASS")
     void loginResponse9007_validStatus_passesXsdValidation() throws Exception {
         LoginResponse9007 body = new LoginResponse9007();
-        body.setStatus("01"); // 2 chars satisfies NodeStatus minLength=1 maxLength=2
+        body.setStatus("99"); // 2 chars satisfies NodeStatus minLength=1 maxLength=2
 
         String bodyXml = marshal(body, LoginResponse9007.class);
-        assertThat(bodyXml).contains("<Status>01</Status>");
+        assertThat(bodyXml).contains("<Status>99</Status>");
 
         String envelope = wrap9007(bodyXml);
         ValidationResult result = validator.validate(MessageType.MSG_9007,
@@ -143,13 +143,13 @@ class Inbound9007And9009WireTest {
     }
 
     @Test
-    @DisplayName("9009 Status='01' (2 chars) → 真 XsdValidator PASS")
+    @DisplayName("9009 Status='99' (2 chars) → 真 XsdValidator PASS")
     void logoutResponse9009_validStatus_passesXsdValidation() throws Exception {
         LogoutResponse9009 body = new LogoutResponse9009();
-        body.setStatus("01");
+        body.setStatus("99");
 
         String bodyXml = marshal(body, LogoutResponse9009.class);
-        assertThat(bodyXml).contains("<Status>01</Status>");
+        assertThat(bodyXml).contains("<Status>99</Status>");
 
         String envelope = wrap9009(bodyXml);
         ValidationResult result = validator.validate(MessageType.MSG_9009,
@@ -185,7 +185,7 @@ class Inbound9007And9009WireTest {
         final String transitionNo = "00910007";
         mockProcessInboundCompleted(MessageType.MSG_9007, transitionNo);
 
-        String envelope = wrap9007(marshalStatus(LoginResponse9007.class, "01"));
+        String envelope = wrap9007(marshalStatus(LoginResponse9007.class, "99"));
         dispatcher.dispatch("9007", transitionNo, envelope.getBytes(StandardCharsets.UTF_8));
 
         List<InboundMessageProcessedEvent> captured = eventCollector.snapshot();
@@ -194,7 +194,7 @@ class Inbound9007And9009WireTest {
         assertThat(event.type()).isEqualTo(MessageType.MSG_9007);
         assertThat(event.transitionNo()).isEqualTo(transitionNo);
         assertThat(event.body()).isInstanceOf(LoginResponse9007.class);
-        assertThat(((LoginResponse9007) event.body()).getStatus()).isEqualTo("01");
+        assertThat(((LoginResponse9007) event.body()).getStatus()).isEqualTo("99");
     }
 
     @Test
@@ -203,7 +203,7 @@ class Inbound9007And9009WireTest {
         final String transitionNo = "00910009";
         mockProcessInboundCompleted(MessageType.MSG_9009, transitionNo);
 
-        String envelope = wrap9009(marshalStatus(LogoutResponse9009.class, "01"));
+        String envelope = wrap9009(marshalStatus(LogoutResponse9009.class, "99"));
         dispatcher.dispatch("9009", transitionNo, envelope.getBytes(StandardCharsets.UTF_8));
 
         List<InboundMessageProcessedEvent> captured = eventCollector.snapshot();
@@ -212,7 +212,7 @@ class Inbound9007And9009WireTest {
         assertThat(event.type()).isEqualTo(MessageType.MSG_9009);
         assertThat(event.transitionNo()).isEqualTo(transitionNo);
         assertThat(event.body()).isInstanceOf(LogoutResponse9009.class);
-        assertThat(((LogoutResponse9009) event.body()).getStatus()).isEqualTo("01");
+        assertThat(((LogoutResponse9009) event.body()).getStatus()).isEqualTo("99");
     }
 
     private void mockProcessInboundCompleted(final MessageType type, final String transitionNo) {
@@ -231,7 +231,7 @@ class Inbound9007And9009WireTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260601</EntrustDate>
                   <TransitionNo>00910007</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead9007>
                 """ + bodyXml);
     }
@@ -243,7 +243,7 @@ class Inbound9007And9009WireTest {
                   <SendOrgCode>A1000143000104</SendOrgCode>
                   <EntrustDate>20260601</EntrustDate>
                   <TransitionNo>00910009</TransitionNo>
-                  <Result>10000</Result>
+                  <Result>90000</Result>
                 </RealHead9009>
                 """ + bodyXml);
     }
