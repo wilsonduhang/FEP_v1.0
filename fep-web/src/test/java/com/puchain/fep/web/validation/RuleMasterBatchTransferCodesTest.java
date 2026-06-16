@@ -47,6 +47,9 @@ class RuleMasterBatchTransferCodesTest {
         // 表 5.1.6-1：90000/10001-10008/19999；20000 不在表内
         RuleMasterTestSupport.assertRule("2103", "CompanyInfoBatchResponse2103", "QueryResult", "10008", "20000");
         RuleMasterTestSupport.assertRule("2103", "CompanyInfoBatchResponse2103", "QueryResult", "90000", "00000");
+        // 2001 实时查询回执同字段同源（与 2103 共表 5.1.6-1；母本补全见 2026-06-16 Plan）
+        RuleMasterTestSupport.assertRule("2001", "CompanyInfoResponse2001", "QueryResult", "10008", "20000");
+        RuleMasterTestSupport.assertRule("2001", "CompanyInfoResponse2001", "QueryResult", "90000", "00000");
     }
 
     @ParameterizedTest
