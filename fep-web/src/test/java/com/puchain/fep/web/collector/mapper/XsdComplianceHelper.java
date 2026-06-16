@@ -127,6 +127,7 @@ public class XsdComplianceHelper {
      *   <li>3105: BatchHead3105 (RequestHead)</li>
      *   <li>3107: BatchHead3107 (RequestHead)</li>
      *   <li>3112: BatchHead3112 (RequestHead)</li>
+     *   <li>3000: RealHead3000 (RequestHead) — B4，3000.xsd:31 实测 type=RequestHead</li>
      * </ul>
      *
      * @param msgNo        4-digit message number
@@ -143,6 +144,7 @@ public class XsdComplianceHelper {
             case "3105" -> new EnvelopeConfig("BatchHead3105", REQUEST_HEAD_FIELDS);
             case "3107" -> new EnvelopeConfig("BatchHead3107", REQUEST_HEAD_FIELDS);
             case "3112" -> new EnvelopeConfig("BatchHead3112", REQUEST_HEAD_FIELDS);
+            case "3000" -> new EnvelopeConfig("RealHead3000", REQUEST_HEAD_FIELDS);
             default -> throw new IllegalArgumentException(
                     "Unsupported msgNo for XsdComplianceHelper: " + msgNo);
         };
