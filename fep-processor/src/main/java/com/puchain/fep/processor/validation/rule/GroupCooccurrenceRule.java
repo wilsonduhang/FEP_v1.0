@@ -1,5 +1,6 @@
 package com.puchain.fep.processor.validation.rule;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -57,12 +58,14 @@ public final class GroupCooccurrenceRule implements ValidationRule {
     public Optional<String> evaluate(final RuleContext ctx) {
         final Predicate<String> used = scope == Scope.HEAD
                 ? ctx::hasElementInHead : ctx::hasElement;
-        final List<String> present = groupFields.stream().filter(used).toList();
-        if (present.isEmpty() || present.size() == groupFields.size()) {
+        final List<String> present = new ArrayList<>(groupFields.size());
+        final List<String> missing = new ArrayList<>();
+        for (final String field : groupFields) {
+            (used.test(field) ? present : missing).add(field);
+        }
+        if (present.isEmpty() || missing.isEmpty()) {
             return Optional.empty();
         }
-        final List<String> missing = groupFields.stream()
-                .filter(f -> !used.test(f)).toList();
         return Optional.of("分组字段 " + groupFields + " 须同时使用或同时不使用；已填 "
                 + present + " 缺失 " + missing);
     }
