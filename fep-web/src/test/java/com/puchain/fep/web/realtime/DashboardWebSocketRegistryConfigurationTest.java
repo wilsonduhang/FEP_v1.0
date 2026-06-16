@@ -3,7 +3,10 @@ package com.puchain.fep.web.realtime;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -51,5 +54,26 @@ class DashboardWebSocketRegistryConfigurationTest {
             // memory bean 未装配（互斥）。
             assertThat(ctx).doesNotHaveBean(InMemorySessionRegistry.class);
         });
+    }
+
+    /**
+     * 默认（memory）模式下，分离的 {@link DashboardWebSocketRedisListenerConfiguration}
+     * 整个被 {@code @ConditionalOnProperty(redis)} 排除——无 {@code RedisMessageListenerContainer}
+     * / {@code MessageListener} bean（验证条件门的排除方向，非仅装配存在）。
+     */
+    @Test
+    void defaultMode_excludesRedisListenerConfig() {
+        new ApplicationContextRunner()
+                .withUserConfiguration(DashboardWebSocketRegistryConfiguration.class,
+                        DashboardWebSocketRedisListenerConfiguration.class)
+                .withBean(ObjectMapper.class, ObjectMapper::new)
+                .withBean(StringRedisTemplate.class, () -> mock(StringRedisTemplate.class))
+                .withBean(RedisConnectionFactory.class, () -> mock(RedisConnectionFactory.class))
+                .run(ctx -> {
+                    assertThat(ctx).hasNotFailed();
+                    assertThat(ctx).doesNotHaveBean(RedisMessageListenerContainer.class);
+                    assertThat(ctx).doesNotHaveBean(MessageListener.class);
+                    assertThat(ctx).doesNotHaveBean(RedisPubSubSessionRegistry.class);
+                });
     }
 }

@@ -47,6 +47,11 @@ public class DashboardWebSocketRegistryConfiguration {
     /**
      * 多实例 Redis pub/sub 注册表（{@code fep.dashboard.ws.registry=redis} 时）。
      *
+     * <p><b>返回具体类型</b>（非接口 {@link WebSocketSessionRegistry}）是<b>有意</b>：
+     * {@link DashboardWebSocketRedisListenerConfiguration#dashboardWsMessageListener} 须按
+     * 具体类型注入本 bean 以调用接口未声明的 {@link RedisPubSubSessionRegistry#onMessage}。
+     * 改为接口返回会破坏该跨配置按类型注入。</p>
+     *
      * @param redisTemplate 跨实例发布用 Redis 模板
      * @param objectMapper  JSON 编解码
      * @return Redis pub/sub 版注册表
