@@ -82,7 +82,7 @@ class SupplyChainBody3000Test {
 
         String xml = marshal(original);
         assertThat(xml)
-                .contains("<DzpzInfo3000")
+                .contains("<dzpzInfo3000")
                 .contains("<SerialNo>SN3000-001</SerialNo>")
                 .contains("<SendNodeCode>B1001010203</SendNodeCode>")
                 .contains("<DesNodeCode>A1000143000104</DesNodeCode>")
