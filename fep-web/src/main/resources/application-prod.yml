@@ -56,12 +56,16 @@ fep:
     access-token-ttl-seconds: 7200
     refresh-token-ttl-seconds: 604800
     issuer: fep
-  # 国密真实实现（S1 SM4 + S2a SM3/SM2 登录）。⚠️ R7/[R2-1]：provider: impl 下
-  # 公钥分发 + 登录解密已由 S2a 实装（须配置下方 sm2 段）；getSignPrivateKey
-  # （OutboundSignAdapter 出站报文签名）仍抛 UnsupportedOperationException →
-  # prod cutover（取消下行注释）GATED ON S2b（SM2 报文签验，待 §0.3 决策门定调）。
+  # 国密真实实现（S1 SM4 + S2a SM3/SM2 登录 + S2b 报文签验）。⚠️ R7/[R2-1]：provider: impl 下
+  # 公钥分发/登录解密（S2a）+ 报文签名私钥 getSignPrivateKey（S2b，经 MessageSignPort）均已实装。
+  # provider cutover（取消下行注释）启用国密真实实现；报文签验额外受 prod-gate R3 约束 ——
+  # 启用 msg-sign / peer-verify-keys / verify-inbound 前须甲方 Q1 答复或 muzhou 书面接受软密钥风险
+  #（ADR 2026-06-12 形态 C-演进式：MessageSignPort + 进程内 BC 先行 + 1818 适配缝）。
   security:
     # provider: impl
+    # GM S2b 入站验签开关（fep-web 域 @Value，默认 false 放行）。prod cutover 时开，prod-gate R3
+    #（须先配置下方 sm2.peer-verify-keys；mock provider 下开启也恒过、不提供完整性保证）。
+    # verify-inbound: true
     sm4:
       active-key-id: ${FEP_SM4_ACTIVE_KEY_ID:sm4-cred-v1}
       sm4-keys:
@@ -83,6 +87,19 @@ fep:
         sm2-audit-v1:                           # map key 须字面值，轮换时新增字面 key（历史行验签按 sign_key_id 路由）
           private-key-hex: ${FEP_SM2_AUDIT_PRIVATE_KEY_HEX}   # 32 字节标量 d（hex 64 字符）
           public-key-hex: ${FEP_SM2_AUDIT_PUBLIC_KEY_HEX}     # 04||x||y 65 字节（hex 130 字符）
+      # GM S2b：报文签名密钥（本节点出站加签）+ 对端验签公钥（入站按 SrcNode 路由）。
+      # ⚠️ prod-gate R3：报文签验默认关闭——以下两段 + 上方 verify-inbound 须在甲方 Q1 答复 /
+      #   muzhou 书面接受软密钥风险后方可启用；保持注释时 msg-sign 段缺失不阻断 provider=impl 启动
+      #   （KeyServiceImpl 抉择④：未配置段跳过校验）。
+      # msg-sign-active-key-id: ${FEP_SM2_MSGSIGN_ACTIVE_KEY_ID:sm2-msgsign-v1}
+      # msg-sign-keys:
+      #   sm2-msgsign-v1:                         # map key 须字面值，轮换时新增字面 key
+      #     private-key-hex: ${FEP_SM2_MSGSIGN_PRIVATE_KEY_HEX}  # 32 字节标量 d（hex 64 字符）
+      #     public-key-hex: ${FEP_SM2_MSGSIGN_PUBLIC_KEY_HEX}    # 04||x||y 65 字节（hex 130 字符）
+      # peer-verify-keys:                         # SrcNode → 对端验签公钥列表（list 抗轮换 try-each）
+      #   A1000143000104:                         # HNDEMP 中心节点（map key 字面值）
+      #     - ${FEP_SM2_PEER_HNDEMP_PUBLIC_KEY_HEX}              # 当前公钥
+      #     # - ${FEP_SM2_PEER_HNDEMP_PUBLIC_KEY_HEX_PREV}      # 换证期保留旧公钥（try-each）
 
 # 显式启用 Prometheus metrics 导出（生产）。基础 application.yml 仅配置 endpoint exposure，
 # 此处显式置 enabled=true 确保 request-state / outbound / callback gauge 与 counter 被
