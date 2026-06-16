@@ -3,7 +3,9 @@ package com.puchain.fep.converter.pipeline;
 /**
  * 报文编解码流水线选项。
  *
- * <p>控制 sign / zip / encrypt 三个可选阶段的开关及所需密钥。</p>
+ * <p>控制 sign / zip / encrypt 三个可选阶段的开关。GM S2b（形态 C-ev）起，签名私钥/验签公钥
+ * 不再经本选项穿参——加签私钥由 {@code MessageSignPort} 经 KeyService 单源取，验签公钥按
+ * {@link #getSrcNode()} 路由（PRD §3.3.3 步骤 1）。本选项仅保留解码验签所需的 srcNode 路由键。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -13,8 +15,7 @@ public class MessagePipelineOptions {
     private boolean sign = true;
     private boolean zip;
     private boolean encrypt;
-    private byte[] signPrivateKey;
-    private byte[] signPublicKey;
+    private String srcNode;
     private byte[] encryptKey;
 
     /** 默认无参构造器。 */
@@ -25,8 +26,8 @@ public class MessagePipelineOptions {
     /**
      * 复制构造器，用于无副作用地派生变体。
      *
-     * <p>byte[] 密钥字段为浅拷贝（共享引用）——它们由调用方的密钥生命周期
-     * 与 security-api 层统一管理，此处不做防御性复制。</p>
+     * <p>{@code encryptKey} byte[] 为浅拷贝（共享引用）——由调用方密钥生命周期与
+     * security-api 层统一管理，此处不做防御性复制；srcNode 为不可变 String。</p>
      *
      * @param other 要复制的源对象
      */
@@ -34,8 +35,7 @@ public class MessagePipelineOptions {
         this.sign = other.sign;
         this.zip = other.zip;
         this.encrypt = other.encrypt;
-        this.signPrivateKey = other.signPrivateKey;
-        this.signPublicKey = other.signPublicKey;
+        this.srcNode = other.srcNode;
         this.encryptKey = other.encryptKey;
     }
 
@@ -82,31 +82,17 @@ public class MessagePipelineOptions {
     }
 
     /**
-     * @return SM2 签名私钥
+     * @return 入站验签发起方节点代码（SrcNode，PRD §3.3.3 步骤 1 公钥路由键）
      */
-    public byte[] getSignPrivateKey() {
-        return signPrivateKey;
+    public String getSrcNode() {
+        return srcNode;
     }
 
     /**
-     * @param v SM2 签名私钥
+     * @param v 入站验签发起方节点代码（SrcNode）
      */
-    public void setSignPrivateKey(final byte[] v) {
-        this.signPrivateKey = v;
-    }
-
-    /**
-     * @return SM2 验签公钥
-     */
-    public byte[] getSignPublicKey() {
-        return signPublicKey;
-    }
-
-    /**
-     * @param v SM2 验签公钥
-     */
-    public void setSignPublicKey(final byte[] v) {
-        this.signPublicKey = v;
+    public void setSrcNode(final String v) {
+        this.srcNode = v;
     }
 
     /**

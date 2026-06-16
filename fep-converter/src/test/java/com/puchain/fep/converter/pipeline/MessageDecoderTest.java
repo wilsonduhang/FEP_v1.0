@@ -19,8 +19,12 @@ import static org.mockito.Mockito.when;
 /**
  * {@link MessageDecoder} 单元测试：验证严格反向顺序
  * decrypt → decompress → verify → extractBody → unmarshal。
+ *
+ * <p>GM S2b 形态 C-ev：验签公钥按 srcNode 路由（不再经 opts 穿公钥字节）。</p>
  */
 class MessageDecoderTest {
+
+    private static final String SRC_NODE = "A1000143000104";
 
     @Test
     void decode_encryptedZippedSigned_shouldReverseOrder() {
@@ -31,11 +35,10 @@ class MessageDecoderTest {
         SignatureCommentCodec codec = mock(SignatureCommentCodec.class);
 
         byte[] encKey = new byte[16];
-        byte[] pubKey = new byte[]{1};
 
         when(encryptor.decrypt("CIPHER", encKey)).thenReturn("ZIPPED");
         when(compressor.decompress("ZIPPED")).thenReturn("XML<!--SIG-->");
-        when(verifier.verify("XML<!--SIG-->", pubKey)).thenReturn(true);
+        when(verifier.verify("XML<!--SIG-->", SRC_NODE)).thenReturn(true);
         when(codec.extractBody("XML<!--SIG-->")).thenReturn("XML");
         CfxMessage cfx = mock(CfxMessage.class);
         when(xml.unmarshal("XML")).thenReturn(cfx);
@@ -46,7 +49,7 @@ class MessageDecoderTest {
         opts.setSign(true);
         opts.setZip(true);
         opts.setEncrypt(true);
-        opts.setSignPublicKey(pubKey);
+        opts.setSrcNode(SRC_NODE);
         opts.setEncryptKey(encKey);
 
         DecodeResult r = decoder.decode("CIPHER", opts);
@@ -57,7 +60,7 @@ class MessageDecoderTest {
         InOrder ord = inOrder(encryptor, compressor, verifier, codec, xml);
         ord.verify(encryptor).decrypt("CIPHER", encKey);
         ord.verify(compressor).decompress("ZIPPED");
-        ord.verify(verifier).verify("XML<!--SIG-->", pubKey);
+        ord.verify(verifier).verify("XML<!--SIG-->", SRC_NODE);
         ord.verify(codec).extractBody("XML<!--SIG-->");
         ord.verify(xml).unmarshal("XML");
     }
@@ -77,7 +80,7 @@ class MessageDecoderTest {
 
         MessagePipelineOptions opts = new MessagePipelineOptions();
         opts.setSign(true);
-        opts.setSignPublicKey(new byte[]{1});
+        opts.setSrcNode(SRC_NODE);
 
         MessageDecoder decoder = new MessageDecoder(xml, verifier, compressor, encryptor, codec);
         DecodeResult r = decoder.decode("XML_BODY<!--BADSIG-->", opts);

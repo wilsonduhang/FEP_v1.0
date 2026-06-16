@@ -60,7 +60,7 @@ public class MessageEncoder {
     public EncodeResult encode(final CfxMessage message, final MessagePipelineOptions opts) {
         String payload = xmlCodec.marshal(message);
         if (opts.isSign()) {
-            payload = signer.sign(payload, opts.getSignPrivateKey());
+            payload = signer.sign(payload);
         }
         if (opts.isZip()) {
             payload = compressor.compress(payload);

@@ -12,7 +12,7 @@ import com.puchain.fep.converter.xml.SignatureCommentCodec;
 import com.puchain.fep.converter.xml.SignatureRangeExtractor;
 import com.puchain.fep.converter.xml.XmlCodec;
 import com.puchain.fep.security.mock.MockCryptoService;
-import com.puchain.fep.security.mock.MockSignService;
+import com.puchain.fep.security.mock.MockMessageSignPort;
 import com.puchain.fep.transport.model.TlqChannel;
 import com.puchain.fep.transport.model.TlqMessage;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * fep-converter 端到端集成测试。
  *
- * <p>使用 {@code security-mock} 的 {@code MockSignService} / {@code MockCryptoService}
+ * <p>使用 {@code security-mock} 的 {@code MockMessageSignPort} / {@code MockCryptoService}
  * 作为密码原语替身，覆盖完整 encode → toTlqMessage → fromTlqMessage → decode
  * 往返路径，验证 PRD v1.3 §3.2 / §3.3 / §3.4 端到端流水线。</p>
  *
@@ -74,8 +74,8 @@ class MessagePipelineIntegrationTest {
      * 提供 Mockito {@code SignService} mock），一旦被扫描进来会让
      * {@link MessageSigner} 调用到返回 null 的 mock，引发 CONV_8004。</p>
      *
-     * <p>同样原因未走 {@code @Profile("dev")} + 包扫描路径——{@code MockSignService}
-     * 和 {@code MockCryptoService} 在此直接实例化，确保产出稳定的 "MOCK_SIGNATURE"
+     * <p>同样原因未走 {@code @Profile("dev")} + 包扫描路径——{@code MockMessageSignPort}
+     * 和 {@code MockCryptoService} 在此直接实例化，确保产出稳定的 "MOCK_MSG_SIGN"
      * 和明文透传 SM4。</p>
      */
     @Configuration
@@ -83,8 +83,8 @@ class MessagePipelineIntegrationTest {
     static class TestConfig {
 
         @Bean
-        MockSignService itSignService() {
-            return new MockSignService();
+        MockMessageSignPort itMessageSignPort() {
+            return new MockMessageSignPort();
         }
 
         @Bean
@@ -113,17 +113,17 @@ class MessagePipelineIntegrationTest {
         }
 
         @Bean
-        MessageSigner itMessageSigner(final MockSignService sign,
+        MessageSigner itMessageSigner(final MockMessageSignPort port,
                                       final SignatureRangeExtractor extractor,
                                       final SignatureCommentCodec codec) {
-            return new MessageSigner(sign, extractor, codec);
+            return new MessageSigner(port, extractor, codec);
         }
 
         @Bean
-        MessageVerifier itMessageVerifier(final MockSignService sign,
+        MessageVerifier itMessageVerifier(final MockMessageSignPort port,
                                           final SignatureRangeExtractor extractor,
                                           final SignatureCommentCodec codec) {
-            return new MessageVerifier(sign, extractor, codec);
+            return new MessageVerifier(port, extractor, codec);
         }
 
         @Bean
@@ -179,8 +179,7 @@ class MessagePipelineIntegrationTest {
         opts.setSign(true);
         opts.setZip(true);
         opts.setEncrypt(true);
-        opts.setSignPrivateKey(new byte[32]);
-        opts.setSignPublicKey(new byte[65]);
+        opts.setSrcNode(TEST_SRC_NODE);
         opts.setEncryptKey(new byte[16]);
         return opts;
     }
@@ -203,7 +202,7 @@ class MessagePipelineIntegrationTest {
         assertThat(tlq.getAttributes().getMsgId()).isEqualTo(TEST_MSG_ID);
 
         final DecodeResult decoded = adapter.fromTlqMessage(tlq, opts);
-        // MockSignService 固定返回 true
+        // MockMessageSignPort 验签固定返回 true
         assertThat(decoded.isVerified()).isTrue();
         assertThat(decoded.getMessage().getHead().getSrcNode()).isEqualTo(TEST_SRC_NODE);
         assertThat(decoded.getMessage().getHead().getMsgId()).isEqualTo(TEST_MSG_ID);
