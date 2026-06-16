@@ -24,8 +24,8 @@ import jakarta.xml.bind.annotation.XmlType;
  * @since 1.0.0
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "DzpzInfo3000")
-@XmlType(name = "DzpzInfo3000", propOrder = {
+@XmlRootElement(name = "dzpzInfo3000")
+@XmlType(name = "dzpzInfo3000", propOrder = {
         "serialNo", "sendNodeCode", "desNodeCode", "applyMode",
         "pzInfo", "extInfo"
 })
