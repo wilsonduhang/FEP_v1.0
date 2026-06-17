@@ -1,15 +1,23 @@
 package com.puchain.fep.web.audit.review.service;
 
+import com.puchain.fep.common.domain.PageResult;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.audit.review.config.ReviewWorkflowProperties;
 import com.puchain.fep.web.audit.review.domain.MessageReviewTaskEntity;
 import com.puchain.fep.web.audit.review.domain.ReviewStatus;
+import com.puchain.fep.web.audit.review.dto.ReviewTaskResponse;
 import com.puchain.fep.web.audit.review.repository.MessageReviewTaskRepository;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Instant;
+import java.util.List;
+import java.util.NoSuchElementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,5 +104,101 @@ public class MessageReviewTaskService {
                 LogSanitizer.sanitize(messageRecordId),
                 LogSanitizer.sanitize(messageType),
                 properties.getLevels());
+    }
+
+    /**
+     * 分页查询审核任务，按创建时间倒序。
+     *
+     * @param status   审核状态过滤；{@code null} 表示全部
+     * @param pageNum  页码（1-based，&lt;1 归一为 1）
+     * @param pageSize 每页条数
+     * @return 分页结果（1-based 回显）
+     */
+    @Transactional(readOnly = true)
+    public PageResult<ReviewTaskResponse> list(final ReviewStatus status,
+                                               final int pageNum,
+                                               final int pageSize) {
+        final int safePage = Math.max(pageNum, 1);
+        final Pageable pageable = PageRequest.of(safePage - 1, pageSize,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
+        final Page<MessageReviewTaskEntity> page = status == null
+                ? repository.findAll(pageable)
+                : repository.findByReviewStatus(status.name(), pageable);
+        final List<ReviewTaskResponse> records = page.getContent().stream()
+                .map(ReviewTaskResponse::from)
+                .toList();
+        return new PageResult<>(records, page.getTotalElements(), safePage, pageSize);
+    }
+
+    /**
+     * 按 id 查询审核任务详情。
+     *
+     * @param reviewId 审核任务 id
+     * @return 响应 DTO
+     * @throws NoSuchElementException id 不存在
+     */
+    @Transactional(readOnly = true)
+    public ReviewTaskResponse getById(final String reviewId) {
+        return repository.findById(reviewId)
+                .map(ReviewTaskResponse::from)
+                .orElseThrow(() -> new NoSuchElementException("review task not found: " + reviewId));
+    }
+
+    /**
+     * 审核通过。单级（{@code levels=1}）一次通过即终结为 {@link ReviewStatus#APPROVED}；
+     * 多级（{@code levels>1}）逐级推进 {@code currentLevel}，达到 {@code reviewLevel} 才终结。
+     *
+     * @param reviewId   审核任务 id
+     * @param reviewerId 审核人 id，非空
+     * @param comment    审核意见（可空）
+     * @throws NoSuchElementException id 不存在
+     * @throws IllegalStateException  任务已是终态（APPROVED/REJECTED）
+     */
+    @Transactional
+    public void approve(final String reviewId, final String reviewerId, final String comment) {
+        final MessageReviewTaskEntity t = loadPending(reviewId);
+        if (t.getCurrentLevel() >= t.getReviewLevel()) {
+            t.setReviewStatus(ReviewStatus.APPROVED.name());
+            t.setReviewerId(reviewerId);
+            t.setReviewComment(comment);
+            t.setReviewedAt(Instant.now().toEpochMilli());
+        } else {
+            t.setCurrentLevel(t.getCurrentLevel() + 1);
+            t.setReviewerId(reviewerId);
+        }
+        repository.save(t);
+    }
+
+    /**
+     * 审核驳回。任一层驳回即终结为 {@link ReviewStatus#REJECTED}。
+     *
+     * @param reviewId   审核任务 id
+     * @param reviewerId 审核人 id，非空
+     * @param reason     驳回原因，非空白
+     * @throws NoSuchElementException   id 不存在
+     * @throws IllegalStateException    任务已是终态
+     * @throws IllegalArgumentException {@code reason} 为空白
+     */
+    @Transactional
+    public void reject(final String reviewId, final String reviewerId, final String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("reject reason must not be blank");
+        }
+        final MessageReviewTaskEntity t = loadPending(reviewId);
+        t.setReviewStatus(ReviewStatus.REJECTED.name());
+        t.setReviewerId(reviewerId);
+        t.setReviewComment(reason);
+        t.setReviewedAt(Instant.now().toEpochMilli());
+        repository.save(t);
+    }
+
+    private MessageReviewTaskEntity loadPending(final String reviewId) {
+        final MessageReviewTaskEntity t = repository.findById(reviewId)
+                .orElseThrow(() -> new NoSuchElementException("review task not found: " + reviewId));
+        if (!ReviewStatus.PENDING.name().equals(t.getReviewStatus())) {
+            throw new IllegalStateException(
+                    "review task already terminal: " + t.getReviewStatus());
+        }
+        return t;
     }
 }
