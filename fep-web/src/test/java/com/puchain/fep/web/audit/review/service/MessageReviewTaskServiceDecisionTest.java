@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.audit.review.domain.MessageReviewTaskEntity;
 import com.puchain.fep.web.audit.review.domain.ReviewStatus;
 import com.puchain.fep.web.audit.review.dto.ReviewTaskResponse;
 import com.puchain.fep.web.audit.review.repository.MessageReviewTaskRepository;
-import java.util.NoSuchElementException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,13 +83,13 @@ class MessageReviewTaskServiceDecisionTest {
         service.approve(id, "reviewer-1", "ok");
 
         assertThatThrownBy(() -> service.approve(id, "reviewer-1", "again"))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(FepBusinessException.class);
     }
 
     @Test
     void getById_unknown_throws() {
         assertThatThrownBy(() -> service.getById("no-such-id"))
-                .isInstanceOf(NoSuchElementException.class);
+                .isInstanceOf(FepBusinessException.class);
     }
 
     @Test

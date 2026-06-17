@@ -1,6 +1,8 @@
 package com.puchain.fep.web.audit.review.service;
 
+import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.web.audit.review.config.ReviewWorkflowProperties;
@@ -11,7 +13,7 @@ import com.puchain.fep.web.audit.review.repository.MessageReviewTaskRepository;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Instant;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -38,6 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class MessageReviewTaskService {
 
     private static final Logger log = LoggerFactory.getLogger(MessageReviewTaskService.class);
+
+    /** 列表查询每页上限，防御超大 pageSize 拖垮审核队列查询。 */
+    private static final int MAX_PAGE_SIZE = 200;
 
     private final MessageReviewTaskRepository repository;
     private final ReviewWorkflowProperties properties;
@@ -119,7 +124,8 @@ public class MessageReviewTaskService {
                                                final int pageNum,
                                                final int pageSize) {
         final int safePage = Math.max(pageNum, 1);
-        final Pageable pageable = PageRequest.of(safePage - 1, pageSize,
+        final int safeSize = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE);
+        final Pageable pageable = PageRequest.of(safePage - 1, safeSize,
                 Sort.by(Sort.Direction.DESC, "createdAt"));
         final Page<MessageReviewTaskEntity> page = status == null
                 ? repository.findAll(pageable)
@@ -127,7 +133,7 @@ public class MessageReviewTaskService {
         final List<ReviewTaskResponse> records = page.getContent().stream()
                 .map(ReviewTaskResponse::from)
                 .toList();
-        return new PageResult<>(records, page.getTotalElements(), safePage, pageSize);
+        return new PageResult<>(records, page.getTotalElements(), safePage, safeSize);
     }
 
     /**
@@ -135,13 +141,14 @@ public class MessageReviewTaskService {
      *
      * @param reviewId 审核任务 id
      * @return 响应 DTO
-     * @throws NoSuchElementException id 不存在
+     * @throws FepBusinessException {@code BIZ_5001} id 不存在（HTTP 404）
      */
     @Transactional(readOnly = true)
     public ReviewTaskResponse getById(final String reviewId) {
         return repository.findById(reviewId)
                 .map(ReviewTaskResponse::from)
-                .orElseThrow(() -> new NoSuchElementException("review task not found: " + reviewId));
+                .orElseThrow(() -> new FepBusinessException(
+                        FepErrorCode.BIZ_5001, "审核任务不存在: " + reviewId));
     }
 
     /**
@@ -151,11 +158,11 @@ public class MessageReviewTaskService {
      * @param reviewId   审核任务 id
      * @param reviewerId 审核人 id，非空
      * @param comment    审核意见（可空）
-     * @throws NoSuchElementException id 不存在
-     * @throws IllegalStateException  任务已是终态（APPROVED/REJECTED）
+     * @throws FepBusinessException {@code BIZ_5001} id 不存在（404）/ {@code BIZ_5003} 任务已终态（400）
      */
     @Transactional
     public void approve(final String reviewId, final String reviewerId, final String comment) {
+        Objects.requireNonNull(reviewerId, "reviewerId");
         final MessageReviewTaskEntity t = loadPending(reviewId);
         if (t.getCurrentLevel() >= t.getReviewLevel()) {
             t.setReviewStatus(ReviewStatus.APPROVED.name());
@@ -175,12 +182,12 @@ public class MessageReviewTaskService {
      * @param reviewId   审核任务 id
      * @param reviewerId 审核人 id，非空
      * @param reason     驳回原因，非空白
-     * @throws NoSuchElementException   id 不存在
-     * @throws IllegalStateException    任务已是终态
-     * @throws IllegalArgumentException {@code reason} 为空白
+     * @throws FepBusinessException     {@code BIZ_5001} id 不存在（404）/ {@code BIZ_5003} 任务已终态（400）
+     * @throws IllegalArgumentException {@code reason} 为空白（400）
      */
     @Transactional
     public void reject(final String reviewId, final String reviewerId, final String reason) {
+        Objects.requireNonNull(reviewerId, "reviewerId");
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reject reason must not be blank");
         }
@@ -194,10 +201,11 @@ public class MessageReviewTaskService {
 
     private MessageReviewTaskEntity loadPending(final String reviewId) {
         final MessageReviewTaskEntity t = repository.findById(reviewId)
-                .orElseThrow(() -> new NoSuchElementException("review task not found: " + reviewId));
+                .orElseThrow(() -> new FepBusinessException(
+                        FepErrorCode.BIZ_5001, "审核任务不存在: " + reviewId));
         if (!ReviewStatus.PENDING.name().equals(t.getReviewStatus())) {
-            throw new IllegalStateException(
-                    "review task already terminal: " + t.getReviewStatus());
+            throw new FepBusinessException(FepErrorCode.BIZ_5003,
+                    "审核任务已终态，不可重复决策: " + t.getReviewStatus());
         }
         return t;
     }
