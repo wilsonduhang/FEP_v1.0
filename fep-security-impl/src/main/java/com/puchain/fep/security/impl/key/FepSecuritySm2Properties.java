@@ -83,7 +83,7 @@ public class FepSecuritySm2Properties {
      * @param loginKeys keyId → 登录密钥对
      */
     public void setLoginKeys(final Map<String, LoginKeyPair> loginKeys) {
-        this.loginKeys = loginKeys == null ? new LinkedHashMap<>() : new LinkedHashMap<>(loginKeys);
+        this.loginKeys = copyOrEmpty(loginKeys);
     }
 
     /**
@@ -124,7 +124,7 @@ public class FepSecuritySm2Properties {
      * @param auditKeys keyId → 审计密钥对
      */
     public void setAuditKeys(final Map<String, LoginKeyPair> auditKeys) {
-        this.auditKeys = auditKeys == null ? new LinkedHashMap<>() : new LinkedHashMap<>(auditKeys);
+        this.auditKeys = copyOrEmpty(auditKeys);
     }
 
     /**
@@ -165,8 +165,7 @@ public class FepSecuritySm2Properties {
      * @param msgSignKeys keyId → 报文签名密钥对
      */
     public void setMsgSignKeys(final Map<String, LoginKeyPair> msgSignKeys) {
-        this.msgSignKeys = msgSignKeys == null
-                ? new LinkedHashMap<>() : new LinkedHashMap<>(msgSignKeys);
+        this.msgSignKeys = copyOrEmpty(msgSignKeys);
     }
 
     /**
@@ -195,6 +194,20 @@ public class FepSecuritySm2Properties {
                     copy.put(srcNode, hexes == null ? new ArrayList<>() : new ArrayList<>(hexes)));
         }
         this.peerVerifyKeys = copy;
+    }
+
+    /**
+     * Map 防御拷贝 + null guard 归一（REUSE-2）：login/audit/msg-sign 三段 setter 共用。
+     * 返回<strong>可变</strong> LinkedHashMap——Spring relaxed binding 经 getter 取 live
+     * 引用逐 key 填充，故不可返回不可变副本。{@code setPeerVerifyKeys} 是两层深拷贝
+     * （内层 List 也拷），语义不同，不在本归一范围。
+     *
+     * @param source 入参 map（可 null）
+     * @param <V>    值类型
+     * @return source 的可变浅拷贝；source 为 null 时返回新空 map
+     */
+    private static <V> Map<String, V> copyOrEmpty(final Map<String, V> source) {
+        return source == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source);
     }
 
     /**
