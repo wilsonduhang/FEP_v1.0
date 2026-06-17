@@ -110,6 +110,9 @@ public class SecurityConfiguration {
                     // UI menuTree 过滤依据（feedback_permission_code_vs_menu_code 红线）；
                     // 本 hasRole 是 API 层第二道守护。
                     .requestMatchers("/api/v1/sys/config/dir-map/**").hasRole("SYSTEM_ADMIN")
+                    // §5.8 审核 API：业务规则失败报文人工审核限 SYSTEM_ADMIN（方法级 @PreAuthorize
+                    // 未启用，URL 规则为实际强制；业务人员角色 Phase3 RBAC 对齐后细化）。
+                    .requestMatchers("/api/v1/audit/reviews/**").hasRole("SYSTEM_ADMIN")
                     .anyRequest().authenticated())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
