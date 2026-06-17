@@ -11,6 +11,7 @@ import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -54,13 +55,19 @@ public class MessageReviewTaskService {
      * <p>幂等：同一 {@code messageRecordId} 已存在审核任务时直接返回（不重复创建）。
      * 数据库 {@code uq_msg_review_record} 唯一约束为并发后盾。</p>
      *
+     * <p><strong>事务隔离（best-effort，muzhou 2026-06-17 决策）</strong>：本方法以
+     * {@link Propagation#REQUIRES_NEW} 在<strong>独立事务</strong>中创建审核任务——审核任务创建
+     * 失败（极罕见并发唯一冲突）不污染调用方（{@code JpaMessageProcessStore.updateStatus}）的
+     * 报文 FAILED 落库事务，保证报文必达终态（中转 liveness 不变量优先于审核完整性；
+     * 丢失的审核任务可由 FAILED+PROC_8507 记录扫描回填）。</p>
+     *
      * @param messageRecordId  源 {@code message_process_record.id}，非空
      * @param messageType      报文类型码（如 {@code 1001}），非空
      * @param transitionNo     业务流水号，非空
      * @param errorCode        失败错误码（{@code PROC_8507}），非空
      * @param violationSummary 首条违规文案（可为 null）
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
             justification = "messageRecordId/messageType passed through LogSanitizer.sanitize() prior to LOG")
     public void createFromFailedRecord(final String messageRecordId,

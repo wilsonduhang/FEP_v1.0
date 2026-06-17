@@ -1,16 +1,20 @@
 package com.puchain.fep.web.integration.processor;
 
 import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.util.LogSanitizer;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageProcessStore;
 import com.puchain.fep.web.audit.review.service.MessageReviewTaskService;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,16 +37,20 @@ import org.springframework.transaction.annotation.Transactional;
  * propagation, read-only lookups use {@code readOnly = true} to enable
  * Hibernate's flush-mode optimisation.</p>
  *
- * <p><strong>§5.8 审核旁路（additive）</strong>：{@link #updateStatus} 在报文落
+ * <p><strong>§5.8 审核旁路（additive, best-effort）</strong>：{@link #updateStatus} 在报文落
  * {@link MessageProcessStatus#FAILED} 且 {@code errorCode == PROC_8507}（业务规则违规）时，
- * 于同一事务内额外创建一条人工审核任务（{@link MessageReviewTaskService#createFromFailedRecord}）。
- * 该旁路<strong>不改变</strong>状态机流转与既有持久化语义——报文仍照常落终态 FAILED；
- * XSD 结构失败（{@code PROC_8501}）与非失败态不触发审核。Batch 通路经 {@code transition(...FAILED)}
- * 不携带 errorCode，结构上不进入本旁路（Plan D5：Batch 审核 deferred）。</p>
+ * 额外创建一条人工审核任务（{@link MessageReviewTaskService#createFromFailedRecord}，
+ * {@code REQUIRES_NEW} 独立事务）。该旁路<strong>不改变</strong>状态机流转与既有持久化语义——
+ * 报文仍照常落终态 FAILED；审核任务创建失败仅记 WARN，<strong>不</strong>回滚报文 FAILED
+ * （中转 liveness 不变量优先，muzhou 2026-06-17 决策）。XSD 结构失败（{@code PROC_8501}）与
+ * 非失败态不触发审核；Batch 通路经 {@code transition(...FAILED)} 不携带 errorCode，结构上不进入
+ * 本旁路（Plan D5：Batch 审核 deferred）。</p>
  */
 @Component("jpaMessageProcessStore")
 @Primary
 public class JpaMessageProcessStore implements MessageProcessStore {
+
+    private static final Logger log = LoggerFactory.getLogger(JpaMessageProcessStore.class);
 
     private final MessageProcessRecordJpaRepository repository;
     private final MessageReviewTaskService reviewTaskService;
@@ -92,6 +100,8 @@ public class JpaMessageProcessStore implements MessageProcessStore {
 
     @Override
     @Transactional
+    @SuppressFBWarnings(value = "CRLF_INJECTION_LOGS",
+            justification = "recordId passed through LogSanitizer.sanitize() prior to LOG")
     public MessageProcessRecord updateStatus(final String id,
                                              final MessageProcessStatus newStatus,
                                              final String errorCode,
@@ -109,10 +119,17 @@ public class JpaMessageProcessStore implements MessageProcessStore {
         final MessageProcessRecordEntity savedEntity = repository.save(entity);
         if (newStatus == MessageProcessStatus.FAILED
                 && FepErrorCode.PROC_8507.getCode().equals(errorCode)) {
-            // §5.8 旁路：业务规则失败报文额外建一条人工审核任务（同事务，原子）。
-            reviewTaskService.createFromFailedRecord(
-                    savedEntity.getId(), savedEntity.getMessageType(),
-                    savedEntity.getTransitionNo(), errorCode, savedEntity.getErrorMessage());
+            // §5.8 旁路（best-effort）：业务规则失败报文额外建一条人工审核任务。
+            // createFromFailedRecord 为 REQUIRES_NEW 独立事务——其失败（极罕见并发唯一冲突）
+            // 不回滚本方法的报文 FAILED 落库；报文必达终态优先（muzhou 2026-06-17 决策）。
+            try {
+                reviewTaskService.createFromFailedRecord(
+                        savedEntity.getId(), savedEntity.getMessageType(),
+                        savedEntity.getTransitionNo(), errorCode, savedEntity.getErrorMessage());
+            } catch (RuntimeException ex) {
+                log.warn("review task creation failed (best-effort) for recordId={}; "
+                        + "FAILED state persisted regardless", LogSanitizer.sanitize(id), ex);
+            }
         }
         return toDomain(savedEntity);
     }

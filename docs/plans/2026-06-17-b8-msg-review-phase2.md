@@ -272,17 +272,26 @@ void updateStatus_failedWithXsd8501_noReviewTask() {
 **Step 3.3：写实现** — `JpaMessageProcessStore` 注入 `MessageReviewTaskService`（构造器 +1 参数；同 commit 改全部构造器调用方/测试，红线 `commit_tree_self_consistent_per_commit`）。在 `updateStatus` 末尾、`return` 前：
 
 ```java
+final MessageProcessRecordEntity savedEntity = repository.save(entity);
 if (newStatus == MessageProcessStatus.FAILED
         && FepErrorCode.PROC_8507.getCode().equals(errorCode)) {
-    // Task2 服务签名为 primitives（与 audit.review 解耦，不依赖 integration.processor 实体）
-    reviewTaskService.createFromFailedRecord(
-            entity.getId(), entity.getMessageType(), entity.getTransitionNo(),
-            errorCode, entity.getErrorMessage());   // 同 @Transactional，原子
+    // best-effort：createFromFailedRecord 为 REQUIRES_NEW 独立事务，失败不回滚 FAILED
+    try {
+        reviewTaskService.createFromFailedRecord(
+                savedEntity.getId(), savedEntity.getMessageType(),
+                savedEntity.getTransitionNo(), errorCode, savedEntity.getErrorMessage());
+    } catch (RuntimeException ex) {
+        log.warn("review task creation failed (best-effort) for recordId={}; "
+                + "FAILED state persisted regardless", LogSanitizer.sanitize(id), ex);
+    }
 }
+return toDomain(savedEntity);
 ```
 
 > 注：旁路只读 `entity`（已含 id/messageType/transitionNo/errorMessage），**不改 fep-processor 任何类**、不改方法签名、不改状态机。ArchUnit：新增依赖均在 fep-web 内，不破层。
 > ⚠️ Task2 实施订正（santa Task2 NIT）：`createFromFailedRecord` 实际签名为 5 primitives（非 Plan 初稿的 `entity` 入参），以解耦 audit.review ↔ integration.processor；hook 传 entity getters 即可，无破坏。
+> ⚠️ **Task3 事务语义订正（santa Task3 quality BLOCKER → muzhou 2026-06-17 决策 best-effort）**：`createFromFailedRecord` 改 `@Transactional(REQUIRES_NEW)` 独立事务 + `updateStatus` try-catch 记 WARN 续行。审核任务创建失败（极罕见并发唯一冲突）**不回滚**报文 FAILED——中转 liveness 不变量（报文必达终态）优先于审核完整性；丢失审核任务可由 FAILED+PROC_8507 记录扫描回填。**推翻 Plan 初稿「同事务，原子」**。
+> ⚠️ **测试隔离副作用**：REQUIRES_NEW 提交独立于测试 `@Transactional` 回滚 → 触发 hook 的测试须**非事务 + @BeforeEach/@AfterEach 显式清理**共享 H2（`message_review_task` 整表 deleteAll / `message_process_record` 按 `rec-h%`·`rec-f%` 前缀 DELETE，前缀非 hex 不撞真实 UUID 记录），否则提交残留污染 `@Transactional` Task1 仓储测试的绝对计数断言（红线 `shared_h2_..._test_isolation`）。新增 `JpaMessageProcessStoreReviewHookFailureTest`（@MockBean 抛异常验 FAILED 仍落库）。
 
 **Step 3.4：跑测试 + 全 fep-web 回归**（新增整链接入须全模块跑，红线 `full_regression_before_commit`；扼点构造器变更影响面）
 

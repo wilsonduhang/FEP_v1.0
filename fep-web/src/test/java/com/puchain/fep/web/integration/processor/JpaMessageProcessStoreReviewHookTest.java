@@ -10,20 +10,26 @@ import com.puchain.fep.processor.state.MessageProcessStore;
 import com.puchain.fep.web.audit.review.domain.ReviewStatus;
 import com.puchain.fep.web.audit.review.repository.MessageReviewTaskRepository;
 import java.time.Instant;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * §5.8 审核旁路集成验证：{@link JpaMessageProcessStore#updateStatus} 在
  * {@code FAILED + PROC_8507} 时创建审核任务；其余情况不创建（Plan Task 3 / D4）。
  *
+ * <p><strong>非事务测试</strong>：审核任务经 {@code REQUIRES_NEW} 独立事务提交（best-effort
+ * 语义），@{@code Transactional} 回滚无法清除，故本类非事务 + {@code @BeforeEach} 按 id 前缀
+ * 显式清理共享 H2（红线 shared_h2_..._test_isolation）。测试 id 前缀 {@code rec-h}（非 hex，
+ * 不与真实 UUID 记录碰撞）。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
 @SpringBootTest
-@Transactional
 class JpaMessageProcessStoreReviewHookTest {
 
     @Autowired
@@ -31,6 +37,16 @@ class JpaMessageProcessStoreReviewHookTest {
 
     @Autowired
     private MessageReviewTaskRepository reviewRepo;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @BeforeEach
+    @AfterEach
+    void cleanup() {
+        jdbc.update("DELETE FROM message_review_task WHERE message_record_id LIKE 'rec-h%'");
+        jdbc.update("DELETE FROM message_process_record WHERE id LIKE 'rec-h%'");
+    }
 
     private static MessageType msg1001() {
         return MessageType.byMsgNo("1001").orElseThrow();
