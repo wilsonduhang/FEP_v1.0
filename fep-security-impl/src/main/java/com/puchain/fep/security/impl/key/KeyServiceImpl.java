@@ -85,10 +85,7 @@ public class KeyServiceImpl implements KeyService {
         this.auditKeys = new LinkedHashMap<>(sm2Props.getAuditKeys());
         this.msgSignActiveKeyId = sm2Props.getMsgSignActiveKeyId();
         this.msgSignKeys = new LinkedHashMap<>(sm2Props.getMsgSignKeys());
-        final Map<String, List<String>> peers = new LinkedHashMap<>();
-        sm2Props.getPeerVerifyKeys().forEach((srcNode, hexes) ->
-                peers.put(srcNode, hexes == null ? List.of() : List.copyOf(hexes)));
-        this.peerVerifyKeys = peers;
+        this.peerVerifyKeys = PeerVerifyKeyMaps.immutableHexCopy(sm2Props.getPeerVerifyKeys());
     }
 
     /**

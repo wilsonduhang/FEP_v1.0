@@ -4,8 +4,7 @@ import com.puchain.fep.security.api.KeyService;
 import com.puchain.fep.security.api.MessageSignPort;
 import com.puchain.fep.security.api.SignService;
 import com.puchain.fep.security.impl.key.FepSecuritySm2Properties;
-import java.util.HexFormat;
-import java.util.LinkedHashMap;
+import com.puchain.fep.security.impl.key.PeerVerifyKeyMaps;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,10 +28,11 @@ public class BcMessageSignPort implements MessageSignPort {
 
     private final SignService signService;
     private final KeyService keyService;
-    private final Map<String, List<String>> peerVerifyKeys;
+    private final Map<String, List<byte[]>> peerVerifyKeys;
 
     /**
-     * 构造：私钥单源 KeyService + 对端公钥深拷贝（无 live 泄漏，EI_EXPOSE_REP2 红线面）。
+     * 构造：私钥单源 KeyService + 对端公钥构造期预解码（byte[]，EFF-1/5——消除每次 verify 的
+     * hex 解析；预解码字节私有 final、verify 只读消费，无 live 泄漏）。
      *
      * @param signService SM2 签验原语（S5），非 null
      * @param keyService  报文签名私钥单源（getSignPrivateKey），非 null
@@ -43,10 +43,7 @@ public class BcMessageSignPort implements MessageSignPort {
         this.signService = Objects.requireNonNull(signService, "signService");
         this.keyService = Objects.requireNonNull(keyService, "keyService");
         Objects.requireNonNull(sm2Props, "sm2Props");
-        final Map<String, List<String>> peers = new LinkedHashMap<>();
-        sm2Props.getPeerVerifyKeys().forEach((srcNode, hexes) ->
-                peers.put(srcNode, hexes == null ? List.of() : List.copyOf(hexes)));
-        this.peerVerifyKeys = peers;
+        this.peerVerifyKeys = PeerVerifyKeyMaps.decodedCopy(sm2Props.getPeerVerifyKeys());
     }
 
     @Override
@@ -57,14 +54,15 @@ public class BcMessageSignPort implements MessageSignPort {
 
     @Override
     public boolean verify(final byte[] data, final String signatureBase64, final String srcNode) {
-        final List<String> pubHexes = peerVerifyKeys.get(srcNode);
-        if (pubHexes == null || pubHexes.isEmpty()) {
+        final List<byte[]> pubKeys = peerVerifyKeys.get(srcNode);
+        if (pubKeys == null || pubKeys.isEmpty()) {
             throw new IllegalStateException(
                     "no peer verify public key configured for srcNode: " + srcNode);
         }
-        // list 化抗轮换：任一已配置公钥验过即真（SM2 验签公开运算，try-each 无安全损失）
-        for (final String pubHex : pubHexes) {
-            if (signService.verify(data, signatureBase64, HexFormat.of().parseHex(pubHex))) {
+        // list 化抗轮换：任一已配置公钥验过即真（SM2 验签公开运算，try-each 无安全损失）。
+        // 公钥已于构造期一次性 parseHex（EFF-1/5），verify 路径不再做 hex 解析。
+        for (final byte[] pubKey : pubKeys) {
+            if (signService.verify(data, signatureBase64, pubKey)) {
                 return true;
             }
         }
