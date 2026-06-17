@@ -1450,6 +1450,13 @@
         <Bug pattern="SPRING_ENDPOINT"/>
     </Match>
 
+    <!-- MessageReviewController (§5.8 B8 Phase2): 审核端点需认证（JWT + URL 规则 hasRole SYSTEM_ADMIN），
+         SPRING_ENDPOINT 是预期行为，与既有 SysRoleController/AuthController 等控制器一致 -->
+    <Match>
+        <Class name="com.puchain.fep.web.audit.review.controller.MessageReviewController"/>
+        <Bug pattern="SPRING_ENDPOINT"/>
+    </Match>
+
     <!-- CallbackOAuth2TokenCache (Phase 2b T5; renamed from OAuth2TokenCache per ArchUnit R4):
          Caffeine Expiry 匿名内部类不引用外部实例状态，SIC_INNER_SHOULD_BE_STATIC_ANON 为风格提示
          非安全/正确性问题，Caffeine 构建器惯用写法 -->
