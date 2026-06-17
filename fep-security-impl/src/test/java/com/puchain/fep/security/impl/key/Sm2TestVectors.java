@@ -55,6 +55,14 @@ public final class Sm2TestVectors {
             "4eb778ecc265d4ccf7f27e0e1db0e63ab03c4c50496613b7517527acb36a049e"
                     + "29963e2a443dee34a589e0968fa1ca0b918751c40a8a9e5c414541a31d5d1ee1";
 
+    /**
+     * sm2p256v1 标准生成元 G（04∥Gx∥Gy，130 hex）——合法曲线点但非任何签名方公钥。
+     * 用于 try-each 抗轮换测试：作"已配置但不匹配"的对端公钥（启动校验过、验签不过）。
+     */
+    public static final String SM2_GENERATOR_HEX =
+            "04" + "32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7"
+                 + "bc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0";
+
     private Sm2TestVectors() {
     }
 }

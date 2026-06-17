@@ -26,11 +26,6 @@ class BcMessageSignPortTest {
     private static final String SELF_NODE = "A1000143000104";
     private static final byte[] REPORT = "<CFX>report-body</CFX>".getBytes(StandardCharsets.UTF_8);
 
-    /** sm2p256v1 标准生成元 G（04∥Gx∥Gy）= 合法曲线点、非 GBT 签名方公钥。 */
-    private static final String SM2_GENERATOR_HEX =
-            "04" + "32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7"
-                 + "bc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0";
-
     private static BcMessageSignPort port(final boolean withMsgSign,
             final Map<String, List<String>> peers) {
         final FepSecuritySm2Properties sm2 = new FepSecuritySm2Properties();
@@ -82,14 +77,14 @@ class BcMessageSignPortTest {
     void verify_tryEachRotation_secondKeyMatches() {
         // list = [G(非签名方), GBT_PUB(签名方)] → 第一个验失败、第二个验过 → true
         final BcMessageSignPort port = port(true,
-                Map.of(SELF_NODE, List.of(SM2_GENERATOR_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX)));
+                Map.of(SELF_NODE, List.of(Sm2TestVectors.SM2_GENERATOR_HEX, Sm2TestVectors.GBT_PUBLIC_KEY_HEX)));
         final String sig = port.sign(REPORT);
         assertThat(port.verify(REPORT, sig, SELF_NODE)).isTrue();
     }
 
     @Test
     void verify_allConfiguredKeysWrong_returnsFalse() {
-        final BcMessageSignPort port = port(true, Map.of(SELF_NODE, List.of(SM2_GENERATOR_HEX)));
+        final BcMessageSignPort port = port(true, Map.of(SELF_NODE, List.of(Sm2TestVectors.SM2_GENERATOR_HEX)));
         final String sig = port.sign(REPORT);
         assertThat(port.verify(REPORT, sig, SELF_NODE)).isFalse();
     }
