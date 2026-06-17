@@ -274,11 +274,15 @@ void updateStatus_failedWithXsd8501_noReviewTask() {
 ```java
 if (newStatus == MessageProcessStatus.FAILED
         && FepErrorCode.PROC_8507.getCode().equals(errorCode)) {
-    reviewTaskService.createFromFailedRecord(entity);   // 同 @Transactional，原子
+    // Task2 服务签名为 primitives（与 audit.review 解耦，不依赖 integration.processor 实体）
+    reviewTaskService.createFromFailedRecord(
+            entity.getId(), entity.getMessageType(), entity.getTransitionNo(),
+            errorCode, entity.getErrorMessage());   // 同 @Transactional，原子
 }
 ```
 
-> 注：旁路只读 `entity`（已含 messageType/transitionNo/errorMessage），**不改 fep-processor 任何类**、不改方法签名、不改状态机。ArchUnit：新增依赖均在 fep-web 内，不破层。
+> 注：旁路只读 `entity`（已含 id/messageType/transitionNo/errorMessage），**不改 fep-processor 任何类**、不改方法签名、不改状态机。ArchUnit：新增依赖均在 fep-web 内，不破层。
+> ⚠️ Task2 实施订正（santa Task2 NIT）：`createFromFailedRecord` 实际签名为 5 primitives（非 Plan 初稿的 `entity` 入参），以解耦 audit.review ↔ integration.processor；hook 传 entity getters 即可，无破坏。
 
 **Step 3.4：跑测试 + 全 fep-web 回归**（新增整链接入须全模块跑，红线 `full_regression_before_commit`；扼点构造器变更影响面）
 

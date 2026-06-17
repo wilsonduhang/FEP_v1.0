@@ -48,4 +48,13 @@ class MessageReviewTaskServiceCreateTest {
 
         assertThat(repository.findAll()).hasSize(1);
     }
+
+    @Test
+    void create_withNullViolationSummary_persistsNull() {
+        reviewService.createFromFailedRecord("rec-3", "1001", "txn-3", "PROC_8507", null);
+
+        final MessageReviewTaskEntity t = repository.findByMessageRecordId("rec-3").orElseThrow();
+        assertThat(t.getViolationSummary()).isNull();
+        assertThat(t.getReviewStatus()).isEqualTo(ReviewStatus.PENDING.name());
+    }
 }
