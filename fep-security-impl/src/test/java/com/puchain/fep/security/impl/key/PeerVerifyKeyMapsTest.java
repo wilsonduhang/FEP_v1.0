@@ -57,4 +57,41 @@ class PeerVerifyKeyMapsTest {
         src.put("N1", null);
         assertThat(PeerVerifyKeyMaps.decodedCopy(src).get("N1")).isEmpty();
     }
+
+    @Test
+    void immutableHexCopy_multiSrcNodeAndMultiKey_allDeepCopied() {
+        final String pub2 = "04"
+                + "32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7"
+                + "bc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0";
+        final Map<String, List<String>> src = new LinkedHashMap<>();
+        src.put("N1", new ArrayList<>(List.of(PUB, pub2)));
+        src.put("N2", new ArrayList<>(List.of(pub2)));
+
+        final Map<String, List<String>> copy = PeerVerifyKeyMaps.immutableHexCopy(src);
+
+        assertThat(copy).containsOnlyKeys("N1", "N2");
+        assertThat(copy.get("N1")).containsExactly(PUB, pub2);
+        assertThat(copy.get("N2")).containsExactly(pub2);
+        // 源 mutate（清空一项 + 删一键）不影响副本
+        src.get("N1").clear();
+        src.remove("N2");
+        assertThat(copy.get("N1")).containsExactly(PUB, pub2);
+        assertThat(copy).containsKey("N2");
+    }
+
+    @Test
+    void immutableHexCopy_returnedMapIsUnmodifiable() {
+        final Map<String, List<String>> copy =
+                PeerVerifyKeyMaps.immutableHexCopy(Map.of("N1", List.of(PUB)));
+        assertThatThrownBy(() -> copy.put("N2", List.of(PUB)))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    @Test
+    void decodedCopy_returnedMapIsUnmodifiable() {
+        final Map<String, List<byte[]>> copy =
+                PeerVerifyKeyMaps.decodedCopy(Map.of("N1", List.of(PUB)));
+        assertThatThrownBy(() -> copy.remove("N1"))
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
 }

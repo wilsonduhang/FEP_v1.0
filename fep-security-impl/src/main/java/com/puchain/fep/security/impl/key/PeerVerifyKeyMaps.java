@@ -60,6 +60,7 @@ public final class PeerVerifyKeyMaps {
         final Map<String, V> result = new LinkedHashMap<>();
         source.forEach((srcNode, hexes) ->
                 result.put(srcNode, valueMapper.apply(hexes == null ? List.of() : hexes)));
-        return result;
+        // Map.copyOf 兑现 Javadoc「不可变深拷贝」承诺（外层 Map 亦不可变，非仅内层 List）。
+        return Map.copyOf(result);
     }
 }
