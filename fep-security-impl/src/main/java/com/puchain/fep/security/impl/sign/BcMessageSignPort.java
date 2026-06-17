@@ -52,6 +52,24 @@ public class BcMessageSignPort implements MessageSignPort {
         return signService.sign(data, keyService.getSignPrivateKey());
     }
 
+    /**
+     * 按 SrcNode 路由对端验签公钥并 try-each 验签（PRD §3.3.3）。
+     *
+     * <p><strong>两类失败语义对比</strong>（QUAL）：① srcNode 未配置任何公钥 → 抛
+     * {@link IllegalStateException}（配置缺失是部署错误，须 fail 而非静默放过）；
+     * ② 已配置但全部公钥都验不过 → 返回 {@code false}（正常验签否决）。调用方据此区分
+     * 「配置问题」与「签名不匹配」。</p>
+     *
+     * <p>try-each 抗轮换：list 内任一公钥验过即 {@code true}；公钥合法性由
+     * {@link com.puchain.fep.security.impl.key.KeyServiceImpl#validateOnStartup()} 启动期
+     * fail-fast 保证（曲线点校验），故 verify 期不再校验。</p>
+     *
+     * @param data            验签原文字节，非 null
+     * @param signatureBase64 Base64 裸签（r∥s），非 null
+     * @param srcNode         发起方节点代码（路由键），非 null
+     * @return 任一已配置公钥验过为 {@code true}，全部验不过为 {@code false}
+     * @throws IllegalStateException srcNode 未配置对端验签公钥
+     */
     @Override
     public boolean verify(final byte[] data, final String signatureBase64, final String srcNode) {
         final List<byte[]> pubKeys = peerVerifyKeys.get(srcNode);

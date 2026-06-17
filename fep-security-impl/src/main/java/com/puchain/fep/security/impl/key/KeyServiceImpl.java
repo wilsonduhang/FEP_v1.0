@@ -228,6 +228,15 @@ public class KeyServiceImpl implements KeyService {
         return new String(plain, StandardCharsets.UTF_8);
     }
 
+    /**
+     * 当前活跃报文签名私钥（32 字节标量 d）。消费方经 {@code MessageSignPort}
+     * （形态 C-ev，ADR 2026-06-12）隔离形态依赖；形态 A（外部签名验签服务器 1818）下
+     * 私钥驻留外部设备、本方法不适用——见类级 §GM S2b 段。每次 {@code parseHex} 新建数组
+     * 即防御副本，调用方持有的字节不与内部状态共享。
+     *
+     * @return 报文签名私钥字节（32 字节）
+     * @throws IllegalStateException msg-sign 段未配置
+     */
     @Override
     public byte[] getSignPrivateKey() {
         if (msgSignActiveKeyId == null || msgSignKeys.isEmpty()) {
