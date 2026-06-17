@@ -1,9 +1,11 @@
 package com.puchain.fep.web.integration.processor;
 
+import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageProcessStore;
+import com.puchain.fep.web.audit.review.service.MessageReviewTaskService;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -30,20 +32,32 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>Transactional boundaries: mutating methods run under the default
  * propagation, read-only lookups use {@code readOnly = true} to enable
  * Hibernate's flush-mode optimisation.</p>
+ *
+ * <p><strong>§5.8 审核旁路（additive）</strong>：{@link #updateStatus} 在报文落
+ * {@link MessageProcessStatus#FAILED} 且 {@code errorCode == PROC_8507}（业务规则违规）时，
+ * 于同一事务内额外创建一条人工审核任务（{@link MessageReviewTaskService#createFromFailedRecord}）。
+ * 该旁路<strong>不改变</strong>状态机流转与既有持久化语义——报文仍照常落终态 FAILED；
+ * XSD 结构失败（{@code PROC_8501}）与非失败态不触发审核。Batch 通路经 {@code transition(...FAILED)}
+ * 不携带 errorCode，结构上不进入本旁路（Plan D5：Batch 审核 deferred）。</p>
  */
 @Component("jpaMessageProcessStore")
 @Primary
 public class JpaMessageProcessStore implements MessageProcessStore {
 
     private final MessageProcessRecordJpaRepository repository;
+    private final MessageReviewTaskService reviewTaskService;
 
     /**
-     * Creates the adapter with the required Spring Data repository.
+     * Creates the adapter with the required Spring Data repository and the
+     * §5.8 review-task service used by the additive PROC_8507 hook.
      *
-     * @param repository Spring Data JPA repository bean, non-null
+     * @param repository        Spring Data JPA repository bean, non-null
+     * @param reviewTaskService 审核任务服务（业务规则失败旁路），non-null
      */
-    public JpaMessageProcessStore(final MessageProcessRecordJpaRepository repository) {
+    public JpaMessageProcessStore(final MessageProcessRecordJpaRepository repository,
+                                  final MessageReviewTaskService reviewTaskService) {
         this.repository = Objects.requireNonNull(repository, "repository");
+        this.reviewTaskService = Objects.requireNonNull(reviewTaskService, "reviewTaskService");
     }
 
     @Override
@@ -92,7 +106,15 @@ public class JpaMessageProcessStore implements MessageProcessStore {
             entity.setErrorCode(errorCode);
             entity.setErrorMessage(errorMessage);
         }
-        return toDomain(repository.save(entity));
+        final MessageProcessRecordEntity savedEntity = repository.save(entity);
+        if (newStatus == MessageProcessStatus.FAILED
+                && FepErrorCode.PROC_8507.getCode().equals(errorCode)) {
+            // §5.8 旁路：业务规则失败报文额外建一条人工审核任务（同事务，原子）。
+            reviewTaskService.createFromFailedRecord(
+                    savedEntity.getId(), savedEntity.getMessageType(),
+                    savedEntity.getTransitionNo(), errorCode, savedEntity.getErrorMessage());
+        }
+        return toDomain(savedEntity);
     }
 
     @Override
