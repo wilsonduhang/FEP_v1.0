@@ -8,6 +8,7 @@ import com.puchain.fep.converter.model.RequestBusinessHead;
 import com.puchain.fep.converter.type.MessageType;
 import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
 import com.puchain.fep.converter.xml.JaxbContextCache;
+import com.puchain.fep.processor.event.BatchForwardProcessedEvent;
 import com.puchain.fep.processor.state.IllegalMessageStateException;
 import com.puchain.fep.processor.state.MessageProcessRecord;
 import com.puchain.fep.processor.state.MessageProcessStatus;
@@ -23,6 +24,7 @@ import jakarta.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.io.StringWriter;
@@ -66,13 +68,18 @@ public class BatchMessageProcessorService {
     private final MessageProcessStore store;
     private final BatchPayloadAdapter adapter;
     private final OutboundWireShapeDispatcher wireShapeDispatcher;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * 构造器注入 6 项业务依赖。
+     * 构造器注入 7 项业务依赖。
      *
      * <p>P5 T3：新增 {@link OutboundWireShapeDispatcher} 用于 {@link #wrapBodyInCfx}
      * 按 wire-shape 派发 head 元素名（修正 hardcoded {@code "RealHead" + msgNo}
      * 仅 1/8 报文正确的缺陷）。</p>
+     *
+     * <p>§6.4.1 FR-DATA-DB-01：新增 {@link ApplicationEventPublisher} 在批量处理终态
+     * publish {@link BatchForwardProcessedEvent}，供 fep-web 侧 listener 落库
+     * {@code batch_forward_records}（非实时业务转发记录表）。</p>
      *
      * @param xsdValidator          XSD 校验器
      * @param businessRuleValidator 业务规则校验器（XSD 之后的第二道关）
@@ -80,6 +87,7 @@ public class BatchMessageProcessorService {
      * @param store                 持久化端口
      * @param adapter               8KB 分拆适配
      * @param wireShapeDispatcher   wire-shape 路由（决定 head 元素名按 16 上行报文 dispatch）
+     * @param eventPublisher        Spring 事件发布器（终态发 {@link BatchForwardProcessedEvent}）
      * @throws NullPointerException 任一参数为 {@code null}
      */
     public BatchMessageProcessorService(
@@ -88,7 +96,8 @@ public class BatchMessageProcessorService {
             final MessageStateMachine stateMachine,
             final MessageProcessStore store,
             final BatchPayloadAdapter adapter,
-            final OutboundWireShapeDispatcher wireShapeDispatcher) {
+            final OutboundWireShapeDispatcher wireShapeDispatcher,
+            final ApplicationEventPublisher eventPublisher) {
         this.xsdValidator = Objects.requireNonNull(xsdValidator, "xsdValidator");
         this.businessRuleValidator =
                 Objects.requireNonNull(businessRuleValidator, "businessRuleValidator");
@@ -96,6 +105,7 @@ public class BatchMessageProcessorService {
         this.store = Objects.requireNonNull(store, "store");
         this.adapter = Objects.requireNonNull(adapter, "adapter");
         this.wireShapeDispatcher = Objects.requireNonNull(wireShapeDispatcher, "wireShapeDispatcher");
+        this.eventPublisher = Objects.requireNonNull(eventPublisher, "eventPublisher");
     }
 
     /**
@@ -172,6 +182,7 @@ public class BatchMessageProcessorService {
             log.warn("batch state transition rejected recordId={} reason={}",
                     LogSanitizer.sanitize(recordId), LogSanitizer.sanitize(e.getMessage()));
             // 状态机拒绝 → 本次批量整体失败（即使 failed == 0）。
+            publishForwardEvent(type, transitionNo, records.size(), 0, records.size(), now);
             return new BatchResult(records.size(), 0, records.size(),
                     List.of(new BatchResult.BatchError(0,
                             "state transition rejected: " + e.getMessage())));
@@ -179,7 +190,32 @@ public class BatchMessageProcessorService {
 
         log.debug("batch completed recordId={} success={} failed={}",
                 LogSanitizer.sanitize(recordId), success, failed);
+        publishForwardEvent(type, transitionNo, records.size(), success, failed, now);
         return new BatchResult(records.size(), success, failed, errors);
+    }
+
+    /**
+     * 在批量处理终态发布 {@link BatchForwardProcessedEvent}，供 fep-web 侧 listener
+     * 落库 {@code batch_forward_records}（§6.4.1 非实时业务转发记录表）。
+     *
+     * <p>仅在已建 RECEIVED 记录的非空批量路径调用（早退空返回不发事件）。
+     * {@code finishedAt} 取发布时刻 {@link Instant#now()}。</p>
+     *
+     * @param type         批量报文类型
+     * @param transitionNo 批量流水号（幂等键源）
+     * @param total        总记录数
+     * @param success      成功记录数
+     * @param failed       失败记录数
+     * @param startedAt    批量处理起始时刻
+     */
+    private void publishForwardEvent(final MessageType type,
+                                     final String transitionNo,
+                                     final int total,
+                                     final int success,
+                                     final int failed,
+                                     final Instant startedAt) {
+        eventPublisher.publishEvent(new BatchForwardProcessedEvent(
+                type, transitionNo, total, success, failed, startedAt, Instant.now()));
     }
 
     /**

@@ -3,6 +3,7 @@ package com.puchain.fep.processor.pipeline;
 import com.puchain.fep.converter.model.CfxMessage;
 import com.puchain.fep.converter.model.CommonHead;
 import com.puchain.fep.converter.wire.OutboundWireShapeDispatcher;
+import com.puchain.fep.processor.event.BatchForwardProcessedEvent;
 import com.puchain.fep.processor.state.IllegalMessageStateException;
 import com.puchain.fep.processor.state.MessageProcessStatus;
 import com.puchain.fep.processor.state.MessageProcessStore;
@@ -17,11 +18,13 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -31,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -60,6 +64,7 @@ class BatchMessageProcessorServiceTest {
     @Mock private MessageProcessStore store;
     @Mock private BatchPayloadAdapter adapter;
     @Mock private OutboundWireShapeDispatcher wireShapeDispatcher;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private BatchMessageProcessorService service;
 
@@ -154,8 +159,43 @@ class BatchMessageProcessorServiceTest {
 
     @Test
     void constructor_shouldRejectNullDependency() {
-        assertThatThrownBy(() -> new BatchMessageProcessorService(null, null, null, null, null, null))
+        assertThatThrownBy(() -> new BatchMessageProcessorService(null, null, null, null, null, null, null))
                 .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void process_validBatch_shouldPublishForwardEventWithCounts() {
+        CfxMessage msg = batchOf(stub("ok1"), stub("bad"), stub("ok2"));
+        when(xsdValidator.validate(any(), any()))
+                .thenReturn(ValidationResult.ok())
+                .thenReturn(ValidationResult.failed(List.of("XSD error")))
+                .thenReturn(ValidationResult.ok());
+
+        service.process(msg);
+
+        ArgumentCaptor<BatchForwardProcessedEvent> captor =
+                ArgumentCaptor.forClass(BatchForwardProcessedEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        BatchForwardProcessedEvent event = captor.getValue();
+        assertThat(event.type().msgNo()).isEqualTo("3007");
+        assertThat(event.transitionNo()).isNotBlank();
+        assertThat(event.total()).isEqualTo(3);
+        assertThat(event.success()).isEqualTo(2);
+        assertThat(event.failed()).isEqualTo(1);
+        assertThat(event.startedAt()).isNotNull();
+        assertThat(event.finishedAt()).isNotNull();
+    }
+
+    @Test
+    void process_emptyBatch_shouldNotPublishForwardEvent() {
+        service.process(batchOf());
+        verify(eventPublisher, never()).publishEvent(any(BatchForwardProcessedEvent.class));
+    }
+
+    @Test
+    void process_nullMessage_shouldNotPublishForwardEvent() {
+        service.process(null);
+        verify(eventPublisher, never()).publishEvent(any(BatchForwardProcessedEvent.class));
     }
 
     // ── helpers ─────────────────────────────────────

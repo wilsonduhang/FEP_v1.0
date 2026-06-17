@@ -65,7 +65,7 @@ class BatchMessageProcessorServiceIntegrationTest {
         ruleRegistry = new MessageRuleRegistry();
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(ruleRegistry);
         service = new BatchMessageProcessorService(
-                validator, businessRuleValidator, machine, store, adapter, dispatcher);
+                validator, businessRuleValidator, machine, store, adapter, dispatcher, event -> { });
     }
 
     @Test

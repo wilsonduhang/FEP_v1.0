@@ -61,7 +61,7 @@ class WrapBodyInCfxFixTest {
         BusinessRuleValidator businessRuleValidator =
                 new BusinessRuleValidator(new MessageRuleRegistry());
         service = new BatchMessageProcessorService(
-                validator, businessRuleValidator, machine, store, adapter, dispatcher);
+                validator, businessRuleValidator, machine, store, adapter, dispatcher, event -> { });
     }
 
     @Test
