@@ -7,13 +7,13 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 
+import static com.puchain.fep.web.realtime.WebSocketSessionTestSupport.closedSession;
+import static com.puchain.fep.web.realtime.WebSocketSessionTestSupport.openSession;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link InMemorySessionRegistry} 单元测试：注册/推送/注销/边界。
@@ -25,13 +25,6 @@ class InMemorySessionRegistryTest {
     @BeforeEach
     void setUp() {
         registry = new InMemorySessionRegistry();
-    }
-
-    private WebSocketSession openSession(final String id) {
-        final WebSocketSession s = mock(WebSocketSession.class);
-        when(s.getId()).thenReturn(id);
-        when(s.isOpen()).thenReturn(true);
-        return s;
     }
 
     @Test
@@ -57,9 +50,7 @@ class InMemorySessionRegistryTest {
 
     @Test
     void sendToUser_skipsAndPrunesClosedSession() throws Exception {
-        final WebSocketSession closed = mock(WebSocketSession.class);
-        when(closed.getId()).thenReturn("c");
-        when(closed.isOpen()).thenReturn(false);
+        final WebSocketSession closed = closedSession("c");
         registry.register("user-2", closed);
 
         registry.sendToUser("user-2", "payload");
@@ -125,9 +116,7 @@ class InMemorySessionRegistryTest {
     @Test
     void sendToUser_droppingClosedSession_alsoClearsReverseIndex() {
         // 第一惰性丢弃点：isOpen()==false。
-        final WebSocketSession closed = mock(WebSocketSession.class);
-        when(closed.getId()).thenReturn("s1");
-        when(closed.isOpen()).thenReturn(false);
+        final WebSocketSession closed = closedSession("s1");
         registry.register("user-1", closed);
 
         registry.sendToUser("user-1", "{}"); // 触发 isOpen()==false 丢弃
