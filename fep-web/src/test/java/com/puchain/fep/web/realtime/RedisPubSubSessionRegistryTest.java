@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import static com.puchain.fep.web.realtime.WebSocketSessionTestSupport.openSession;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -16,7 +17,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * {@link RedisPubSubSessionRegistry} 单元测试：发布广播 / onMessage 本地投递 /
@@ -36,13 +36,6 @@ class RedisPubSubSessionRegistryTest {
         redisTemplate = mock(StringRedisTemplate.class);
         objectMapper = new ObjectMapper();
         registry = new RedisPubSubSessionRegistry(local, redisTemplate, objectMapper);
-    }
-
-    private WebSocketSession openSession(final String id) {
-        final WebSocketSession s = mock(WebSocketSession.class);
-        when(s.getId()).thenReturn(id);
-        when(s.isOpen()).thenReturn(true);
-        return s;
     }
 
     @Test
