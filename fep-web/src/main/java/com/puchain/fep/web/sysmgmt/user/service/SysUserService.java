@@ -233,12 +233,9 @@ public class SysUserService {
                 .map(SysUser::getUserId).toList();
         Map<String, List<String>> roleCodesByUserId = roleQueryHelper.batchGetRoleCodes(userIds);
 
-        List<UserResponse> records = page.getContent().stream()
-                .map(u -> UserResponse.from(u,
-                        roleCodesByUserId.getOrDefault(u.getUserId(), List.of())))
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize,
+                u -> UserResponse.from(u,
+                        roleCodesByUserId.getOrDefault(u.getUserId(), List.of())));
     }
 
     /**

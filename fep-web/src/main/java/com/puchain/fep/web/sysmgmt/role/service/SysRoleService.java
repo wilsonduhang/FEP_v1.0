@@ -176,11 +176,7 @@ public class SysRoleService {
             page = roleRepository.findByRoleNameContaining(keyword, pageable);
         }
 
-        List<RoleResponse> records = page.getContent().stream()
-                .map(RoleResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, RoleResponse::from);
     }
 
     /**
