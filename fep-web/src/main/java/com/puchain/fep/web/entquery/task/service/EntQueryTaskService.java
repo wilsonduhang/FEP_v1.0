@@ -179,11 +179,7 @@ public class EntQueryTaskService {
 
         Page<EntQueryTask> page = taskRepository.search(qt, ts, kw, pageable);
 
-        List<QueryTaskResponse> records = page.getContent().stream()
-                .map(QueryTaskResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, QueryTaskResponse::from);
     }
 
     /**

@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 授权书管理服务。
@@ -207,10 +206,6 @@ public class EntAuthLetterService {
 
         Page<EntAuthLetter> page = letterRepository.search(at, ls, kw, pageable);
 
-        List<AuthLetterResponse> records = page.getContent().stream()
-                .map(AuthLetterResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, AuthLetterResponse::from);
     }
 }
