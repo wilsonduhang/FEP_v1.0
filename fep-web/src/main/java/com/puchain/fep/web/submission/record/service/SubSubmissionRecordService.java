@@ -115,12 +115,7 @@ public class SubSubmissionRecordService {
                 keyword, startTime, endTime,
                 PageRequest.of(pageNum - 1, pageSize,
                         Sort.by(Sort.Direction.DESC, "createTime")));
-        return new PageResult<>(
-                page.getContent().stream()
-                        .map(SubmissionRecordResponse::from).toList(),
-                page.getTotalElements(),
-                pageNum,
-                pageSize);
+        return PageResult.from(page, pageNum, pageSize, SubmissionRecordResponse::from);
     }
 
     /**
@@ -215,10 +210,7 @@ public class SubSubmissionRecordService {
                 List.of(PushStatus.PUSHING, PushStatus.FAILED),
                 PageRequest.of(pageNum - 1, pageSize,
                         Sort.by(Sort.Direction.DESC, "createTime")));
-        return new PageResult<>(
-                page.getContent().stream()
-                        .map(SubmissionRecordResponse::from).toList(),
-                page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, SubmissionRecordResponse::from);
     }
 
     /**
@@ -237,12 +229,7 @@ public class SubSubmissionRecordService {
                 messageType,
                 PageRequest.of(pageNum - 1, pageSize,
                         Sort.by(Sort.Direction.DESC, "createTime")));
-        return new PageResult<>(
-                page.getContent().stream()
-                        .map(SubmissionRecordResponse::from).toList(),
-                page.getTotalElements(),
-                pageNum,
-                pageSize);
+        return PageResult.from(page, pageNum, pageSize, SubmissionRecordResponse::from);
     }
 
     /**
