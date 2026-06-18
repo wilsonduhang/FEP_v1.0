@@ -88,12 +88,9 @@ public class SysPushInterfaceService {
         Map<String, String> typeNames = businessTypeRepository.findAllById(typeIds).stream()
                 .collect(Collectors.toMap(SysBusinessType::getTypeId, SysBusinessType::getTypeName));
 
-        List<PushInterfaceResponse> records = page.getContent().stream()
-                .map(e -> PushInterfaceResponse.from(e,
-                        typeNames.getOrDefault(e.getBusinessTypeId(), null)))
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize,
+                e -> PushInterfaceResponse.from(e,
+                        typeNames.getOrDefault(e.getBusinessTypeId(), null)));
     }
 
     /**

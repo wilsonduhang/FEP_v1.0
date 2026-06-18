@@ -18,8 +18,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 /**
  * 输出类型管理服务。
  *
@@ -68,11 +66,7 @@ public class SysOutputTypeService {
             page = outputTypeRepository.findByTypeNameContaining(keyword, pageable);
         }
 
-        List<OutputTypeResponse> records = page.getContent().stream()
-                .map(OutputTypeResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, OutputTypeResponse::from);
     }
 
     /**

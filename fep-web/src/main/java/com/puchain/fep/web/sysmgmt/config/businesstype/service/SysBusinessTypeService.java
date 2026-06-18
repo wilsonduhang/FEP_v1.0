@@ -77,11 +77,7 @@ public class SysBusinessTypeService {
             page = businessTypeRepository.findByTypeNameContaining(keyword, pageable);
         }
 
-        List<BusinessTypeResponse> records = page.getContent().stream()
-                .map(BusinessTypeResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, BusinessTypeResponse::from);
     }
 
     /**
