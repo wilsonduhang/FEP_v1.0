@@ -152,12 +152,7 @@ public class BizMessageRecordService {
                 messageCode, status, direction, startDate, endDate,
                 PageRequest.of(pageNum - 1, pageSize,
                         Sort.by(Sort.Direction.DESC, "createTime")));
-        return new PageResult<>(
-                page.getContent().stream()
-                        .map(RecordResponse::from).toList(),
-                page.getTotalElements(),
-                pageNum,
-                pageSize);
+        return PageResult.from(page, pageNum, pageSize, RecordResponse::from);
     }
 
     /**

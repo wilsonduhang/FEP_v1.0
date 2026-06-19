@@ -81,11 +81,7 @@ public class SubOutputInterfaceService {
         Page<SubOutputInterface> page = outputInterfaceRepository.search(
                 keyword,
                 PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "createTime")));
-        return new PageResult<>(
-                page.getContent().stream().map(OutputInterfaceResponse::from).toList(),
-                page.getTotalElements(),
-                pageNum,
-                pageSize);
+        return PageResult.from(page, pageNum, pageSize, OutputInterfaceResponse::from);
     }
 
     /**

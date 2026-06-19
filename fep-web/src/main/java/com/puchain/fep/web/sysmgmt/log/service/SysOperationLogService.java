@@ -13,7 +13,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 操作日志查询服务。
@@ -70,14 +69,10 @@ public class SysOperationLogService {
                 accountParam, moduleParam, startTime, endTime, traceParam,
                 PageRequest.of(pageNum - 1, pageSize));
 
-        List<OperationLogResponse> records = page.getContent().stream()
-                .map(OperationLogResponse::from)
-                .toList();
-
         log.info("Operation log search: userAccount={}, module={}, total={}",
                 accountParam, moduleParam, page.getTotalElements());
 
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, OperationLogResponse::from);
     }
 
     /**

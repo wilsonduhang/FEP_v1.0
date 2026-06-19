@@ -18,8 +18,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 /**
  * 数据类型管理服务。
  *
@@ -68,11 +66,7 @@ public class SysDataTypeConfigService {
             page = dataTypeConfigRepository.findByTypeNameContaining(keyword, pageable);
         }
 
-        List<DataTypeConfigResponse> records = page.getContent().stream()
-                .map(DataTypeConfigResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, DataTypeConfigResponse::from);
     }
 
     /**

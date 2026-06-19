@@ -125,11 +125,7 @@ public class TlqNodeService {
         Page<TlqNode> page = nodeRepository.findByFilters(
                 role, status,
                 PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "createTime")));
-        return new PageResult<>(
-                page.getContent().stream().map(TlqNodeResponse::fromEntity).toList(),
-                page.getTotalElements(),
-                pageNum,
-                pageSize);
+        return PageResult.from(page, pageNum, pageSize, TlqNodeResponse::fromEntity);
     }
 
     /**

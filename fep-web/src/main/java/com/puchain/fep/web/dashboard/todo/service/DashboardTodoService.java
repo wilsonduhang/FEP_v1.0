@@ -97,11 +97,7 @@ public class DashboardTodoService {
             page = todoRepository.searchByUser(userId, pageable);
         }
 
-        return new PageResult<>(
-                page.getContent().stream().map(TodoResponse::from).toList(),
-                page.getTotalElements(),
-                pageNum,
-                pageSize);
+        return PageResult.from(page, pageNum, pageSize, TodoResponse::from);
     }
 
     /**

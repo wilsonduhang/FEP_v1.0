@@ -91,11 +91,7 @@ public class SysEnterpriseService {
 
         Page<SysEnterprise> page = enterpriseRepository.search(kw, status, pageable);
 
-        List<EnterpriseResponse> records = page.getContent().stream()
-                .map(EnterpriseResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, EnterpriseResponse::from);
     }
 
     /**

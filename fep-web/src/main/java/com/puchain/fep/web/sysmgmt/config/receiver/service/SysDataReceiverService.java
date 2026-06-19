@@ -18,8 +18,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 /**
  * 数据接收方管理服务。
  *
@@ -68,11 +66,7 @@ public class SysDataReceiverService {
             page = receiverRepository.findByReceiverNameContaining(keyword, pageable);
         }
 
-        List<DataReceiverResponse> records = page.getContent().stream()
-                .map(DataReceiverResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, DataReceiverResponse::from);
     }
 
     /**

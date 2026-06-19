@@ -12,7 +12,6 @@ import com.puchain.fep.web.audit.review.dto.ReviewTaskResponse;
 import com.puchain.fep.web.audit.review.repository.MessageReviewTaskRepository;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,10 +129,7 @@ public class MessageReviewTaskService {
         final Page<MessageReviewTaskEntity> page = status == null
                 ? repository.findAll(pageable)
                 : repository.findByReviewStatus(status.name(), pageable);
-        final List<ReviewTaskResponse> records = page.getContent().stream()
-                .map(ReviewTaskResponse::from)
-                .toList();
-        return new PageResult<>(records, page.getTotalElements(), safePage, safeSize);
+        return PageResult.from(page, safePage, safeSize, ReviewTaskResponse::from);
     }
 
     /**

@@ -122,11 +122,8 @@ public class SysMessageService {
                 ? Set.of()
                 : messageReadRepository.findReadMessageIds(userId, messageIds);
 
-        List<MessageResponse> records = page.getContent().stream()
-                .map(m -> MessageResponse.from(m, readIds.contains(m.getMessageId())))
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize,
+                m -> MessageResponse.from(m, readIds.contains(m.getMessageId())));
     }
 
     /**
@@ -141,11 +138,8 @@ public class SysMessageService {
                 Sort.by("createTime").descending());
         Page<SysMessage> page = messageRepository.findByMessageStatus(MessageStatus.NORMAL, pageable);
 
-        List<MessageResponse> records = page.getContent().stream()
-                .map(m -> MessageResponse.from(m, false))
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize,
+                m -> MessageResponse.from(m, false));
     }
 
     /**

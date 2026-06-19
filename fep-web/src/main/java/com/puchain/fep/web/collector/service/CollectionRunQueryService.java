@@ -97,11 +97,8 @@ public class CollectionRunQueryService {
                 DEFAULT_SORT);
         final Specification<CollectionRunEntity> spec = buildSpecification(req);
         final Page<CollectionRunEntity> page = repository.findAll(spec, pageable);
-        final List<CollectionRunResponse> records = page.getContent().stream()
-                .map(CollectionRunResponse::from)
-                .toList();
-        return new PageResult<>(records, page.getTotalElements(),
-                req.getPageNum(), req.getPageSize());
+        return PageResult.from(page, req.getPageNum(), req.getPageSize(),
+                CollectionRunResponse::from);
     }
 
     /**

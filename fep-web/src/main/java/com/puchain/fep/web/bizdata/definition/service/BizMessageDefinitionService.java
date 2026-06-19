@@ -74,11 +74,7 @@ public class BizMessageDefinitionService {
                 PageRequest.of(pageNum - 1, pageSize,
                         Sort.by("sortOrder").ascending()
                                 .and(Sort.by("createTime").descending())));
-        return new PageResult<>(
-                page.getContent().stream().map(DefinitionResponse::from).toList(),
-                page.getTotalElements(),
-                pageNum,
-                pageSize);
+        return PageResult.from(page, pageNum, pageSize, DefinitionResponse::from);
     }
 
     /**

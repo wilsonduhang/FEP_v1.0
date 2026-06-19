@@ -70,11 +70,7 @@ public class SubBusinessSceneService {
                 keyword,
                 businessTypeId,
                 PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.ASC, "sortOrder")));
-        return new PageResult<>(
-                page.getContent().stream().map(SceneResponse::from).toList(),
-                page.getTotalElements(),
-                pageNum,
-                pageSize);
+        return PageResult.from(page, pageNum, pageSize, SceneResponse::from);
     }
 
     /**

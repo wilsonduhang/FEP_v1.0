@@ -143,11 +143,7 @@ public class DownloadTaskService {
         Page<SysDownloadTask> page = taskRepository.findByRequesterIdOrderByCreateTimeDesc(
                 requesterId, PageRequest.of(pageNum - 1, pageSize));
 
-        List<DownloadTaskResponse> records = page.getContent().stream()
-                .map(DownloadTaskResponse::from)
-                .toList();
-
-        return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
+        return PageResult.from(page, pageNum, pageSize, DownloadTaskResponse::from);
     }
 
     /**
