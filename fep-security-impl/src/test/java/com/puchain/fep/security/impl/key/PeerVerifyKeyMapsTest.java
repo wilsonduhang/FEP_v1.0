@@ -91,7 +91,11 @@ class PeerVerifyKeyMapsTest {
     void decodedCopy_returnedMapIsUnmodifiable() {
         final Map<String, List<byte[]>> copy =
                 PeerVerifyKeyMaps.decodedCopy(Map.of("N1", List.of(PUB)));
+        // 外层 Map 不可变（Map.copyOf）
         assertThatThrownBy(() -> copy.remove("N1"))
+                .isInstanceOf(UnsupportedOperationException.class);
+        // 内层 List<byte[]> 亦不可变（decodedCopy 经 stream .toList()，DEF-DRAIN-1：锁定不变量）
+        assertThatThrownBy(() -> copy.get("N1").add(new byte[0]))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 }
