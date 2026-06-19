@@ -71,6 +71,31 @@ class PageResultTest {
     }
 
     @Test
+    void fromNullPageShouldThrowNpe() {
+        assertThrows(NullPointerException.class,
+                () -> PageResult.from(null, 1, 10, String::length));
+    }
+
+    @Test
+    void fromIdentityOverloadShouldPreservePagingWithoutMapper() {
+        Page<String> page = new PageImpl<>(
+                List.of("a", "b"),
+                PageRequest.of(0, 10),
+                23L);
+        PageResult<String> r = PageResult.from(page, 1, 10);
+        assertEquals(List.of("a", "b"), r.getRecords());
+        assertEquals(23L, r.getTotal());
+        assertEquals(1, r.getPageNum());
+        assertEquals(10, r.getPageSize());
+        assertEquals(3, r.getTotalPages());
+    }
+
+    @Test
+    void fromIdentityOverloadNullPageShouldThrowNpe() {
+        assertThrows(NullPointerException.class, () -> PageResult.from(null, 1, 10));
+    }
+
+    @Test
     void errorCodeDefaultMessageShouldBeRetrievable() {
         assertEquals("成功", FepErrorCode.SUCCESS.getDefaultMessage());
         assertEquals("PARAM_4001", FepErrorCode.PARAM_4001.getCode());
