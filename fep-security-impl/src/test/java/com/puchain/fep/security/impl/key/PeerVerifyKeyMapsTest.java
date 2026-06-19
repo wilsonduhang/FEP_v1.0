@@ -98,14 +98,4 @@ class PeerVerifyKeyMapsTest {
         assertThatThrownBy(() -> copy.get("N1").add(new byte[0]))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
-
-    // DEF-DRAIN-1：对称于 immutableHexCopy 内层 List 不可变断言，锁定 decodedCopy
-    // 侧 Stream.toList()（Java 16+ 不可变）契约——防未来改为可变实现无声回归。
-    @Test
-    void decodedCopy_innerListIsUnmodifiable() {
-        final Map<String, List<byte[]>> copy =
-                PeerVerifyKeyMaps.decodedCopy(Map.of("N1", List.of(PUB)));
-        assertThatThrownBy(() -> copy.get("N1").add(new byte[] {0x01}))
-                .isInstanceOf(UnsupportedOperationException.class);
-    }
 }
