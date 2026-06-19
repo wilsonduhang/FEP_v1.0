@@ -79,6 +79,26 @@ public class PageResult<T> {
         return new PageResult<>(records, page.getTotalElements(), pageNum, pageSize);
     }
 
+    /**
+     * 由已是目标记录类型的 Spring Data {@link Page} 构造分页响应（恒等映射，无需 mapper）。
+     *
+     * <p>适用于 service 已返回 {@code Page<T>}（{@code T} 即响应 DTO）的站点，
+     * 避免调用方书写 {@code Function.identity()} 样板。语义等同
+     * {@link #from(Page, int, int, Function)} 传入恒等函数。</p>
+     *
+     * @param page     Spring Data 分页结果（内容已是目标记录类型）
+     * @param pageNum  当前页码（1-based，调用方语义）
+     * @param pageSize 每页大小
+     * @param <T>      记录类型
+     * @return 分页响应
+     */
+    public static <T> PageResult<T> from(
+            final Page<T> page,
+            final int pageNum,
+            final int pageSize) {
+        return from(page, pageNum, pageSize, Function.identity());
+    }
+
     public List<T> getRecords() {
         return Collections.unmodifiableList(records);
     }

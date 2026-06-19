@@ -22,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.function.Function;
-
 /**
  * TLQ 连通性测试 REST Controller。
  *
@@ -90,7 +88,7 @@ public class TlqConnectivityController {
             @Parameter(description = "每页条数")
             @RequestParam(defaultValue = "20") final int size) {
         Page<ConnectivityRecordResponse> result = connectivityService.listRecords(nodeId, page + 1, size);
-        return ApiResult.success(PageResult.from(result, page + 1, size, Function.identity()));
+        return ApiResult.success(PageResult.from(result, page + 1, size));
     }
 
     /**
