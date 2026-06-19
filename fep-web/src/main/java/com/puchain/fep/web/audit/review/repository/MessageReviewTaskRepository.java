@@ -32,4 +32,12 @@ public interface MessageReviewTaskRepository
      * @return matching task or empty
      */
     Optional<MessageReviewTaskEntity> findByMessageRecordId(String messageRecordId);
+
+    /**
+     * Count review tasks in the given status (backs the pending-count gauge).
+     *
+     * @param reviewStatus {@link com.puchain.fep.web.audit.review.domain.ReviewStatus} name
+     * @return row count in that status
+     */
+    long countByReviewStatus(String reviewStatus);
 }

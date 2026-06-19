@@ -9,8 +9,10 @@ import com.puchain.fep.web.audit.review.config.ReviewWorkflowProperties;
 import com.puchain.fep.web.audit.review.domain.MessageReviewTaskEntity;
 import com.puchain.fep.web.audit.review.domain.ReviewStatus;
 import com.puchain.fep.web.audit.review.dto.ReviewTaskResponse;
+import com.puchain.fep.web.audit.review.metrics.AuditReviewMetrics;
 import com.puchain.fep.web.audit.review.repository.MessageReviewTaskRepository;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -45,20 +47,31 @@ public class MessageReviewTaskService {
 
     private final MessageReviewTaskRepository repository;
     private final ReviewWorkflowProperties properties;
+    private final AuditReviewMetrics metrics;
 
     /**
-     * 构造注入仓储与工作流配置。
+     * 构造注入仓储、工作流配置与审核 telemetry 门面。
      *
      * @param repository 审核任务仓储，非空
      * @param properties 审核工作流配置（层级数），非空
+     * @param metrics    审核 telemetry 门面（决策计数 + 待审 gauge），非空
      */
     @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-            justification = "Spring-injected singleton config bean (ReviewWorkflowProperties); "
-                    + "shared reference is intentional DI, not external mutable state")
+            justification = "Spring-injected singleton beans (ReviewWorkflowProperties / AuditReviewMetrics); "
+                    + "shared references are intentional DI, not external mutable state")
     public MessageReviewTaskService(final MessageReviewTaskRepository repository,
-                                    final ReviewWorkflowProperties properties) {
+                                    final ReviewWorkflowProperties properties,
+                                    final AuditReviewMetrics metrics) {
         this.repository = repository;
         this.properties = properties;
+        this.metrics = metrics;
+    }
+
+    /** 注册待审核任务数 gauge（单例初始化时一次）。 */
+    @PostConstruct
+    void registerMetrics() {
+        metrics.registerPendingGauge(
+                () -> repository.countByReviewStatus(ReviewStatus.PENDING.name()));
     }
 
     /**
@@ -160,7 +173,8 @@ public class MessageReviewTaskService {
     public void approve(final String reviewId, final String reviewerId, final String comment) {
         Objects.requireNonNull(reviewerId, "reviewerId");
         final MessageReviewTaskEntity t = loadPending(reviewId);
-        if (t.getCurrentLevel() >= t.getReviewLevel()) {
+        final boolean terminal = t.getCurrentLevel() >= t.getReviewLevel();
+        if (terminal) {
             t.setReviewStatus(ReviewStatus.APPROVED.name());
             t.setReviewerId(reviewerId);
             t.setReviewComment(comment);
@@ -170,6 +184,10 @@ public class MessageReviewTaskService {
             t.setReviewerId(reviewerId);
         }
         repository.save(t);
+        if (terminal) {
+            // 仅终态（最后一级通过）计数；逐级推进不计为决策
+            metrics.recordDecision(ReviewStatus.APPROVED.name());
+        }
     }
 
     /**
@@ -193,6 +211,7 @@ public class MessageReviewTaskService {
         t.setReviewComment(reason);
         t.setReviewedAt(Instant.now().toEpochMilli());
         repository.save(t);
+        metrics.recordDecision(ReviewStatus.REJECTED.name());
     }
 
     private MessageReviewTaskEntity loadPending(final String reviewId) {

@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -79,5 +80,37 @@ class MessageReviewTaskRepositoryTest {
         repository.saveAndFlush(newPending("rec-dup", "txn-a"));
         assertThatThrownBy(() -> repository.saveAndFlush(newPending("rec-dup", "txn-b")))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /**
+     * 回归锚（非 TDD RED）：V43 复合索引 {@code (review_status, created_at)} 加固后，
+     * 审核队列查询 {@code WHERE review_status=? ORDER BY created_at DESC} 的语义不变——
+     * 仍按状态过滤 + 创建时间倒序，排除其他状态。索引是性能加固，行为等价。
+     */
+    @Test
+    void findByReviewStatus_orderedByCreatedAtDesc_returnsNewestFirst() {
+        repository.save(newTaskAt("rec-a", ReviewStatus.PENDING.name(), 1000L));
+        repository.save(newTaskAt("rec-b", ReviewStatus.PENDING.name(), 3000L));
+        repository.save(newTaskAt("rec-c", ReviewStatus.PENDING.name(), 2000L));
+        repository.save(newTaskAt("rec-d", ReviewStatus.APPROVED.name(), 9000L));
+        entityManager.flush();
+        entityManager.clear();
+
+        final Page<MessageReviewTaskEntity> page = repository.findByReviewStatus(
+                ReviewStatus.PENDING.name(),
+                PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt")));
+
+        assertThat(page.getTotalElements()).isEqualTo(3);
+        assertThat(page.getContent()).extracting(MessageReviewTaskEntity::getMessageRecordId)
+                .containsExactly("rec-b", "rec-c", "rec-a"); // 3000 > 2000 > 1000；APPROVED 排除
+    }
+
+    private static MessageReviewTaskEntity newTaskAt(final String recordId,
+                                                     final String status,
+                                                     final long createdAt) {
+        final MessageReviewTaskEntity t = newPending(recordId, recordId);
+        t.setReviewStatus(status);
+        t.setCreatedAt(createdAt);
+        return t;
     }
 }
