@@ -2,6 +2,7 @@ package com.puchain.fep.web.sysmgmt.download.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.web.sysmgmt.download.domain.SysDownloadTask;
@@ -12,7 +13,6 @@ import com.puchain.fep.web.sysmgmt.download.repository.SysDownloadTaskRepository
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -141,7 +141,7 @@ public class DownloadTaskService {
                                                      final int pageNum,
                                                      final int pageSize) {
         Page<SysDownloadTask> page = taskRepository.findByRequesterIdOrderByCreateTimeDesc(
-                requesterId, PageRequest.of(pageNum - 1, pageSize));
+                requesterId, PaginationHelper.pageable(pageNum, pageSize));
 
         return PageResult.from(page, pageNum, pageSize, DownloadTaskResponse::from);
     }

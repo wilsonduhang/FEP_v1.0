@@ -2,6 +2,7 @@ package com.puchain.fep.web.sysmgmt.message.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.web.sysmgmt.message.domain.MessageStatus;
@@ -16,7 +17,6 @@ import com.puchain.fep.web.sysmgmt.rel.repository.SysUserRoleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -112,7 +112,7 @@ public class SysMessageService {
                                                    final int pageNum,
                                                    final int pageSize) {
         List<String> roleIds = resolveRoleIds(userId);
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize);
+        Pageable pageable = PaginationHelper.pageable(pageNum, pageSize);
         Page<SysMessage> page = messageRepository.findVisibleMessages(userId, roleIds, pageable);
 
         List<String> messageIds = page.getContent().stream()
@@ -134,7 +134,7 @@ public class SysMessageService {
      * @return 分页消息列表（isRead 固定为 false，管理视图不展示已读状态）
      */
     public PageResult<MessageResponse> adminList(final int pageNum, final int pageSize) {
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize,
+        Pageable pageable = PaginationHelper.pageable(pageNum, pageSize,
                 Sort.by("createTime").descending());
         Page<SysMessage> page = messageRepository.findByMessageStatus(MessageStatus.NORMAL, pageable);
 

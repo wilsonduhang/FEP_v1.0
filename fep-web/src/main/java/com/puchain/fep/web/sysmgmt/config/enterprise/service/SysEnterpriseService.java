@@ -2,6 +2,7 @@ package com.puchain.fep.web.sysmgmt.config.enterprise.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.web.sysmgmt.config.businesstype.repository.SysBusinessTypeRepository;
@@ -21,7 +22,6 @@ import com.puchain.fep.web.sysmgmt.config.enterprise.repository.SysEnterpriseRep
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -83,7 +83,7 @@ public class SysEnterpriseService {
                                                  final String auditStatus,
                                                  final int pageNum,
                                                  final int pageSize) {
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize,
+        Pageable pageable = PaginationHelper.pageable(pageNum, pageSize,
                 Sort.by("createTime").descending());
 
         String kw = (keyword == null || keyword.isBlank()) ? null : keyword;
