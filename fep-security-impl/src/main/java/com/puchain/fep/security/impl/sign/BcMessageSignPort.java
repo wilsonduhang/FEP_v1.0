@@ -23,6 +23,7 @@ import java.util.Objects;
  *
  * @author FEP Team
  * @since 1.0.0
+ * @see "docs/decisions/2026-06-12-s2b-sm2-message-signing-form-decision-gate.md（形态 C-ev 决策门）"
  */
 public class BcMessageSignPort implements MessageSignPort {
 

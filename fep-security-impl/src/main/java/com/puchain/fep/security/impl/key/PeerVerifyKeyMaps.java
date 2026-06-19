@@ -55,6 +55,15 @@ public final class PeerVerifyKeyMaps {
                 .toList());
     }
 
+    /**
+     * 共享深拷贝骨架：迭代源 Map，逐值经 {@code valueMapper} 映射后装入新 Map 再不可变化。
+     * 源 Map 中 null 值条目转为空列表，但<strong>键保留</strong>（不丢键，下游按 srcNode get 行为一致）。
+     *
+     * @param source      live 配置 map（值可为 null），非 null
+     * @param valueMapper 列表值映射函数（hex 列表 → 目标形态），非 null
+     * @param <V>         目标值类型（{@code List<String>} 或 {@code List<byte[]>}）
+     * @return 外层 Map 与内层 List 均不可变的深拷贝
+     */
     private static <V> Map<String, V> copy(final Map<String, List<String>> source,
             final Function<List<String>, V> valueMapper) {
         final Map<String, V> result = new LinkedHashMap<>();

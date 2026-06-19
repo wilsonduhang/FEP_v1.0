@@ -93,5 +93,8 @@ class PeerVerifyKeyMapsTest {
                 PeerVerifyKeyMaps.decodedCopy(Map.of("N1", List.of(PUB)));
         assertThatThrownBy(() -> copy.remove("N1"))
                 .isInstanceOf(UnsupportedOperationException.class);
+        // 内层 byte[] 列表亦不可变（toList() 保证），与 immutableHexCopy 路径对称
+        assertThatThrownBy(() -> copy.get("N1").add(new byte[0]))
+                .isInstanceOf(UnsupportedOperationException.class);
     }
 }
