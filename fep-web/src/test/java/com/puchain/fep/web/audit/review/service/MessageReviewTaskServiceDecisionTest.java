@@ -9,6 +9,7 @@ import com.puchain.fep.web.audit.review.domain.MessageReviewTaskEntity;
 import com.puchain.fep.web.audit.review.domain.ReviewStatus;
 import com.puchain.fep.web.audit.review.dto.ReviewTaskResponse;
 import com.puchain.fep.web.audit.review.repository.MessageReviewTaskRepository;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,10 +33,23 @@ class MessageReviewTaskServiceDecisionTest {
     @Autowired
     private MessageReviewTaskRepository repository;
 
+    @Autowired
+    private MeterRegistry meterRegistry;
+
     @BeforeEach
     @AfterEach
     void cleanup() {
         repository.deleteAll();
+    }
+
+    /**
+     * 决策计数差值（共享 registry 跨测试累加，禁绝对值断言，MINOR-1）。
+     *
+     * @param decision APPROVED / REJECTED tag
+     * @return 当前计数
+     */
+    private double decisionCount(final String decision) {
+        return meterRegistry.counter("fep_audit_review_decision_total", "decision", decision).count();
     }
 
     private String createPending(final String recordId) {
@@ -46,6 +60,7 @@ class MessageReviewTaskServiceDecisionTest {
     @Test
     void approve_singleLevel_marksApproved() {
         final String id = createPending("rec-a1");
+        final double before = decisionCount(ReviewStatus.APPROVED.name());
 
         service.approve(id, "reviewer-1", "looks fine");
 
@@ -55,11 +70,14 @@ class MessageReviewTaskServiceDecisionTest {
         assertThat(t.getReviewComment()).isEqualTo("looks fine");
         assertThat(t.getReviewedAt()).isNotNull();
         assertThat(t.getCurrentLevel()).isEqualTo(t.getReviewLevel());
+        // 终态通过打点 +1（差值，避共享 registry flaky）
+        assertThat(decisionCount(ReviewStatus.APPROVED.name()) - before).isEqualTo(1.0);
     }
 
     @Test
     void reject_marksRejectedWithReason() {
         final String id = createPending("rec-a2");
+        final double before = decisionCount(ReviewStatus.REJECTED.name());
 
         service.reject(id, "reviewer-2", "amount out of range");
 
@@ -67,6 +85,8 @@ class MessageReviewTaskServiceDecisionTest {
         assertThat(t.getReviewStatus()).isEqualTo(ReviewStatus.REJECTED.name());
         assertThat(t.getReviewComment()).isEqualTo("amount out of range");
         assertThat(t.getReviewedAt()).isNotNull();
+        // 驳回打点 +1（差值）
+        assertThat(decisionCount(ReviewStatus.REJECTED.name()) - before).isEqualTo(1.0);
     }
 
     @Test
