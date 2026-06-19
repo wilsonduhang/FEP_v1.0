@@ -16,6 +16,12 @@ import java.util.function.Function;
  * 消除每次 {@code verify} 的 hex 解析（EFF-1/5）。骨架（迭代 + null 列表归空 +
  * 不可变化）共享，逐元素映射函数不同。</p>
  *
+ * <p><strong>null 值列表语义</strong>：源 map 中 value 为 {@code null} 的键<strong>被保留</strong>
+ * （key 不丢弃），其 value 归一为空列表 {@code List.of()}，而非将该 srcNode 条目整体剔除。</p>
+ *
+ * <p>报文签验落地形态见 ADR {@code 2026-06-12 §0.3 决策门 — SM2 报文签验落地形态}
+ * （形态 C-演进式：{@code MessageSignPort} + 进程内 BC 先行 + 外部 1818 适配缝预留）。</p>
+ *
  * @author FEP Team
  * @since 1.0.0
  */
