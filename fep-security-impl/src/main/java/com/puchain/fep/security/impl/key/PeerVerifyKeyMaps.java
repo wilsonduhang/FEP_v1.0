@@ -25,7 +25,7 @@ public final class PeerVerifyKeyMaps {
     }
 
     /**
-     * SrcNode → 对端公钥 hex 列表的不可变深拷贝（null 列表 → 空列表）。
+     * SrcNode → 对端公钥 hex 列表的不可变深拷贝（源 null 列表值 → 空列表，SrcNode 键保留）。
      * 校验侧用（{@link KeyServiceImpl#validateOnStartup()} 读 hex 验曲线点）。
      *
      * @param source live 配置 map（可含 null 列表值），非 null
@@ -45,6 +45,8 @@ public final class PeerVerifyKeyMaps {
      * fail-fast 保证（keyService bean 的 {@code @PostConstruct} 在依赖它的
      * BcMessageSignPort 构造前完成）。</p>
      *
+     * <p>源 null 列表值 → 空 byte[] 列表，SrcNode 键保留（与 {@link #immutableHexCopy} 同形）。</p>
+     *
      * @param source live 配置 map（可含 null 列表值），非 null
      * @return SrcNode → 解码后 byte[] 列表的不可变 map
      */
@@ -55,6 +57,16 @@ public final class PeerVerifyKeyMaps {
                 .toList());
     }
 
+    /**
+     * 共享深拷贝骨架：迭代源 map，对每个 SrcNode 经 {@code valueMapper} 映射其 hex 列表。
+     * 源 null 列表值归一为空列表（{@code List.of()}）后再映射，但 SrcNode 键始终保留；
+     * 外层 {@code Map.copyOf} 使返回 map 不可变（{@code valueMapper} 负责内层不可变）。
+     *
+     * @param source      live 配置 map（可含 null 列表值），非 null
+     * @param valueMapper 逐 SrcNode 的 hex 列表 → 目标值映射（须产出不可变值）
+     * @param <V>         目标值类型（{@code List<String>} 或 {@code List<byte[]>}）
+     * @return SrcNode → 映射值的不可变 map
+     */
     private static <V> Map<String, V> copy(final Map<String, List<String>> source,
             final Function<List<String>, V> valueMapper) {
         final Map<String, V> result = new LinkedHashMap<>();

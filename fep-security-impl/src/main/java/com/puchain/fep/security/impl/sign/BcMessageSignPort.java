@@ -11,7 +11,7 @@ import java.util.Objects;
 
 /**
  * {@link MessageSignPort} B 形态实现（进程内 BouncyCastle，{@code provider=impl} 门控；
- * 形态 C-ev，ADR 2026-06-12）。
+ * 形态 C-ev，ADR {@code docs/decisions/2026-06-12-s2b-sm2-message-signing-form-decision-gate.md}）。
  *
  * <p><strong>负责</strong>：报文签名私钥经 {@link KeyService#getSignPrivateKey()} 单源取
  * （v0.2 MAJOR-4，消除双取钥 drift）+ 按 SrcNode 路由对端验签公钥（list 化 try-each 抗轮换）
@@ -19,7 +19,7 @@ import java.util.Objects;
  *
  * <p><strong>不负责</strong>：签名范围/注释语义（converter 协议层）；SM2 算法（SignService）；
  * 私钥/对端公钥校验加载（{@code KeyServiceImpl} 启动校验）。无 Spring stereotype，经
- * {@code GmSecurityConfiguration} {@code @Bean} 注册。</p>
+ * {@link com.puchain.fep.security.impl.GmSecurityConfiguration} {@code @Bean} 注册。</p>
  *
  * @author FEP Team
  * @since 1.0.0
