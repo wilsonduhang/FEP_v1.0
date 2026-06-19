@@ -2,6 +2,7 @@ package com.puchain.fep.web.dashboard.todo.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
@@ -13,7 +14,7 @@ import com.puchain.fep.web.dashboard.todo.repository.DashboardTodoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,7 +89,7 @@ public class DashboardTodoService {
         // 排序固定在 DashboardTodoRepository 的 JPQL ORDER BY（priority ASC,
         // deadline ASC NULLS LAST, createTime DESC）。不能用 Pageable 的 Sort 携带
         // nullsLast：Hibernate 6.6 起 Criteria API 不支持 null precedence。
-        PageRequest pageable = PageRequest.of(pageNum - 1, pageSize);
+        Pageable pageable = PaginationHelper.pageable(pageNum, pageSize);
 
         Page<DashboardTodo> page;
         if (status != null) {

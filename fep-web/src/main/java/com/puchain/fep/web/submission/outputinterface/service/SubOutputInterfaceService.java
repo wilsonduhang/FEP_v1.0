@@ -3,6 +3,7 @@ package com.puchain.fep.web.submission.outputinterface.service;
 import com.puchain.fep.common.domain.EnableDisableStatus;
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
@@ -14,7 +15,6 @@ import com.puchain.fep.web.sysmgmt.config.businesstype.repository.SysBusinessTyp
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,7 +80,7 @@ public class SubOutputInterfaceService {
                                                        final int pageSize) {
         Page<SubOutputInterface> page = outputInterfaceRepository.search(
                 keyword,
-                PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "createTime")));
+                PaginationHelper.pageable(pageNum, pageSize, Sort.by(Sort.Direction.DESC, "createTime")));
         return PageResult.from(page, pageNum, pageSize, OutputInterfaceResponse::from);
     }
 
