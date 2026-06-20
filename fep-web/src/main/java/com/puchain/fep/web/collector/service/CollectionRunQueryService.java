@@ -2,6 +2,7 @@ package com.puchain.fep.web.collector.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.collector.CollectionRunEntity;
 import com.puchain.fep.web.collector.CollectionRunRepository;
@@ -9,7 +10,6 @@ import com.puchain.fep.web.collector.dto.CollectionRunQueryRequest;
 import com.puchain.fep.web.collector.dto.CollectionRunResponse;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -72,9 +72,8 @@ public class CollectionRunQueryService {
      * Pages collection runs filtered by the optional fields on {@code req}.
      *
      * <p>Pagination contract: {@code pageNum} is 1-based (project convention,
-     * see {@link com.puchain.fep.common.domain.PageQuery}); this method
-     * translates to 0-based {@link PageRequest#of(int, int, Sort)} inline
-     * (mirrors {@code ReconciliationQueryService.search} line ~99).</p>
+     * see {@link com.puchain.fep.common.domain.PageQuery}); converted to a
+     * 0-based {@link PaginationHelper#pageable(int, int, Sort)}.</p>
      *
      * @param req query request, non-null; null-safe filters
      * @return paged response wrapping {@link CollectionRunResponse} content
@@ -91,8 +90,8 @@ public class CollectionRunQueryService {
                     FepErrorCode.PARAM_4002,
                     "from must be <= to (inverted range)");
         }
-        final Pageable pageable = PageRequest.of(
-                req.getPageNum() - 1,
+        final Pageable pageable = PaginationHelper.pageable(
+                req.getPageNum(),
                 req.getPageSize(),
                 DEFAULT_SORT);
         final Specification<CollectionRunEntity> spec = buildSpecification(req);

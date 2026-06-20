@@ -2,6 +2,7 @@ package com.puchain.fep.web.bizdata.record.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
@@ -17,7 +18,6 @@ import com.puchain.fep.web.bizdata.record.repository.BizMessageRecordRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -150,7 +150,7 @@ public class BizMessageRecordService {
             final int pageSize) {
         Page<BizMessageRecord> page = recordRepository.search(
                 messageCode, status, direction, startDate, endDate,
-                PageRequest.of(pageNum - 1, pageSize,
+                PaginationHelper.pageable(pageNum, pageSize,
                         Sort.by(Sort.Direction.DESC, "createTime")));
         return PageResult.from(page, pageNum, pageSize, RecordResponse::from);
     }

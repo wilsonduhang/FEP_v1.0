@@ -2,6 +2,7 @@ package com.puchain.fep.web.submission.record.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.web.submission.record.domain.EntryMethod;
@@ -13,7 +14,6 @@ import com.puchain.fep.web.submission.record.repository.SubSubmissionRecordRepos
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,7 +113,7 @@ public class SubSubmissionRecordService {
             final int pageSize) {
         Page<SubSubmissionRecord> page = recordRepository.search(
                 keyword, startTime, endTime,
-                PageRequest.of(pageNum - 1, pageSize,
+                PaginationHelper.pageable(pageNum, pageSize,
                         Sort.by(Sort.Direction.DESC, "createTime")));
         return PageResult.from(page, pageNum, pageSize, SubmissionRecordResponse::from);
     }
@@ -208,7 +208,7 @@ public class SubSubmissionRecordService {
             final int pageNum, final int pageSize) {
         Page<SubSubmissionRecord> page = recordRepository.findByPushStatusIn(
                 List.of(PushStatus.PUSHING, PushStatus.FAILED),
-                PageRequest.of(pageNum - 1, pageSize,
+                PaginationHelper.pageable(pageNum, pageSize,
                         Sort.by(Sort.Direction.DESC, "createTime")));
         return PageResult.from(page, pageNum, pageSize, SubmissionRecordResponse::from);
     }
@@ -227,7 +227,7 @@ public class SubSubmissionRecordService {
             final int pageSize) {
         Page<SubSubmissionRecord> page = recordRepository.findByMessageType(
                 messageType,
-                PageRequest.of(pageNum - 1, pageSize,
+                PaginationHelper.pageable(pageNum, pageSize,
                         Sort.by(Sort.Direction.DESC, "createTime")));
         return PageResult.from(page, pageNum, pageSize, SubmissionRecordResponse::from);
     }

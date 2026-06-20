@@ -2,6 +2,7 @@ package com.puchain.fep.web.sysmgmt.log.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.web.sysmgmt.log.domain.SysOperationLog;
 import com.puchain.fep.web.sysmgmt.log.dto.OperationLogResponse;
@@ -9,7 +10,6 @@ import com.puchain.fep.web.sysmgmt.log.repository.SysOperationLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -67,7 +67,7 @@ public class SysOperationLogService {
 
         Page<SysOperationLog> page = logRepository.search(
                 accountParam, moduleParam, startTime, endTime, traceParam,
-                PageRequest.of(pageNum - 1, pageSize));
+                PaginationHelper.pageable(pageNum, pageSize));
 
         log.info("Operation log search: userAccount={}, module={}, total={}",
                 accountParam, moduleParam, page.getTotalElements());

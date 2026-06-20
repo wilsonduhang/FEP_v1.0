@@ -1,6 +1,7 @@
 package com.puchain.fep.web.tlq.connectivity.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
@@ -16,7 +17,7 @@ import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -127,7 +128,7 @@ public class TlqConnectivityService {
                                                          final int pageNum,
                                                          final int pageSize) {
         validateNodeExists(nodeId);
-        PageRequest pageable = PageRequest.of(pageNum - 1, pageSize);
+        Pageable pageable = PaginationHelper.pageable(pageNum, pageSize);
         return recordRepository.findByNodeIdOrderByTestTimeDesc(nodeId, pageable)
                 .map(ConnectivityRecordResponse::fromEntity);
     }
