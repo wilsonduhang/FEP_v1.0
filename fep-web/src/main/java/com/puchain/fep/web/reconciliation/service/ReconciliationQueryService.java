@@ -1,5 +1,6 @@
 package com.puchain.fep.web.reconciliation.service;
 
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.processor.reconciliation.ReconciliationRecord;
 import com.puchain.fep.web.integration.reconciliation.ReconciliationRecordEntity;
 import com.puchain.fep.web.integration.reconciliation.ReconciliationRecordRepository;
@@ -94,9 +95,7 @@ public class ReconciliationQueryService {
     @Transactional(readOnly = true)
     public PagedResult search(final LocalDate date, final String messageType,
                               final String status, final int pageNum, final int pageSize) {
-        final int safePage = Math.max(1, pageNum) - 1;
-        final int safeSize = Math.max(1, pageSize);
-        final Pageable pageable = PageRequest.of(safePage, safeSize, DEFAULT_SORT);
+        final Pageable pageable = PaginationHelper.safePageable(pageNum, pageSize, DEFAULT_SORT);
 
         final Page<ReconciliationRecordEntity> page;
         if (date != null) {
