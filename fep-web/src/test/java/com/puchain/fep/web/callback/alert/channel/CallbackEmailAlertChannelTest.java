@@ -51,7 +51,7 @@ class CallbackEmailAlertChannelTest {
     }
 
     private CallbackAlertMessage msg(final String email) {
-        return new CallbackAlertMessage("ERROR", "回调死信 - IF-1", "queueId=q1",
+        return new CallbackAlertMessage("CALLBACK_DLQ", "ERROR", "回调死信 - IF-1", "queueId=q1",
                 "q1", "CALLBACK_DLQ_ENTRY", email, null);
     }
 
