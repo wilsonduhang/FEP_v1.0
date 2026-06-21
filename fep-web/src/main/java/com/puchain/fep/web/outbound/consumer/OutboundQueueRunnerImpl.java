@@ -7,11 +7,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
 import com.puchain.fep.web.outbound.consumer.OutboundTlqSender.OutboundSendOutcome;
+import com.puchain.fep.web.outbound.event.TlqOutboundDeadLetterEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -56,9 +59,10 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
     private final OutboundTlqSender tlqSender;
     private final OutboundStatusWriterService statusWriter;
     private final OutboundMetrics metrics;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * 构造注入 6 项依赖。
+     * 构造注入 7 项依赖。
      *
      * @param repository      outbound queue Repository（findById；写入由 statusWriter 承担）
      * @param envelopeBuilder CFX envelope 组装器（T4）
@@ -66,6 +70,7 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
      * @param tlqSender       TLQ BATCH_SEND 推送（T6）
      * @param statusWriter    状态机回写 @Service（B1 拆出，独立 @Transactional 边界）
      * @param metrics         Counter / Timer telemetry（T8）
+     * @param eventPublisher  应用事件发布器（B-9：DEAD_LETTER 终态 → {@link TlqOutboundDeadLetterEvent}）
      */
     public OutboundQueueRunnerImpl(
             final OutboundQueueRepository repository,
@@ -73,13 +78,15 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
             final OutboundSignAdapter signAdapter,
             final OutboundTlqSender tlqSender,
             final OutboundStatusWriterService statusWriter,
-            final OutboundMetrics metrics) {
+            final OutboundMetrics metrics,
+            final ApplicationEventPublisher eventPublisher) {
         this.repository = Objects.requireNonNull(repository, "repository");
         this.envelopeBuilder = Objects.requireNonNull(envelopeBuilder, "envelopeBuilder");
         this.signAdapter = Objects.requireNonNull(signAdapter, "signAdapter");
         this.tlqSender = Objects.requireNonNull(tlqSender, "tlqSender");
         this.statusWriter = Objects.requireNonNull(statusWriter, "statusWriter");
         this.metrics = Objects.requireNonNull(metrics, "metrics");
+        this.eventPublisher = Objects.requireNonNull(eventPublisher, "eventPublisher");
     }
 
     /**
@@ -156,6 +163,11 @@ public class OutboundQueueRunnerImpl implements OutboundQueueRunner {
         repository.findById(queueId).ifPresent(updated -> {
             if ("DEAD_LETTER".equals(updated.getStatus())) {
                 metrics.recordDeadLetter();
+                // B-9: 死信终态发布事件 → TlqOutboundAlertEvaluator 订阅按 t_sys_alert_rule 告警。
+                // msgNo: OutboundMessageQueueEntity 无该字段 → 传 null（事件契约可 null）。
+                eventPublisher.publishEvent(new TlqOutboundDeadLetterEvent(
+                        updated.getQueueId(), null, updated.getRetryCount(),
+                        updated.getErrorMessage(), LocalDateTime.now()));
             } else if ("RETRY".equals(updated.getStatus())) {
                 metrics.recordRetry();
             }

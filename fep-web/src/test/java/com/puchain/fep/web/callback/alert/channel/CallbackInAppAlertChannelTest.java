@@ -45,7 +45,7 @@ class CallbackInAppAlertChannelTest {
     @Mock ApplicationEventPublisher eventPublisher;
 
     private CallbackAlertMessage msg() {
-        return new CallbackAlertMessage("ERROR", "回调死信 - IF-1", "queueId=q1 msgNo=9120",
+        return new CallbackAlertMessage("CALLBACK_DLQ", "ERROR", "回调死信 - IF-1", "queueId=q1 msgNo=9120",
                 "q1", "CALLBACK_DLQ_ENTRY", null, null);
     }
 
@@ -116,6 +116,31 @@ class CallbackInAppAlertChannelTest {
         verify(eventPublisher, times(2)).publishEvent(evt.capture());
         assertThat(evt.getAllValues().stream().map(InAppNotificationCreatedEvent::userId).toList())
                 .containsExactlyInAnyOrder("u1", "u2");
+    }
+
+    @Test
+    void send_shouldUseMessageCategoryForTlqOutbound() {
+        SysRole admin = mock(SysRole.class);
+        when(admin.getRoleId()).thenReturn("r-admin");
+        when(roleRepo.findByRoleCode("ADMIN")).thenReturn(Optional.of(admin));
+        SysUserRole ur = mock(SysUserRole.class);
+        when(ur.getUserId()).thenReturn("u1");
+        when(userRoleRepo.findByRoleId("r-admin")).thenReturn(List.of(ur));
+        SysUser u1 = mock(SysUser.class);
+        when(u1.getUserId()).thenReturn("u1");
+        when(userRepo.findAllById(List.of("u1"))).thenReturn(List.of(u1));
+        when(notifRepo.save(any(CallbackNotificationEntity.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        CallbackAlertMessage tlqMsg = new CallbackAlertMessage("TLQ_OUTBOUND_DLQ", "ERROR",
+                "TLQ 出站死信 - q9", "queueId=q9", "q9", "TLQ_OUTBOUND_DLQ_ENTRY", null, null);
+        new CallbackInAppAlertChannel(roleRepo, userRoleRepo, userRepo, notifRepo, eventPublisher).send(tlqMsg);
+
+        ArgumentCaptor<CallbackNotificationEntity> cap =
+                ArgumentCaptor.forClass(CallbackNotificationEntity.class);
+        verify(notifRepo).save(cap.capture());
+        assertThat(cap.getValue().getCategory()).isEqualTo("TLQ_OUTBOUND_DLQ");
+        assertThat(cap.getValue().getRefId()).isEqualTo("q9");
     }
 
     @Test

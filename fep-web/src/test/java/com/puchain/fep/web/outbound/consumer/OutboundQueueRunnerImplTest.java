@@ -1,21 +1,26 @@
 package com.puchain.fep.web.outbound.consumer;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.puchain.fep.processor.intake.port.OutboundHeadFields;
 import com.puchain.fep.web.outbound.OutboundMessageQueueEntity;
 import com.puchain.fep.web.outbound.consumer.OutboundTlqSender.OutboundSendOutcome;
+import com.puchain.fep.web.outbound.event.TlqOutboundDeadLetterEvent;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * B1 Task 2 — {@link OutboundQueueRunnerImpl} 编排单测。
@@ -40,6 +45,7 @@ class OutboundQueueRunnerImplTest {
     @Mock private OutboundTlqSender tlqSender;
     @Mock private OutboundStatusWriterService statusWriter;
     @Mock private OutboundMetrics metrics;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private OutboundQueueRunnerImpl runner;
 
@@ -85,6 +91,58 @@ class OutboundQueueRunnerImplTest {
         runner.run("Q3");
 
         verify(statusWriter).recordFailure(eq("Q3"), any(RuntimeException.class));
+    }
+
+    @Test
+    void run_whenSendFailsAndTransitionsToDeadLetter_shouldPublishTlqOutboundDeadLetterEvent() {
+        final OutboundMessageQueueEntity start = sampleEntity("Q5");
+        final OutboundMessageQueueEntity deadLetter = sampleEntity("Q5");
+        deadLetter.setStatus("DEAD_LETTER");
+        deadLetter.setRetryCount(5);
+        deadLetter.setErrorMessage("send fail");
+        // run() 起始 read 返回 start；handleSendFailure re-read 返回 DEAD_LETTER 终态。
+        when(repository.findById("Q5"))
+                .thenReturn(Optional.of(start))
+                .thenReturn(Optional.of(deadLetter));
+        when(envelopeBuilder.build(any(), any()))
+                .thenReturn(new OutboundCfxEnvelopeBuilder.EnvelopeBuildResult("<env/>", "20260525060000000005"));
+        when(signAdapter.embedSignatureAsComment(any())).thenReturn("<env signed/>");
+        when(tlqSender.send(any(), any()))
+                .thenReturn(new OutboundSendOutcome(false, null, "TLQ-FAIL"));
+
+        runner.run("Q5");
+
+        final ArgumentCaptor<TlqOutboundDeadLetterEvent> captor =
+                ArgumentCaptor.forClass(TlqOutboundDeadLetterEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+        final TlqOutboundDeadLetterEvent ev = captor.getValue();
+        assertThat(ev.queueId()).isEqualTo("Q5");
+        assertThat(ev.retryCount()).isEqualTo(5);
+        assertThat(ev.lastError()).isEqualTo("send fail");
+        assertThat(ev.msgNo()).isNull();
+        assertThat(ev.occurredAt()).isNotNull();
+        verify(metrics).recordDeadLetter();
+    }
+
+    @Test
+    void run_whenSendFailsButTransitionsToRetry_shouldNotPublishEvent() {
+        final OutboundMessageQueueEntity start = sampleEntity("Q6");
+        final OutboundMessageQueueEntity retry = sampleEntity("Q6");
+        retry.setStatus("RETRY");
+        retry.setRetryCount(1);
+        when(repository.findById("Q6"))
+                .thenReturn(Optional.of(start))
+                .thenReturn(Optional.of(retry));
+        when(envelopeBuilder.build(any(), any()))
+                .thenReturn(new OutboundCfxEnvelopeBuilder.EnvelopeBuildResult("<env/>", "20260525060000000006"));
+        when(signAdapter.embedSignatureAsComment(any())).thenReturn("<env signed/>");
+        when(tlqSender.send(any(), any()))
+                .thenReturn(new OutboundSendOutcome(false, null, "TLQ-FAIL"));
+
+        runner.run("Q6");
+
+        verify(metrics).recordRetry();
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test

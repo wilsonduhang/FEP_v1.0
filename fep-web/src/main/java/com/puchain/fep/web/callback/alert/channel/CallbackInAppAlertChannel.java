@@ -43,7 +43,6 @@ public class CallbackInAppAlertChannel implements CallbackAlertChannel {
 
     private static final Logger LOG = LoggerFactory.getLogger(CallbackInAppAlertChannel.class);
     private static final String ADMIN_ROLE_CODE = "ADMIN";
-    private static final String CATEGORY_DLQ = "CALLBACK_DLQ";
 
     private final SysRoleRepository roleRepo;
     private final SysUserRoleRepository userRoleRepo;
@@ -95,7 +94,7 @@ public class CallbackInAppAlertChannel implements CallbackAlertChannel {
         final List<SysUser> admins = userRepo.findAllById(adminUserIds);
         for (final SysUser u : admins) {
             final CallbackNotificationEntity saved = notifRepo.save(CallbackNotificationEntity.of(
-                    u.getUserId(), CATEGORY_DLQ, message.level(),
+                    u.getUserId(), message.category(), message.level(),
                     message.title(), message.body(), message.refId(), message.refType()));
             // B-8: 通知落库后发布事件，由 DashboardNotificationPushListener
             // 在事务提交后（AFTER_COMMIT）经 WebSocket 实时推送到该用户活跃会话。
