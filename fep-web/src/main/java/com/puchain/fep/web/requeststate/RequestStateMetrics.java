@@ -1,10 +1,14 @@
 package com.puchain.fep.web.requeststate;
 
+import com.puchain.fep.web.common.metrics.CachedCountSupplier;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Objects;
 
 /**
@@ -25,7 +29,9 @@ import java.util.Objects;
  * 排除、不计入 STUCK，但仍由独立 {@code blocked_count} gauge 可见，避免已知缺口噪声污染 STUCK 计数
  * （T4 review MAJOR CONCERN / 红线 {@code audit_maturity_label_needs_prd_trace}）。</p>
  *
- * <p>gauge 值在 Prometheus scrape 时实时回查 DB（{@code count(*)} 轻量聚合），故无需本类持有可变状态。</p>
+ * <p>gauge 值经 {@link com.puchain.fep.web.common.metrics.CachedCountSupplier} 在 TTL 窗内复用上次
+ * {@code count(*)}，避免每次 Prometheus scrape 都打 DB（§8.6 一致化：与 {@code AuditReviewMetrics}
+ * 共用同一缓存基元）。TTL 由 {@code fep.metrics.count-cache-ttl} 配置（默认 PT10S）。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -38,14 +44,21 @@ public class RequestStateMetrics implements MeterBinder {
     private static final String TAG_STATUS = "status";
 
     private final RequestStateRepository repository;
+    private final Clock clock;
+    private final Duration countCacheTtl;
 
     /**
      * Spring 构造器注入。
      *
-     * @param repository request_state JPA repository（非空）
+     * @param repository    request_state JPA repository（非空）
+     * @param clock         时间来源（系统 {@link Clock} bean），非空
+     * @param countCacheTtl count 缓存窗（{@code fep.metrics.count-cache-ttl}，默认 PT10S）
      */
-    public RequestStateMetrics(final RequestStateRepository repository) {
+    public RequestStateMetrics(final RequestStateRepository repository, final Clock clock,
+            @Value("${fep.metrics.count-cache-ttl:PT10S}") final Duration countCacheTtl) {
         this.repository = Objects.requireNonNull(repository, "repository");
+        this.clock = Objects.requireNonNull(clock, "clock");
+        this.countCacheTtl = Objects.requireNonNull(countCacheTtl, "countCacheTtl");
     }
 
     /**
@@ -56,14 +69,16 @@ public class RequestStateMetrics implements MeterBinder {
     @Override
     public void bindTo(final MeterRegistry registry) {
         for (final RequestStateLifecycle status : RequestStateLifecycle.values()) {
-            Gauge.builder(GAUGE_COUNT, repository,
-                            repo -> repo.countByLifecycleStatus(status))
+            Gauge.builder(GAUGE_COUNT,
+                            new CachedCountSupplier(
+                                    () -> repository.countByLifecycleStatus(status), countCacheTtl, clock))
                     .tag(TAG_STATUS, status.name())
                     .description("Number of request_state rows in the given lifecycle status")
                     .register(registry);
         }
-        Gauge.builder(GAUGE_BLOCKED_COUNT, repository,
-                        repo -> repo.countByCorrelationBlockedTrue())
+        Gauge.builder(GAUGE_BLOCKED_COUNT,
+                        new CachedCountSupplier(
+                                () -> repository.countByCorrelationBlockedTrue(), countCacheTtl, clock))
                 .description("Number of request_state rows flagged correlation_blocked "
                         + "(excluded from STUCK detection)")
                 .register(registry);
