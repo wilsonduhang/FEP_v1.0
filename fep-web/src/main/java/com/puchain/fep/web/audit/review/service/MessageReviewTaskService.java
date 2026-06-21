@@ -2,6 +2,7 @@ package com.puchain.fep.web.audit.review.service;
 
 import com.puchain.fep.common.domain.FepErrorCode;
 import com.puchain.fep.common.domain.PageResult;
+import com.puchain.fep.common.domain.PaginationHelper;
 import com.puchain.fep.common.exception.FepBusinessException;
 import com.puchain.fep.common.util.IdGenerator;
 import com.puchain.fep.common.util.LogSanitizer;
@@ -18,7 +19,6 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -135,14 +135,13 @@ public class MessageReviewTaskService {
     public PageResult<ReviewTaskResponse> list(final ReviewStatus status,
                                                final int pageNum,
                                                final int pageSize) {
-        final int safePage = Math.max(pageNum, 1);
-        final int safeSize = Math.min(Math.max(pageSize, 1), MAX_PAGE_SIZE);
-        final Pageable pageable = PageRequest.of(safePage - 1, safeSize,
-                Sort.by(Sort.Direction.DESC, "createdAt"));
+        final Pageable pageable = PaginationHelper.safePageable(
+                pageNum, pageSize, MAX_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
         final Page<MessageReviewTaskEntity> page = status == null
                 ? repository.findAll(pageable)
                 : repository.findByReviewStatus(status.name(), pageable);
-        return PageResult.from(page, safePage, safeSize, ReviewTaskResponse::from);
+        return PageResult.from(page, pageable.getPageNumber() + 1, pageable.getPageSize(),
+                ReviewTaskResponse::from);
     }
 
     /**
