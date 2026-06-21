@@ -52,4 +52,56 @@ class PaginationHelperTest {
         assertThatThrownBy(() -> PaginationHelper.pageable(1, 10, null))
                 .isInstanceOf(NullPointerException.class);
     }
+
+    @Test
+    void safePageableClampsPageNumAndSizeLowerBound() {
+        // pageNum<1 → 1（0-based 0）；pageSize<1 → 1
+        final Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        final Pageable p = PaginationHelper.safePageable(0, 0, sort);
+        assertThat(p.getPageNumber()).isZero();
+        assertThat(p.getPageSize()).isEqualTo(1);
+        assertThat(p.getSort()).isEqualTo(sort);
+    }
+
+    @Test
+    void safePageableNoUpperCapIsByteEquivalentToReconciliationInline() {
+        // 收敛不变量：== ReconciliationQueryService 既有内联（无上限）
+        final Sort sort = Sort.by(Sort.Direction.ASC, "reconciliationDate");
+        assertThat(PaginationHelper.safePageable(0, 50, sort))
+                .isEqualTo(PageRequest.of(Math.max(1, 0) - 1, Math.max(1, 50), sort));
+        assertThat(PaginationHelper.safePageable(3, 9999, sort))   // 无上限：9999 原样
+                .isEqualTo(PageRequest.of(2, 9999, sort));
+    }
+
+    @Test
+    void safePageableWithMaxClampsUpperBound() {
+        final Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        // pageSize>max → max；max 路径下下限同样钳制
+        assertThat(PaginationHelper.safePageable(1, 500, 200, sort).getPageSize()).isEqualTo(200);
+        assertThat(PaginationHelper.safePageable(1, 0, 200, sort).getPageSize()).isEqualTo(1);
+    }
+
+    @Test
+    void safePageableWithMaxIsByteEquivalentToMessageReviewInline() {
+        // 收敛不变量：== MessageReviewTaskService 既有内联（MAX_PAGE_SIZE=200）
+        final Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+        final int max = 200;
+        assertThat(PaginationHelper.safePageable(2, 300, max, sort))
+                .isEqualTo(PageRequest.of(Math.max(2, 1) - 1, Math.min(Math.max(300, 1), max), sort));
+    }
+
+    @Test
+    void safePageableNullSortThrowsNpe() {
+        assertThatThrownBy(() -> PaginationHelper.safePageable(1, 10, null))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> PaginationHelper.safePageable(1, 10, 200, null))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void safePageableInvalidMaxThrows() {
+        final Sort sort = Sort.by("createdAt");
+        assertThatThrownBy(() -> PaginationHelper.safePageable(1, 10, 0, sort))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }
