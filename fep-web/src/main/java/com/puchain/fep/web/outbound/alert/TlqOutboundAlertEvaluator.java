@@ -35,6 +35,9 @@ import java.util.List;
 public class TlqOutboundAlertEvaluator {
 
     private static final Logger LOG = LoggerFactory.getLogger(TlqOutboundAlertEvaluator.class);
+    private static final String LEVEL_ERROR = "ERROR";
+    private static final String CATEGORY_TLQ_OUTBOUND = "TLQ_OUTBOUND_DLQ";
+    private static final String REF_TYPE_TLQ_OUTBOUND = "TLQ_OUTBOUND_DLQ_ENTRY";
 
     private final SysAlertRuleRepository ruleRepo;
     private final List<CallbackAlertChannel> channels;
@@ -76,8 +79,7 @@ public class TlqOutboundAlertEvaluator {
             LOG.debug("alert frequency {} aggregation deferred; dispatching as REALTIME, queueId={}",
                     rule.getAlertFrequency(), LogSanitizer.sanitize(ev.queueId()));
         }
-        final CallbackAlertMessage msg = CallbackAlertMessage.ofTlqOutboundDeadLetter(
-                ev, rule.getAlertEmail(), rule.getAlertPhone());
+        final CallbackAlertMessage msg = toAlertMessage(ev, rule.getAlertEmail(), rule.getAlertPhone());
         for (final NotifyMethod method : rule.getNotifyMethods()) {
             for (final CallbackAlertChannel ch : channels) {
                 if (ch.supports(method)) {
@@ -85,6 +87,28 @@ public class TlqOutboundAlertEvaluator {
                 }
             }
         }
+    }
+
+    /**
+     * 从 TLQ 出站死信事件组装通用告警消息（category=TLQ_OUTBOUND_DLQ）。
+     *
+     * <p>构造置于本 evaluator（{@code outbound.alert} 包）而非 {@code CallbackAlertMessage}
+     * 工厂，以遵守 ArchUnit R1（callback 包不得依赖 outbound 包）；{@code CallbackAlertMessage}
+     * 作为通用记录被复用。{@code body} 经 {@link LogSanitizer#sanitize(String)} 去 CRLF 注入风险。</p>
+     *
+     * @param ev         TLQ 出站死信事件
+     * @param alertEmail EMAIL 收件邮箱（可 null）
+     * @param alertPhone SMS 收件手机号（可 null）
+     * @return 通用告警消息
+     */
+    private CallbackAlertMessage toAlertMessage(final TlqOutboundDeadLetterEvent ev,
+            final String alertEmail, final String alertPhone) {
+        final String title = "TLQ 出站死信 - " + ev.queueId();
+        final String body = LogSanitizer.sanitize(String.format(
+                "queueId=%s msgNo=%s retryCount=%d error=%s",
+                ev.queueId(), ev.msgNo(), ev.retryCount(), ev.lastError()));
+        return new CallbackAlertMessage(CATEGORY_TLQ_OUTBOUND, LEVEL_ERROR, title, body,
+                ev.queueId(), REF_TYPE_TLQ_OUTBOUND, alertEmail, alertPhone);
     }
 
     private void dispatchIsolated(final CallbackAlertChannel ch, final CallbackAlertMessage msg,
