@@ -1,9 +1,13 @@
 package com.puchain.fep.web.audit.review.metrics;
 
+import com.puchain.fep.web.common.metrics.CachedCountSupplier;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.function.Supplier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,12 +32,19 @@ public class AuditReviewMetrics {
     private static final String TAG_DECISION = "decision";
 
     private final MeterRegistry registry;
+    private final Clock clock;
+    private final Duration countCacheTtl;
 
     /**
-     * @param registry Micrometer 注册中心（Actuator 自动装配 PrometheusMeterRegistry），非空
+     * @param registry      Micrometer 注册中心（Actuator 自动装配 PrometheusMeterRegistry），非空
+     * @param clock         时间来源（系统 {@link Clock} bean），非空
+     * @param countCacheTtl pending count 缓存窗（{@code fep.metrics.count-cache-ttl}，默认 PT10S）
      */
-    public AuditReviewMetrics(final MeterRegistry registry) {
+    public AuditReviewMetrics(final MeterRegistry registry, final Clock clock,
+            @Value("${fep.metrics.count-cache-ttl:PT10S}") final Duration countCacheTtl) {
         this.registry = Objects.requireNonNull(registry, "MeterRegistry must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock");
+        this.countCacheTtl = Objects.requireNonNull(countCacheTtl, "countCacheTtl");
     }
 
     /**
@@ -49,9 +60,13 @@ public class AuditReviewMetrics {
     /**
      * 注册待审核任务数 gauge（观测审核队列积压）。应在单例 service 初始化时注册一次。
      *
+     * <p>供应函数经 {@link CachedCountSupplier} 在 TTL 窗内复用上次 {@code count(*)}，避免每次
+     * Prometheus scrape 都打 DB（§8.6 一致化：与 {@code RequestStateMetrics} 共用同一缓存基元）。</p>
+     *
      * @param pending 当前 PENDING 行数供应函数，非空
      */
     public void registerPendingGauge(final Supplier<Number> pending) {
-        Gauge.builder(GAUGE_PENDING_COUNT, pending).register(registry);
+        Gauge.builder(GAUGE_PENDING_COUNT, new CachedCountSupplier(pending, countCacheTtl, clock))
+                .register(registry);
     }
 }

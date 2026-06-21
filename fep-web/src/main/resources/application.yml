@@ -630,3 +630,9 @@ fep:
     reaper:
       # @Scheduled fixedDelay（上次执行完成后延迟再触发，毫秒；默认 60s）
       fixed-delay: 60000
+  # §8.6 可观测: count gauge 时间窗缓存 TTL（窗内复用上次 SELECT COUNT(*)，避免每次 scrape 打 DB；
+  # 红线 6 无硬编码超时；AuditReviewMetrics + RequestStateMetrics 共用）。
+  # 注意: 此 TTL 与上方 request-state.stuck-ttl(PT30M, reaper 僵尸检测阈值) 用途完全不同——
+  # 本项仅控制 gauge 观测值的缓存新鲜度，不影响任何业务/状态机判定。
+  metrics:
+    count-cache-ttl: PT10S
