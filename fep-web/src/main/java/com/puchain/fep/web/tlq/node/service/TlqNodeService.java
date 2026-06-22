@@ -12,14 +12,18 @@ import com.puchain.fep.web.tlq.node.domain.TlqNodeStatus;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeCreateRequest;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeResponse;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeUpdateRequest;
+import com.puchain.fep.web.tlq.node.event.TlqNodeOfflineEvent;
 import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
 import com.puchain.fep.web.tlq.queue.repository.TlqQueueConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 /**
  * TLQ 节点配置管理 Service。
@@ -46,17 +50,21 @@ public class TlqNodeService {
 
     private final TlqNodeRepository nodeRepository;
     private final TlqQueueConfigRepository queueConfigRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 构造 TlqNodeService。
      *
      * @param nodeRepository        TLQ 节点 Repository
      * @param queueConfigRepository TLQ 队列配置 Repository（级联保护用）
+     * @param eventPublisher        领域事件发布器（节点离线告警 B-9 Phase-2）
      */
     public TlqNodeService(final TlqNodeRepository nodeRepository,
-                          final TlqQueueConfigRepository queueConfigRepository) {
+                          final TlqQueueConfigRepository queueConfigRepository,
+                          final ApplicationEventPublisher eventPublisher) {
         this.nodeRepository = nodeRepository;
         this.queueConfigRepository = queueConfigRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -202,6 +210,11 @@ public class TlqNodeService {
      *
      * <p>状态机：UNKNOWN→ONLINE→OFFLINE→ONLINE，非法迁移抛 BIZ_5003。</p>
      *
+     * <p>置 OFFLINE 后发布 {@link TlqNodeOfflineEvent}，由
+     * {@code @TransactionalEventListener(AFTER_COMMIT)} 的 {@code TlqNodeOfflineAlertEvaluator}
+     * 订阅并按 {@code t_sys_alert_rule} 配置分发告警（B-9 Phase-2）。AFTER_COMMIT 保证本事务
+     * 提交后才告警，避免事务回滚导致的假告警。</p>
+     *
      * @param nodeId       节点 ID
      * @param targetStatus 目标状态
      * @return 更新后节点响应 DTO
@@ -218,6 +231,12 @@ public class TlqNodeService {
         TlqNode saved = nodeRepository.save(node);
         log.info("Changed TLQ node status: id={}, status={}",
                 LogSanitizer.sanitize(saved.getNodeId()), targetStatus);
+        if (targetStatus == TlqNodeStatus.OFFLINE) {
+            // B-9 Phase-2: 节点离线发布事件 → TlqNodeOfflineAlertEvaluator 订阅按 t_sys_alert_rule 告警。
+            eventPublisher.publishEvent(new TlqNodeOfflineEvent(
+                    saved.getNodeId(), saved.getNodeName(),
+                    saved.getLastHeartbeat(), LocalDateTime.now()));
+        }
         return TlqNodeResponse.fromEntity(saved);
     }
 
