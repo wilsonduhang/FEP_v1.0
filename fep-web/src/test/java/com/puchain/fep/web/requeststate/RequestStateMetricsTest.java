@@ -77,4 +77,79 @@ class RequestStateMetricsTest {
         assertThat(reg.find(RequestStateMetrics.GAUGE_COUNT)
                 .tag("status", "SENT").gauge().value()).isEqualTo(1.0);
     }
+
+    /**
+     * DEF-MC-1 等价测：单次聚合查询驱动的每个 gauge 与独立 derived-query oracle 逐一相等，
+     * 覆盖全部 5 lifecycle 状态（distinct 计数防列序错位）+ blocked，并钉死「5 lifecycle 之和 ==
+     * 总行数」与「blocked ⊆ lifecycle 总体」正交性不变量（santa CONCERN-2 加固）。
+     */
+    @Test
+    void aggregateGauges_matchPerStatusDerivedQueries_acrossAllStates() {
+        int k = 10000000;
+        // CREATED = 1（非 blocked）
+        service.create(String.valueOf(k++), "3101", "Q");
+        // SENT = 4：2 非 blocked + 2 blocked(3115)，distinct 计数
+        for (int i = 0; i < 2; i++) {
+            final String key = String.valueOf(k++);
+            service.create(key, "3101", "Q");
+            service.markSent(key);
+        }
+        for (int i = 0; i < 2; i++) {
+            final String key = String.valueOf(k++);
+            service.create(key, "3115", "Q");        // correlation_blocked，停留 SENT
+            service.markSent(key);
+        }
+        // RESULT_RECEIVED = 3
+        for (int i = 0; i < 3; i++) {
+            final String key = String.valueOf(k++);
+            service.create(key, "3101", "Q");
+            service.markSent(key);
+            service.markResultReceived(key, "S" + key, key);
+        }
+        // FAILED = 5
+        for (int i = 0; i < 5; i++) {
+            final String key = String.valueOf(k++);
+            service.create(key, "3101", "Q");
+            service.markFailed(key);
+        }
+        // STUCK = 6
+        for (int i = 0; i < 6; i++) {
+            final String key = String.valueOf(k++);
+            service.create(key, "3101", "Q");
+            service.markStuck(key);
+        }
+
+        final SimpleMeterRegistry reg = new SimpleMeterRegistry();
+        metrics.bindTo(reg);
+
+        // 每个 lifecycle gauge == 独立 derived query（聚合语义等价 oracle）
+        long sumLifecycle = 0L;
+        for (final RequestStateLifecycle s : RequestStateLifecycle.values()) {
+            final double g = reg.find(RequestStateMetrics.GAUGE_COUNT)
+                    .tag("status", s.name()).gauge().value();
+            assertThat(g).isEqualTo((double) repository.countByLifecycleStatus(s));
+            sumLifecycle += (long) g;
+        }
+        // blocked gauge == 独立 derived query（兼验 `= true` 布尔谓词方言正确性）
+        final double blocked = reg.find(RequestStateMetrics.GAUGE_BLOCKED_COUNT).gauge().value();
+        assertThat(blocked).isEqualTo((double) repository.countByCorrelationBlockedTrue());
+        assertThat(blocked).isEqualTo(2.0);
+
+        // 不变量：5 个 lifecycle gauge 之和 == 总行数（不含 blocked，正交）
+        assertThat(sumLifecycle).isEqualTo(repository.count());
+        // 正交性加固（santa CONCERN-2）：blocked ⊆ lifecycle 总体
+        assertThat((long) blocked).isLessThanOrEqualTo(sumLifecycle);
+
+        // 列序正确性（distinct 计数 1/4/3/5/6 防列错位）
+        assertThat(reg.find(RequestStateMetrics.GAUGE_COUNT)
+                .tag("status", "CREATED").gauge().value()).isEqualTo(1.0);
+        assertThat(reg.find(RequestStateMetrics.GAUGE_COUNT)
+                .tag("status", "SENT").gauge().value()).isEqualTo(4.0);
+        assertThat(reg.find(RequestStateMetrics.GAUGE_COUNT)
+                .tag("status", "RESULT_RECEIVED").gauge().value()).isEqualTo(3.0);
+        assertThat(reg.find(RequestStateMetrics.GAUGE_COUNT)
+                .tag("status", "FAILED").gauge().value()).isEqualTo(5.0);
+        assertThat(reg.find(RequestStateMetrics.GAUGE_COUNT)
+                .tag("status", "STUCK").gauge().value()).isEqualTo(6.0);
+    }
 }

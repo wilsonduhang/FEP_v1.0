@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
-/** {@link CachedCountSupplier} 单测：TTL 窗内复用 / 窗外刷新 / 边界。 */
-class CachedCountSupplierTest {
+/** {@link CachedSupplier} 单测：TTL 窗内复用 / 窗外刷新 / 边界。 */
+class CachedSupplierTest {
 
     private final AtomicReference<Instant> now =
             new AtomicReference<>(Instant.parse("2026-06-20T00:00:00Z"));
@@ -43,8 +43,8 @@ class CachedCountSupplierTest {
     @Test
     void firstCall_refreshesImmediately() {
         final AtomicInteger src = new AtomicInteger(7);
-        final CachedCountSupplier cached =
-                new CachedCountSupplier(src::get, Duration.ofSeconds(10), clock);
+        final CachedSupplier<Number> cached =
+                new CachedSupplier<>(src::get, Duration.ofSeconds(10), clock);
 
         assertThat(cached.get().longValue()).isEqualTo(7L);
     }
@@ -52,8 +52,8 @@ class CachedCountSupplierTest {
     @Test
     void withinTtl_reusesCachedValue() {
         final AtomicInteger src = new AtomicInteger(5);
-        final CachedCountSupplier cached =
-                new CachedCountSupplier(src::get, Duration.ofSeconds(10), clock);
+        final CachedSupplier<Number> cached =
+                new CachedSupplier<>(src::get, Duration.ofSeconds(10), clock);
 
         assertThat(cached.get().longValue()).isEqualTo(5L);   // 首读刷新 = 5
         src.set(2);
@@ -64,8 +64,8 @@ class CachedCountSupplierTest {
     @Test
     void afterTtl_refreshesValue() {
         final AtomicInteger src = new AtomicInteger(5);
-        final CachedCountSupplier cached =
-                new CachedCountSupplier(src::get, Duration.ofSeconds(10), clock);
+        final CachedSupplier<Number> cached =
+                new CachedSupplier<>(src::get, Duration.ofSeconds(10), clock);
 
         assertThat(cached.get().longValue()).isEqualTo(5L);
         src.set(2);
@@ -76,8 +76,8 @@ class CachedCountSupplierTest {
     @Test
     void wellBeyondTtl_refreshesValue() {
         final AtomicInteger src = new AtomicInteger(5);
-        final CachedCountSupplier cached =
-                new CachedCountSupplier(src::get, Duration.ofSeconds(10), clock);
+        final CachedSupplier<Number> cached =
+                new CachedSupplier<>(src::get, Duration.ofSeconds(10), clock);
 
         assertThat(cached.get().longValue()).isEqualTo(5L);
         src.set(2);
@@ -88,8 +88,8 @@ class CachedCountSupplierTest {
     @Test
     void zeroTtl_alwaysRefreshes() {
         final AtomicInteger src = new AtomicInteger(1);
-        final CachedCountSupplier cached =
-                new CachedCountSupplier(src::get, Duration.ZERO, clock);
+        final CachedSupplier<Number> cached =
+                new CachedSupplier<>(src::get, Duration.ZERO, clock);
 
         assertThat(cached.get().longValue()).isEqualTo(1L);
         src.set(3);
@@ -99,17 +99,17 @@ class CachedCountSupplierTest {
     @Test
     void negativeTtl_rejected() {
         assertThatThrownBy(() ->
-                new CachedCountSupplier(() -> 0, Duration.ofSeconds(-1), clock))
+                new CachedSupplier<>(() -> 0, Duration.ofSeconds(-1), clock))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void nullArgs_rejected() {
-        assertThatThrownBy(() -> new CachedCountSupplier(null, Duration.ofSeconds(1), clock))
+        assertThatThrownBy(() -> new CachedSupplier<>(null, Duration.ofSeconds(1), clock))
                 .isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> new CachedCountSupplier(() -> 0, null, clock))
+        assertThatThrownBy(() -> new CachedSupplier<>(() -> 0, null, clock))
                 .isInstanceOf(NullPointerException.class);
-        assertThatThrownBy(() -> new CachedCountSupplier(() -> 0, Duration.ofSeconds(1), null))
+        assertThatThrownBy(() -> new CachedSupplier<>(() -> 0, Duration.ofSeconds(1), null))
                 .isInstanceOf(NullPointerException.class);
     }
 }
