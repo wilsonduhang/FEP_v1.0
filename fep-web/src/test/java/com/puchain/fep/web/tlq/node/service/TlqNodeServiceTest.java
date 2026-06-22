@@ -8,13 +8,16 @@ import com.puchain.fep.web.tlq.node.domain.TlqNodeStatus;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeCreateRequest;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeResponse;
 import com.puchain.fep.web.tlq.node.dto.TlqNodeUpdateRequest;
+import com.puchain.fep.web.tlq.node.event.TlqNodeOfflineEvent;
 import com.puchain.fep.web.tlq.node.repository.TlqNodeRepository;
 import com.puchain.fep.web.tlq.queue.repository.TlqQueueConfigRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -41,6 +44,9 @@ class TlqNodeServiceTest {
 
     @Mock
     private TlqQueueConfigRepository queueConfigRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private TlqNodeService tlqNodeService;
@@ -184,6 +190,46 @@ class TlqNodeServiceTest {
                 .satisfies(ex -> assertThat(((FepBusinessException) ex).getErrorCode())
                         .isEqualTo(FepErrorCode.BIZ_5003));
         verify(nodeRepository, never()).save(any());
+    }
+
+    // ─── changeStatus → 节点离线事件（B-9 Phase-2）─────────────────────────────
+
+    @Test
+    void changeStatus_toOffline_publishesNodeOfflineEvent() {
+        TlqNode node = buildPersistedNode("node-1");
+        node.setNodeStatus(TlqNodeStatus.ONLINE);  // ONLINE→OFFLINE 合法
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(nodeRepository.save(any(TlqNode.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        tlqNodeService.changeStatus("node-1", TlqNodeStatus.OFFLINE);
+
+        ArgumentCaptor<TlqNodeOfflineEvent> cap = ArgumentCaptor.forClass(TlqNodeOfflineEvent.class);
+        verify(eventPublisher).publishEvent(cap.capture());
+        assertThat(cap.getValue().nodeId()).isEqualTo("node-1");
+        assertThat(cap.getValue().nodeName()).isEqualTo("Node-A");
+    }
+
+    @Test
+    void changeStatus_toOnline_doesNotPublishEvent() {
+        TlqNode node = buildPersistedNode("node-1");
+        node.setNodeStatus(TlqNodeStatus.OFFLINE);  // OFFLINE→ONLINE 合法但非离线
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+        when(nodeRepository.save(any(TlqNode.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        tlqNodeService.changeStatus("node-1", TlqNodeStatus.ONLINE);
+
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void changeStatus_illegalTransition_doesNotPublishEvent() {
+        TlqNode node = buildPersistedNode("node-1");
+        node.setNodeStatus(TlqNodeStatus.OFFLINE);  // OFFLINE→OFFLINE 非法
+        when(nodeRepository.findById("node-1")).thenReturn(Optional.of(node));
+
+        assertThatThrownBy(() -> tlqNodeService.changeStatus("node-1", TlqNodeStatus.OFFLINE))
+                .isInstanceOf(FepBusinessException.class);
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     // ─── updateNode ─────────────────────────────────────────────────────────
