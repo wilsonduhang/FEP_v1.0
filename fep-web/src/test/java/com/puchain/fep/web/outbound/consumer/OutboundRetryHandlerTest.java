@@ -33,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 沿用同包 {@code OutboundQueueRepositoryIntegrationTest} 的 {@code @SpringBootTest}
  * + {@code @Transactional} + {@code @Sql} fixture 模式。
  * {@link FixedClockConfig#fixedClockConfiguration()} 通过 {@link Primary @Primary}
- * 覆盖 {@link OutboundConsumerClockConfiguration} 提供的系统时钟，使
+ * 覆盖 {@link com.puchain.fep.common.CommonAutoConfiguration} 提供的系统时钟，使
  * {@code next_retry_at} 断言可基于固定 {@link #NOW} 推断。</p>
  *
  * @author FEP Team
@@ -110,7 +110,7 @@ class OutboundRetryHandlerTest {
 
     /**
      * Test-only configuration overriding
-     * {@link OutboundConsumerClockConfiguration#systemClock()} with a fixed
+     * {@link com.puchain.fep.common.CommonAutoConfiguration#systemClock()} with a fixed
      * instant ({@link OutboundRetryHandlerTest#NOW}). Marked {@link Primary}
      * so that {@link OutboundRetryHandler} autowires this clock instead of
      * the system default — making {@code next_retry_at = NOW + backoff}
