@@ -52,10 +52,41 @@ public interface RequestStateRepository extends JpaRepository<RequestStateEntity
     long countByLifecycleStatus(RequestStateLifecycle lifecycleStatus);
 
     /**
-     * 统计 {@code correlation_blocked = true} 的请求行数（{@link RequestStateMetrics} 的 blocked
-     * gauge 用，与 STUCK 计数区分——结构性永等不到匹配的行不计入 STUCK，见 {@link BlockedMessageTypes}）。
+     * 统计 {@code correlation_blocked = true} 的请求行数（与 STUCK 计数区分——结构性永等不到匹配的行
+     * 不计入 STUCK，见 {@link BlockedMessageTypes}）。
+     *
+     * <p>重构后（DEF-MC-1）仅作 {@link RequestStateMetrics} 等价测试的 oracle，生产 gauge 走
+     * {@link #aggregateLifecycleAndBlockedCounts()} 单次聚合。</p>
      *
      * @return correlation_blocked 行数（≥0）
      */
     long countByCorrelationBlockedTrue();
+
+    /**
+     * 单次聚合统计 5 个 lifecycle 状态行数 + correlation_blocked 行数（{@link RequestStateMetrics}
+     * gauge 用，把每次 Prometheus scrape 的 6 次 {@code COUNT} 往返压为 1 次，DEF-MC-1）。
+     *
+     * <p>镜像同模块 {@code SubSubmissionRecordRepository.aggregatePushStatusCounts()} 的单行
+     * {@code SUM(CASE WHEN ...)} 范式：固定 6 列、<strong>无 {@code GROUP BY}</strong>，空表也恒返回
+     * 单行全 {@code null}（调用方须 null→0）。<strong>列序固定</strong>：
+     * {@code [CREATED, SENT, RESULT_RECEIVED, FAILED, STUCK, blocked]}。blocked 行同时计入其 lifecycle
+     * 桶与 blocked 列（二者正交，逐字保持旧 {@code countByLifecycleStatus} 不含 blocked 过滤的语义）。</p>
+     *
+     * @return 单行 {@code Object[]}：{@code [createdCount, sentCount, resultReceivedCount,
+     *         failedCount, stuckCount, blockedCount]}（外层 {@link List} 恒含 1 行；各元素空表时为 null）
+     */
+    @Query("SELECT "
+            + "SUM(CASE WHEN r.lifecycleStatus = "
+            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.CREATED THEN 1L ELSE 0L END), "
+            + "SUM(CASE WHEN r.lifecycleStatus = "
+            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.SENT THEN 1L ELSE 0L END), "
+            + "SUM(CASE WHEN r.lifecycleStatus = "
+            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.RESULT_RECEIVED THEN 1L ELSE 0L END), "
+            + "SUM(CASE WHEN r.lifecycleStatus = "
+            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.FAILED THEN 1L ELSE 0L END), "
+            + "SUM(CASE WHEN r.lifecycleStatus = "
+            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.STUCK THEN 1L ELSE 0L END), "
+            + "SUM(CASE WHEN r.correlationBlocked = true THEN 1L ELSE 0L END) "
+            + "FROM RequestStateEntity r")
+    List<Object[]> aggregateLifecycleAndBlockedCounts();
 }
