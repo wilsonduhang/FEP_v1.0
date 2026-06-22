@@ -1,6 +1,6 @@
 package com.puchain.fep.web.requeststate;
 
-import com.puchain.fep.web.common.metrics.CachedCountSupplier;
+import com.puchain.fep.web.common.metrics.CachedSupplier;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.MeterBinder;
@@ -29,7 +29,7 @@ import java.util.Objects;
  * 排除、不计入 STUCK，但仍由独立 {@code blocked_count} gauge 可见，避免已知缺口噪声污染 STUCK 计数
  * （T4 review MAJOR CONCERN / 红线 {@code audit_maturity_label_needs_prd_trace}）。</p>
  *
- * <p>gauge 值经 {@link com.puchain.fep.web.common.metrics.CachedCountSupplier} 在 TTL 窗内复用上次
+ * <p>gauge 值经 {@link com.puchain.fep.web.common.metrics.CachedSupplier} 在 TTL 窗内复用上次
  * {@code count(*)}，避免每次 Prometheus scrape 都打 DB（§8.6 一致化：与 {@code AuditReviewMetrics}
  * 共用同一缓存基元）。TTL 由 {@code fep.metrics.count-cache-ttl} 配置（默认 PT10S）。</p>
  *
@@ -70,14 +70,14 @@ public class RequestStateMetrics implements MeterBinder {
     public void bindTo(final MeterRegistry registry) {
         for (final RequestStateLifecycle status : RequestStateLifecycle.values()) {
             Gauge.builder(GAUGE_COUNT,
-                            new CachedCountSupplier(
+                            new CachedSupplier<>(
                                     () -> repository.countByLifecycleStatus(status), countCacheTtl, clock))
                     .tag(TAG_STATUS, status.name())
                     .description("Number of request_state rows in the given lifecycle status")
                     .register(registry);
         }
         Gauge.builder(GAUGE_BLOCKED_COUNT,
-                        new CachedCountSupplier(
+                        new CachedSupplier<>(
                                 () -> repository.countByCorrelationBlockedTrue(), countCacheTtl, clock))
                 .description("Number of request_state rows flagged correlation_blocked "
                         + "(excluded from STUCK detection)")

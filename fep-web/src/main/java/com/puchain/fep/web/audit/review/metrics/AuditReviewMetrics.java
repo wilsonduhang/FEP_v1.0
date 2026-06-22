@@ -1,6 +1,6 @@
 package com.puchain.fep.web.audit.review.metrics;
 
-import com.puchain.fep.web.common.metrics.CachedCountSupplier;
+import com.puchain.fep.web.common.metrics.CachedSupplier;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
@@ -60,13 +60,13 @@ public class AuditReviewMetrics {
     /**
      * 注册待审核任务数 gauge（观测审核队列积压）。应在单例 service 初始化时注册一次。
      *
-     * <p>供应函数经 {@link CachedCountSupplier} 在 TTL 窗内复用上次 {@code count(*)}，避免每次
+     * <p>供应函数经 {@link CachedSupplier} 在 TTL 窗内复用上次 {@code count(*)}，避免每次
      * Prometheus scrape 都打 DB（§8.6 一致化：与 {@code RequestStateMetrics} 共用同一缓存基元）。</p>
      *
      * @param pending 当前 PENDING 行数供应函数，非空
      */
     public void registerPendingGauge(final Supplier<Number> pending) {
-        Gauge.builder(GAUGE_PENDING_COUNT, new CachedCountSupplier(pending, countCacheTtl, clock))
+        Gauge.builder(GAUGE_PENDING_COUNT, new CachedSupplier<>(pending, countCacheTtl, clock))
                 .register(registry);
     }
 }
