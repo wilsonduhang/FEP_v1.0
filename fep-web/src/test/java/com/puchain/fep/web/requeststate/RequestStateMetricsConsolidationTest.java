@@ -8,19 +8,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.puchain.fep.web.common.metrics.MutableTestClock;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 /**
  * DEF-MC-1 合并证明：6 个 gauge 在同一 TTL 窗内共享<strong>单次</strong>聚合查询
- * （mock repository，无 Spring context；用可前进的固定 {@link Clock} 直接数 DB 往返次数——
+ * （mock repository，无 Spring context；用可前进的固定 {@link MutableTestClock} 直接数 DB 往返次数——
  * {@code @SpringBootTest} 数不出往返次数，故此处用 Mockito {@code verify} 兜底 6→1 的硬证明）。
  *
  * @author FEP Team
@@ -28,26 +25,9 @@ import org.junit.jupiter.api.Test;
  */
 class RequestStateMetricsConsolidationTest {
 
-    private final AtomicReference<Instant> now =
-            new AtomicReference<>(Instant.parse("2026-06-22T00:00:00Z"));
-
-    /** 可前进的测试时钟（读 {@link #now}）。 */
-    private final Clock clock = new Clock() {
-        @Override
-        public ZoneId getZone() {
-            return ZoneOffset.UTC;
-        }
-
-        @Override
-        public Clock withZone(final ZoneId zone) {
-            return this;
-        }
-
-        @Override
-        public Instant instant() {
-            return now.get();
-        }
-    };
+    /** 可前进的测试时钟。 */
+    private final MutableTestClock clock =
+            new MutableTestClock(Instant.parse("2026-06-22T00:00:00Z"));
 
     private static void readAllGauges(final SimpleMeterRegistry reg) {
         for (final RequestStateLifecycle s : RequestStateLifecycle.values()) {
@@ -99,7 +79,7 @@ class RequestStateMetricsConsolidationTest {
         metrics.bindTo(reg);
 
         readAllGauges(reg);                                  // 窗 1 → 1 次
-        now.set(now.get().plus(Duration.ofSeconds(11)));     // 越 TTL
+        clock.advance(Duration.ofSeconds(11));               // 越 TTL
         readAllGauges(reg);                                  // 窗 2 → 再 1 次
 
         verify(repo, times(2)).aggregateLifecycleAndBlockedCounts();
