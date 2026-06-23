@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -182,9 +183,10 @@ public class MessageReviewTaskService {
             t.setCurrentLevel(t.getCurrentLevel() + 1);
             t.setReviewerId(reviewerId);
         }
-        repository.save(t);
+        saveWithOptimisticGuard(t);
         if (terminal) {
-            // 仅终态（最后一级通过）计数；逐级推进不计为决策
+            // 仅终态（最后一级通过）计数；逐级推进不计为决策。
+            // 打点在 saveWithOptimisticGuard 成功之后——并发冲突抛异常则不计数（避免失真）。
             metrics.recordDecision(ReviewStatus.APPROVED.name());
         }
     }
@@ -209,8 +211,30 @@ public class MessageReviewTaskService {
         t.setReviewerId(reviewerId);
         t.setReviewComment(reason);
         t.setReviewedAt(Instant.now().toEpochMilli());
-        repository.save(t);
+        saveWithOptimisticGuard(t);
         metrics.recordDecision(ReviewStatus.REJECTED.name());
+    }
+
+    /**
+     * 持久化审核决策并强制 flush，将并发乐观锁冲突翻译为业务异常。
+     *
+     * <p>{@code saveAndFlush} 在方法内强制 flush，使 Hibernate 的乐观锁校验立即触发（默认
+     * {@code save} 把 flush 推迟到事务提交后，逃逸出本 try-catch）。并发场景下持 stale
+     * {@code row_version} 的写入命中 0 行 → {@link OptimisticLockingFailureException}
+     * （含子类 {@code ObjectOptimisticLockingFailureException}），翻译为
+     * {@link FepErrorCode#BIZ_5003}（HTTP 400，与终态守卫同语义「此刻不可决策」），
+     * 而非逃逸为 HTTP 500。</p>
+     *
+     * @param t 待持久化的审核任务实体
+     * @throws FepBusinessException {@code BIZ_5003} 并发决策冲突（任务已被他人处理）
+     */
+    private void saveWithOptimisticGuard(final MessageReviewTaskEntity t) {
+        try {
+            repository.saveAndFlush(t);
+        } catch (final OptimisticLockingFailureException ex) {
+            throw new FepBusinessException(FepErrorCode.BIZ_5003,
+                    "审核任务已被他人处理，请刷新后重试: " + t.getReviewId());
+        }
     }
 
     private MessageReviewTaskEntity loadPending(final String reviewId) {
