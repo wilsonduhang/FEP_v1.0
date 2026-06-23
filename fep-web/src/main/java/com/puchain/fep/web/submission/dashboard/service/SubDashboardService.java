@@ -1,6 +1,7 @@
 package com.puchain.fep.web.submission.dashboard.service;
 
 import com.puchain.fep.common.util.LogSanitizer;
+import com.puchain.fep.web.common.metrics.AggregateRows;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardDistributionItem;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardResponse;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardTrendResponse;
@@ -96,31 +97,18 @@ public class SubDashboardService {
 
         // 聚合 JPQL 单行查询的 Spring Data 签名要求 List<Object[]>，取首行
         final Object[] ifaceCounts = outputInterfaceRepository.aggregateInterfaceCounts().get(0);
-        resp.setTotalInterfaceCount(toLong(ifaceCounts[0]));
-        resp.setEnabledInterfaceCount(toLong(ifaceCounts[1]));
+        resp.setTotalInterfaceCount(AggregateRows.toLong(ifaceCounts[0]));
+        resp.setEnabledInterfaceCount(AggregateRows.toLong(ifaceCounts[1]));
 
         resp.setTotalDataSourceCount(dataSourceRepository.count());
 
         final Object[] recordCounts = recordRepository.aggregatePushStatusCounts().get(0);
-        resp.setTotalRecordCount(toLong(recordCounts[0]));
-        resp.setPushedRecordCount(toLong(recordCounts[1]));
+        resp.setTotalRecordCount(AggregateRows.toLong(recordCounts[0]));
+        resp.setPushedRecordCount(AggregateRows.toLong(recordCounts[1]));
         // pendingRecordCount 仅统计 PushStatus.PENDING，不含 PUSHING/FAILED
-        resp.setPendingRecordCount(toLong(recordCounts[2]));
+        resp.setPendingRecordCount(AggregateRows.toLong(recordCounts[2]));
 
         return resp;
-    }
-
-    /**
-     * 将聚合查询返回的 SUM 结果安全转 long（空表时 SUM 返回 null）。
-     *
-     * @param value 聚合结果单元（可能为 null）
-     * @return 非 null 的 long 值，null 转 0
-     */
-    private static long toLong(final Object value) {
-        if (value == null) {
-            return 0L;
-        }
-        return ((Number) value).longValue();
     }
 
     /**

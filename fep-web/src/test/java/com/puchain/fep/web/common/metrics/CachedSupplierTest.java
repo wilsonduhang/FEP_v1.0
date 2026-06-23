@@ -3,42 +3,17 @@ package com.puchain.fep.web.common.metrics;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 /** {@link CachedSupplier} 单测：TTL 窗内复用 / 窗外刷新 / 边界。 */
 class CachedSupplierTest {
 
-    private final AtomicReference<Instant> now =
-            new AtomicReference<>(Instant.parse("2026-06-20T00:00:00Z"));
-
-    /** 可前进的测试时钟（读 {@link #now}）。 */
-    private final Clock clock = new Clock() {
-        @Override
-        public ZoneId getZone() {
-            return ZoneOffset.UTC;
-        }
-
-        @Override
-        public Clock withZone(final ZoneId zone) {
-            return this;
-        }
-
-        @Override
-        public Instant instant() {
-            return now.get();
-        }
-    };
-
-    private void advance(final Duration d) {
-        now.set(now.get().plus(d));
-    }
+    /** 可前进的测试时钟。 */
+    private final MutableTestClock clock =
+            new MutableTestClock(Instant.parse("2026-06-20T00:00:00Z"));
 
     @Test
     void firstCall_refreshesImmediately() {
@@ -57,7 +32,7 @@ class CachedSupplierTest {
 
         assertThat(cached.get().longValue()).isEqualTo(5L);   // 首读刷新 = 5
         src.set(2);
-        advance(Duration.ofSeconds(9));                        // 仍在窗内
+        clock.advance(Duration.ofSeconds(9));                        // 仍在窗内
         assertThat(cached.get().longValue()).isEqualTo(5L);   // 复用陈旧值
     }
 
@@ -69,7 +44,7 @@ class CachedSupplierTest {
 
         assertThat(cached.get().longValue()).isEqualTo(5L);
         src.set(2);
-        advance(Duration.ofSeconds(10));                       // 达到 TTL 边界
+        clock.advance(Duration.ofSeconds(10));                       // 达到 TTL 边界
         assertThat(cached.get().longValue()).isEqualTo(2L);   // 刷新
     }
 
@@ -81,7 +56,7 @@ class CachedSupplierTest {
 
         assertThat(cached.get().longValue()).isEqualTo(5L);
         src.set(2);
-        advance(Duration.ofSeconds(15));                       // 远超 TTL 窗
+        clock.advance(Duration.ofSeconds(15));                       // 远超 TTL 窗
         assertThat(cached.get().longValue()).isEqualTo(2L);   // 仍刷新
     }
 
