@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 /**
  * JPA entity for the {@code message_review_task} table (Flyway {@code V41}).
@@ -67,6 +68,18 @@ public class MessageReviewTaskEntity {
 
     @Column(name = "reviewed_at")
     private Long reviewedAt;
+
+    /**
+     * 乐观锁版本号（并发审核决策冲突检测，Flyway {@code V44} 的 {@code row_version} 列）。
+     *
+     * <p>Hibernate 在每次 UPDATE 时自增并以旧值为谓词校验；并发场景下持 stale 版本的写入
+     * 命中 0 行 → 抛 {@code ObjectOptimisticLockingFailureException}，杜绝两审核人同时决策
+     * 同一 PENDING 任务导致的丢失更新 / 多级 {@code currentLevel} 自增竞争。包装类型以区分
+     * 新建（{@code null} → persist 时 Hibernate 置 0）。</p>
+     */
+    @Version
+    @Column(name = "row_version", nullable = false)
+    private Long version;
 
     /**
      * No-arg constructor required by JPA.
@@ -185,5 +198,13 @@ public class MessageReviewTaskEntity {
 
     public void setReviewedAt(final Long reviewedAt) {
         this.reviewedAt = reviewedAt;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(final Long version) {
+        this.version = version;
     }
 }
