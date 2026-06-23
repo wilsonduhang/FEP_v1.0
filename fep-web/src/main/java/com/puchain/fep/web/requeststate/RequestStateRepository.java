@@ -75,18 +75,15 @@ public interface RequestStateRepository extends JpaRepository<RequestStateEntity
      * @return 单行 {@code Object[]}：{@code [createdCount, sentCount, resultReceivedCount,
      *         failedCount, stuckCount, blockedCount]}（外层 {@link List} 恒含 1 行；各元素空表时为 null）
      */
-    @Query("SELECT "
-            + "SUM(CASE WHEN r.lifecycleStatus = "
-            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.CREATED THEN 1L ELSE 0L END), "
-            + "SUM(CASE WHEN r.lifecycleStatus = "
-            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.SENT THEN 1L ELSE 0L END), "
-            + "SUM(CASE WHEN r.lifecycleStatus = "
-            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.RESULT_RECEIVED THEN 1L ELSE 0L END), "
-            + "SUM(CASE WHEN r.lifecycleStatus = "
-            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.FAILED THEN 1L ELSE 0L END), "
-            + "SUM(CASE WHEN r.lifecycleStatus = "
-            + "com.puchain.fep.web.requeststate.RequestStateLifecycle.STUCK THEN 1L ELSE 0L END), "
-            + "SUM(CASE WHEN r.correlationBlocked = true THEN 1L ELSE 0L END) "
-            + "FROM RequestStateEntity r")
+    @Query("""
+        SELECT
+          SUM(CASE WHEN r.lifecycleStatus = com.puchain.fep.web.requeststate.RequestStateLifecycle.CREATED THEN 1L ELSE 0L END),
+          SUM(CASE WHEN r.lifecycleStatus = com.puchain.fep.web.requeststate.RequestStateLifecycle.SENT THEN 1L ELSE 0L END),
+          SUM(CASE WHEN r.lifecycleStatus = com.puchain.fep.web.requeststate.RequestStateLifecycle.RESULT_RECEIVED THEN 1L ELSE 0L END),
+          SUM(CASE WHEN r.lifecycleStatus = com.puchain.fep.web.requeststate.RequestStateLifecycle.FAILED THEN 1L ELSE 0L END),
+          SUM(CASE WHEN r.lifecycleStatus = com.puchain.fep.web.requeststate.RequestStateLifecycle.STUCK THEN 1L ELSE 0L END),
+          SUM(CASE WHEN r.correlationBlocked = true THEN 1L ELSE 0L END)
+        FROM RequestStateEntity r
+        """)
     List<Object[]> aggregateLifecycleAndBlockedCounts();
 }
