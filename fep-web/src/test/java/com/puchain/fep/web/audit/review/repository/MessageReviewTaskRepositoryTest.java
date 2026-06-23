@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -80,6 +81,36 @@ class MessageReviewTaskRepositoryTest {
         repository.saveAndFlush(newPending("rec-dup", "txn-a"));
         assertThatThrownBy(() -> repository.saveAndFlush(newPending("rec-dup", "txn-b")))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    /**
+     * 乐观锁并发约束（V44 {@code row_version} + 实体 {@code @Version}）：两审核人持同一 PENDING
+     * 任务的独立版本快照，先提交者把版本推进，后提交者持 stale 版本写入即抛
+     * {@link OptimisticLockingFailureException}（StaleObjectStateException 包装），杜绝并发双决策丢失更新。
+     *
+     * <p>类级 {@code @Transactional}：同一持久化上下文两次 {@code findById} 返同实例，故在两读之间
+     * {@code entityManager.detach()} 第一个，造一个 version=0 的脱管快照。</p>
+     */
+    @Test
+    void concurrentStaleUpdate_throwsOptimisticLockException() {
+        final MessageReviewTaskEntity seed = newPending("rec-optlock", "txn-optlock");
+        repository.saveAndFlush(seed);
+        final String id = seed.getReviewId();
+        entityManager.clear();
+
+        // 审核人 A 读取快照后脱管（停在 version 0，模拟另一并发事务持有的旧版本）
+        final MessageReviewTaskEntity copyA = repository.findById(id).orElseThrow();
+        entityManager.detach(copyA);
+
+        // 审核人 B 读取、决策、提交（version 0 → 1）
+        final MessageReviewTaskEntity copyB = repository.findById(id).orElseThrow();
+        copyB.setReviewStatus(ReviewStatus.APPROVED.name());
+        repository.saveAndFlush(copyB);
+
+        // 审核人 A 持 stale version 0 提交 → 乐观锁冲突
+        copyA.setReviewStatus(ReviewStatus.REJECTED.name());
+        assertThatThrownBy(() -> repository.saveAndFlush(copyA))
+                .isInstanceOf(OptimisticLockingFailureException.class);
     }
 
     /**
