@@ -233,7 +233,7 @@ public class MessageReviewTaskService {
             repository.saveAndFlush(t);
         } catch (final OptimisticLockingFailureException ex) {
             throw new FepBusinessException(FepErrorCode.BIZ_5003,
-                    "审核任务已被他人处理，请刷新后重试: " + t.getReviewId());
+                    "审核任务已被他人处理，请刷新后重试: " + t.getReviewId(), ex);
         }
     }
 
