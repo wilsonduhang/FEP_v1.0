@@ -49,11 +49,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * </ul>
  *
  * <p><strong>mock 凭证非-legacy 配置:</strong> mock 透传期凭证 keyId 恒为 {@code mock-key-v1}，
- * 而 {@code legacy-plaintext-key-ids} 默认含 {@code mock-key-v1} → 解析期 {@code isLegacy=true}
- * 触发 {@code migrateToActiveKey}，但 mock 活跃 key 即 {@code mock-key-v1}（active∈legacy）致
- * 迁移产物仍 legacy → 抛 {@code refusing to write}。本测试经
- * {@code legacy-plaintext-key-ids=}（空）令 mock 凭证非-legacy，解析走 facade 直解密（mock 透传）
- * 路径——镜像生产 impl 凭证非-legacy 的真实解析行为。</p>
+ * 而 {@code legacy-plaintext-key-ids} 默认空（2026-06-23 follow-up 根治 mock active==legacy 陷阱）→
+ * mock 凭证（keyId={@code mock-key-v1}）{@code isLegacy=false} → 解析走 facade 直解密（mock 透传），
+ * 镜像生产 impl 凭证非-legacy 的真实解析行为，无需逐测试 override。</p>
  *
  * <p>harness：JDK {@link HttpServer} 单 context {@code /callback} 录请求头；bank 直接返回 200。
  * 无 IDP（TOKEN/NONE 不取 token）。调度中性化，测试内手动 {@link CallbackQueueRunner#poll()}。</p>
@@ -70,7 +68,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
         "fep.outbound.queue.poll-initial-delay-ms=99999",
         "fep.callback.poll-interval-ms=600000",
         "fep.callback.poll-initial-delay-ms=600000",
-        "fep.callback.credential.migration.legacy-plaintext-key-ids=",
         "management.health.redis.enabled=false"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

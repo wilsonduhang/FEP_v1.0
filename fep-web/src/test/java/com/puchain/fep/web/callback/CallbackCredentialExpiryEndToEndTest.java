@@ -46,9 +46,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 在解析期 {@code ensureNotExpired} 拒用过期凭证 → 不发出任何 HTTP（bank 收到 0 请求），
  * 回调行不达 DONE（不静默降级为无鉴权）。</p>
  *
- * <p>命名 {@code *Test}（非 {@code *IT}）：本项目无 failsafe plugin + surefire 默认 includes
- * 静默跳过 {@code *IT}，故 {@code *Test} 确保覆盖在 CI 真实执行。{@code legacy-plaintext-key-ids=}
- * 空令 mock 凭证非-legacy（过期检查先于 legacy 检查，此处为一致性保留）。</p>
+ * <p>命名 {@code *Test}（surefire test 阶段执行）。{@code legacy-plaintext-key-ids} 默认空
+ * （2026-06-23 follow-up 根治 mock active==legacy 陷阱）令 mock 凭证非-legacy；过期检查先于
+ * legacy 检查，本测试不依赖该路径，无需逐测试 override。</p>
  *
  * @author FEP Team
  * @since 1.0.0
@@ -62,7 +62,6 @@ import java.util.concurrent.atomic.AtomicInteger;
         "fep.outbound.queue.poll-initial-delay-ms=99999",
         "fep.callback.poll-interval-ms=600000",
         "fep.callback.poll-initial-delay-ms=600000",
-        "fep.callback.credential.migration.legacy-plaintext-key-ids=",
         "management.health.redis.enabled=false"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
