@@ -1,5 +1,6 @@
 package com.puchain.fep.web.integration.dirmap;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +25,15 @@ class DirMapConfigHistoryRepositoryIT {
 
     @Autowired
     private DirMapConfigHistoryRepository repo;
+
+    /**
+     * 前置清场：共享 H2 下 peer *IT（JpaDirMapConfigStoreIT / DirMapConfigControllerIT）写
+     * dir_map_config_history → hasSize(2) 断言被污染（红线 shared_h2_topn_aggregation_test_isolation）。
+     */
+    @BeforeEach
+    void cleanHistory() {
+        repo.deleteAll();
+    }
 
     @Test
     void shouldReturnLatestFirst_whenMultipleHistoryRowsForSameTarget() {
