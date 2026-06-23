@@ -45,7 +45,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "fep.transport.provider=mock",
         "fep.collector.scheduling.enabled=false",
-        "fep.callback.credential.migration.legacy-plaintext-key-ids=",
         "management.health.redis.enabled=false"
 })
 @DisplayName("Callback rotate-key writes an audit log without credential material")

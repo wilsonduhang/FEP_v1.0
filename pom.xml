@@ -181,6 +181,32 @@
                 </configuration>
             </plugin>
             <plugin>
+                <!-- Run *IT integration tests (integration-test/verify phases). The project
+                     named integration tests *IT but never configured failsafe, so surefire's
+                     default includes (only *Test) silently skipped all *IT (P2b-DEFECT-002,
+                     latent fake coverage). Version managed by spring-boot-starter-parent.
+                     Fork config mirrors surefire's forkCount=1/reuseForks guardrail to cap
+                     CPU pressure on low-core machines (each *IT boots a @SpringBootTest
+                     ApplicationContext). Default include **/*IT.java is complementary to
+                     surefire's **/*Test.java (no overlap). -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <rerunFailingTestsCount>1</rerunFailingTestsCount>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-tests</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.5.0</version>

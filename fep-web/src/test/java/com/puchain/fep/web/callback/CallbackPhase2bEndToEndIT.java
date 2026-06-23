@@ -181,6 +181,10 @@ class CallbackPhase2bEndToEndIT {
         callbackQueueRepository.deleteAll();
         notificationRepository.deleteAll();
         if (seededInterfaceId != null) {
+            // 先经 @Transactional 服务删凭证（fk_callback_credential_interface 指向 interface）：
+            // 否则删 interface 触发 FK 约束违规致 tearDown 中途抛出，残留 interface/bt/msgNo 污染
+            // 后续共享 H2 的 *IT（红线 shared_h2_topn_aggregation_test_isolation）。
+            credentialAdminService.delete(seededInterfaceId);
             subOutputInterfaceRepository.findById(seededInterfaceId)
                     .ifPresent(subOutputInterfaceRepository::delete);
         }
