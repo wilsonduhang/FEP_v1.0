@@ -1,5 +1,6 @@
 package com.puchain.fep.web.requeststate;
 
+import com.puchain.fep.web.common.metrics.AggregateRows;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
@@ -53,9 +54,10 @@ final class RequestStateCountSnapshot {
         final Map<RequestStateLifecycle, Long> byStatus =
                 new EnumMap<>(RequestStateLifecycle.class);
         for (int i = 0; i < COLUMN_ORDER.length; i++) {
-            byStatus.put(COLUMN_ORDER[i], toLong(row[i]));
+            byStatus.put(COLUMN_ORDER[i], AggregateRows.toLong(row[i]));
         }
-        return new RequestStateCountSnapshot(byStatus, toLong(row[COLUMN_ORDER.length]));
+        return new RequestStateCountSnapshot(byStatus,
+                AggregateRows.toLong(row[COLUMN_ORDER.length]));
     }
 
     /**
@@ -71,9 +73,5 @@ final class RequestStateCountSnapshot {
      */
     long blocked() {
         return blocked;
-    }
-
-    private static long toLong(final Object value) {
-        return value == null ? 0L : ((Number) value).longValue();
     }
 }
