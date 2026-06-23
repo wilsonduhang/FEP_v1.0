@@ -56,6 +56,14 @@ fep:
     access-token-ttl-seconds: 7200
     refresh-token-ttl-seconds: 604800
     issuer: fep
+  callback:
+    credential:
+      migration:
+        # 回调凭证 legacy 明文迁移：标记哪些 keyId 的凭证密文实为明文（SM4 加密引入前存量）。
+        # 默认空（见 CallbackLegacyCredentialKeyIdProperties）；impl 模式若有存量明文凭证待迁移，
+        # 在此显式列出真实旧 keyId（真实 keyId 语义同密钥，按需部署期填，不入 repo）。
+        # active-key-id（fep.security.sm4.active-key-id）禁与本集合交集（C1 启动守护）。
+        legacy-plaintext-key-ids: []
   # 国密真实实现（S1 SM4 + S2a SM3/SM2 登录 + S2b 报文签验）。⚠️ R7/[R2-1]：provider: impl 下
   # 公钥分发/登录解密（S2a）+ 报文签名私钥 getSignPrivateKey（S2b，经 MessageSignPort）均已实装。
   # provider cutover（取消下行注释）启用国密真实实现；报文签验额外受 prod-gate R3 约束 ——
