@@ -139,12 +139,9 @@ public class SubDashboardService {
         final LocalDateTime startAt = start.atStartOfDay();
         final LocalDateTime endExclusive = today.plusDays(1L).atStartOfDay();
         final Map<String, long[]> byDate = new HashMap<>();
-        for (Object[] row : recordRepository.aggregateTrendByDate(startAt, endExclusive)) {
-            final String dateStr = (String) row[0];
-            byDate.put(dateStr, new long[] {
-                    ((Number) row[1]).longValue(),
-                    ((Number) row[2]).longValue(),
-            });
+        for (Object[] raw : recordRepository.aggregateTrendByDate(startAt, endExclusive)) {
+            final TrendDayRow row = TrendDayRow.fromAggregateRow(raw);
+            byDate.put(row.date(), new long[] {row.pushed(), row.pending()});
         }
 
         final List<String> dates = new ArrayList<>(days);
@@ -208,10 +205,10 @@ public class SubDashboardService {
                     startTime, PageRequest.of(0, TOP_N));
             default -> throw new IllegalStateException("unreachable");
         };
-        return raw.stream().map(r -> {
+        return raw.stream().map(DistributionRow::fromAggregateRow).map(row -> {
             final DashboardDistributionItem item = new DashboardDistributionItem();
-            item.setName((String) r[0]);
-            item.setValue(((Number) r[1]).longValue());
+            item.setName(row.name());
+            item.setValue(row.value());
             return item;
         }).toList();
     }
