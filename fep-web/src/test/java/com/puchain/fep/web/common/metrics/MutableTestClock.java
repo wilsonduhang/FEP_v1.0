@@ -44,6 +44,16 @@ public final class MutableTestClock extends Clock {
         return zone;
     }
 
+    /**
+     * 返回同区不同的派生时钟。<strong>派生时钟与本时钟共享同一 {@code now}
+     * 引用</strong>——对任一方 {@link #advance(Duration)} 对另一方立即可见。本类专用于
+     * 单时钟测试，当前无消费方调用 {@code withZone}（仅 {@link Clock} 契约要求实现），
+     * 故该共享无可观测影响；如未来需要相互独立的派生时钟，须改为深拷贝
+     * {@link AtomicReference}（DEF-MC-3）。
+     *
+     * @param newZone 目标时区
+     * @return 共享 {@code now}、时区为 {@code newZone} 的新实例
+     */
     @Override
     public Clock withZone(final ZoneId newZone) {
         return new MutableTestClock(now, newZone);
