@@ -1,7 +1,6 @@
 package com.puchain.fep.web.submission.dashboard.service;
 
 import com.puchain.fep.common.util.LogSanitizer;
-import com.puchain.fep.web.common.metrics.AggregateRows;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardDistributionItem;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardResponse;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardTrendResponse;
@@ -95,18 +94,21 @@ public class SubDashboardService {
 
         final DashboardResponse resp = new DashboardResponse();
 
-        // 聚合 JPQL 单行查询的 Spring Data 签名要求 List<Object[]>，取首行
-        final Object[] ifaceCounts = outputInterfaceRepository.aggregateInterfaceCounts().get(0);
-        resp.setTotalInterfaceCount(AggregateRows.toLong(ifaceCounts[0]));
-        resp.setEnabledInterfaceCount(AggregateRows.toLong(ifaceCounts[1]));
+        // 聚合 JPQL 单行查询的 Spring Data 签名要求 List<Object[]>，取首行；
+        // snapshot record 显式命名列序，消除 Object[] 裸索引消费（DEF-MC-REUSE-1 附带项）
+        final InterfaceCountsSnapshot iface = InterfaceCountsSnapshot.fromAggregateRow(
+                outputInterfaceRepository.aggregateInterfaceCounts().get(0));
+        resp.setTotalInterfaceCount(iface.total());
+        resp.setEnabledInterfaceCount(iface.enabled());
 
         resp.setTotalDataSourceCount(dataSourceRepository.count());
 
-        final Object[] recordCounts = recordRepository.aggregatePushStatusCounts().get(0);
-        resp.setTotalRecordCount(AggregateRows.toLong(recordCounts[0]));
-        resp.setPushedRecordCount(AggregateRows.toLong(recordCounts[1]));
+        final PushStatusCountsSnapshot record = PushStatusCountsSnapshot.fromAggregateRow(
+                recordRepository.aggregatePushStatusCounts().get(0));
+        resp.setTotalRecordCount(record.total());
+        resp.setPushedRecordCount(record.pushed());
         // pendingRecordCount 仅统计 PushStatus.PENDING，不含 PUSHING/FAILED
-        resp.setPendingRecordCount(AggregateRows.toLong(recordCounts[2]));
+        resp.setPendingRecordCount(record.pending());
 
         return resp;
     }
