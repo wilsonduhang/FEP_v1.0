@@ -636,3 +636,16 @@ fep:
   # 本项仅控制 gauge 观测值的缓存新鲜度，不影响任何业务/状态机判定。
   metrics:
     count-cache-ttl: PT10S
+  # DEF-B9-3 队列积压告警：@Scheduled 监控器周期采样 callback_queue + outbound_message_queue
+  # 积压深度（PENDING + 到期 RETRY），边沿触发（上穿才告警，回落 re-arm）。阈值走 yaml（muzhou D2）。
+  alert:
+    queue-backlog:
+      # @ConditionalOnProperty Bean 级开关（false 时 monitor Bean 不创建）
+      enabled: true
+      # @Scheduled fixedDelay 采样间隔（毫秒；默认 60s）
+      interval-ms: 60000
+      # 积压深度阈值（上穿即告警，运维须按部署实际流量调参）
+      threshold: 1000
+      # 各队列独立开关
+      callback-enabled: true
+      outbound-enabled: true
