@@ -1,7 +1,6 @@
 package com.puchain.fep.web.submission.dashboard.service;
 
 import com.puchain.fep.common.util.LogSanitizer;
-import com.puchain.fep.web.common.metrics.AggregateRows;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardDistributionItem;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardResponse;
 import com.puchain.fep.web.submission.dashboard.dto.DashboardTrendResponse;
@@ -95,18 +94,21 @@ public class SubDashboardService {
 
         final DashboardResponse resp = new DashboardResponse();
 
-        // 聚合 JPQL 单行查询的 Spring Data 签名要求 List<Object[]>，取首行
-        final Object[] ifaceCounts = outputInterfaceRepository.aggregateInterfaceCounts().get(0);
-        resp.setTotalInterfaceCount(AggregateRows.toLong(ifaceCounts[0]));
-        resp.setEnabledInterfaceCount(AggregateRows.toLong(ifaceCounts[1]));
+        // 聚合 JPQL 单行查询的 Spring Data 签名要求 List<Object[]>，取首行；
+        // snapshot record 显式命名列序，消除 Object[] 裸索引消费（DEF-MC-REUSE-1 附带项）
+        final InterfaceCountsSnapshot iface = InterfaceCountsSnapshot.fromAggregateRow(
+                outputInterfaceRepository.aggregateInterfaceCounts().get(0));
+        resp.setTotalInterfaceCount(iface.total());
+        resp.setEnabledInterfaceCount(iface.enabled());
 
         resp.setTotalDataSourceCount(dataSourceRepository.count());
 
-        final Object[] recordCounts = recordRepository.aggregatePushStatusCounts().get(0);
-        resp.setTotalRecordCount(AggregateRows.toLong(recordCounts[0]));
-        resp.setPushedRecordCount(AggregateRows.toLong(recordCounts[1]));
+        final PushStatusCountsSnapshot record = PushStatusCountsSnapshot.fromAggregateRow(
+                recordRepository.aggregatePushStatusCounts().get(0));
+        resp.setTotalRecordCount(record.total());
+        resp.setPushedRecordCount(record.pushed());
         // pendingRecordCount 仅统计 PushStatus.PENDING，不含 PUSHING/FAILED
-        resp.setPendingRecordCount(AggregateRows.toLong(recordCounts[2]));
+        resp.setPendingRecordCount(record.pending());
 
         return resp;
     }
@@ -137,12 +139,9 @@ public class SubDashboardService {
         final LocalDateTime startAt = start.atStartOfDay();
         final LocalDateTime endExclusive = today.plusDays(1L).atStartOfDay();
         final Map<String, long[]> byDate = new HashMap<>();
-        for (Object[] row : recordRepository.aggregateTrendByDate(startAt, endExclusive)) {
-            final String dateStr = (String) row[0];
-            byDate.put(dateStr, new long[] {
-                    ((Number) row[1]).longValue(),
-                    ((Number) row[2]).longValue(),
-            });
+        for (Object[] raw : recordRepository.aggregateTrendByDate(startAt, endExclusive)) {
+            final TrendDayRow row = TrendDayRow.fromAggregateRow(raw);
+            byDate.put(row.date(), new long[] {row.pushed(), row.pending()});
         }
 
         final List<String> dates = new ArrayList<>(days);
@@ -206,10 +205,10 @@ public class SubDashboardService {
                     startTime, PageRequest.of(0, TOP_N));
             default -> throw new IllegalStateException("unreachable");
         };
-        return raw.stream().map(r -> {
+        return raw.stream().map(DistributionRow::fromAggregateRow).map(row -> {
             final DashboardDistributionItem item = new DashboardDistributionItem();
-            item.setName((String) r[0]);
-            item.setValue(((Number) r[1]).longValue());
+            item.setName(row.name());
+            item.setValue(row.value());
             return item;
         }).toList();
     }
