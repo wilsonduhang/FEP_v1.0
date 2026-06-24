@@ -48,6 +48,21 @@ class AuditReviewMetricsTest {
     }
 
     @Test
+    void recordFailure_incrementsPerReasonCounterIndependently() {
+        metrics.recordFailure(AuditReviewMetrics.REASON_NOT_FOUND);
+        metrics.recordFailure(AuditReviewMetrics.REASON_LOCK_CONFLICT);
+        metrics.recordFailure(AuditReviewMetrics.REASON_LOCK_CONFLICT);
+
+        assertThat(registry.counter("fep_audit_review_failure_total", "reason", "not_found").count())
+                .isEqualTo(1.0);
+        assertThat(registry.counter("fep_audit_review_failure_total", "reason", "lock_conflict").count())
+                .isEqualTo(2.0);
+        // terminal tag 独立，未被污染
+        assertThat(registry.counter("fep_audit_review_failure_total", "reason", "terminal").count())
+                .isEqualTo(0.0);
+    }
+
+    @Test
     void pendingGauge_cachesWithinTtlThenRefreshes() {
         final AtomicInteger pending = new AtomicInteger(5);
         metrics.registerPendingGauge(pending::get);
