@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
  * <ul>
  *   <li>{@code fep_audit_review_decision_total{decision="APPROVED"|"REJECTED"}} — 审核终态决策计数</li>
  *   <li>{@code fep_audit_review_pending_count} — 当前待审核任务数 Gauge（审核队列积压观测）</li>
+ *   <li>{@code fep_audit_review_failure_total{reason="not_found"|"terminal"|"lock_conflict"}}
+ *       — 审核决策失败计数（客户端错误 / 并发冲突压力可观测）</li>
  * </ul>
  *
  * <p>本类仅 telemetry 门面，不涉状态机/DB。{@link MeterRegistry} 为 Spring Actuator
@@ -29,7 +31,16 @@ public class AuditReviewMetrics {
 
     static final String COUNTER_DECISION_TOTAL = "fep_audit_review_decision_total";
     static final String GAUGE_PENDING_COUNT = "fep_audit_review_pending_count";
+    static final String COUNTER_FAILURE_TOTAL = "fep_audit_review_failure_total";
     private static final String TAG_DECISION = "decision";
+    private static final String TAG_REASON = "reason";
+
+    /** 审核任务不存在（{@code BIZ_5001}，HTTP 404）。 */
+    public static final String REASON_NOT_FOUND = "not_found";
+    /** 审核任务已终态，不可重复决策（{@code BIZ_5003}，HTTP 400）。 */
+    public static final String REASON_TERMINAL = "terminal";
+    /** 并发乐观锁冲突，任务已被他人处理（{@code BIZ_5003}，HTTP 400）。 */
+    public static final String REASON_LOCK_CONFLICT = "lock_conflict";
 
     private final MeterRegistry registry;
     private final Clock clock;
@@ -55,6 +66,16 @@ public class AuditReviewMetrics {
      */
     public void recordDecision(final String decision) {
         registry.counter(COUNTER_DECISION_TOTAL, TAG_DECISION, decision).increment();
+    }
+
+    /**
+     * 记录一次审核决策失败（按 {@code reason} 维度区分客户端错误 / 并发冲突压力）。
+     *
+     * @param reason 失败原因 tag（{@link #REASON_NOT_FOUND} / {@link #REASON_TERMINAL}
+     *               / {@link #REASON_LOCK_CONFLICT}），非空
+     */
+    public void recordFailure(final String reason) {
+        registry.counter(COUNTER_FAILURE_TOTAL, TAG_REASON, reason).increment();
     }
 
     /**
