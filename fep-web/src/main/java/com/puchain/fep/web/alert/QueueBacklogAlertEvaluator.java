@@ -81,7 +81,9 @@ public class QueueBacklogAlertEvaluator extends CallbackAlertEvaluatorBase<Queue
     @Override
     protected CallbackAlertMessage toAlertMessage(final QueueBacklogEvent ev,
             final String alertEmail, final String alertPhone) {
-        final String queue = ev.queue().name();
+        // 单点 sanitize：queue 同时用于 title / body / refId，统一去 CRLF（enum 名当前无注入面，
+        // 此为对称 + 前向防御——未来若 queue 来源改为非 enum 即已防护）。
+        final String queue = LogSanitizer.sanitize(ev.queue().name());
         final String title = "队列积压告警 - " + queue;
         final String body = LogSanitizer.sanitize(String.format(
                 "queue=%s backlog=%d threshold=%d", queue, ev.backlogDepth(), ev.threshold()));
