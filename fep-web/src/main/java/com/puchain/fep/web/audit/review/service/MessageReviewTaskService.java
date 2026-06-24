@@ -232,16 +232,20 @@ public class MessageReviewTaskService {
         try {
             repository.saveAndFlush(t);
         } catch (final OptimisticLockingFailureException ex) {
+            metrics.recordFailure(AuditReviewMetrics.REASON_LOCK_CONFLICT);
             throw new FepBusinessException(FepErrorCode.BIZ_5003,
                     "审核任务已被他人处理，请刷新后重试: " + t.getReviewId(), ex);
         }
     }
 
     private MessageReviewTaskEntity loadPending(final String reviewId) {
-        final MessageReviewTaskEntity t = repository.findById(reviewId)
-                .orElseThrow(() -> new FepBusinessException(
-                        FepErrorCode.BIZ_5001, "审核任务不存在: " + reviewId));
+        final MessageReviewTaskEntity t = repository.findById(reviewId).orElse(null);
+        if (t == null) {
+            metrics.recordFailure(AuditReviewMetrics.REASON_NOT_FOUND);
+            throw new FepBusinessException(FepErrorCode.BIZ_5001, "审核任务不存在: " + reviewId);
+        }
         if (!ReviewStatus.PENDING.name().equals(t.getReviewStatus())) {
+            metrics.recordFailure(AuditReviewMetrics.REASON_TERMINAL);
             throw new FepBusinessException(FepErrorCode.BIZ_5003,
                     "审核任务已终态，不可重复决策: " + t.getReviewStatus());
         }
