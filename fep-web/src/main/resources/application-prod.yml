@@ -64,6 +64,15 @@ fep:
         # 在此显式列出真实旧 keyId（真实 keyId 语义同密钥，按需部署期填，不入 repo）。
         # active-key-id（fep.security.sm4.active-key-id）禁与本集合交集（C1 启动守护）。
         legacy-plaintext-key-ids: []
+  # DEF-B9-3 队列积压告警（生产模板）。threshold 须按生产实际队列吞吐基线设定（默认 1000 仅占位）：
+  # 过低 → 正常波峰误告警；过高 → 真积压漏报。建议取「正常高峰 backlog × 3~5」。
+  alert:
+    queue-backlog:
+      enabled: true
+      interval-ms: 60000
+      threshold: ${FEP_QUEUE_BACKLOG_THRESHOLD:1000}
+      callback-enabled: true
+      outbound-enabled: true
   # 国密真实实现（S1 SM4 + S2a SM3/SM2 登录 + S2b 报文签验）。⚠️ R7/[R2-1]：provider: impl 下
   # 公钥分发/登录解密（S2a）+ 报文签名私钥 getSignPrivateKey（S2b，经 MessageSignPort）均已实装。
   # provider cutover（取消下行注释）启用国密真实实现；报文签验额外受 prod-gate R3 约束 ——

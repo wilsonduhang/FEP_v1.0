@@ -52,4 +52,20 @@ public interface OutboundQueueRepository extends JpaRepository<OutboundMessageQu
         FOR UPDATE SKIP LOCKED
         """, nativeQuery = true)
     List<String> claimBatch(@Param("batchSize") int batchSize);
+
+    /**
+     * 统计当前积压条数：{@code PENDING} 或（{@code RETRY} 且
+     * {@code next_retry_at<=CURRENT_TIMESTAMP}）。
+     *
+     * <p>供 {@code QueueBacklogMonitor} 周期采样积压告警（DEF-B9-3）。纯读不加锁
+     * （无 {@code FOR UPDATE}），过滤条件与 {@link #claimBatch(int)} 一致（去 ORDER/LIMIT）。</p>
+     *
+     * @return 积压条数（≥0）
+     */
+    @Query(value = """
+        SELECT COUNT(*) FROM outbound_message_queue
+        WHERE status = 'PENDING'
+           OR (status = 'RETRY' AND next_retry_at <= CURRENT_TIMESTAMP)
+        """, nativeQuery = true)
+    long countBacklog();
 }
